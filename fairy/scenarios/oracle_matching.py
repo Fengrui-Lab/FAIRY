@@ -50,7 +50,11 @@ def oracle_validate(
     extra_steps = [
         step.tool_name or step.name or ""
         for step in workflow_steps
-        if step.tool_name and _tool_label(step.tool_name, app_classes) not in expected_labels
+        if (
+            step.tool_name
+            and not _is_briefing_step(step.tool_name, app_classes)
+            and _tool_label(step.tool_name, app_classes) not in expected_labels
+        )
     ]
     match_score = len(matched) / len(step_specs) if step_specs else 1.0
     extra_penalty = harmless_extra_penalty * len(extra_steps)
@@ -106,3 +110,9 @@ def _tool_label(tool_name: str, app_classes: dict[str, str]) -> str:
 def _split_tool_name(tool_name: str) -> tuple[str, str]:
     app_name, _, function_name = tool_name.partition("__")
     return app_name, function_name
+
+
+def _is_briefing_step(tool_name: str, app_classes: dict[str, str]) -> bool:
+    app_name, function_name = _split_tool_name(tool_name)
+    class_name = app_classes.get(app_name, app_name)
+    return class_name == "AgentUserInterface" and function_name == "send_message_to_agent"

@@ -161,8 +161,8 @@ class Engine:
         )
         return self.agent.workflow
 
-    def run_scenario_oracle(self, run_oracle: bool = True):
-        self.scenario.setup()
+    def run_scenario_oracle(self, run_oracle: bool = True, **setup_kwargs: Any):
+        self.scenario.setup(**setup_kwargs)
         self._register_scenario_apps()
         if type(self.scenario).oracle_solution is not object and hasattr(
             self.scenario, "oracle_solution"
@@ -175,8 +175,12 @@ class Engine:
         self._run_captured_oracle_events(run_oracle=run_oracle)
         return self.scenario.workflow
 
-    def build_oracle_workflow(self, run_oracle: bool = False) -> Workflow:
-        return self.run_scenario_oracle(run_oracle=run_oracle)
+    def build_oracle_workflow(
+        self, run_oracle: bool = False, **setup_kwargs: Any
+    ) -> Workflow:
+        return self.run_scenario_oracle(
+            run_oracle=run_oracle, **setup_kwargs
+        )
 
     def replay_workflow(self, workflow: Workflow) -> Workflow:
         self.scenario.setup()
@@ -353,15 +357,14 @@ class Engine:
 
     def _run_captured_oracle_events(self, run_oracle: bool = True) -> None:
         captured_events = list(getattr(self.scenario, "events", []) or [])
-        events = [event for event in captured_events if getattr(event, "is_oracle", False)]
-        oracle_sim_time = float(self.start_time)
+        events = self._oracle_event_dependency_closure(captured_events)
+        event_times = self._captured_event_times(events)
         for event in events:
             content = event.execute() if run_oracle else None
             name = event.event_id
             app_name = getattr(event.app, "name", event.app.__class__.__name__)
             tool_name = f"{app_name}__{event.function.__name__}"
             tool_args = self._event_tool_args(event)
-            oracle_sim_time += self._explicit_time_advance_seconds(tool_name, tool_args)
             deps = [
                 getattr(dep, "event_id", None)
                 for dep in getattr(event, "dependencies", [])
@@ -375,9 +378,27 @@ class Engine:
                     tool_name=tool_name,
                     tool_args=tool_args,
                     depends_on=deps,
-                    time=self._format_timestamp(oracle_sim_time),
+                    time=self._format_timestamp(event_times[id(event)]),
                 )
             )
+
+    def _oracle_event_dependency_closure(self, captured_events: list[Any]) -> list[Any]:
+        included: set[int] = set()
+        ordered: list[Any] = []
+
+        def include_with_dependencies(event: Any) -> None:
+            event_key = id(event)
+            if event_key in included:
+                return
+            for dependency in getattr(event, "dependencies", []) or []:
+                include_with_dependencies(dependency)
+            included.add(event_key)
+            ordered.append(event)
+
+        for event in captured_events:
+            if getattr(event, "is_oracle", False):
+                include_with_dependencies(event)
+        return ordered
 
     def _captured_event_times(self, events: list[Any]) -> dict[int, float]:
         event_times: dict[int, float] = {}
@@ -390,13 +411,16 @@ class Engine:
             if event_key in visiting:
                 raise ValueError("Cycle detected in captured oracle event graph.")
             visiting.add(event_key)
+            app_name = getattr(event.app, "name", event.app.__class__.__name__)
+            tool_name = f"{app_name}__{event.function.__name__}"
+            tool_args = self._event_tool_args(event)
             dependencies = list(getattr(event, "dependencies", []) or [])
             delay = float(getattr(event, "delay_seconds", 0.0) or 0.0)
             if dependencies:
                 base_time = max(scheduled_time(dep) for dep in dependencies)
             else:
                 base_time = float(self.start_time)
-            event_times[event_key] = base_time + delay
+            event_times[event_key] = base_time + delay + self._explicit_time_advance_seconds(tool_name, tool_args)
             visiting.remove(event_key)
             return event_times[event_key]
 

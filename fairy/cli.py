@@ -4,6 +4,7 @@ import argparse
 import json
 import time
 from pathlib import Path
+from typing import Any
 
 from fairy.agents.llm.base_llm import BaseLLM
 from fairy.controllers.engine import Engine
@@ -12,6 +13,18 @@ from fairy.controllers.agent_builder import build_controller_agent
 from fairy.controllers.run_artifacts import build_run_report, write_json, write_jsonl
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow
+
+
+def _json_object_arg(raw: str | None, name: str) -> dict[str, Any]:
+    if raw in (None, ""):
+        return {}
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"{name} must be a JSON object: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise SystemExit(f"{name} must be a JSON object.")
+    return payload
 
 
 def main() -> None:
@@ -31,6 +44,8 @@ def main() -> None:
     parser.add_argument("--evaluate", action="store_true", help="Evaluate the replayed workflow")
     parser.add_argument("--workflow", help="Workflow JSON path for build output or replay input")
     parser.add_argument("--output-dir", default="runs", help="Directory for generated workflow/evaluation files")
+    parser.add_argument("--scenario-kwargs", default=None, help="JSON object passed to the scenario constructor")
+    parser.add_argument("--init-kwargs", default=None, help="JSON object passed to scenario setup/initialize")
     parser.add_argument("--list", action="store_true", help="List scenarios")
     parser.add_argument("--list-controllers", action="store_true", help="List controller families")
     args = parser.parse_args()
@@ -45,6 +60,8 @@ def main() -> None:
     if not args.scenario:
         parser.error("--scenario is required unless --list is used")
     scenario_class = get_scenario_class(args.scenario)
+    scenario_kwargs = _json_object_arg(args.scenario_kwargs, "--scenario-kwargs")
+    init_kwargs = _json_object_arg(args.init_kwargs, "--init-kwargs")
     output_dir = Path(args.output_dir)
     workflow_path = Path(args.workflow) if args.workflow else output_dir / f"{args.scenario}.oracle.json"
 
@@ -57,9 +74,10 @@ def main() -> None:
         artifacts: dict[str, str] = {}
 
         if args.build_oracle:
-            build_engine = Engine(agent=None, scenario=scenario_class())
+            build_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
             source_workflow = build_engine.build_oracle_workflow(
-                run_oracle=args.run_oracle_tools
+                run_oracle=args.run_oracle_tools,
+                **init_kwargs,
             )
             source_workflow.save_workflow(str(workflow_path))
             artifacts["oracle_workflow"] = str(workflow_path)
@@ -68,7 +86,7 @@ def main() -> None:
         if args.replay or args.evaluate:
             if source_workflow is None:
                 source_workflow = Workflow.load_workflow(str(workflow_path))
-            active_engine = Engine(agent=None, scenario=scenario_class())
+            active_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
             active_workflow = active_engine.replay_workflow(source_workflow)
             replay_path = output_dir / f"{args.scenario}.replay.json"
             active_workflow.save_workflow(str(replay_path))
@@ -140,7 +158,7 @@ def main() -> None:
         print(f"run_summary={run_summary_path}")
         return
 
-    scenario = scenario_class()
+    scenario = scenario_class(**scenario_kwargs)
     if args.agent:
         run_wall_start = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -151,7 +169,7 @@ def main() -> None:
                 "temperature": args.temperature,
             }
         )
-        scenario.setup()
+        scenario.setup(**init_kwargs)
         agent = build_controller_agent(
             args.controller,
             llm=llm,
@@ -256,7 +274,7 @@ def main() -> None:
 
     engine = Engine(agent=None, scenario=scenario)
     if args.oracle:
-        workflow = engine.run_scenario_oracle(run_oracle=True)
+        workflow = engine.run_scenario_oracle(run_oracle=True, **init_kwargs)
         print(workflow)
     else:
         parser.error("agent mode requires constructing an Agent in user code")

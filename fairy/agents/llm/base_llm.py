@@ -73,7 +73,9 @@ class BaseLLM:
             case "default"|"openai":
                 from .openai_llm import OpenAILLM
                 return OpenAILLM(model, temperature, **extra_params)
-            case "deepseek":
+            case "deepseek" | "deepseek-json":
+                # deepseek-json is a legacy ARE config label; FAIRY uses
+                # OpenAI-compatible function calling through the same client.
                 from .deepseek_client import DeepSeekClient
                 return DeepSeekClient(model, temperature, **extra_params)
             case "anthropic":

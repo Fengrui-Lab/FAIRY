@@ -24,6 +24,9 @@ from fairy.scenarios.farm_world_physics.scenario_field_prep_physics_action_tick 
 from fairy.scenarios.farm_world_physics.scenario_irrigation_physics_action_tick import (
     ScenarioFarmWorldIrrigationPhysicsActionTick,
 )
+from fairy.scenarios.farm_world_fullseason_v2.scenario_full_season_hb_base_hn84_std_normal import (
+    ScenarioFullSeasonHBBaseHN84StdNormal,
+)
 from fairy.scenarios.baseline_farm_world.scenario_field_prep import (
     ScenarioFarmWorldFieldPrep,
 )
@@ -78,23 +81,56 @@ def test_baseline_field_prep_oracle_sequence() -> None:
 def test_physics_action_tick_oracle_smoke() -> None:
     scenario = ScenarioFarmWorldFieldPrepPhysicsActionTick()
     workflow = Engine(None, scenario).run_scenario_oracle(run_oracle=False)
-    assert len(workflow) == 14
-    assert next(iter(workflow.dag)) == "oracle_check_weather"
+    assert len(workflow) == 15
+    assert next(iter(workflow.dag)) == "field_prep_briefing"
+    assert workflow.dag["oracle_check_weather"].depends_on == ["field_prep_briefing"]
     assert workflow.dag["oracle_attach_grader"].tool_args == {"implement": "grader"}
     assert workflow.dag["oracle_form_ridges"].tool_args == {"ridge_width_m": 1.1}
-    assert workflow.dag["oracle_check_weather"].time == "2026-04-25 08:00:00"
-    assert workflow.dag["oracle_check_forecast"].time == "2026-04-25 08:00:00"
+    assert workflow.dag["oracle_check_weather"].time == "2026-04-25 08:00:07"
+    assert workflow.dag["oracle_check_forecast"].time == "2026-04-25 08:00:08"
 
 
 def test_fullseason_oracle_smoke() -> None:
     workflow = Engine(None, ScenarioFullSeasonBalanced()).run_scenario_oracle(
         run_oracle=False
     )
-    assert len(workflow) == 83
+    assert len(workflow) == 84
+    assert next(iter(workflow.dag)) == "briefing"
     assert "o_store_grain" in workflow.dag
-    assert workflow.dag["o_weather_before_planting"].time == "2026-05-04 07:00:00"
-    assert workflow.dag["o_wait_to_emergence_window"].time == "2026-05-16 07:00:00"
-    assert workflow.dag["o_report"].time == "2026-09-06 13:00:00"
+    assert workflow.dag["o_weather_before_planting"].time == "2026-05-04 07:00:07"
+    assert workflow.dag["o_wait_to_emergence_window"].time == "2026-05-16 07:00:51"
+    assert workflow.dag["o_report"].time == "2026-09-06 13:02:15"
+
+
+def test_fullseason_v2_formal90_registered() -> None:
+    formal_ids = [
+        line.strip()
+        for line in Path("scripts/fullseason/formal_90_scenario_ids.txt").read_text().splitlines()
+        if line.strip()
+    ]
+    registered = set(list_scenarios())
+
+    assert len(formal_ids) == 90
+    assert not [scenario_id for scenario_id in formal_ids if scenario_id not in registered]
+
+
+def test_fullseason_v2_oracle_replay_evaluate_smoke(tmp_path: Path) -> None:
+    build_engine = Engine(None, ScenarioFullSeasonHBBaseHN84StdNormal())
+    oracle_workflow = build_engine.build_oracle_workflow(run_oracle=False)
+    oracle_path = tmp_path / "v2_oracle.json"
+    oracle_workflow.save_workflow(str(oracle_path))
+
+    replay_engine = Engine(None, ScenarioFullSeasonHBBaseHN84StdNormal())
+    replay_workflow = replay_engine.replay_workflow(Workflow.load_workflow(str(oracle_path)))
+    report = replay_engine.evaluation_report(replay_workflow)
+
+    assert len(oracle_workflow) == 242
+    assert next(iter(oracle_workflow.dag)) == "briefing"
+    assert oracle_workflow.dag["briefing"].time == "2026-05-05 07:00:05"
+    assert oracle_workflow.dag["o_weather_before_prep"].depends_on == ["briefing"]
+    assert oracle_workflow.dag["o_report"].time == "2026-09-08 11:04:55"
+    assert len(replay_workflow) == 242
+    assert report["validation"]["success"] is True
 
 
 def test_fullseason_scenario_class_defaults_reach_instance() -> None:
@@ -143,7 +179,7 @@ def test_end_to_end_oracle_replay_evaluate(tmp_path: Path) -> None:
     assert evaluation_path.exists()
     assert report["validation"]["success"] is True
     assert report["validation"]["metadata"]["score"] == 1.0
-    assert report["validation"]["metadata"]["workflow_steps"] == 14
+    assert report["validation"]["metadata"]["workflow_steps"] == 15
 
 
 class _DummyLLM:

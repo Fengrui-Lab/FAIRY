@@ -27,6 +27,14 @@ def list_scenarios() -> list[str]:
     return sorted(_REGISTRY)
 
 
+class _RegistryCompat:
+    def get_scenario(self, scenario_id: str) -> Type[Scenario]:
+        return get_scenario_class(scenario_id)
+
+
+registry = _RegistryCompat()
+
+
 def _import_known_scenarios() -> None:
     import importlib
     import pkgutil
@@ -34,7 +42,9 @@ def _import_known_scenarios() -> None:
     for package in (
         "fairy.scenarios.baseline_farm_world",
         "fairy.scenarios.farm_world_physics",
+        "fairy.scenarios.farm_worldpp_physics",
         "fairy.scenarios.farm_world_fullseason",
+        "fairy.scenarios.farm_world_fullseason_v2",
     ):
         mod = importlib.import_module(package)
         for info in pkgutil.iter_modules(mod.__path__, package + "."):

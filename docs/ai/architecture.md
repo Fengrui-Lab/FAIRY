@@ -8,6 +8,18 @@
   without mutating scenario state through tool execution. For ARE-derived event
   graph scenarios, positional event arguments are recovered from the captured
   function signature so JSON replay has named `tool_args`.
+- Captured ARE-style event graphs need both `dependencies` and `successors`.
+  Some full-season v2 scenarios call `collect_event_graph(root)`, which walks
+  `successors`; `CapturedEvent.depends_on()` must therefore append the current
+  event to each dependency's `successors`.
+- Oracle workflow construction writes the dependency closure of oracle events,
+  not only events marked `.oracle()`. This preserves upstream briefing nodes
+  such as `AgentUserInterface__send_message_to_agent` when later oracle steps
+  depend on them.
+- The dependency closure must return hidden helper-created dependencies too.
+  For example, full-season split harvest helpers return the final store event,
+  while the harvest/unload events exist only through `dependencies`; these
+  must execute before the final node for recovered-yield baselines to match ARE.
 - `replay_workflow()` builds tools from the fresh scenario apps and calls each
   `AppName__method` in workflow order. The replayed workflow stores actual tool
   results in `content`, preserving the original workflow JSON shape.

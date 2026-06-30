@@ -5,6 +5,7 @@ from openai import OpenAI
 from fairy.agents.llm.base_llm import BaseLLM
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com")
 
 class DeepSeekClient(BaseLLM):
     client_class: str = "DeepSeekClient"
@@ -20,11 +21,9 @@ class DeepSeekClient(BaseLLM):
         """
         super().__init__(model, temperature, **kwargs)
         self.provider = "openai"
-        self.api_key = DEEPSEEK_API_KEY
-        # self.api_client = OpenAI()
-        # self.model = "deepseek-reasoner"
-        self.model = "deepseek-chat"
-        self.base_url="https://api.deepseek.com"
+        self.api_key = api_key or DEEPSEEK_API_KEY
+        self.model = model
+        self.base_url = kwargs.get("base_url") or DEEPSEEK_API_BASE
         self.api_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
 
 

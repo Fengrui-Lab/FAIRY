@@ -69,6 +69,9 @@ class Scenario:
     def initiate_scenario(self, *args: Any, **kwargs: Any) -> None:
         self.init_and_populate_apps(*args, **kwargs)
 
+    def initialize(self, *args: Any, **kwargs: Any) -> None:
+        self.setup(*args, **kwargs)
+
     def init_and_populate_apps(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Scenario must implement setup hooks.")
 

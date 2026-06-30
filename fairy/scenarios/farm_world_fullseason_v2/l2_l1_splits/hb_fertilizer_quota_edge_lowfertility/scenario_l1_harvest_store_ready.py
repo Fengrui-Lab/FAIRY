@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+from fairy.apps.agent_user_interface import AgentUserInterface
+from fairy.apps.farm_world import FarmWorldApp, SensorApp, TractorApp, WeatherApp
+from fairy.scenarios.scenario import Scenario
+from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_scenario_helpers import (
+    harvest_range,
+)
+from fairy.scenarios.registry import register_scenario
+from fairy.scenarios.validation_result import ScenarioValidationResult
+from fairy.types import EventRegisterer
+
+from ._hb_fertilizer_quota_edge_lowfertility_split_common import (
+    CHECKPOINT_HARVEST_READY,
+    SOURCE_L3_SCENARIO_ID,
+    checkpoint_sim_time,
+    populate_hb_fertilizer_quota_apps,
+    restore_hb_fertilizer_quota_checkpoint,
+    validate_native_workflow,
+)
+
+SCENARIO_ID = "scenario_l1_hb_fertilizer_quota_harvest_store_ready"
+
+
+@register_scenario(SCENARIO_ID)
+class ScenarioL1HBFertilizerQuotaHarvestStoreReady(Scenario):
+    """L1 split: harvest, dry, and store once the whole field is ready."""
+
+    start_time: float | None = checkpoint_sim_time(CHECKPOINT_HARVEST_READY)
+    queue_based_loop: bool = True
+    time_increment_in_seconds: int = 60
+    detailed_briefing: bool = True
+    expects_agent_harvest: bool = True
+
+    source_l3_scenario_id = SOURCE_L3_SCENARIO_ID
+    source_checkpoint_label = CHECKPOINT_HARVEST_READY
+    source_checkpoint_date = "2026-09-06"
+    source_dap = 125
+    source_growth_stage = "R8_FULL_MATURITY"
+
+    def init_and_populate_apps(self, *args, **kwargs) -> None:
+        populate_hb_fertilizer_quota_apps(self)
+        restore_hb_fertilizer_quota_checkpoint(self, CHECKPOINT_HARVEST_READY)
+
+    def build_events_flow(self) -> None:
+        aui = self.get_typed_app(AgentUserInterface)
+        weather = self.get_typed_app(WeatherApp)
+        sensor = self.get_typed_app(SensorApp)
+        farm_world = self.get_typed_app(FarmWorldApp)
+        tractor = self.get_typed_app(TractorApp)
+
+        if self.detailed_briefing:
+            briefing_text = (
+                "准备执行低肥力边缘田块全田收获入库。当前0-63垄处于收获前复核状态，目标是完成收获、烘干和入库闭环。\n"
+                "请按以下步骤操作：\n"
+                "1. 查看当前天气，确认收获窗口。\n"
+                "2. 读取土壤传感器，确认田间通行性。\n"
+                "3. 读取0-63垄状态，确认R8、harvest_allowed和grain_moisture。\n"
+                "4. 查看仓储容量和烘干资源。\n"
+                "5. 条件合适时按每趟4垄完成0-63垄收获，每趟后及时卸粮。\n"
+                "6. 收后烘干到13.0%安全水分并入库。\n"
+                "7. 入库后复查库存。\n"
+                "8. 向我汇报 recovered yield 和烘干入库闭环。"
+            )
+        else:
+            briefing_text = "请复核0-63垄收获条件、水分和容量；条件合适时完成收获、烘干到13.0%并入库。"
+
+        with EventRegisterer.capture_mode():
+            briefing = aui.send_message_to_agent(content=briefing_text).with_id(
+                "briefing"
+            ).depends_on(None, delay_seconds=5)
+            o_weather = weather.get_current_weather().oracle().with_id(
+                "o_confirm_harvest_weather"
+            ).depends_on(briefing, delay_seconds=1)
+            o_soil = sensor.read_soil_sensors().oracle().with_id(
+                "o_confirm_harvest_soil"
+            ).depends_on(o_weather, delay_seconds=1)
+            o_state = farm_world.get_ridge_range_state(0, 63).oracle().with_id(
+                "o_confirm_whole_field_harvestability"
+            ).depends_on(o_soil, delay_seconds=1)
+            o_capacity = farm_world.get_inventory().oracle().with_id(
+                "o_confirm_storage_capacity"
+            ).depends_on(o_state, delay_seconds=1)
+            o_harvest_done = harvest_range(
+                tractor,
+                farm_world,
+                o_capacity,
+                start_ridge=0,
+                end_ridge=63,
+                id_prefix="o_whole_field",
+                dry_after_harvest=True,
+            )
+            o_recheck = farm_world.get_inventory().oracle().with_id(
+                "o_recheck_stored_grain"
+            ).depends_on(o_harvest_done, delay_seconds=2)
+            o_report = aui.send_message_to_user(
+                content="已完成全田收获、卸粮、烘干至13.0%和入库复查。"
+            ).oracle().with_id("o_report").depends_on(o_recheck, delay_seconds=2)
+
+        self.events = [
+            briefing,
+            o_weather,
+            o_soil,
+            o_state,
+            o_capacity,
+            o_harvest_done,
+            o_recheck,
+            o_report,
+        ]
+
+    def validate(self, env) -> ScenarioValidationResult:
+        return validate_native_workflow(
+            self, env, "fertilizer quota harvest-store ready L1 split"
+        )
