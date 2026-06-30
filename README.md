@@ -2,18 +2,19 @@
 
 [中文说明](README.zh-CN.md)
 
-FAIRY is an independent Python runtime for farm-agent simulation, scenario
-execution, oracle replay, and evaluation. It packages the FARM business logic
-that was previously embedded in ARE into a standalone `fairy` package with
-lightweight FarmAgent-style controllers and OpenAI-compatible function calling.
+FAIRY is a simulation and evaluation platform for agricultural-agent
+experiments. It provides executable farm scenarios, replayable tool-call
+traces, season-scale crop physics, oracle baselines, and batch evaluation
+workflows for research runs.
 
-FAIRY is designed for reproducible agricultural-agent experiments: the same
-scenario can be initialized, converted into an oracle workflow, replayed against
-fresh farm state, and evaluated from the resulting workflow and physics state.
+FAIRY is designed for reproducible experiments: the same scenario can be
+initialized, run with a real agent, paired with an oracle baseline, replayed
+against fresh farm state, and evaluated from workflow, physics, and yield
+outcomes.
 
 ## Highlights
 
-- Standalone `fairy` Python package, decoupled from ARE runtime imports.
+- Standalone `fairy` Python package and command-line runner.
 - Farm-world apps for weather, sensors, drones, robots, tractors, field
   operations, inventory, time control, and user messages.
 - Physics engines for soil water, weather, phenology, canopy and biomass,

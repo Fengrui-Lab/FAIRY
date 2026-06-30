@@ -2,22 +2,22 @@
 
 [English README](README.md)
 
-FAIRY 是一个独立的农场智能体仿真运行时，用于 FARM 场景执行、oracle
-工作流生成、回放和评估。它把原先嵌在 ARE 里的 FARM 业务逻辑迁移成独立的
-`fairy` Python 包，并保留 FarmAgent 风格的轻量控制器和 OpenAI-compatible
-function calling 工具调用路径。
+FAIRY 是面向农场智能体实验的仿真与评估平台。它提供可执行的农场场景、
+可回放的工具调用轨迹、季节级作物物理过程、oracle 基线和面向论文实验的
+批量评估工作流。
 
-FAIRY 面向可复现实验：同一个场景可以初始化、生成 oracle workflow、在干净
-场景状态上回放，再基于 workflow 和物理状态输出评估报告。
+FAIRY 面向可复现实验：同一个场景可以初始化、运行真实 agent、生成 oracle
+baseline、在干净场景状态上回放，再基于 workflow、物理状态和产量结果输出
+评估报告。
 
 ## 核心能力
 
-- 独立 `fairy` Python 包，不再依赖 ARE runtime imports。
+- 独立 `fairy` Python 包和命令行运行入口。
 - Farm-world 应用：天气、传感器、无人机、机器人、拖拉机、田间作业、库存、
   时间控制和用户消息。
 - FARM 物理引擎：土壤水分、天气、物候、冠层和生物量、管理措施效应、生物
   压力、观测模型和 recovered yield。
-- FarmAgent baseline 场景、ARE action-tick 物理场景和 L3 full-season 场景。
+- FarmAgent 风格 baseline 场景、action-tick 物理场景和 L3 full-season 场景。
 - Oracle workflow 生成，保留稳定 JSON 结构：
   `name`、`content`、`op_type`、`tool_name`、`tool_args`、`depends_on`、`time`。
 - 在全新场景状态上回放 workflow。
@@ -37,7 +37,7 @@ fairy/
   physics/       FARM 物理引擎和 profiles
   scenarios/     Scenario 基类、registry、FARM 场景集
 scripts/         CLI 入口
-tests/           迁移、oracle、回放和控制器 smoke tests
+tests/           oracle、回放、agent 和控制器 smoke tests
 docs/ai/         维护者笔记：执行路径和测试命令
 ```
 
@@ -59,7 +59,7 @@ PYTHONPATH=. /Users/quao/Desktop/Second-year/CWSN/FarmARE_physics/.venv312/bin/p
 
 ## 快速开始
 
-列出已迁移场景：
+列出可用场景：
 
 ```bash
 fairy-run --list
@@ -125,7 +125,7 @@ FAIRY 使用统一场景入口：
 scenario.setup()
 ```
 
-迁移代码仍可使用兼容入口：
+已有场景也可使用兼容入口：
 
 ```python
 scenario.initiate_scenario()
@@ -160,7 +160,7 @@ AppName__method_name
 
 ## 场景
 
-FAIRY 包含三类已迁移 FARM 场景：
+FAIRY 包含三类 FARM 场景：
 
 - Baseline farm-world 场景，例如整地、播种、灌溉、病虫害响应、无人机巡田和
   收获。
@@ -182,7 +182,7 @@ scenario_tangyan5_base_full_season
 
 ## 物理与产量恢复
 
-FAIRY 保留了迁移 FARM 场景使用的物理模型。Full-season 链路包括：
+FAIRY 的 full-season 链路包括：
 
 - 每日土壤和天气更新，
 - 物候和成熟期，
@@ -284,7 +284,7 @@ client 和场景 apps 构造 controller agent。
 
 ## 测试
 
-运行迁移 smoke suite：
+运行 smoke suite：
 
 ```bash
 PYTHONPATH=. python -m pytest tests/test_fairy_migration_smoke.py -q
