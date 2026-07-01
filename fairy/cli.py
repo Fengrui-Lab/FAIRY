@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import time
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,62 @@ from fairy.controllers.app_agent import apply_a2a_to_apps, collect_a2a_traces
 from fairy.controllers.run_artifacts import build_run_report, metric_totals, write_json, write_jsonl
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow
+
+
+_LEGACY_ARTIFACT_SUFFIXES = (
+    ".events.jsonl",
+    ".messages.json",
+    ".runtime_metrics.json",
+    ".evaluation.json",
+    ".run_summary.json",
+    ".run_log.jsonl",
+    ".a2a_traces.json",
+)
+
+
+def _cleanup_legacy_artifacts(output_dir: Path, scenario_id: str) -> None:
+    for suffix in _LEGACY_ARTIFACT_SUFFIXES:
+        path = output_dir / f"{scenario_id}{suffix}"
+        if path.exists():
+            path.unlink()
+
+
+def _cleanup_repo_side_exports() -> None:
+    for dirname in ("fos_exports", "workflow_exports"):
+        path = Path.cwd() / dirname
+        if path.exists():
+            shutil.rmtree(path)
+
+
+def _runtime_log_rows(runtime_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for i, event in enumerate(runtime_events):
+        row = dict(event)
+        record_type = row.pop("event_type", None)
+        row.pop("event_index", None)
+        rows.append(
+            {
+                "record_index": i,
+                "record_type": record_type,
+                **row,
+            }
+        )
+    return rows
+
+
+def _tool_replay_log_rows(run_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for i, entry in enumerate(run_log):
+        row = dict(entry)
+        row.pop("index", None)
+        rows.append(
+            {
+                "record_index": i,
+                "record_type": "tool_replay",
+                **row,
+            }
+        )
+    return rows
 
 
 def _json_object_arg(raw: str | None, name: str) -> dict[str, Any]:
@@ -92,6 +149,7 @@ def main() -> None:
     if args.build_oracle or args.replay or args.evaluate:
         run_wall_start = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
+        _cleanup_legacy_artifacts(output_dir, args.scenario)
         source_workflow: Workflow | None = None
         active_engine: Engine | None = None
         active_workflow: Workflow | None = None
@@ -121,39 +179,16 @@ def main() -> None:
         if args.evaluate:
             assert active_engine is not None
             report = active_engine.evaluation_report(active_workflow)
-            evaluation_path = output_dir / f"{args.scenario}.evaluation.json"
-            write_json(evaluation_path, report)
-            artifacts["evaluation"] = str(evaluation_path)
-            print(f"evaluation={evaluation_path}")
             print(json.dumps(report, ensure_ascii=False, indent=2))
 
         log_engine = active_engine if active_engine is not None else build_engine
-        run_log_path = output_dir / f"{args.scenario}.run_log.jsonl"
-        write_jsonl(run_log_path, log_engine.run_log)
-        artifacts["run_log"] = str(run_log_path)
-        events_path = output_dir / f"{args.scenario}.events.jsonl"
+        runtime_log_path = output_dir / f"{args.scenario}.runtime_log.jsonl"
         write_jsonl(
-            events_path,
-            [
-                {"event_type": "tool_replay", **entry}
-                for entry in log_engine.run_log
-            ],
+            runtime_log_path,
+            _tool_replay_log_rows(log_engine.run_log),
         )
-        artifacts["events"] = str(events_path)
+        artifacts["runtime_log"] = str(runtime_log_path)
 
-        run_summary = {
-            "scenario_id": args.scenario,
-            "wall_time_seconds": round(time.perf_counter() - run_wall_start, 6),
-            "oracle_workflow_steps": len(source_workflow) if source_workflow is not None else 0,
-            "replay_workflow_steps": len(active_workflow) if active_workflow is not None else 0,
-            "run_log_entries": len(log_engine.run_log),
-            "token_usage": log_engine.token_usage,
-            "artifacts": artifacts,
-            "evaluation": report,
-            "outcome": log_engine.outcome_summary(),
-        }
-        run_summary_path = output_dir / f"{args.scenario}.run_summary.json"
-        artifacts["run_summary"] = str(run_summary_path)
         report_path = output_dir / f"{args.scenario}.run_report.json"
         artifacts["run_report"] = str(report_path)
         run_report = build_run_report(
@@ -174,18 +209,17 @@ def main() -> None:
             evaluation=report,
             outcome=log_engine.outcome_summary(),
         )
-        write_json(run_summary_path, run_summary)
         write_json(report_path, run_report)
-        print(f"run_log={run_log_path}")
-        print(f"events={events_path}")
+        _cleanup_repo_side_exports()
+        print(f"runtime_log={runtime_log_path}")
         print(f"run_report={report_path}")
-        print(f"run_summary={run_summary_path}")
         return
 
     scenario = scenario_class(**scenario_kwargs)
     if args.agent:
         run_wall_start = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
+        _cleanup_legacy_artifacts(output_dir, args.scenario)
         llm = BaseLLM.llm_builder(
             {
                 "provider": args.provider,
@@ -266,17 +300,9 @@ def main() -> None:
         workflow.save_workflow(str(workflow_path))
         artifacts["agent_workflow"] = str(workflow_path)
 
-        messages_path = output_dir / f"{args.scenario}.messages.json"
-        write_json(messages_path, agent.messages.messages)
-        artifacts["messages"] = str(messages_path)
-
-        metrics_path = output_dir / f"{args.scenario}.runtime_metrics.json"
-        write_json(metrics_path, runtime_metrics)
-        artifacts["runtime_metrics"] = str(metrics_path)
-
-        events_path = output_dir / f"{args.scenario}.events.jsonl"
-        write_jsonl(events_path, agent.runtime_events)
-        artifacts["events"] = str(events_path)
+        runtime_log_path = output_dir / f"{args.scenario}.runtime_log.jsonl"
+        write_jsonl(runtime_log_path, _runtime_log_rows(agent.runtime_events))
+        artifacts["runtime_log"] = str(runtime_log_path)
 
         if a2a_metadata.get("enabled"):
             a2a_traces = collect_a2a_traces(list(scenario.apps or []))
@@ -296,17 +322,9 @@ def main() -> None:
                 ),
                 "expert_metrics": metric_totals(a2a_trace_metrics),
             }
-            a2a_traces_path = output_dir / f"{args.scenario}.a2a_traces.json"
-            write_json(a2a_traces_path, a2a_traces)
-            artifacts["a2a_traces"] = str(a2a_traces_path)
+            a2a_metadata["expert_traces"] = a2a_traces
 
         evaluation = engine.evaluation_report(workflow)
-        evaluation_path = output_dir / f"{args.scenario}.evaluation.json"
-        write_json(evaluation_path, evaluation)
-        artifacts["evaluation"] = str(evaluation_path)
-
-        run_summary_path = output_dir / f"{args.scenario}.run_summary.json"
-        artifacts["run_summary"] = str(run_summary_path)
         report_path = output_dir / f"{args.scenario}.run_report.json"
         artifacts["run_report"] = str(report_path)
         run_report = build_run_report(
@@ -330,33 +348,11 @@ def main() -> None:
             controller_telemetry=controller_telemetry,
             a2a=a2a_metadata,
         )
-        run_summary = {
-            "scenario_id": args.scenario,
-            "controller_id": args.controller,
-            "provider": args.provider,
-            "model": args.model,
-            "temperature": args.temperature,
-            "max_tool_calls": args.max_tool_calls,
-            "timeout_seconds": args.timeout_seconds,
-            "stopped_reason": stopped_reason,
-            "final_message": final_message,
-            "tool_call_count": agent.tool_call_count,
-            "workflow_steps": len(workflow),
-            "wall_time_seconds": wall_time_seconds,
-            "token_usage": run_report["metrics"]["token_usage"],
-            "controller_telemetry": controller_telemetry,
-            "a2a": a2a_metadata,
-            "artifacts": artifacts,
-            "evaluation": evaluation,
-            "outcome": engine.outcome_summary(),
-            "error": error,
-        }
-        write_json(run_summary_path, run_summary)
         write_json(report_path, run_report)
+        _cleanup_repo_side_exports()
         print(f"agent_workflow={workflow_path}")
-        print(f"events={events_path}")
+        print(f"runtime_log={runtime_log_path}")
         print(f"run_report={report_path}")
-        print(f"run_summary={run_summary_path}")
         if error is not None:
             raise RuntimeError(f"Agent run failed: {error['type']}: {error['message']}")
         return

@@ -3,7 +3,7 @@
 - Migrated FARM business into a standalone `fairy` package with FarmAgent-style controller runtime and local compatibility layers for ARE tool/event decorators.
 - Added FAIRY controller family layer for ReAct/ReWOO-style FARM agents and research strategy profiles.
 - Added productized run observability: `run_report.json` as the primary
-  human-readable run entry point, `events.jsonl` as the runtime event stream,
+  human-readable run entry point, `runtime_log.jsonl` as the runtime log,
   structured agent LLM/tool/error/limit events, CLI real-agent execution, and
   `scripts/summarize_runs.py` for batch run tables.
 - Migrated oracle baseline and FOS rebatch tooling into FAIRY:
@@ -40,7 +40,7 @@
   wrappers exposing `<AppName>Expert__expert_agent`, CLI and validation-runner
   `--a2a-*` plumbing, `run_report.a2a` metadata, and focused smoke tests.
 - Added A2A expert observability and limit semantics during the 2026-07-01
-  controller/A2A audit: `<scenario>.a2a_traces.json`,
+  controller/A2A audit: `run_report.a2a`, `runtime_log.jsonl`,
   `run_report.a2a.expert_metrics`, expert `max_iterations` wired to
   `max_tool_calls`, and main-agent limit stops recorded as
   `agent_run_end status=stopped` instead of event-level errors.

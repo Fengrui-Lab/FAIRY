@@ -37,19 +37,20 @@
   diagnostics can live under
   `validation_runs/<phase>/oracle_replay/<scenario_id>/`.
 - Every productized run cell should expose two human entry points:
-  `*.run_report.json` and `*.events.jsonl`.
+  `*.run_report.json` and `*.runtime_log.jsonl`.
 - `run_report.json` is the file to open first. It contains run type, scenario,
   controller/model, status, stop reason, limits, wall time, LLM/tool metrics,
   token totals, evaluation, outcome, error, artifact paths, and an
   `artifact_guide` explaining the remaining files.
-- `events.jsonl` is the runtime log. Agent runs write `agent_run_start/end`,
-  `llm_call_start/end/error`, `tool_call_start/end/error`,
-  `tool_args_parse_error`, and `agent_limit_exceeded`. Oracle replay writes
-  `tool_replay` rows derived from the replay tool log.
+- `runtime_log.jsonl` is the runtime log. Agent runs write records such as
+  `agent_run_start/end`, `llm_call_start/end/error`,
+  `tool_call_start/end/error`, `tool_args_parse_error`, and
+  `agent_limit_exceeded`. Oracle replay writes `tool_replay` rows derived from
+  the replay tool log.
 - `agent_workflow.json` remains the replay/audit trace with FAIRY workflow
-  shape. `messages.json` is raw LLM conversation state. `runtime_metrics.json`
-  is per-call token/time detail. `evaluation.json` is validation and farm
-  outcome. `run_summary.json` is legacy machine summary for old scripts.
+  shape. Prompt/messages, per-call token/time detail, tool results, errors,
+  and limits are in `runtime_log.jsonl`; validation and farm outcome are in
+  `run_report.json`.
 
 ## Research Controller Runtime
 

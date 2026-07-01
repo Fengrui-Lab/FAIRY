@@ -58,7 +58,7 @@ def metric_totals(metrics: list[dict[str, Any]]) -> dict[str, Any]:
 def artifact_guide(artifacts: dict[str, str]) -> dict[str, str]:
     labels = {
         "run_report": "Open this first: status, metrics, outcome, errors, and file guide.",
-        "events": "Runtime event stream: agent start/end, LLM calls, tool calls, limits, and errors.",
+        "runtime_log": "Chronological runtime log: prompts, LLM calls, tokens, tool calls, limits, and errors.",
         "agent_workflow": "Semantic replay/audit trace: ordered USER/TOOL steps with tool args and results.",
         "oracle_workflow": "Oracle workflow built from the scenario.",
         "replay_workflow": "Workflow produced by replaying an oracle or saved workflow.",

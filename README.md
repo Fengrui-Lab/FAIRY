@@ -29,10 +29,10 @@ The primary output is a run bundle. The default entry point is:
 
 | Mode | CLI flags | Input | Output | Purpose |
 |---|---|---|---|---|
-| Agent run | `--agent` | Scenario, controller, model | `run_report.json`, `messages.json`, `agent_workflow.json`, `events.jsonl` | Execute a real function-calling agent. |
+| Agent run | `--agent` | Scenario, controller, model | `run_report.json`, `runtime_log.jsonl`, `agent_workflow.json` | Execute a real function-calling agent. |
 | Oracle build | `--build-oracle` | Scenario | `oracle.json` | Export the scenario's reference workflow. |
-| Workflow replay | `--replay --workflow <file>` | Any workflow JSON | `replay.json`, `events.jsonl` | Re-execute a workflow in a fresh scenario state. |
-| Evaluation | `--replay --evaluate --workflow <file>` | Any workflow JSON | `evaluation.json` | Validate the replayed workflow and resulting farm state. |
+| Workflow replay | `--replay --workflow <file>` | Any workflow JSON | `replay.json`, `runtime_log.jsonl`, `run_report.json` | Re-execute a workflow in a fresh scenario state. |
+| Evaluation | `--replay --evaluate --workflow <file>` | Any workflow JSON | `run_report.json` | Validate the replayed workflow and resulting farm state. |
 | Batch run | `scripts/iclr_validation_runner.py` | Controller set, scenario set | `results.csv` plus per-cell run bundles | Execute a controller × scenario matrix. |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles, oracle baselines | `summary_v2.csv` | Recompute FOS, yield loss, and error columns from existing `agent_workflow.json` runs. |
 
@@ -75,11 +75,9 @@ Key fields:
 Inspect agent-run artifacts in this order:
 
 ```text
-1. <scenario>.run_report.json      # status, wall time, tokens, tool count
-2. <scenario>.messages.json        # prompt, model responses, tool calls
+1. <scenario>.run_report.json      # status, wall time, tokens, tool count, evaluation, outcome
+2. <scenario>.runtime_log.jsonl    # full prompts/messages, model calls, tool calls, errors, limits
 3. <scenario>.agent_workflow.json  # tools the agent actually executed
-4. <scenario>.events.jsonl         # API errors, JSON parse errors, timeout, limits
-5. <scenario>.evaluation.json      # validation and final farm state
 ```
 
 If `status=stopped` and `stopped_reason=max_tool_calls`, the run reached the configured `--max-tool-calls` bound. Increase that limit for longer traces.
@@ -234,9 +232,8 @@ Each cell directory layout:
   stdout.log
   stderr.log
   <scenario>.run_report.json
-  <scenario>.messages.json
   <scenario>.agent_workflow.json
-  <scenario>.events.jsonl
+  <scenario>.runtime_log.jsonl
 ```
 
 ### 5. Compute Yield Loss / FOS
@@ -287,16 +284,16 @@ Select artifacts by analysis objective:
 | Question | File |
 |---|---|
 | Did this run succeed, why did it stop, how long did it take, how many tokens? | `run_report.json` |
-| What prompt did the model see, and how did it call functions? | `messages.json` |
+| What prompt did the model see, and how did it call functions? | `runtime_log.jsonl` |
 | What tools did the agent actually execute, with which args and results? | `agent_workflow.json` |
-| Which step failed, had bad JSON args, API error, timeout, or limit stop? | `events.jsonl` |
-| What happened inside A2A experts? | `a2a_traces.json` |
+| Which step failed, had bad JSON args, API error, timeout, or limit stop? | `runtime_log.jsonl` |
+| What happened inside A2A experts? | `run_report.a2a` and `runtime_log.jsonl` |
 | What is the oracle answer workflow? | `oracle.json` |
 | What workflow was replayed in a fresh scenario? | `replay.json` |
-| What was the final validation/farm result? | `evaluation.json` |
+| What was the final validation/farm result? | `run_report.json` |
 | Where is the batch summary table? | `results.csv` or `summary_v2.csv` |
 
-`run_log.jsonl` and `run_summary.json` are primarily compatibility artifacts for older scripts. Human inspection usually starts from `run_report.json`.
+Human inspection starts from `run_report.json`. Per-turn prompt/tool/error details are in `runtime_log.jsonl`.
 
 ## Architecture Overview
 
@@ -485,7 +482,7 @@ Parameters:
 | `--build-oracle` | flag | false | Build and save the scenario's oracle workflow. |
 | `--run-oracle-tools` | flag | false | Execute tools while building the oracle. Usually off for workflow baselines; turn on when you also need live physics state during oracle construction. |
 | `--replay` | flag | false | Replay `--workflow` against a fresh scenario instance. |
-| `--evaluate` | flag | false | Evaluate the replayed workflow and write `evaluation.json`. |
+| `--evaluate` | flag | false | Evaluate the replayed workflow and store the result in `run_report.evaluation`. |
 | `--workflow` | path | `<output-dir>/<scenario>.oracle.json` | Output path for `--build-oracle`; input path for `--replay` and `--evaluate`. |
 | `--output-dir` | path | `runs` | Output directory for the run bundle. |
 | `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Detail/context such as `'{\"detailed_briefing\":\"kwoo\"}'` belongs here. |
@@ -624,10 +621,10 @@ When A2A is enabled, the main agent no longer sees all direct app tools. Some ap
 <AppName>Expert__expert_agent(task)
 ```
 
-The expert agent receives the task and can only call the wrapped app's tools plus `FinalAnswerTool__final_answer`. Expert messages, events, workflow, token usage, and runtime metrics are written to:
+The expert agent receives the task and can only call the wrapped app's tools plus `FinalAnswerTool__final_answer`. Expert summary metrics and traces are stored inside:
 
 ```text
-<scenario>.a2a_traces.json
+<scenario>.run_report.json
 ```
 
 Command:
@@ -677,7 +674,7 @@ operations_expert_app_agent
 | `FarmWorldApp`, `DroneApp`, `RobotApp` | `operations_expert_app_agent` |
 | `SystemApp`, `AgentUserInterface` | never wrapped |
 
-Important: if the main agent delegates a task that is too broad, one expert can loop until its own `max_tool_calls` limit. When A2A is slow or fails, inspect `run_report.a2a.expert_metrics` and `a2a_traces.json`.
+Important: if the main agent delegates a task that is too broad, one expert can loop until its own `max_tool_calls` limit. When A2A is slow or fails, inspect `run_report.a2a.expert_metrics` and `runtime_log.jsonl`.
 
 ## Output Files
 
@@ -695,13 +692,13 @@ Question 1: did the run succeed?
 
 Open this first. It contains `status`, `stop_reason`, `limits`, `wall_time_seconds`, tokens, LLM/tool call counts, controller telemetry, A2A summary, evaluation, outcome, and error. This is the human entry point.
 
-Question 2: was the final prompt correct?
+Question 2: was the prompt correct, and where are token/error logs?
 
 ```text
-<scenario>.messages.json
+<scenario>.runtime_log.jsonl
 ```
 
-This is the raw conversation: system prompt, user prompt, assistant tool calls, and tool responses. Use it to inspect the actual DeepSeek/Qwen/OpenAI-compatible function-call input.
+This is the chronological runtime log. For each `record_type=llm_call_start`, `messages` contains the exact messages sent to the model and `tool_names` lists the available function tools. The same file also records LLM token usage, tool arguments, tool results, API errors, JSON parse errors, timeout, and step-limit stops.
 
 Question 3: which tools did the model actually call?
 
@@ -711,37 +708,9 @@ Question 3: which tools did the model actually call?
 
 This is the semantic workflow: USER/TOOL nodes, tool names, arguments, return values, dependencies, and environment times. Use it for path comparison, manual audit, and later replay.
 
-Question 4: where are token usage and timing?
+Question 4: where is the final validation/farm result?
 
-```text
-<scenario>.runtime_metrics.json
-```
-
-This records per-LLM and per-tool timing plus token usage. `run_report.json` summarizes these numbers; this file has the per-call detail.
-
-Question 5: where do timeout, step-limit, API, and JSON-parse failures appear?
-
-```text
-<scenario>.events.jsonl
-```
-
-This is the runtime event stream, one JSON object per line: agent start/end, LLM start/end, tool start/end, limits, and errors. Read it in timestamp order when debugging failures.
-
-When A2A is enabled, one more file is written:
-
-```text
-<scenario>.a2a_traces.json
-```
-
-It contains each app expert's messages, events, workflow, and runtime metrics. Main-agent details are in the files above; expert-agent details are here.
-
-Compatibility file:
-
-```text
-<scenario>.run_summary.json
-```
-
-This is a legacy machine summary. For human debugging, prefer `run_report.json`.
+Open `run_report.json`; its `evaluation` and `outcome` fields contain the validation result and farm state summary.
 
 ### Oracle / Replay / Evaluate Files By Step
 
@@ -759,34 +728,28 @@ Step 2: `--replay`
 
 ```text
 <scenario>.replay.json
-<scenario>.events.jsonl
-<scenario>.run_log.jsonl
+<scenario>.runtime_log.jsonl
 ```
 
 `replay.json` is the workflow produced after replaying the input workflow in a fresh scenario state. It proves the workflow can actually drive FARM apps.
 
-`events.jsonl` is the replay event stream, one tool event per line. Use it to debug which replay step ran, what it returned, and whether it failed.
-
-`run_log.jsonl` is the older tool replay log for compatibility scripts. Humans usually do not need to open it first.
+`runtime_log.jsonl` is the replay runtime log, one tool replay record per line. Use it to debug which replay step ran, what it returned, and whether it failed.
 
 Step 3: `--evaluate`
 
 ```text
-<scenario>.evaluation.json
+<scenario>.run_report.json
 ```
 
-This is the validation result after replay. Use it to check whether scenario validation passed and whether inventory/yield/physics state looks correct.
+The validation result is stored in `run_report.evaluation`. Use it to check whether scenario validation passed and whether inventory/yield/physics state looks correct.
 
 Final overview:
 
 ```text
 <scenario>.run_report.json
-<scenario>.run_summary.json
 ```
 
 `run_report.json` is the entry point. Open it first; it links all files above and summarizes status, metrics, outcome, and errors.
-
-`run_summary.json` is a compatibility summary for older scripts. Humans usually do not need it first.
 
 ### `run_report.json` Fields
 
@@ -1165,20 +1128,20 @@ Start with `run_report.json`:
 - `status=stopped`: hit a configured limit such as `max_tool_calls` or `timeout`. This is not a fatal error.
 - `status=failed`: fatal error. Read `error.type` and `error.message`.
 
-Then inspect `events.jsonl`:
+Then inspect `runtime_log.jsonl`:
 
-- `llm_call_start` / `llm_call_end`: LLM calls.
-- `tool_call_start` / `tool_call_end`: tool calls.
-- `tool_args_parse_error`: model returned invalid JSON function arguments.
-- `tool_call_error`: tool raised an exception or an A2A expert failed internally.
-- `agent_limit_exceeded`: main agent reached max tool calls or timeout.
-- `agent_run_end status=stopped`: normal limit stop.
-- `agent_run_error`: real exception.
+- `record_type=llm_call_start` / `llm_call_end`: LLM calls. `llm_call_start.messages` is the exact prompt/messages sent to the model.
+- `record_type=tool_call_start` / `tool_call_end`: tool calls.
+- `record_type=tool_args_parse_error`: model returned invalid JSON function arguments.
+- `record_type=tool_call_error`: tool raised an exception or an A2A expert failed internally.
+- `record_type=agent_limit_exceeded`: main agent reached max tool calls or timeout.
+- `record_type=agent_run_end` with `status=stopped`: normal limit stop.
+- `record_type=agent_run_error`: real exception.
 
 API errors are usually visible in:
 
 ```text
-<run_dir>/<scenario>.events.jsonl
+<run_dir>/<scenario>.runtime_log.jsonl
 <run_dir>/stderr.log              # iclr_validation_runner.py batch runs
 <run_dir>/command_stderr.log      # hand-written subprocess smoke runs
 <run_dir>/<scenario>.run_report.json error field
@@ -1187,8 +1150,7 @@ API errors are usually visible in:
 Prompt inspection:
 
 ```text
-<scenario>.messages.json          # main-agent system/user/tool conversation
-<scenario>.a2a_traces.json        # A2A expert system/user/tool conversation
+<scenario>.runtime_log.jsonl      # record_type=llm_call_start has full messages
 ```
 
 Token and runtime:
@@ -1198,7 +1160,7 @@ run_report.metrics.token_usage
 run_report.metrics.llm_wall_time_seconds
 run_report.metrics.tool_wall_time_seconds
 run_report.a2a.expert_metrics     # expert-layer token/runtime when A2A is on
-runtime_metrics.json              # per-call details
+runtime_log.jsonl                 # per-call details
 ```
 
 ## Tests

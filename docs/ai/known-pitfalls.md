@@ -43,7 +43,8 @@
 
 - A2A app wrappers hide direct app tools from the main agent and expose
   `<AppName>Expert__expert_agent`; main-run workflows then show the delegation
-  call, while real app-tool details live in `<scenario>.a2a_traces.json`.
+  call, while real app-tool details live in `run_report.a2a` and
+  `<scenario>.runtime_log.jsonl`.
 - Always inspect `run_report.a2a.expert_metrics` when comparing A2A on/off.
   Main-agent token usage can drop while expert-agent token usage rises sharply.
 - In the 2026-07-01 controller/A2A smoke audit,

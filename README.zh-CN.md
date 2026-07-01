@@ -29,10 +29,10 @@ FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入�
 
 | 模式 | 命令参数 | 输入 | 输出 | 用途 |
 |---|---|---|---|---|
-| Agent run | `--agent` | 场景、控制器、模型 | `run_report.json`, `messages.json`, `agent_workflow.json`, `events.jsonl` | 执行真实 function-calling agent。 |
+| Agent run | `--agent` | 场景、控制器、模型 | `run_report.json`, `runtime_log.jsonl`, `agent_workflow.json` | 执行真实 function-calling agent。 |
 | Oracle build | `--build-oracle` | 场景 | `oracle.json` | 导出场景内置 reference workflow。 |
-| Workflow replay | `--replay --workflow <file>` | 任意 workflow JSON | `replay.json`, `events.jsonl` | 在全新场景状态中重放 workflow。 |
-| Evaluation | `--replay --evaluate --workflow <file>` | 任意 workflow JSON | `evaluation.json` | 对 replay 后的 workflow 和农场状态执行场景验证。 |
+| Workflow replay | `--replay --workflow <file>` | 任意 workflow JSON | `replay.json`, `runtime_log.jsonl`, `run_report.json` | 在全新场景状态中重放 workflow。 |
+| Evaluation | `--replay --evaluate --workflow <file>` | 任意 workflow JSON | `run_report.json` | 对 replay 后的 workflow 和农场状态执行场景验证。 |
 | Batch run | `scripts/iclr_validation_runner.py` | controller 集合、scenario 集合 | `results.csv` 和每个 cell 的 run bundle | 执行 controller × scenario 矩阵。 |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles、oracle baselines | `summary_v2.csv` | 从已有 `agent_workflow.json` run 重新计算 FOS、yield loss 和错误列。 |
 
@@ -75,11 +75,9 @@ validation_runs/quickstart/agent/farm_baseline_react__scenario_farm_world_field_
 Agent run 的详细产物按以下顺序检查：
 
 ```text
-1. <scenario>.run_report.json      # 总览：成功/失败、耗时、token、工具次数
-2. <scenario>.messages.json        # prompt、模型回复、tool calls
+1. <scenario>.run_report.json      # 总览：成功/失败、耗时、token、工具次数、评估、农场结果
+2. <scenario>.runtime_log.jsonl    # 完整 prompt/messages、模型调用、工具调用、错误、超限
 3. <scenario>.agent_workflow.json  # agent 实际做了哪些工具步骤
-4. <scenario>.events.jsonl         # 排查接口错误、JSON 解析错误、超时、超步数
-5. <scenario>.evaluation.json      # 场景验证和农场最终状态
 ```
 
 如果 `status=stopped` 且 `stopped_reason=max_tool_calls`，说明运行达到 `--max-tool-calls` 上限。需要更长轨迹时提高该参数。
@@ -234,9 +232,8 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
   stdout.log
   stderr.log
   <scenario>.run_report.json
-  <scenario>.messages.json
   <scenario>.agent_workflow.json
-  <scenario>.events.jsonl
+  <scenario>.runtime_log.jsonl
 ```
 
 ### 5. 计算 yield loss / FOS
@@ -287,16 +284,16 @@ validation_runs/quickstart/rebatch_fos/summary_v2.csv
 | 分析目标 | 产物 |
 |---|---|
 | 这次 run 成功了吗、为什么停、花了多久、用了多少 token？ | `run_report.json` |
-| 模型最后看到的 prompt 是什么、模型怎么 function call？ | `messages.json` |
+| 模型最后看到的 prompt 是什么、模型怎么 function call？ | `runtime_log.jsonl` |
 | agent 实际执行了哪些工具、参数和返回值是什么？ | `agent_workflow.json` |
-| 哪一步报错、JSON 参数解析失败、接口失败、超时、超步数？ | `events.jsonl` |
-| A2A 专家内部干了什么？ | `a2a_traces.json` |
+| 哪一步报错、JSON 参数解析失败、接口失败、超时、超步数？ | `runtime_log.jsonl` |
+| A2A 专家内部干了什么？ | `run_report.a2a` 和 `runtime_log.jsonl` |
 | oracle 标准答案步骤是什么？ | `oracle.json` |
 | oracle/agent workflow 在新场景里重放后是什么？ | `replay.json` |
-| 场景最终验证和农场结果是什么？ | `evaluation.json` |
+| 场景最终验证和农场结果是什么？ | `run_report.json` |
 | 一批实验的总表在哪里？ | `results.csv` 或 `summary_v2.csv` |
 
-`run_log.jsonl` 和 `run_summary.json` 主要用于旧脚本兼容。人工分析通常从 `run_report.json` 开始。
+人工分析从 `run_report.json` 开始。逐轮 prompt、tool、错误和超限细节看 `runtime_log.jsonl`。
 
 ## 架构概览
 
@@ -485,7 +482,7 @@ fairy-run \
 | `--build-oracle` | flag | false | 调用场景内置 oracle，生成 workflow JSON。 |
 | `--run-oracle-tools` | flag | false | 生成 oracle 时也实际执行工具。通常构建 workflow baseline 不需要开；需要同时推动物理状态时才开。 |
 | `--replay` | flag | false | 读取 `--workflow` 指向的 workflow，在新的场景实例上重放工具调用。 |
-| `--evaluate` | flag | false | 对 replay 后的 workflow 和 farm state 做评估，写 `evaluation.json`。 |
+| `--evaluate` | flag | false | 对 replay 后的 workflow 和 farm state 做评估，结果写入 `run_report.evaluation`。 |
 | `--workflow` | path | `<output-dir>/<scenario>.oracle.json` | `--build-oracle` 时的输出路径；`--replay/--evaluate` 时的输入路径。 |
 | `--output-dir` | path | `runs` | 本次 run bundle 的输出目录。 |
 | `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。detail/context 例如 `'{\"detailed_briefing\":\"kwoo\"}'` 放这里。 |
@@ -624,10 +621,10 @@ A2A 打开后，主 agent 不再直接看到所有 app tools。部分 app 会被
 <AppName>Expert__expert_agent(task)
 ```
 
-专家 agent 收到 task 后，只能调用被包装 app 的工具和 `FinalAnswerTool__final_answer`。专家自己的 messages、events、workflow、token/runtime 会写到：
+专家 agent 收到 task 后，只能调用被包装 app 的工具和 `FinalAnswerTool__final_answer`。专家摘要、metrics 和 trace 写在：
 
 ```text
-<scenario>.a2a_traces.json
+<scenario>.run_report.json
 ```
 
 命令：
@@ -677,7 +674,7 @@ operations_expert_app_agent
 | `FarmWorldApp`, `DroneApp`, `RobotApp` | `operations_expert_app_agent` |
 | `SystemApp`, `AgentUserInterface` | 不包装 |
 
-已知注意点：如果主 agent 把过大的任务一次性委托给单个专家，专家可能在自己的 `max_tool_calls` 内循环。遇到 A2A 慢或失败，先看 `run_report.a2a.expert_metrics` 和 `a2a_traces.json`。
+已知注意点：如果主 agent 把过大的任务一次性委托给单个专家，专家可能在自己的 `max_tool_calls` 内循环。遇到 A2A 慢或失败，先看 `run_report.a2a.expert_metrics` 和 `runtime_log.jsonl`。
 
 ## 输出文件怎么读
 
@@ -695,13 +692,13 @@ Agent run 指真正调用模型的运行：模型读 prompt，发 function call�
 
 先打开它。这里有 `status`、`stop_reason`、`limits`、`wall_time_seconds`、token、tool/LLM 次数、controller telemetry、A2A summary、evaluation、outcome 和 error。它是人看的总入口。
 
-第 2 个问题：最后给模型的 prompt 对不对？
+第 2 个问题：prompt 对不对？token、接口错误、JSON 解析错误、超时、超步数去哪看？
 
 ```text
-<scenario>.messages.json
+<scenario>.runtime_log.jsonl
 ```
 
-这里是原始对话：system prompt、user prompt、assistant tool calls、tool responses。检查 deepseek/qwen/openai function call 输入是否符合预期，先看这个文件。
+这是按时间顺序写的运行日志。每条 `record_type=llm_call_start` 里，`messages` 就是实际发给模型的完整 messages，`tool_names` 是这一轮可用的 function tools。模型 token、工具参数、工具返回、API 报错、JSON 解析失败、超时、超步数也都在这个文件里。
 
 第 3 个问题：模型实际调用了哪些工具？
 
@@ -711,37 +708,9 @@ Agent run 指真正调用模型的运行：模型读 prompt，发 function call�
 
 这里是语义 workflow：USER/TOOL 节点、工具名、参数、返回值、依赖和环境时间。做路径比较、人工审计、后续 replay，主要看它。
 
-第 4 个问题：token、接口耗时、工具耗时在哪？
+第 4 个问题：最后验证和农场结果是什么？
 
-```text
-<scenario>.runtime_metrics.json
-```
-
-这里记录每次 LLM/tool 调用的耗时和 token usage。`run_report.json` 会汇总这些数字，逐轮细节在这个文件。
-
-第 5 个问题：超时、超步数、接口报错、JSON 解析失败去哪看？
-
-```text
-<scenario>.events.jsonl
-```
-
-这是运行时事件流，一行一个 JSON：agent start/end、LLM start/end、tool start/end、limit、error。排查失败时按时间顺序读它。
-
-A2A 打开时还会多一个：
-
-```text
-<scenario>.a2a_traces.json
-```
-
-这里放每个 app expert 的 messages、events、workflow 和 runtime metrics。也就是说主 agent 的细节看上面几个文件，专家 agent 的细节看这里。
-
-兼容文件：
-
-```text
-<scenario>.run_summary.json
-```
-
-它是旧脚本用的机器摘要。日常人工排查优先看 `run_report.json`。
+看 `run_report.json` 里的 `evaluation` 和 `outcome` 字段。
 
 ### Oracle / Replay / Evaluate 文件按步骤看
 
@@ -759,34 +728,28 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 
 ```text
 <scenario>.replay.json
-<scenario>.events.jsonl
-<scenario>.run_log.jsonl
+<scenario>.runtime_log.jsonl
 ```
 
 `replay.json` 是把 workflow 放进一个全新场景状态后重新执行出来的步骤表。它证明这套 workflow 不是只写在纸上，而是真的能驱动 FARM apps。
 
-`events.jsonl` 是 replay 的事件流，一行一个工具事件。排查 replay 哪一步执行了、返回了什么、是否出错，看它。
-
-`run_log.jsonl` 是旧工具回放日志，主要给兼容脚本用；人工一般不用先看。
+`runtime_log.jsonl` 是 replay 的运行日志，一行一个工具 replay 记录。排查 replay 哪一步执行了、返回了什么、是否出错，看它。
 
 第 3 步：`--evaluate`
 
 ```text
-<scenario>.evaluation.json
+<scenario>.run_report.json
 ```
 
-这是 replay 后的验证结果。看场景 validate 是否通过、库存/产量/物理状态是否合理。
+验证结果在 `run_report.evaluation` 里。看场景 validate 是否通过、库存/产量/物理状态是否合理。
 
 最后总览：
 
 ```text
 <scenario>.run_report.json
-<scenario>.run_summary.json
 ```
 
 `run_report.json` 是入口。先看它，它会把上面所有文件路径和评估结果汇总起来。
-
-`run_summary.json` 是旧脚本兼容摘要；人工一般不用先看。
 
 ### `run_report.json` 字段
 
@@ -1165,20 +1128,20 @@ harvested_ridges, yield_g_m2
 - `status=stopped`：达到限制，例如 `max_tool_calls` 或 `timeout`。这不是 fatal error。
 - `status=failed`：发生 fatal error，看 `error.type` 和 `error.message`。
 
-再看 `events.jsonl`：
+再看 `runtime_log.jsonl`：
 
-- `llm_call_start` / `llm_call_end`：每次 LLM 调用。
-- `tool_call_start` / `tool_call_end`：每次工具调用。
-- `tool_args_parse_error`：模型返回的 function arguments 不是合法 JSON。
-- `tool_call_error`：工具执行抛异常，或 A2A 专家内部失败。
-- `agent_limit_exceeded`：主 agent 到达 max tool calls 或 timeout。
-- `agent_run_end status=stopped`：正常限制停止。
-- `agent_run_error`：真正异常。
+- `record_type=llm_call_start` / `llm_call_end`：每次 LLM 调用。`llm_call_start.messages` 就是实际发给模型的完整 prompt/messages。
+- `record_type=tool_call_start` / `tool_call_end`：每次工具调用。
+- `record_type=tool_args_parse_error`：模型返回的 function arguments 不是合法 JSON。
+- `record_type=tool_call_error`：工具执行抛异常，或 A2A 专家内部失败。
+- `record_type=agent_limit_exceeded`：主 agent 到达 max tool calls 或 timeout。
+- `record_type=agent_run_end` 且 `status=stopped`：正常限制停止。
+- `record_type=agent_run_error`：真正异常。
 
 接口错误通常在：
 
 ```text
-<run_dir>/<scenario>.events.jsonl
+<run_dir>/<scenario>.runtime_log.jsonl
 <run_dir>/stderr.log              # iclr_validation_runner.py 批跑
 <run_dir>/command_stderr.log      # 手写 subprocess smoke
 <run_dir>/<scenario>.run_report.json error 字段
@@ -1187,8 +1150,7 @@ harvested_ridges, yield_g_m2
 Prompt 是否符合预期：
 
 ```text
-<scenario>.messages.json          # 主 agent system/user/tool conversation
-<scenario>.a2a_traces.json        # A2A 专家 system/user/tool conversation
+<scenario>.runtime_log.jsonl      # record_type=llm_call_start 里有完整 messages
 ```
 
 Token 和 runtime：
@@ -1198,7 +1160,7 @@ run_report.metrics.token_usage
 run_report.metrics.llm_wall_time_seconds
 run_report.metrics.tool_wall_time_seconds
 run_report.a2a.expert_metrics     # A2A on 时专家层 token/runtime
-runtime_metrics.json              # 每次调用细节
+runtime_log.jsonl                 # 每次调用细节
 ```
 
 ## 测试
