@@ -109,3 +109,16 @@
   farm-world state even when `FarmWorldApp` is transformed.
 - `run_report.json` includes an `a2a` section with enablement, app proportion,
   policy, fallback app-agent, model/provider/endpoint, and transformed app list.
+
+## WeatherEvent Boundary
+
+- `WeatherEvent` in `fairy.physics.weather_engine` is physics/weather-generator
+  input data, not a FAIRY framework `Event` and not an ARE event-graph node.
+- For full-season profiles, rain is injected through
+  `PhysicsProfile.weather_events` -> `WeatherGenerator.generate(..., events=...)`
+  -> `_apply_events()` -> `_build_weather_inputs()` -> `WeatherApp.set_weather()`.
+- Agent-visible weather tools expose the resulting weather state, for example
+  `rainfall_mm`, but intentionally do not expose `weather_tags` or the internal
+  `rain_event` label as workflow events.
+- The regression check is
+  `tests/test_fairy_migration_smoke.py::test_weather_event_rain_event_is_physics_input_not_framework_event`.

@@ -8,3 +8,5 @@ __pycache__/
 .DS_Store
 validation_runs/
 runs/
+fos_exports/
+workflow_exports/

@@ -4,6 +4,7 @@ import importlib
 import json
 import pkgutil
 import subprocess
+from datetime import date
 import pytest
 from pathlib import Path
 
@@ -11,6 +12,7 @@ import fairy
 from fairy.agents.agent.agent import AgentRunLimitExceeded
 from fairy.agents.llm.base_llm import BaseLLM
 from fairy.apps.farm_world import FarmWorldApp, WeatherApp
+from fairy.apps.farm_world.physics_orchestrator import _build_weather_inputs
 from fairy.apps.system import SystemApp
 from fairy.controllers.engine import Engine
 from fairy.controllers.agent_builder import (
@@ -47,7 +49,7 @@ from fairy.scenarios.farm_world_fullseason_v2.scenario_full_season_hb_base_hn84_
 from fairy.scenarios.baseline_farm_world.scenario_field_prep import (
     ScenarioFarmWorldFieldPrep,
 )
-from fairy.scenarios.registry import list_scenarios
+from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow, WorkflowStep
 
 
@@ -202,6 +204,24 @@ def test_system_advance_time_triggers_physics() -> None:
     assert result["status"] == "ok"
     assert farm_world.physics.last_physics_sim_time is not None
     assert weather.get_current_weather()["date"] == "2026-05-21"
+
+
+def test_weather_event_rain_event_is_physics_input_not_framework_event() -> None:
+    scenario_cls = get_scenario_class("scenario_full_season_hb_wetjune_short_spray_window")
+    scenario = scenario_cls()
+    scenario.setup()
+    farm_world = scenario.get_typed_app(FarmWorldApp)
+    weather = scenario.get_typed_app(WeatherApp)
+
+    inputs = _build_weather_inputs(weather, date(2026, 6, 15), farm_world.physics)
+    current_weather = weather.get_current_weather()
+
+    assert farm_world.physics.profile.name == "harbin_l3_wetjune_short_spray_window_seed_1521"
+    assert inputs["soil"].rain_mm > 80.0
+    assert current_weather["date"] == "2026-06-15"
+    assert current_weather["rainfall_mm"] == round(inputs["soil"].rain_mm, 2)
+    assert "weather_tags" not in current_weather
+    assert "rain_event" not in current_weather
 
 
 def test_end_to_end_oracle_replay_evaluate(tmp_path: Path) -> None:
@@ -679,3 +699,29 @@ def test_rebatch_uses_run_report_token_metrics() -> None:
         "total_tokens_per_scenario": "120.00",
         "avg_runtime_s_per_agent_call": "5.00",
     }
+
+
+def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
+    from fairy.controllers.run_artifacts import build_run_report
+
+    report = build_run_report(
+        scenario_id="scenario_demo",
+        controller_id="farm_baseline_react",
+        provider="deepseek",
+        model="deepseek-chat",
+        temperature=0.1,
+        run_type="agent",
+        stopped_reason="max_tool_calls",
+        wall_time_seconds=12.3456789,
+        max_tool_calls=3,
+        timeout_seconds=30,
+        workflow_steps=4,
+        tool_call_count=3,
+        runtime_metrics=[],
+        artifacts={},
+    )
+
+    assert report["status"] == "stopped"
+    assert report["stopped_reason"] == "max_tool_calls"
+    assert report["stop_reason"] == "max_tool_calls"
+    assert report["wall_time_seconds"] == 12.345679

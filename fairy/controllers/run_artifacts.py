@@ -110,6 +110,8 @@ def build_run_report(
         "temperature": temperature,
         "status": status,
         "stopped_reason": stopped_reason,
+        "stop_reason": stopped_reason,
+        "wall_time_seconds": round(wall_time_seconds, 6),
         "limits": {
             "max_tool_calls": max_tool_calls,
             "timeout_seconds": timeout_seconds,
