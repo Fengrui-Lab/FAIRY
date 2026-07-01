@@ -36,6 +36,54 @@ FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入�
 | Batch run | `scripts/iclr_validation_runner.py` | controller 集合、scenario 集合 | `results.csv` 和每个 cell 的 run bundle | 执行 controller × scenario 矩阵。 |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles、oracle baselines | `summary_v2.csv` | 从已有 `agent_workflow.json` run 重新计算 FOS、yield loss 和错误列。 |
 
+## 安装和环境准备
+
+FAIRY 是一个 Python 包。新 clone 下来的仓库需要先准备 Python 环境和依赖，不能假设裸环境直接运行。
+
+要求：
+
+- Python 3.10 或更高版本。
+- 推荐使用 `uv` 管理本地环境。
+- 只有真实 `--agent` run 需要模型 API key。oracle/replay/evaluate 不调用 LLM。
+
+使用 `uv` 安装：
+
+```bash
+cd /path/to/FAIRY
+uv sync
+```
+
+如果没有安装 `uv`：
+
+```bash
+python -m pip install uv
+uv sync
+```
+
+不用 `uv` 的安装方式：
+
+```bash
+cd /path/to/FAIRY
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+配置真实 agent 所需模型 key：
+
+```bash
+export DEEPSEEK_API_KEY=<your_key>
+# 或
+export OPENAI_API_KEY=<your_key>
+```
+
+检查环境是否可用：
+
+```bash
+PYTHONPATH=. uv run python -m fairy.cli --list-controllers
+PYTHONPATH=. uv run pytest -q tests/test_fairy_migration_smoke.py
+```
+
 ## 快速开始
 
 ### 1. 执行真实 agent
@@ -43,7 +91,7 @@ FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入�
 该命令运行一个小型 FARM baseline 场景，使用 DeepSeek function calling，并把所有产物写入一个独立 run 目录。
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_farm_world_field_prep \
   --agent \
   --controller farm_baseline_react \
@@ -87,7 +135,7 @@ Agent run 的详细产物按以下顺序检查：
 该命令不调用 LLM。它导出 reference workflow，将该 workflow 在全新场景中重放，并执行场景验证。
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_farm_world_field_prep_physics_action_tick \
   --build-oracle --replay --evaluate \
   --workflow validation_runs/quickstart/oracle/scenario_farm_world_field_prep_physics_action_tick.json \
@@ -106,14 +154,14 @@ validation_runs/quickstart/oracle_replay/scenario_farm_world_field_prep_physics_
 - `evaluation.validation.success=true`：场景验证通过。
 - `artifacts.oracle_workflow`：标准答案 workflow 在哪里。
 - `artifacts.replay_workflow`：重放后的 workflow 在哪里。
-- `artifacts.evaluation`：评估明细在哪里。
+- `evaluation`：验证明细和农场结果摘要。
 
 ### 3. 执行 full-season 场景并切换 context 模式
 
 full-season 的 detailed context 通过 `--scenario-kwargs` 传入场景构造器。
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_full_season_hb_base_hn84_std_normal \
   --agent \
   --controller farm_baseline_react \
@@ -151,7 +199,7 @@ PYTHONPATH=. python -m fairy.cli \
 批量实验使用 validation runner。每个 controller/scenario/repeat cell 会生成一个独立 run bundle。
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase smoke \
   --output-root validation_runs/quickstart/batch/phase5_paper_matrix \
   --families farm_baseline_react,farm_rewoo_modular \
@@ -243,7 +291,7 @@ yield loss 需要 oracle yield baseline。当你要算 `crop_loss_pct`、`yield_
 第一步，生成 oracle baselines：
 
 ```bash
-PYTHONPATH=. python scripts/build_oracle_baselines.py \
+PYTHONPATH=. uv run python scripts/build_oracle_baselines.py \
   --scenarios formal90 \
   --output-dir validation_runs/quickstart/oracle_baselines_formal90 \
   --max-days 180 \
@@ -254,7 +302,7 @@ PYTHONPATH=. python scripts/build_oracle_baselines.py \
 第二步，对已经跑完的 agent traces 重放并重算 FOS：
 
 ```bash
-PYTHONPATH=. python scripts/rebatch_fos_from_traces.py \
+PYTHONPATH=. uv run python scripts/rebatch_fos_from_traces.py \
   --root validation_runs/quickstart/batch/phase5_paper_matrix \
   --out-root validation_runs/quickstart/rebatch_fos \
   --oracle-baselines validation_runs/quickstart/oracle_baselines_formal90 \
@@ -355,7 +403,7 @@ pip install -e .
 如果不想安装 console script，也可以一直用：
 
 ```bash
-PYTHONPATH=. python -m fairy.cli --list
+PYTHONPATH=. uv run python -m fairy.cli --list
 ```
 
 安装后可用：
@@ -427,9 +475,9 @@ validation_runs/example/oracle_replay/scenario_farm_world_field_prep_physics_act
 等价入口：
 
 ```bash
-fairy-run ...
-PYTHONPATH=. python -m fairy.cli ...
-PYTHONPATH=. python scripts/run_scenario.py ...   # 兼容入口，内部调用 fairy.cli
+uv run fairy-run ...
+PYTHONPATH=. uv run python -m fairy.cli ...
+PYTHONPATH=. uv run python scripts/run_scenario.py ...   # 兼容入口，内部调用 fairy.cli
 ```
 
 ### 1. 查看可用对象
@@ -872,7 +920,7 @@ fairy-run \
 等价批跑写法：
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase l3_context \
   --output-root validation_runs/l3_context/phase5_paper_matrix \
   --families farm_baseline_react \
@@ -929,7 +977,7 @@ crop_loss_pct = 1 - agent_biological_kg / oracle_biological_kg
 命令：
 
 ```bash
-PYTHONPATH=. python scripts/build_oracle_baselines.py \
+PYTHONPATH=. uv run python scripts/build_oracle_baselines.py \
   --scenarios formal90 \
   --output-dir validation_runs/oracle_baselines_formal90 \
   --max-days 180 \
@@ -969,7 +1017,7 @@ PYTHONPATH=. python scripts/build_oracle_baselines.py \
 当你已经有一批 FAIRY agent run bundles，不想重新花 LLM 钱，只想用最新 FOS/yield loss 逻辑重新评估，用：
 
 ```bash
-PYTHONPATH=. python scripts/rebatch_fos_from_traces.py \
+PYTHONPATH=. uv run python scripts/rebatch_fos_from_traces.py \
   --root validation_runs/<experiment>/phase5_paper_matrix \
   --out-root validation_runs/<experiment>/rebatch_fos \
   --oracle-baselines validation_runs/oracle_baselines_formal90 \
@@ -1056,7 +1104,7 @@ Rebatch 输出结构：
 用于 controller × scenario × repeat 的批量真实 LLM run。每个 cell 是一个独立 subprocess，并写自己的 stdout/stderr 和 run_report。
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase smoke \
   --output-root validation_runs/smoke/phase5_paper_matrix \
   --families farm_baseline_react,farm_rewoo_modular \
@@ -1107,7 +1155,7 @@ PYTHONPATH=. python scripts/iclr_validation_runner.py \
 快速扫描一个目录下所有 `*.run_report.json`：
 
 ```bash
-PYTHONPATH=. python scripts/summarize_runs.py validation_runs/manual \
+PYTHONPATH=. uv run python scripts/summarize_runs.py validation_runs/manual \
   --csv validation_runs/manual/summary.csv
 ```
 

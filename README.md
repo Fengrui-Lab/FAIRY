@@ -36,6 +36,54 @@ The primary output is a run bundle. The default entry point is:
 | Batch run | `scripts/iclr_validation_runner.py` | Controller set, scenario set | `results.csv` plus per-cell run bundles | Execute a controller × scenario matrix. |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles, oracle baselines | `summary_v2.csv` | Recompute FOS, yield loss, and error columns from existing `agent_workflow.json` runs. |
 
+## Installation
+
+FAIRY is a Python package. A fresh checkout needs a Python environment and dependencies before any scenario can run.
+
+Requirements:
+
+- Python 3.10 or newer.
+- `uv` is recommended for local development.
+- An API key is required only for real agent runs. Oracle/replay/evaluate commands do not call an LLM.
+
+Install with `uv`:
+
+```bash
+cd /path/to/FAIRY
+uv sync
+```
+
+If `uv` is not installed:
+
+```bash
+python -m pip install uv
+uv sync
+```
+
+Alternative without `uv`:
+
+```bash
+cd /path/to/FAIRY
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Configure a model provider for `--agent` runs:
+
+```bash
+export DEEPSEEK_API_KEY=<your_key>
+# or
+export OPENAI_API_KEY=<your_key>
+```
+
+Smoke-check the environment:
+
+```bash
+PYTHONPATH=. uv run python -m fairy.cli --list-controllers
+PYTHONPATH=. uv run pytest -q tests/test_fairy_migration_smoke.py
+```
+
 ## Quick Start
 
 ### 1. Execute A Real Agent
@@ -43,7 +91,7 @@ The primary output is a run bundle. The default entry point is:
 This command runs a small FARM baseline scenario with DeepSeek function calling and writes all artifacts to one run directory.
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_farm_world_field_prep \
   --agent \
   --controller farm_baseline_react \
@@ -87,7 +135,7 @@ If `status=stopped` and `stopped_reason=max_tool_calls`, the run reached the con
 This command does not call an LLM. It exports the reference workflow, replays that workflow in a fresh scenario, and runs scenario validation.
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_farm_world_field_prep_physics_action_tick \
   --build-oracle --replay --evaluate \
   --workflow validation_runs/quickstart/oracle/scenario_farm_world_field_prep_physics_action_tick.json \
@@ -106,14 +154,14 @@ Key fields:
 - `evaluation.validation.success=true`: scenario validation passed.
 - `artifacts.oracle_workflow`: where the oracle workflow is.
 - `artifacts.replay_workflow`: where the replayed workflow is.
-- `artifacts.evaluation`: where the evaluation details are.
+- `evaluation`: validation details and farm outcome summary.
 
 ### 3. Execute A Full-Season Scenario With Context Modes
 
 Full-season detailed context is passed to the scenario constructor through `--scenario-kwargs`.
 
 ```bash
-PYTHONPATH=. python -m fairy.cli \
+PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_full_season_hb_base_hn84_std_normal \
   --agent \
   --controller farm_baseline_react \
@@ -151,7 +199,7 @@ Complete `detailed_briefing` values:
 Batch experiments use the validation runner. Each controller/scenario/repeat cell produces a separate run bundle.
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase smoke \
   --output-root validation_runs/quickstart/batch/phase5_paper_matrix \
   --families farm_baseline_react,farm_rewoo_modular \
@@ -243,7 +291,7 @@ Yield loss needs oracle yield baselines. To compute `crop_loss_pct`, `yield_loss
 Build oracle baselines:
 
 ```bash
-PYTHONPATH=. python scripts/build_oracle_baselines.py \
+PYTHONPATH=. uv run python scripts/build_oracle_baselines.py \
   --scenarios formal90 \
   --output-dir validation_runs/quickstart/oracle_baselines_formal90 \
   --max-days 180 \
@@ -254,7 +302,7 @@ PYTHONPATH=. python scripts/build_oracle_baselines.py \
 Replay completed agent traces and recompute FOS:
 
 ```bash
-PYTHONPATH=. python scripts/rebatch_fos_from_traces.py \
+PYTHONPATH=. uv run python scripts/rebatch_fos_from_traces.py \
   --root validation_runs/quickstart/batch/phase5_paper_matrix \
   --out-root validation_runs/quickstart/rebatch_fos \
   --oracle-baselines validation_runs/quickstart/oracle_baselines_formal90 \
@@ -355,7 +403,7 @@ pip install -e .
 Without installing the console script, use:
 
 ```bash
-PYTHONPATH=. python -m fairy.cli --list
+PYTHONPATH=. uv run python -m fairy.cli --list
 ```
 
 After installation:
@@ -427,9 +475,9 @@ validation_runs/example/oracle_replay/scenario_farm_world_field_prep_physics_act
 Equivalent entry points:
 
 ```bash
-fairy-run ...
-PYTHONPATH=. python -m fairy.cli ...
-PYTHONPATH=. python scripts/run_scenario.py ...   # compatibility wrapper around fairy.cli
+uv run fairy-run ...
+PYTHONPATH=. uv run python -m fairy.cli ...
+PYTHONPATH=. uv run python scripts/run_scenario.py ...   # compatibility wrapper around fairy.cli
 ```
 
 ### 1. Inspect Available Objects
@@ -872,7 +920,7 @@ fairy-run \
 Equivalent batch-run form:
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase l3_context \
   --output-root validation_runs/l3_context/phase5_paper_matrix \
   --families farm_baseline_react \
@@ -929,7 +977,7 @@ crop_loss_pct = 1 - agent_biological_kg / oracle_biological_kg
 Command:
 
 ```bash
-PYTHONPATH=. python scripts/build_oracle_baselines.py \
+PYTHONPATH=. uv run python scripts/build_oracle_baselines.py \
   --scenarios formal90 \
   --output-dir validation_runs/oracle_baselines_formal90 \
   --max-days 180 \
@@ -969,7 +1017,7 @@ Baseline JSON fields:
 If you already have FAIRY agent run bundles and do not want to spend more LLM tokens, run:
 
 ```bash
-PYTHONPATH=. python scripts/rebatch_fos_from_traces.py \
+PYTHONPATH=. uv run python scripts/rebatch_fos_from_traces.py \
   --root validation_runs/<experiment>/phase5_paper_matrix \
   --out-root validation_runs/<experiment>/rebatch_fos \
   --oracle-baselines validation_runs/oracle_baselines_formal90 \
@@ -1056,7 +1104,7 @@ Important `summary_v2.csv` columns:
 Use this for controller x scenario x repeat sweeps. Each cell is a separate subprocess and writes its own stdout/stderr plus FAIRY run artifacts.
 
 ```bash
-PYTHONPATH=. python scripts/iclr_validation_runner.py \
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --phase smoke \
   --output-root validation_runs/smoke/phase5_paper_matrix \
   --families farm_baseline_react,farm_rewoo_modular \
@@ -1107,7 +1155,7 @@ Outputs:
 Scan all `*.run_report.json` files under a directory:
 
 ```bash
-PYTHONPATH=. python scripts/summarize_runs.py validation_runs/manual \
+PYTHONPATH=. uv run python scripts/summarize_runs.py validation_runs/manual \
   --csv validation_runs/manual/summary.csv
 ```
 
