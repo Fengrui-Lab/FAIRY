@@ -17,6 +17,18 @@
   `python scripts/build_oracle_baselines.py --scenarios selected_l2_l1_20_30 --output-dir validation_runs/oracle_baselines_l2_l1_20_30_current --force --include-donothing`.
   The 2026-06-30 run built 50/50 baselines and matched `/Users/quao/Desktop/Second-year/CWSN/FarmARE_physics/oracle_baselines_l2_l1_20_30` exactly on biological kg, recovered kg, per-ridge yield arrays, and ridge counts. Comparison outputs:
   `validation_runs/oracle_baseline_comparison/l2_l1_20_30_vs_are.csv` and `validation_runs/oracle_baseline_comparison/l2_l1_20_30_vs_are_summary.json`.
+- L2 skill-pool registration check:
+  `PYTHONPATH=. python - <<'PY' ... list_scenarios() ... PY` should find all
+  72 IDs in `scripts/fullseason/l2_skill_scenario_ids.txt`.
+- L2 skill-pool oracle smoke:
+  `PYTHONPATH=. python scripts/build_oracle_baselines.py --scenarios scenario_l2_hb_coldspring_heihe50_planting_window --output-dir /tmp/fairy_l2_skill_baselines_smoke --force --include-donothing`.
+  The 2026-06-30 run produced `bio_total=5795.7 kg` and completed with ok=1.
+- Full L2 skill-pool oracle baseline check:
+  `PYTHONPATH=. python scripts/build_oracle_baselines.py --scenarios l2_skill_72 --output-dir validation_runs/oracle_baselines_l2_skill_72_current --force --include-donothing`.
+  The 2026-06-30 run built 72/72 baselines with fail=0.
+- A2A/controller focused smoke:
+  `PYTHONPATH=. pytest -q tests/test_fairy_migration_smoke.py::test_app_agent_profiles_match_are_names_and_prompts tests/test_fairy_migration_smoke.py::test_a2a_typed_routing_and_wrapper_tool_exposure tests/test_fairy_migration_smoke.py::test_a2a_expert_agent_can_call_wrapped_app_tool tests/test_fairy_migration_smoke.py::test_engine_registers_wrapped_farm_world_for_system_time_advance tests/test_fairy_migration_smoke.py::test_iclr_runner_passes_a2a_cli_flags -q`.
+  The 2026-06-30 run passed 5/5.
 - L3 context/skill runner dry-runs:
   `python scripts/fullseason/run_l3_context_ablation.py --groups detail_false,detail_true,detail_kwoo --scenarios scenario_full_season_hb_base_hn84_std_normal --dry-run`
   and
@@ -25,6 +37,14 @@
 - Rebatch FOS smoke over an ARE trace:
   `python scripts/rebatch_fos_from_traces.py --root /Users/quao/Desktop/Second-year/CWSN/FarmARE_physics/validation_runs/deepseek_json_l3_remaining70_l2_textsim_grouped_differ_20260606_160418/l2_textsim_grouped_differ --out-root validation_runs/rebatch_fos_smoke --limit 1 --workers 1 --extrapolate --oracle-baselines validation_runs/oracle_baselines_formal90_current --summary-name smoke_summary.csv`.
 - Controller smoke includes `farm_baseline_react` and `farm_rewoo_modular` through `tests/test_fairy_migration_smoke.py`.
+- Research-controller parity smoke is also in
+  `tests/test_fairy_migration_smoke.py`: it checks ARE-compatible
+  `AgentConfigBuilder` planning modes, migrated `DynamicSkillLibrary`
+  retrieval, `ResearchARESimulationAgent` telemetry, and Qwen/vLLM client
+  construction without network calls.
+- FAIRY package imports need `PYTHONPATH=.` unless the package is installed
+  editable. A direct `pytest` from a fresh shell can fail with
+  `ModuleNotFoundError: No module named 'fairy'`.
 - End-to-end oracle/replay/evaluation smoke:
   `PYTHONPATH=. /Users/quao/Desktop/Second-year/CWSN/FarmARE_physics/.venv312/bin/python scripts/run_scenario.py -s scenario_farm_world_field_prep_physics_action_tick --build-oracle --replay --evaluate --output-dir /tmp/fairy-e2e`.
 - L3 full-season e2e smoke:

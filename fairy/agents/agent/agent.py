@@ -46,6 +46,21 @@ class Agent(BaseAgent):
         self.llm_turn_count = 0
         self.stop_reason: str | None = None
 
+    def before_llm_turn(self, task: str) -> str:
+        return ""
+
+    def after_llm_message(self, message: Any) -> None:
+        return None
+
+    def after_tool_response(self, tool_call: Any, tool_response: Any) -> None:
+        return None
+
+    def after_agent_error(self, exc: Exception) -> None:
+        return None
+
+    def after_agent_run(self) -> None:
+        return None
+
     def _check_limits(
         self,
         *,
@@ -192,8 +207,17 @@ class Agent(BaseAgent):
             while True:
 
                 self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
+                turn_context = self.before_llm_turn(str(input))
+                if turn_context.strip():
+                    self.messages.system_notify(turn_context, time=self.env_time_str())
+                    self.record_event(
+                        "controller_context",
+                        status="ok",
+                        content_preview=turn_context[:1000],
+                    )
                 message = self.chat_completion(self.messages(), tools=self.tool_schemas)
                 self.llm_turn_count += 1
+                self.after_llm_message(message)
                 if not message.tool_calls:  # if finished handling tool calls, break
                     self.stop_reason = "agent_finished"
                     break
@@ -202,7 +226,9 @@ class Agent(BaseAgent):
                 for tool_call in message.tool_calls:
                     self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
                     tool_response = self.call_function(tool_call)
+                    self.after_tool_response(tool_call, tool_response)
             wall_elapsed = round(time.perf_counter() - self.run_started_at_wall, 6)
+            self.after_agent_run()
             self.record_event(
                 "agent_run_end",
                 status="ok",
@@ -214,6 +240,24 @@ class Agent(BaseAgent):
             return message.content
         except Exception as exc:
             wall_elapsed = round(time.perf_counter() - self.run_started_at_wall, 6)
+            if (
+                isinstance(exc, AgentRunLimitExceeded)
+                and self.stop_reason in {"max_tool_calls", "timeout"}
+            ):
+                self.after_agent_run()
+                self.record_event(
+                    "agent_run_end",
+                    status="stopped",
+                    stopped_reason=self.stop_reason,
+                    wall_time_seconds=wall_elapsed,
+                    tool_call_count=self.tool_call_count,
+                    llm_turn_count=self.llm_turn_count,
+                    limit_type=exc.limit_type,
+                    limit_value=exc.limit_value,
+                )
+                raise
+
+            self.after_agent_error(exc)
             self.record_event(
                 "agent_run_error",
                 status="error",

@@ -69,14 +69,12 @@ class Engine:
             self.scenario.workflow = Workflow()
 
     def _register_scenario_apps(self) -> None:
-        farm_world = next(
-            (
-                app
-                for app in self.scenario.apps or []
-                if app.__class__.__name__ == "FarmWorldApp"
-            ),
-            None,
-        )
+        farm_world = None
+        for app in self.scenario.apps or []:
+            candidate = getattr(app, "wrapped_app", app)
+            if candidate.__class__.__name__ == "FarmWorldApp":
+                farm_world = candidate
+                break
         for app in self.scenario.apps or []:
             app.register_time_manager(self.time_manager)
             if hasattr(app, "register_event_scheduler"):

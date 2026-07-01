@@ -50,3 +50,62 @@
   shape. `messages.json` is raw LLM conversation state. `runtime_metrics.json`
   is per-call token/time detail. `evaluation.json` is validation and farm
   outcome. `run_summary.json` is legacy machine summary for old scripts.
+
+## Research Controller Runtime
+
+- FAIRY's paper-controller path is:
+  `fairy.cli --agent` -> `BaseLLM.llm_builder()` ->
+  `build_controller_agent()` -> `Engine.run_scenario_agent()` ->
+  `Agent.run()`.
+- `Agent.run()` is still the single function-calling loop. Controller families
+  hook it through `before_llm_turn()`, `after_llm_message()`,
+  `after_tool_response()`, and `after_agent_error()`.
+- `ResearchARESimulationAgent` is the FAIRY port of ARE's
+  `ResearchARESimulationAgent`: it resets telemetry at run start, injects
+  dynamic controller context before each LLM turn, feeds tool observations and
+  errors into `ResearchStrategyCoordinator.consume_snapshot()`, and emits a
+  final `controller_telemetry` runtime event.
+- `AgentConfigBuilder` in `fairy.controllers.agent_config` is the ARE-compatible
+  family mapping. Preserve exact paper-facing planning modes such as
+  `adaptive_verifier`, `rewoo_modular`, and `critic_refiner`; downstream
+  summaries use these labels.
+- L3 skill-retrieval context is a separate scenario-level library under
+  `fairy/scenarios/farm_world_fullseason_v2/l2_l1_splits/knowledge_library_pilot/`.
+  Do not confuse it with the 6 controller JSON skills. The L2 skill pool is
+  `scripts/fullseason/l2_skill_scenario_ids.txt` (72 scenarios) and its source
+  L3 pool is `scripts/fullseason/l3_skill_source_ids.txt` (20 scenarios).
+- Full-season detailed-context modes are documented in both READMEs and are
+  implemented by `harbin_l3_context_briefings.py`: `false`, `true`, `kwoo`,
+  `library`, `l2_human_same`, `l2_human_differ`, `l2_textsim_differ`,
+  `l2_textsim_grouped_differ`, `l2_pathsim_differ`,
+  `l2_pathsim_grouped_differ`, `l3_pathsim_same`, `l3_pathsim_differ`,
+  `l3_textsim_differ`, and legacy alias `l3_textdiff_differ`.
+- `run_report.json` stores controller telemetry in both
+  `controller_telemetry` and `metrics.controller_telemetry`; batch summaries
+  should prefer this over legacy `output.jsonl.metadata.telemetry`.
+
+## Agent2Agent App Experts
+
+- FAIRY's A2A path starts in `fairy.cli --agent --a2a true`, after
+  `scenario.setup()` and before `build_controller_agent()`. The CLI calls
+  `apply_a2a_to_apps()` and replaces `scenario.apps` with the transformed app
+  list.
+- `apply_a2a_to_apps()` follows ARE's FARM transform semantics: filter out
+  `InternalContacts`, `AgentUserInterface`, and `SystemApp`; choose
+  `int(len(filtered_apps) * a2a_app_prop)` apps with `random.Random(seed)`;
+  keep non-transformed apps and append one `AppAgent` wrapper for each selected
+  app.
+- Each `AppAgent` wrapper exposes only `<WrappedAppName>Expert__expert_agent`.
+  The expert agent inside the wrapper sees the original wrapped app's tools plus
+  `FinalAnswerTool__final_answer`. Delegated calls reset the expert message,
+  workflow, runtime event, and tool-count state so separate delegations do not
+  leak prompt context into each other.
+- `typed_experts` uses the ARE mapping: `WeatherApp` ->
+  `weather_expert_app_agent`, `SensorApp` -> `sensor_expert_app_agent`,
+  `TractorApp`/`FieldOpsApp` -> `machinery_expert_app_agent`, and
+  `FarmWorldApp`/`DroneApp`/`RobotApp` -> `operations_expert_app_agent`.
+- `Engine._register_scenario_apps()` unwraps `AppAgent.wrapped_app` when looking
+  for `FarmWorldApp`, so `SystemApp.advance_time()` still attaches to the real
+  farm-world state even when `FarmWorldApp` is transformed.
+- `run_report.json` includes an `a2a` section with enablement, app proportion,
+  policy, fallback app-agent, model/provider/endpoint, and transformed app list.

@@ -19,9 +19,9 @@ Usage:
 
     python scripts/iclr_validation_runner.py --config validation_runs/iclr.json
 
-For Qwen, use ``--provider qwen``. The runner maps it to an
-OpenAI-compatible ``llama-api`` provider inside the subprocess and reads
-``QWEN_API_KEY`` plus optional ``QWEN_API_BASE`` / ``DASHSCOPE_API_BASE``.
+For Qwen, use ``--provider qwen``. FAIRY runs it through an
+OpenAI-compatible function-calling client and reads ``QWEN_API_KEY`` plus
+optional ``QWEN_API_BASE`` / ``DASHSCOPE_API_BASE``.
 
 The runner enforces:
   - per-cell wall-clock timeout (``--cell-timeout-s``, default 300s), with
@@ -144,6 +144,19 @@ def _build_cell_command(
         "--timeout-seconds",
         str(agent_timeout_seconds or 1200),
     ]
+    if endpoint:
+        cmd.extend(["--endpoint", endpoint])
+    if a2a_enabled:
+        cmd.extend(["--a2a", "true"])
+        cmd.extend(["--a2a-app-prop", str(a2a_app_prop)])
+        cmd.extend(["--a2a-policy", a2a_policy])
+        cmd.extend(["--a2a-app-agent", a2a_app_agent])
+        if a2a_model:
+            cmd.extend(["--a2a-model", a2a_model])
+        if a2a_provider:
+            cmd.extend(["--a2a-provider", a2a_provider])
+        if a2a_endpoint:
+            cmd.extend(["--a2a-endpoint", a2a_endpoint])
     if scenario_creation_kwargs:
         cmd.extend(["--scenario-kwargs", scenario_creation_kwargs])
     if scenario_initialization_kwargs:
@@ -254,9 +267,9 @@ def _prepare_provider_env(
             or env.get("DASHSCOPE_API_BASE")
             or "https://dashscope.aliyuncs.com/compatible-mode/v1"
         )
-        env["LLAMA_API_KEY"] = qwen_key
-        env["LLAMA_API_BASE"] = resolved_endpoint
-        return "llama-api", resolved_endpoint
+        env["QWEN_API_KEY"] = qwen_key
+        env["QWEN_API_BASE"] = resolved_endpoint
+        return "qwen", resolved_endpoint
 
     if provider == "qwen-json":
         qwen_key = env.get("QWEN_API_KEY") or env.get("DASHSCOPE_API_KEY")
@@ -270,8 +283,15 @@ def _prepare_provider_env(
             or env.get("DASHSCOPE_API_BASE")
             or "https://dashscope.aliyuncs.com/compatible-mode/v1"
         )
+        env["QWEN_API_KEY"] = qwen_key
         env["QWEN_API_BASE"] = resolved_endpoint
-        return "qwen-json", resolved_endpoint
+        return "qwen", resolved_endpoint
+
+    if provider == "vllm":
+        resolved_endpoint = endpoint or env.get("VLLM_API_BASE") or "http://localhost:8000/v1"
+        env["VLLM_API_BASE"] = resolved_endpoint
+        env.setdefault("VLLM_API_KEY", "EMPTY")
+        return "vllm", resolved_endpoint
 
     return provider, endpoint
 
@@ -535,7 +555,8 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         default=defaults.get("provider"),
         help=(
             "Model provider: openai, llama-api/openai-compatible, deepseek, "
-            "or qwen. deepseek-json/qwen-json are legacy aliases."
+            "qwen, or vllm. deepseek-json/qwen-json are legacy aliases normalized "
+            "onto function calling."
         ),
     )
     parser.add_argument(
@@ -597,7 +618,9 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
             "Set detailed_briefing in --scenario_kwargs, e.g. true, false, "
             "kwoo, l2_human_same, l2_human_differ, l2_textsim_differ, "
             "l2_textsim_grouped_differ, l2_pathsim_differ, "
-            "l2_pathsim_grouped_differ."
+            "l2_pathsim_grouped_differ, l3_pathsim_same, "
+            "l3_pathsim_differ, l3_textsim_differ, l3_textdiff_differ, "
+            "or library."
         ),
     )
     parser.add_argument("--a2a", type=_str_to_bool, default=defaults.get("a2a"))
@@ -793,14 +816,18 @@ def run_cell(
     if run_report is not None:
         status = run_report.get("status")
         metrics = run_report.get("metrics") or {}
+        report_telemetry = run_report.get("controller_telemetry") or metrics.get("controller_telemetry") or {}
+        if isinstance(report_telemetry, dict):
+            telemetry = report_telemetry
         evaluation = run_report.get("evaluation") or {}
         validation = evaluation.get("validation") or {}
         score = 1.0 if validation.get("success") is True else 0.0
         cost, n_calls, _ = _estimate_report_cost_dollars(run_report, model)
         llm_calls = metrics.get("llm_call_count")
         tool_calls = metrics.get("tool_call_count", "")
-        planned_steps = metrics.get("workflow_steps", "")
-        executed_steps = metrics.get("workflow_steps", "")
+        planned_steps = telemetry.get("planned_steps", metrics.get("workflow_steps", ""))
+        executed_steps = telemetry.get("executed_steps", metrics.get("workflow_steps", ""))
+        error_count = telemetry.get("error_count", error_count)
         if run_report.get("error"):
             error_count = 1
         outcome_report = evaluation.get("outcome") or run_report.get("outcome") or {}

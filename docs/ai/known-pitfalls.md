@@ -38,3 +38,31 @@
 - Treat true fatal failures separately: missing FarmWorldApp, inactive physics
   after oracle run, scenario not in registry, or Python exceptions during
   scenario construction/execution.
+
+## A2A Expert Loop Diagnostics
+
+- A2A app wrappers hide direct app tools from the main agent and expose
+  `<AppName>Expert__expert_agent`; main-run workflows then show the delegation
+  call, while real app-tool details live in `<scenario>.a2a_traces.json`.
+- Always inspect `run_report.a2a.expert_metrics` when comparing A2A on/off.
+  Main-agent token usage can drop while expert-agent token usage rises sharply.
+- In the 2026-07-01 controller/A2A smoke audit,
+  `farm_multi_specialist + scenario_farm_world_drone_survey + A2A on` failed
+  because the main agent delegated a broad full-field survey to
+  `Mavic3MExpert__expert_agent`; the drone expert looped until its
+  `max_tool_calls=70` limit instead of completing bounded `fly_survey` calls.
+  Treat this as an A2A task-decomposition/expert-prompt issue, not an API
+  parse failure.
+
+## Paper-Controller Smoke Gaps
+
+- `farm_rewoo_modular` currently falls back when it cannot parse structured
+  steps from the task. The smoke audit recorded planner calls and parse
+  failures, but the controller context was the fallback path rather than a
+  successful plan-work-solve plan.
+
+## Workflow Output Paths
+
+- `Workflow.save_workflow()` creates parent directories before writing. README
+  quickstart commands intentionally point `--workflow` at fresh directories; do
+  not reintroduce call sites that require users to run `mkdir` first.

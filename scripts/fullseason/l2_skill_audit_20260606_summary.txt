@@ -1,0 +1,9 @@
+skills=72
+groups={'establishment': 21, 'management': 30, 'harvest': 21}
+l2_baseline_files=72
+l3_baseline_files=20
+empty_oracle_events=0
+non_dict_oracle_event_entries_skills=0
+card_major_missing_in_flow=0
+flow_major_not_in_card=0
+harvest_l2_recovered_delta_abs_gt_3pct=0

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -43,6 +44,7 @@ class Workflow:
         return {name: step.to_dict() for name, step in self.dag.items()}
 
     def save_workflow(self, filename: str) -> None:
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, ensure_ascii=False, indent=2)
 
@@ -57,4 +59,3 @@ class Workflow:
 
     def __repr__(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False, indent=2)
-

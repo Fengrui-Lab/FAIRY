@@ -36,16 +36,14 @@ class Messages:
         #     response_tool_calls = None
 
         self.messages.append(response.choices[0].message)
-        tokens = {}
-        if self.provider == "openai":
-            usage = getattr(response, "usage", None)
-            prompt_details = getattr(usage, "prompt_tokens_details", None)
-            tokens = {
-                "prompt_tokens": getattr(usage, "prompt_tokens", 0) if usage else 0,
-                "cached_tokens": getattr(prompt_details, "cached_tokens", 0) if prompt_details else 0,
-                "completion_tokens": getattr(usage, "completion_tokens", 0) if usage else 0,
-                "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
-            }
+        usage = getattr(response, "usage", None)
+        prompt_details = getattr(usage, "prompt_tokens_details", None)
+        tokens = {
+            "prompt_tokens": getattr(usage, "prompt_tokens", 0) if usage else 0,
+            "cached_tokens": getattr(prompt_details, "cached_tokens", 0) if prompt_details else 0,
+            "completion_tokens": getattr(usage, "completion_tokens", 0) if usage else 0,
+            "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
+        }
         self.runtime_metrics.append({
             "role": "assistant",
             "time": elapsed_time,

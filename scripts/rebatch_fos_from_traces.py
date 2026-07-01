@@ -1,15 +1,16 @@
 """
-Batch re-evaluation of FOS over saved cell traces, without LLM cost.
+Batch re-evaluation of FOS over FAIRY agent run bundles, without LLM cost.
 
 For each cell directory under <root> (typical layout:
 phase5_paper_matrix/<family>__<scenario>__rN/):
 
-    1. Parse the trace JSON (`scenario_*.json`).
+    1. Parse the FAIRY workflow bundle:
+       ``<scenario>.agent_workflow.json`` + ``<scenario>.run_report.json``.
     2. Re-instantiate the scenario from the registry by `scenario_id`
        — this gets us a fresh, fully-wired set of apps including the
        physics orchestrator with its initial state.
-    3. Replay the trace's `completed_events` against the fresh
-       scenario's apps. The agent's tool-mutating actions
+    3. Replay the workflow's TOOL steps against the fresh scenario's apps.
+       The agent's tool-mutating actions
        (plant_seeds, irrigate, advance_time, harvest, ...) re-drive
        the physics engines forward. Read-only actions are no-ops on
        state but still get logged so FOS Decision/Efficiency see the
@@ -39,7 +40,7 @@ Usage:
         --workers 4
 
 Caveats:
-    - The replay assumes the scenario's `init_and_populate_apps()` is
+    - The replay assumes the scenario's `setup()` / `init_and_populate_apps()` is
       deterministic given (seed, start_time). All farm scenarios on this
       branch satisfy that.
     - Scenarios that aren't in the registry are skipped with status
@@ -79,97 +80,52 @@ _DEFAULT_EXCLUDED_SWEEP_DIRS: tuple[str, ...] = ()
 # ---------------------------------------------------------------------------
 
 
-def _parse_arg_value(value: Any, value_type: str | None) -> Any:
-    """Recover a Python value from the trace's stringified form.
+def _operation_type_for_method(method: Any):
+    from fairy.types import OperationType
 
-    Trace JSON stores all args as `{"name": ..., "value": <stringified>,
-    "value_type": "int" | "str" | "list" | ...}`. The simplest
-    round-trip is: if value_type names a numeric or bool primitive, eval
-    via `ast.literal_eval`; otherwise pass through the raw value.
-    """
-    if value is None:
-        return None
-    import ast
-
-    if value_type in {"int", "float", "bool", "list", "dict", "tuple", "NoneType"}:
-        try:
-            return ast.literal_eval(value if isinstance(value, str) else str(value))
-        except (ValueError, SyntaxError):
-            return value
-    if value_type == "str":
-        return value
-    # Fallback: try literal_eval, else return as-is.
-    if isinstance(value, str):
-        try:
-            return ast.literal_eval(value)
-        except (ValueError, SyntaxError):
-            return value
-    return value
+    return getattr(method, "_event_operation_type", None) or OperationType.READ
 
 
-def _build_completed_event(
-    raw_ce: dict[str, Any],
+def _build_completed_event_from_workflow_step(
+    step: dict[str, Any],
     target_app: Any,
     method_name: str,
     args: dict[str, Any],
+    event_time: float,
     return_value: Any,
     exception: Any,
 ):
-    """Assemble a CompletedEvent that FOS can introspect.
-
-    We bind action.app to the *real* scenario app (so .class_name and
-    .app.name match what gates expect) and stash return_value on
-    metadata so safety-violation counting works.
-    """
+    """Assemble a CompletedEvent from a FAIRY workflow step."""
     from fairy.types import (
         Action,
         CompletedEvent,
         EventMetadata,
         EventType,
-        OperationType,
     )
-
-    raw_action = raw_ce.get("action") or {}
-    op_str = raw_action.get("operation_type") or "READ"
-    try:
-        op = OperationType(op_str.lower())
-    except ValueError:
-        op = OperationType.READ
 
     method = getattr(target_app, method_name, None)
     if method is None:
-        # Fallback: any callable; the only consumer is FOS's class_name /
-        # function_name lookups which read from action.app.__class__ and
-        # the Action.function attribute name.
         method = lambda **_kw: None  # noqa: E731
 
     action = Action(
         function=method,
         app=target_app,
         args={k: v for k, v in args.items() if k != "self"},
-        operation_type=op,
-        action_id=raw_action.get("action_id"),
+        operation_type=_operation_type_for_method(method),
+        action_id=step.get("name"),
     )
-
     metadata = EventMetadata(
         return_value=return_value,
         exception=str(exception) if exception is not None else None,
         exception_stack_trace=None,
     )
-
-    et_str = raw_ce.get("event_type") or "AGENT"
-    try:
-        et = EventType(et_str)
-    except ValueError:
-        et = EventType.AGENT
-
     return CompletedEvent(
-        event_type=et,
-        event_time=float(raw_ce.get("event_time", 0.0)),
-        event_id=raw_ce.get("event_id", ""),
+        event_type=EventType.AGENT,
+        event_time=event_time,
+        event_id=str(step.get("name") or ""),
         action=action,
         metadata=metadata,
-        dependencies=raw_ce.get("dependencies", []) or [],
+        dependencies=step.get("depends_on") or [],
     )
 
 
@@ -276,31 +232,116 @@ def _post_event_alignment_time(raw_ce: dict[str, Any], return_value: Any) -> flo
         return None
 
 
-def _replay_trace(trace_path: Path) -> tuple[Any, Any, dict[str, Any]]:
-    """Returns (scenario, env, info) where env has a populated event_log.
+def _find_agent_workflow_path(cell_dir: Path) -> Path | None:
+    matches = sorted(cell_dir.glob("*.agent_workflow.json"))
+    return matches[0] if matches else None
 
-    Raises on hard failure (scenario not registerable, malformed JSON).
-    """
+
+def _find_run_report_path(cell_dir: Path, workflow_path: Path | None = None) -> Path | None:
+    if workflow_path is not None:
+        scenario_stem = workflow_path.name.removesuffix(".agent_workflow.json")
+        candidate = cell_dir / f"{scenario_stem}.run_report.json"
+        if candidate.is_file():
+            return candidate
+    matches = sorted(cell_dir.glob("*.run_report.json"))
+    return matches[0] if matches else None
+
+
+def _load_fairy_run_bundle(cell_dir: Path) -> dict[str, Any] | None:
+    workflow_path = _find_agent_workflow_path(cell_dir)
+    if workflow_path is None:
+        return None
+    report_path = _find_run_report_path(cell_dir, workflow_path)
+    workflow = json.loads(workflow_path.read_text(encoding="utf-8"))
+    run_report = (
+        json.loads(report_path.read_text(encoding="utf-8"))
+        if report_path is not None and report_path.is_file()
+        else {}
+    )
+    scenario_id = (
+        run_report.get("scenario_id")
+        or workflow_path.name.removesuffix(".agent_workflow.json")
+    )
+    return {
+        "cell_dir": cell_dir,
+        "workflow_path": workflow_path,
+        "report_path": report_path,
+        "workflow": workflow,
+        "run_report": run_report,
+        "scenario_id": scenario_id,
+        "start_time": run_report.get("start_time"),
+        "seed": run_report.get("seed") or 0,
+    }
+
+
+def _iter_fairy_tool_steps(workflow: Any) -> list[dict[str, Any]]:
+    raw_steps = workflow.values() if isinstance(workflow, dict) else workflow
+    steps: list[dict[str, Any]] = []
+    for raw_step in raw_steps or []:
+        if not isinstance(raw_step, dict):
+            continue
+        if raw_step.get("op_type") == "USER":
+            continue
+        if not raw_step.get("tool_name"):
+            continue
+        steps.append(raw_step)
+    return steps
+
+
+def _tool_name_parts(tool_name: str) -> tuple[str, str]:
+    if "__" not in tool_name:
+        raise ValueError(f"FAIRY workflow tool_name must be App__method: {tool_name!r}")
+    app_name, method_name = tool_name.split("__", 1)
+    return app_name, method_name
+
+
+def _workflow_step_timestamp(step: dict[str, Any], fallback: float | None) -> float:
+    raw = step.get("time")
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if isinstance(raw, str) and raw.strip():
+        text = raw.strip().replace("T", " ")
+        try:
+            return datetime.fromisoformat(text).timestamp()
+        except ValueError:
+            pass
+    return float(fallback or 0.0)
+
+
+def _post_workflow_step_alignment_time(
+    step: dict[str, Any],
+    event_time: float,
+    return_value: Any,
+) -> float:
+    tool_name = str(step.get("tool_name") or "")
+    if tool_name == "SystemApp__advance_time" and isinstance(return_value, dict):
+        try:
+            return float(return_value.get("current_timestamp"))
+        except (TypeError, ValueError):
+            pass
+    return event_time
+
+
+def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
+    """Returns (scenario, env, info) where env has a populated EventLog."""
     from fairy.types import EventLog
 
-    raw = json.loads(trace_path.read_text())
-    meta = raw.get("metadata", {}).get("definition", {})
-    scenario_id = meta.get("scenario_id")
+    scenario_id = bundle.get("scenario_id")
     if not scenario_id:
-        raise ValueError("trace has no scenario_id")
-    start_time = meta.get("start_time")
-    seed = meta.get("seed") or 0
+        raise ValueError("FAIRY run bundle has no scenario_id")
+    start_time = bundle.get("start_time")
+    seed = bundle.get("seed") or 0
 
     scenario = _instantiate_scenario_for_replay(scenario_id, start_time, seed)
-
     apps_by_name = {a.name: a for a in scenario.apps or []}
     apps_by_class = {a.__class__.__name__: a for a in scenario.apps or []}
 
+    tool_steps = _iter_fairy_tool_steps(bundle.get("workflow"))
     info = {
         "scenario_id": scenario_id,
         "start_time": start_time,
         "seed": seed,
-        "n_completed_events": 0,
+        "n_completed_events": len(tool_steps),
         "n_replayed": 0,
         "n_skipped": 0,
         "skipped_reasons": {},
@@ -308,25 +349,15 @@ def _replay_trace(trace_path: Path) -> tuple[Any, Any, dict[str, Any]]:
     }
 
     rebound_events = []
-    raw_completed = raw.get("completed_events", []) or []
-    info["n_completed_events"] = len(raw_completed)
-
     last_event_time: float | None = None
-    for raw_ce in raw_completed:
-        action = raw_ce.get("action") or {}
-        # Skip ConditionCheckAction events — no app/function.
-        if action.get("class_name") == "ConditionCheckAction":
+    for step in tool_steps:
+        tool_name = str(step.get("tool_name") or "")
+        try:
+            target_app_name, fn_name = _tool_name_parts(tool_name)
+        except ValueError:
             info["n_skipped"] += 1
-            info["skipped_reasons"]["condition_check"] = (
-                info["skipped_reasons"].get("condition_check", 0) + 1
-            )
-            continue
-        target_app_name = action.get("app")
-        fn_name = action.get("function")
-        if not target_app_name or not fn_name:
-            info["n_skipped"] += 1
-            info["skipped_reasons"]["no_app_or_fn"] = (
-                info["skipped_reasons"].get("no_app_or_fn", 0) + 1
+            info["skipped_reasons"]["bad_tool_name"] = (
+                info["skipped_reasons"].get("bad_tool_name", 0) + 1
             )
             continue
         target_app = apps_by_name.get(target_app_name) or apps_by_class.get(
@@ -339,41 +370,37 @@ def _replay_trace(trace_path: Path) -> tuple[Any, Any, dict[str, Any]]:
             )
             continue
 
-        # Parse args list of dicts -> kwargs dict.
-        args: dict[str, Any] = {}
-        for arg in action.get("args") or []:
-            if not isinstance(arg, dict):
-                continue
-            name = arg.get("name")
-            if name is None or name == "self":
-                continue
-            args[name] = _parse_arg_value(arg.get("value"), arg.get("value_type"))
+        args = step.get("tool_args") or {}
+        if not isinstance(args, dict):
+            args = {}
+        event_time = _workflow_step_timestamp(step, last_event_time)
 
-        # Re-execute the tool to drive physics state. Capture exceptions
-        # but do not propagate them — they're a normal part of agent
-        # runs (e.g., "Cannot harvest in rain").
         exception_obj = None
         try:
-            _align_replay_time(scenario, last_event_time)
+            _align_replay_time(scenario, event_time)
             method = getattr(target_app, fn_name, None)
             if callable(method):
                 method(**args)
-        except Exception as exc:  # pragma: no cover — defensive
+        except Exception as exc:  # pragma: no cover - defensive replay tolerance
             exception_obj = exc
             info["exec_errors"] += 1
 
-        # Build a CompletedEvent with the trace's recorded return_value
-        # (so FOS sees the same return values the agent saw — including
-        # safety-violation error dicts).
-        return_value = (raw_ce.get("metadata") or {}).get("return_value")
-        rebound = _build_completed_event(
-            raw_ce, target_app, fn_name, args, return_value, exception_obj
+        return_value = step.get("content")
+        rebound_events.append(
+            _build_completed_event_from_workflow_step(
+                step,
+                target_app,
+                fn_name,
+                args,
+                event_time,
+                return_value,
+                exception_obj,
+            )
         )
-        rebound_events.append(rebound)
         info["n_replayed"] += 1
-        post_event_time = _post_event_alignment_time(raw_ce, return_value)
-        if post_event_time is not None:
-            last_event_time = post_event_time
+        last_event_time = _post_workflow_step_alignment_time(
+            step, event_time, return_value
+        )
 
     env = SimpleNamespace(
         event_log=EventLog.from_list_view(rebound_events),
@@ -508,27 +535,6 @@ def _coerce_bool(value: Any) -> bool | None:
     if text in {"0", "false", "no", "off"}:
         return False
     return None
-
-
-def _a2a_enabled_from_runner_config_payload(payload: dict[str, Any]) -> bool | None:
-    explicit = _coerce_bool(payload.get("a2a_enabled"))
-    if explicit is not None:
-        return explicit
-    try:
-        return float(payload.get("a2a_app_prop") or 0.0) > 0.0
-    except (TypeError, ValueError):
-        return None
-
-
-def _a2a_enabled_from_trace_json(trace_path: Path) -> bool | None:
-    try:
-        raw = json.loads(trace_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-    runner_config = (raw.get("metadata") or {}).get("runner_config") or {}
-    if not isinstance(runner_config, dict):
-        return None
-    return _a2a_enabled_from_runner_config_payload(runner_config)
 
 
 def _a2a_enabled_from_status(status: Any) -> bool | None:
@@ -702,46 +708,6 @@ def _model_type_size_from_results_csv(cell_dir: Path) -> str:
     return ""
 
 
-def _detailed_briefing_from_trace_json(trace_path: Path) -> str:
-    """Read detailed_briefing from the trace JSON runner config."""
-    try:
-        raw = json.loads(trace_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return ""
-    runner_config = (raw.get("metadata") or {}).get("runner_config") or {}
-    detailed = _parse_detailed_briefing_from_kwargs(
-        runner_config.get("scenario_creation_params")
-    )
-    if detailed:
-        return detailed
-    return _parse_detailed_briefing_from_kwargs(
-        runner_config.get("scenario_multi_creation_params")
-    )
-
-
-_LLM_OUTPUT_LOG_TYPES = {
-    "llm_output",
-    "llm_output_plan",
-    "llm_output_facts",
-}
-
-
-def _iter_world_log_dicts(raw_trace: dict[str, Any]):
-    """Yield parsed world-log dictionaries from a trace JSON payload."""
-    for item in raw_trace.get("world_logs") or []:
-        if isinstance(item, dict):
-            yield item
-            continue
-        if not isinstance(item, str):
-            continue
-        try:
-            parsed = json.loads(item)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
-            yield parsed
-
-
 def _number_or_zero(value: Any) -> float:
     if value in (None, "") or value is True or value is False:
         return 0.0
@@ -858,63 +824,49 @@ def _stderr_failure_from_cell_logs(cell_dir: Path) -> dict[str, str]:
     }
 
 
-def _llm_usage_from_trace_json(trace_path: Path) -> dict[str, Any]:
-    """Aggregate per-call token/runtime metrics from saved agent logs.
+def _llm_usage_from_run_report(run_report: dict[str, Any]) -> dict[str, Any]:
+    """Aggregate token/runtime metrics from FAIRY run_report.json."""
+    metrics = run_report.get("metrics") or {}
+    usage = metrics.get("token_usage") or {}
+    calls = int(_number_or_zero(metrics.get("llm_call_count")))
+    total_tokens = _number_or_zero(usage.get("total_tokens"))
+    input_tokens = _number_or_zero(usage.get("prompt_tokens"))
+    output_tokens = _number_or_zero(usage.get("completion_tokens"))
+    cached_tokens_total = _number_or_zero(usage.get("cached_tokens"))
+    total_runtime_s = _number_or_zero(metrics.get("llm_wall_time_seconds"))
+    model_name = str(run_report.get("model") or "").strip()
 
-    Token columns keep total/input/output/cached separate.  Cached tokens are
-    reported as observed in provider usage metadata, not subtracted here.
-    """
-    try:
-        raw = json.loads(trace_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-
-    calls = 0
-    total_tokens = 0.0
-    input_tokens = 0.0
-    output_tokens = 0.0
-    cached_tokens_total = 0.0
-    total_runtime_s = 0.0
-    model_name = ""
-    for log in _iter_world_log_dicts(raw):
-        log_type = str(log.get("log_type") or "")
-        if log_type not in _LLM_OUTPUT_LOG_TYPES:
-            continue
-        calls += 1
-        if not model_name:
-            model_name = str(log.get("model_name") or "").strip()
-        prompt_tokens = _number_or_zero(log.get("prompt_tokens"))
-        completion_tokens = _number_or_zero(log.get("completion_tokens"))
-        cached_tokens = _number_or_zero(log.get("cached_tokens"))
-        recorded_total_tokens = _number_or_zero(log.get("total_tokens"))
-        total_tokens += recorded_total_tokens or (prompt_tokens + completion_tokens)
-        input_tokens += prompt_tokens
-        output_tokens += completion_tokens
-        cached_tokens_total += cached_tokens
-        total_runtime_s += _number_or_zero(log.get("completion_duration"))
-
+    out: dict[str, Any] = {}
+    if model_name:
+        out["model_type_size"] = model_name
+    if metrics.get("wall_time_seconds") is not None:
+        out["runtime_s_per_scenario"] = _format_metric_number(
+            _number_or_zero(metrics.get("wall_time_seconds"))
+        )
     if calls <= 0:
-        return {"model_type_size": model_name} if model_name else {}
-    return {
-        "model_type_size": model_name,
-        "llm_calls_with_usage": calls,
-        "avg_total_tokens_per_agent_call": _format_metric_number(
-            total_tokens / calls
-        ),
-        "avg_input_tokens_per_agent_call": _format_metric_number(
-            input_tokens / calls
-        ),
-        "avg_output_tokens_per_agent_call": _format_metric_number(
-            output_tokens / calls
-        ),
-        "avg_cached_tokens_per_agent_call": _format_metric_number(
-            cached_tokens_total / calls
-        ),
-        "total_tokens_per_scenario": _format_metric_number(total_tokens),
-        "avg_runtime_s_per_agent_call": _format_metric_number(
-            total_runtime_s / calls
-        ),
-    }
+        return out
+    out.update(
+        {
+            "llm_calls_with_usage": calls,
+            "avg_total_tokens_per_agent_call": _format_metric_number(
+                total_tokens / calls
+            ),
+            "avg_input_tokens_per_agent_call": _format_metric_number(
+                input_tokens / calls
+            ),
+            "avg_output_tokens_per_agent_call": _format_metric_number(
+                output_tokens / calls
+            ),
+            "avg_cached_tokens_per_agent_call": _format_metric_number(
+                cached_tokens_total / calls
+            ),
+            "total_tokens_per_scenario": _format_metric_number(total_tokens),
+            "avg_runtime_s_per_agent_call": _format_metric_number(
+                total_runtime_s / calls
+            ),
+        }
+    )
+    return out
 
 
 def _detailed_briefing_from_detail_status(detail_status: Any) -> str:
@@ -1026,8 +978,8 @@ def replay_one_cell(
     log_span_s = _log_span_s_from_cell_logs(cell_dir)
     if log_span_s is not None:
         row["runtime_s_per_scenario"] = _format_metric_number(log_span_s)
-    trace_path = next(iter(cell_dir.glob("scenario_*.json")), None)
-    if trace_path is None:
+    bundle = _load_fairy_run_bundle(cell_dir)
+    if bundle is None:
         row.update(_stderr_failure_from_cell_logs(cell_dir))
         scenario_id = _scenario_id_from_cell_name(cell_dir.name)
         if scenario_id:
@@ -1037,41 +989,42 @@ def replay_one_cell(
             _detailed_briefing_from_results_csv(cell_dir)
             or _detailed_briefing_from_detail_status(row.get("detail_status"))
         )
-        row["status"] = "no_trace"
+        row["status"] = "no_agent_workflow"
         return row
-    trace_a2a_enabled = _a2a_enabled_from_trace_json(trace_path)
-    if trace_a2a_enabled is not None:
-        _set_a2a_fields(row, trace_a2a_enabled)
-    usage_metrics = _llm_usage_from_trace_json(trace_path)
-    trace_model_type_size = usage_metrics.pop("model_type_size", "")
-    if not row.get("model_type_size") and trace_model_type_size:
-        row["model_type_size"] = trace_model_type_size
+    run_report = bundle.get("run_report") or {}
+    scenario_id = str(bundle.get("scenario_id") or "")
+    if scenario_id:
+        row["scenario"] = scenario_id
+        row["l3_pool"] = _l3_pool_for_scenario(scenario_id)
+    if run_report.get("controller_id"):
+        row["agent_family"] = str(run_report.get("controller_id")).removeprefix("farm_")
+    if run_report.get("provider") and not row.get("llm_model"):
+        row["llm_model"] = _normalize_model_family_label(run_report.get("provider"))
+    if run_report.get("model") and not row.get("model_type_size"):
+        row["model_type_size"] = str(run_report.get("model"))
+    report_a2a = (run_report.get("a2a") or {}).get("enabled")
+    _set_a2a_fields(row, _coerce_bool(report_a2a))
+    usage_metrics = _llm_usage_from_run_report(run_report)
+    report_model_type_size = usage_metrics.pop("model_type_size", "")
+    if not row.get("model_type_size") and report_model_type_size:
+        row["model_type_size"] = report_model_type_size
     row.update(usage_metrics)
     row["detailed_briefing"] = (
-        _detailed_briefing_from_trace_json(trace_path)
-        or _detailed_briefing_from_results_csv(cell_dir)
+        _detailed_briefing_from_results_csv(cell_dir)
         or _detailed_briefing_from_detail_status(row.get("detail_status"))
     )
 
     # ---- Inline do-nothing baseline (optional, no pre-built JSON needed) ----
     # Computed BEFORE the agent replay from a fresh scenario instance that
     # shares the same (scenario_id, start_time, seed) so the physics seed
-    # is identical.  We read the raw trace metadata to get these fields
-    # before calling _replay_trace, which destroys the fresh state.
+    # is identical.
     inline_donothing_kg: float | None = None
     inline_donothing_per_ridge: list[float] | None = None
-    _trace_scenario_id: str | None = None
     if donothing_inline and extrapolate:
         try:
-            raw_meta = (
-                json.loads(trace_path.read_text())
-                .get("metadata", {})
-                .get("definition", {})
-            )
-            _dn_scenario_id = raw_meta.get("scenario_id")
-            _trace_scenario_id = _dn_scenario_id
-            _dn_start_time = raw_meta.get("start_time")
-            _dn_seed = int(raw_meta.get("seed") or 0)
+            _dn_scenario_id = bundle.get("scenario_id")
+            _dn_start_time = bundle.get("start_time")
+            _dn_seed = int(bundle.get("seed") or 0)
             if _dn_scenario_id:
                 # Use the per-ridge variant so we get both the total kg AND
                 # the per-ridge yield array — needed to score focus subsets
@@ -1093,7 +1046,7 @@ def replay_one_cell(
             inline_donothing_per_ridge = None
 
     try:
-        scenario, env, info = _replay_trace(trace_path)
+        scenario, env, info = _replay_fairy_run_bundle(bundle)
     except KeyError as exc:
         row["status"] = "scenario_not_in_registry"
         row["error"] = str(exc)
@@ -1577,7 +1530,7 @@ def _discover_cells(root: Path, recursive: bool = False) -> list[Path]:
     """Find cell directories under *root*.
 
     A cell directory is any directory that contains at least one
-    ``scenario_*.json`` trace file.
+    FAIRY ``*.agent_workflow.json`` file.
 
     When ``recursive=False`` (default), only the immediate children of
     *root* are checked — this is the fast path for a well-structured sweep
@@ -1591,9 +1544,9 @@ def _discover_cells(root: Path, recursive: bool = False) -> list[Path]:
     """
     cells = []
     if recursive:
-        # rglob "scenario_*.json" then take the parent dirs, de-dup, sort.
+        # rglob "*.agent_workflow.json" then take parent dirs, de-dup, sort.
         seen: set[Path] = set()
-        for match in sorted(root.rglob("scenario_*.json")):
+        for match in sorted(root.rglob("*.agent_workflow.json")):
             parent = match.parent
             if parent not in seen:
                 seen.add(parent)
@@ -1603,7 +1556,7 @@ def _discover_cells(root: Path, recursive: bool = False) -> list[Path]:
         for p in sorted(root.iterdir()):
             if not p.is_dir():
                 continue
-            if any(p.glob("scenario_*.json")):
+            if any(p.glob("*.agent_workflow.json")):
                 cells.append(p)
     return cells
 
@@ -1630,7 +1583,7 @@ def _normalize_excluded_dirs(excluded_dirs: list[str]) -> list[Path]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Re-evaluate FOS over a sweep of saved cell traces."
+        description="Re-evaluate FOS over FAIRY agent run bundles."
     )
     ap.add_argument(
         "--root",
@@ -1639,7 +1592,7 @@ def main() -> int:
         action="append",
         nargs="+",
         help="Sweep dir (e.g. .../phase5_paper_matrix/<grouping>/) "
-        "containing one subdir per cell with a scenario_*.json trace. "
+        "containing one subdir per cell with a *.agent_workflow.json bundle. "
         "Pass multiple roots to combine several sweeps into one summary.",
     )
     ap.add_argument(
@@ -1685,7 +1638,7 @@ def main() -> int:
             "When provided, FOS Outcome reports the headline metric "
             "crop_loss_pct = 1 - agent_biological / oracle_biological, "
             "and yield_preserved_ratio replaces yield_ratio as the main "
-            "Outcome term. Without it we fall back to legacy yield_ratio."
+            "Outcome term. Without it we fall back to yield_ratio."
         ),
     )
     ap.add_argument(
@@ -1712,7 +1665,7 @@ def main() -> int:
         default=False,
         help=(
             "Walk the entire subtree under --root to find cell directories "
-            "(any dir containing a scenario_*.json file). Use this when "
+            "(any dir containing a *.agent_workflow.json file). Use this when "
             "--root points to a top-level directory such as validation_runs/ "
             "that contains multiple sweep subdirectories. Without this flag "
             "only the immediate children of --root are checked."
@@ -1842,7 +1795,7 @@ def main() -> int:
     if oracle_dir is not None and not oracle_dir.is_dir():
         print(
             f"  [warn] --oracle-baselines={oracle_dir} is not a directory; "
-            f"running without baselines (fallback to legacy yield_ratio).",
+            f"running without baselines (fallback to yield_ratio).",
             file=sys.stderr,
         )
         oracle_dir = None

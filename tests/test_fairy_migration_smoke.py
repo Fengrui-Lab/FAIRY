@@ -9,12 +9,29 @@ from pathlib import Path
 
 import fairy
 from fairy.agents.agent.agent import AgentRunLimitExceeded
+from fairy.agents.llm.base_llm import BaseLLM
 from fairy.apps.farm_world import FarmWorldApp, WeatherApp
 from fairy.apps.system import SystemApp
 from fairy.controllers.engine import Engine
-from fairy.controllers.agent_builder import AgentBuilder, build_controller_agent
-from fairy.controllers.agent_config import ResearchAgentProfileConfig
+from fairy.controllers.agent_builder import (
+    AgentBuilder,
+    AppAgentBuilder,
+    ResearchARESimulationAgent,
+    build_controller_agent,
+)
+from fairy.controllers.agent_config import (
+    AgentConfigBuilder,
+    AppAgentConfigBuilder,
+    ResearchAgentProfileConfig,
+)
+from fairy.controllers.app_agent import (
+    AppAgent,
+    apply_a2a_to_apps,
+    collect_a2a_traces,
+    resolve_a2a_agent_name_for_app,
+)
 from fairy.controllers.research_strategies import ResearchStrategyCoordinator
+from fairy.controllers.skill_library import DynamicSkillLibrary
 from fairy.scenarios.farm_world_fullseason.scenario_full_season_baseline_balanced_season import (
     ScenarioFullSeasonBalanced,
 )
@@ -31,7 +48,7 @@ from fairy.scenarios.baseline_farm_world.scenario_field_prep import (
     ScenarioFarmWorldFieldPrep,
 )
 from fairy.scenarios.registry import list_scenarios
-from fairy.scenarios.workflow import Workflow
+from fairy.scenarios.workflow import Workflow, WorkflowStep
 
 
 def test_all_fairy_modules_import() -> None:
@@ -53,6 +70,16 @@ def test_no_are_or_rsare_runtime_imports() -> None:
         capture_output=True,
     )
     assert result.returncode == 1, result.stdout + result.stderr
+
+
+def test_workflow_save_creates_parent_directory(tmp_path: Path) -> None:
+    workflow = Workflow()
+    workflow.add_node(WorkflowStep(name="check_weather", tool_name="WeatherApp__get_current_weather"))
+    path = tmp_path / "new" / "nested" / "workflow.json"
+
+    workflow.save_workflow(str(path))
+
+    assert Workflow.load_workflow(str(path)).to_dict() == workflow.to_dict()
 
 
 def test_registry_contains_migrated_farm_scenarios() -> None:
@@ -112,6 +139,24 @@ def test_fullseason_v2_formal90_registered() -> None:
 
     assert len(formal_ids) == 90
     assert not [scenario_id for scenario_id in formal_ids if scenario_id not in registered]
+
+
+def test_fullseason_v2_l2_skill_72_registered() -> None:
+    skill_ids = [
+        line.strip()
+        for line in Path("scripts/fullseason/l2_skill_scenario_ids.txt").read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    source_l3_ids = [
+        line.strip()
+        for line in Path("scripts/fullseason/l3_skill_source_ids.txt").read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    registered = set(list_scenarios())
+
+    assert len(skill_ids) == 72
+    assert len(source_l3_ids) == 20
+    assert not [scenario_id for scenario_id in skill_ids if scenario_id not in registered]
 
 
 def test_fullseason_v2_oracle_replay_evaluate_smoke(tmp_path: Path) -> None:
@@ -251,6 +296,167 @@ def test_controller_families_include_react_and_rewoo() -> None:
     assert "farm_rewoo_modular" in families
     assert "farm_tree_search" in families
     assert "farm_critic_refiner" in families
+    assert "farm_skill_rag" not in families
+    with pytest.raises(ValueError):
+        AgentConfigBuilder().build("farm_skill_rag")
+
+
+def test_app_agent_profiles_match_are_names_and_prompts() -> None:
+    builder = AppAgentConfigBuilder()
+
+    assert builder.list_agents() == [
+        "default_app_agent",
+        "weather_expert_app_agent",
+        "sensor_expert_app_agent",
+        "machinery_expert_app_agent",
+        "operations_expert_app_agent",
+    ]
+    weather = builder.build("weather_expert_app_agent")
+    machinery = builder.build("machinery_expert_app_agent")
+
+    assert weather.max_iterations == 60
+    assert "weather and field-conditions expert" in weather.system_prompt
+    assert machinery.max_iterations == 70
+    assert "machinery and implement operations expert" in machinery.system_prompt
+
+
+def test_a2a_typed_routing_and_wrapper_tool_exposure() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    result = apply_a2a_to_apps(
+        list(scenario.apps or []),
+        llm_factory=lambda: _ScriptedLLM([_Message(content="done")]),
+        app_agent_builder=AppAgentBuilder(),
+        app_agent_config_builder=AppAgentConfigBuilder(),
+        app_prop=1.0,
+        policy="typed_experts",
+        app_agent_name="default_app_agent",
+        seed=scenario.seed,
+    )
+
+    wrappers = [app for app in result.apps if isinstance(app, AppAgent)]
+    assert wrappers
+    assert result.metadata["enabled"] is True
+    assert result.metadata["transformed_apps"]
+    assert all(app.name != "SystemAppExpert" for app in wrappers)
+    assert all(app.max_tool_calls is not None for app in wrappers)
+    assert resolve_a2a_agent_name_for_app(WeatherApp(), policy="typed_experts") == (
+        "weather_expert_app_agent"
+    )
+
+    _, schemas, tools_map = __import__(
+        "fairy.agents.agent.toolset_builder",
+        fromlist=["build_toolset"],
+    ).build_toolset(result.apps)
+    schema_names = {schema["function"]["name"] for schema in schemas}
+    assert any(name.endswith("__expert_agent") for name in schema_names)
+    assert "WeatherApp__get_current_weather" not in tools_map
+
+
+def test_a2a_expert_agent_can_call_wrapped_app_tool() -> None:
+    weather = WeatherApp()
+    config = AppAgentConfigBuilder().build("weather_expert_app_agent")
+    expert = AppAgentBuilder().build(
+        config,
+        llm=_ScriptedLLM(
+            [
+                _Message(tool_calls=[_ToolCall("WeatherApp__get_current_weather")]),
+                _Message(content="weather checked", tool_calls=None),
+            ]
+        ),
+        app=weather,
+    )
+    wrapper = AppAgent(
+        wrapped_app=weather,
+        app_agent=expert,
+        app_agent_name="weather_expert_app_agent",
+    )
+
+    answer = wrapper.expert_agent("Check current weather.")
+
+    assert answer == "weather checked"
+    assert wrapper.last_tool_call_count == 1
+    assert any(event["event_type"] == "tool_call_end" for event in wrapper.last_runtime_events)
+
+
+def test_collect_a2a_traces_exports_expert_prompt_events_and_metrics() -> None:
+    weather = WeatherApp()
+    config = AppAgentConfigBuilder().build("weather_expert_app_agent")
+    expert = AppAgentBuilder().build(
+        config,
+        llm=_ScriptedLLM(
+            [
+                _Message(tool_calls=[_ToolCall("WeatherApp__get_current_weather")]),
+                _Message(content="weather checked", tool_calls=None),
+            ]
+        ),
+        app=weather,
+    )
+    wrapper = AppAgent(
+        wrapped_app=weather,
+        app_agent=expert,
+        app_agent_name="weather_expert_app_agent",
+    )
+
+    wrapper.expert_agent("Check current weather.")
+    traces = collect_a2a_traces([wrapper])
+
+    assert traces[0]["wrapper_app_name"] == "WeatherAppExpert"
+    assert traces[0]["app_agent"] == "weather_expert_app_agent"
+    assert "weather and field-conditions expert" in traces[0]["messages"][0]["content"]
+    assert traces[0]["tool_call_count"] == 1
+    assert traces[0]["runtime_metrics"][0]["tokens"]["total_tokens"] == 16
+    assert any(event["event_type"] == "tool_call_end" for event in traces[0]["runtime_events"])
+    assert "step1" in traces[0]["workflow"]
+
+
+def test_engine_registers_wrapped_farm_world_for_system_time_advance() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    result = apply_a2a_to_apps(
+        list(scenario.apps or []),
+        llm_factory=lambda: _ScriptedLLM([_Message(content="done")]),
+        app_agent_builder=AppAgentBuilder(),
+        app_agent_config_builder=AppAgentConfigBuilder(),
+        app_prop=1.0,
+        policy="typed_experts",
+        app_agent_name="default_app_agent",
+        seed=scenario.seed,
+    )
+    scenario.apps = result.apps
+
+    engine = Engine(agent=None, scenario=scenario)
+    system_app = next(app for app in scenario.apps or [] if isinstance(app, SystemApp))
+
+    assert getattr(system_app, "_farm_world_app", None).__class__.__name__ == "FarmWorldApp"
+    assert system_app.advance_time(days=1)["status"] == "ok"
+
+
+def test_iclr_runner_passes_a2a_cli_flags() -> None:
+    from scripts.iclr_validation_runner import CellSpec, _build_cell_command
+
+    cmd = _build_cell_command(
+        CellSpec(family="farm_baseline_react", scenario="scenario_x", repeat=1),
+        model="deepseek-chat",
+        provider="deepseek",
+        output_dir=Path("/tmp/fairy-cell"),
+        a2a_enabled=True,
+        a2a_app_prop=0.75,
+        a2a_policy="typed_experts",
+        a2a_app_agent="weather_expert_app_agent",
+        a2a_model="qwen-plus",
+        a2a_provider="qwen",
+        a2a_endpoint="http://localhost:8000/v1",
+    )
+
+    joined = " ".join(cmd)
+    assert "--a2a true" in joined
+    assert "--a2a-app-prop 0.75" in joined
+    assert "--a2a-policy typed_experts" in joined
+    assert "--a2a-app-agent weather_expert_app_agent" in joined
+    assert "--a2a-model qwen-plus" in joined
+    assert "--a2a-provider qwen" in joined
+    assert "--a2a-endpoint http://localhost:8000/v1" in joined
 
 
 def test_rewoo_strategy_builds_plan_context() -> None:
@@ -266,6 +472,39 @@ def test_rewoo_strategy_builds_plan_context() -> None:
     assert telemetry["planned_steps"] == 3
 
 
+@pytest.mark.parametrize(
+    ("family_id", "planning_mode"),
+    [
+        ("farm_reflective_memory", "reflective"),
+        ("farm_multi_specialist", "multi_specialist"),
+        ("farm_adaptive_verifier", "adaptive_verifier"),
+        ("farm_rewoo_modular", "rewoo_modular"),
+        ("farm_tree_search", "tree_search"),
+        ("farm_critic_refiner", "critic_refiner"),
+        ("farm_graph_memory", "graph_memory"),
+    ],
+)
+def test_agent_config_builder_matches_are_research_profiles(
+    family_id: str, planning_mode: str
+) -> None:
+    config = AgentConfigBuilder().build(family_id)
+
+    assert config.research_profile is not None
+    assert config.research_profile.family_id == family_id
+    assert config.research_profile.planning_mode == planning_mode
+    if family_id in {"farm_adaptive_verifier", "farm_rewoo_modular"}:
+        assert config.research_profile.replan_on_tool_error is True
+
+
+def test_dynamic_skill_library_retrieves_migrated_skills() -> None:
+    library = DynamicSkillLibrary("fairy/controllers/research_skills")
+
+    results = library.retrieve("check weather forecast before harvest", top_k=2)
+
+    assert results
+    assert results[0][0].skill_id == "weather_window_assessment"
+
+
 def test_controller_builder_creates_tool_enabled_agent() -> None:
     scenario = ScenarioFarmWorldFieldPrep()
     scenario.setup()
@@ -276,8 +515,33 @@ def test_controller_builder_creates_tool_enabled_agent() -> None:
     )
 
     assert agent.name == "farm_rewoo_modular"
+    assert isinstance(agent, ResearchARESimulationAgent)
     assert "FarmWorldApp__get_inventory" in agent.tools_map
     assert agent.controller_profile.rewoo.enabled
+    assert agent.controller_profile.planning_mode == "rewoo_modular"
+
+
+def test_qwen_and_vllm_clients_use_function_call_path(monkeypatch) -> None:
+    monkeypatch.setenv("QWEN_API_KEY", "test-key")
+    monkeypatch.setenv("VLLM_API_KEY", "EMPTY")
+
+    qwen = BaseLLM.llm_builder(
+        {"provider": "qwen", "model": "qwen3.6-flash-2026-04-16"}
+    )
+    qwen_legacy = BaseLLM.llm_builder(
+        {"provider": "qwen-json", "model": "qwen3.6-flash-2026-04-16"}
+    )
+    vllm = BaseLLM.llm_builder(
+        {
+            "provider": "vllm",
+            "model": "Qwen/Qwen3-1.7B",
+            "base_url": "http://localhost:8000/v1",
+        }
+    )
+
+    assert qwen.provider == "qwen"
+    assert qwen_legacy.provider == "qwen"
+    assert vllm.provider == "vllm"
 
 
 def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
@@ -309,6 +573,8 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert "tool_call_end" in event_types
     assert "agent_run_end" in event_types
     assert agent.tool_call_count == 1
+    assert agent.telemetry["tool_calls"] == 1
+    assert agent.telemetry["llm_calls"] == 2
     assert len(workflow) == 2
     assert agent.messages.runtime_metrics[0]["tokens"]["total_tokens"] == 16
 
@@ -333,6 +599,14 @@ def test_agent_runtime_events_capture_limits_and_parse_errors() -> None:
         event["event_type"] == "agent_limit_exceeded"
         for event in limited_agent.runtime_events
     )
+    assert any(
+        event["event_type"] == "agent_run_end" and event["status"] == "stopped"
+        for event in limited_agent.runtime_events
+    )
+    assert not any(
+        event["event_type"] == "agent_run_error"
+        for event in limited_agent.runtime_events
+    )
 
     parse_scenario = ScenarioFarmWorldFieldPrep()
     parse_scenario.setup()
@@ -355,3 +629,53 @@ def test_agent_runtime_events_capture_limits_and_parse_errors() -> None:
         event["event_type"] == "tool_args_parse_error"
         for event in parse_agent.runtime_events
     )
+
+
+def test_rebatch_discovers_fairy_agent_workflow_bundles_only(tmp_path: Path) -> None:
+    from scripts.rebatch_fos_from_traces import _discover_cells
+
+    root = tmp_path / "matrix"
+    fairy_cell = root / "farm_baseline_react__scenario_demo__r1"
+    old_trace_cell = root / "farm_baseline_react__scenario_old__r1"
+    nested_cell = root / "nested" / "farm_baseline_react__scenario_nested__r1"
+    fairy_cell.mkdir(parents=True)
+    old_trace_cell.mkdir(parents=True)
+    nested_cell.mkdir(parents=True)
+
+    (fairy_cell / "scenario_demo.agent_workflow.json").write_text("{}", encoding="utf-8")
+    (old_trace_cell / "scenario_old.json").write_text("{}", encoding="utf-8")
+    (nested_cell / "scenario_nested.agent_workflow.json").write_text("{}", encoding="utf-8")
+
+    assert _discover_cells(root, recursive=False) == [fairy_cell]
+    assert _discover_cells(root, recursive=True) == [fairy_cell, nested_cell]
+
+
+def test_rebatch_uses_run_report_token_metrics() -> None:
+    from scripts.rebatch_fos_from_traces import _llm_usage_from_run_report
+
+    report = {
+        "model": "deepseek-chat",
+        "metrics": {
+            "wall_time_seconds": 12.5,
+            "llm_call_count": 2,
+            "llm_wall_time_seconds": 10.0,
+            "token_usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 20,
+                "cached_tokens": 40,
+                "total_tokens": 120,
+            },
+        },
+    }
+
+    assert _llm_usage_from_run_report(report) == {
+        "model_type_size": "deepseek-chat",
+        "runtime_s_per_scenario": "12.50",
+        "llm_calls_with_usage": 2,
+        "avg_total_tokens_per_agent_call": "60.00",
+        "avg_input_tokens_per_agent_call": "50.00",
+        "avg_output_tokens_per_agent_call": "10.00",
+        "avg_cached_tokens_per_agent_call": "20.00",
+        "total_tokens_per_scenario": "120.00",
+        "avg_runtime_s_per_agent_call": "5.00",
+    }

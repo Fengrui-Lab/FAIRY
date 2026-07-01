@@ -65,6 +65,10 @@ SELECTED_L2_L1_20_30_PATH = (
     REPO_ROOT
     / "scripts/fullseason/selected_l2_l1_20_30_scenario_ids.txt"
 )
+L2_SKILL_SCENARIO_IDS_PATH = (
+    REPO_ROOT
+    / "scripts/fullseason/l2_skill_scenario_ids.txt"
+)
 
 
 # Match the per-scenario list the FOS validation paper sweep covers, plus
@@ -153,6 +157,20 @@ def _selected_l2_l1_manifest_rows() -> list[tuple[str, str, str, str]]:
 
 def _selected_l2_l1_scenarios() -> list[str]:
     return [scenario_id for _, _, scenario_id, _ in _selected_l2_l1_manifest_rows()]
+
+
+def _plain_scenario_id_list(path: Path, label: str) -> list[str]:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing {label} scenario list: {path}")
+    return [
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+
+def _l2_skill_scenarios() -> list[str]:
+    return _plain_scenario_id_list(L2_SKILL_SCENARIO_IDS_PATH, "L2 skill")
 
 
 def _ensure_selected_l2_l1_scenario_imported(scenario_id: str) -> None:
@@ -438,6 +456,8 @@ def _resolve_scenarios(spec: str) -> list[str]:
         return _formal_fullseason_scenarios()
     if spec in {"selected_l2_l1_20_30", "l2_l1_20_30"}:
         return _selected_l2_l1_scenarios()
+    if spec in {"l2_skill_72", "l2_skills", "l2_skill"}:
+        return _l2_skill_scenarios()
     if spec in DEFAULT_SCENARIO_GROUPS:
         return list(DEFAULT_SCENARIO_GROUPS[spec])
     return [s.strip() for s in spec.split(",") if s.strip()]
@@ -453,7 +473,7 @@ def main() -> int:
         help=(
             "Comma-separated scenario IDs, or one of: 'all', 'round12', "
             "'round3', 'round4', 'full'/'formal90'/'l3_fullseason', "
-            "'selected_l2_l1_20_30'. "
+            "'selected_l2_l1_20_30', 'l2_skill_72'. "
             "Default: all."
         ),
     )

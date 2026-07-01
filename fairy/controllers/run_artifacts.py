@@ -64,6 +64,7 @@ def artifact_guide(artifacts: dict[str, str]) -> dict[str, str]:
         "replay_workflow": "Workflow produced by replaying an oracle or saved workflow.",
         "messages": "Raw LLM conversation and tool responses for prompt/debug analysis.",
         "runtime_metrics": "Per LLM/tool timing and token details.",
+        "a2a_traces": "A2A expert-agent messages, runtime events, workflow, and token details.",
         "run_log": "Tool-only replay log kept for compatibility.",
         "evaluation": "Scenario validation result and farm outcome summary.",
         "run_summary": "Legacy machine summary kept for compatibility with older scripts.",
@@ -90,6 +91,8 @@ def build_run_report(
     evaluation: dict[str, Any] | None = None,
     outcome: dict[str, Any] | None = None,
     error: dict[str, Any] | None = None,
+    controller_telemetry: dict[str, Any] | None = None,
+    a2a: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     totals = metric_totals(runtime_metrics)
     status = "completed" if stopped_reason in {"agent_finished", "completed"} and error is None else "stopped"
@@ -116,7 +119,10 @@ def build_run_report(
             "workflow_steps": workflow_steps,
             "tool_call_count": tool_call_count,
             **totals,
+            "controller_telemetry": controller_telemetry or {},
         },
+        "controller_telemetry": controller_telemetry or {},
+        "a2a": a2a or {"enabled": False},
         "evaluation": evaluation,
         "outcome": outcome or {},
         "error": error,

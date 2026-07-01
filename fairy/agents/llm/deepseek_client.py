@@ -20,7 +20,7 @@ class DeepSeekClient(BaseLLM):
             **kwargs: Additional parameters.
         """
         super().__init__(model, temperature, **kwargs)
-        self.provider = "openai"
+        self.provider = "deepseek"
         self.api_key = api_key or DEEPSEEK_API_KEY
         self.model = model
         self.base_url = kwargs.get("base_url") or DEEPSEEK_API_BASE

@@ -47,7 +47,7 @@ def _import_known_scenarios() -> None:
         "fairy.scenarios.farm_world_fullseason_v2",
     ):
         mod = importlib.import_module(package)
-        for info in pkgutil.iter_modules(mod.__path__, package + "."):
+        for info in pkgutil.walk_packages(mod.__path__, package + "."):
             if not info.ispkg:
                 imported = importlib.import_module(info.name)
                 for value in vars(imported).values():
