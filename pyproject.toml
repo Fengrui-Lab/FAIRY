@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "fairy-farm"
 version = "0.1.0"
-description = "FAIRY farm-agent simulation package decoupled from ARE."
+description = "FAIRY farm-agent simulation runtime."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,4 +19,3 @@ fairy-run = "fairy.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["fairy"]
-

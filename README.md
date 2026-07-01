@@ -2,7 +2,7 @@
 
 [中文说明](README.zh-CN.md)
 
-FAIRY is an independent farm-agent simulation runtime for FARM scenario execution, oracle workflow generation, replay, and evaluation. It extracts the FARM business logic that used to live inside ARE into a standalone `fairy` Python package, while preserving the lightweight FarmAgent-style controller runtime and the OpenAI-compatible function-calling tool path.
+FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 
 ## System Scope
 
@@ -131,13 +131,13 @@ Complete `detailed_briefing` values:
 |---|---|---|---|
 | `false` | `{"detailed_briefing": false}` | Use only the base L3 prompt; no extra detail/context. | None |
 | `true` | `{"detailed_briefing": true}` | Use the scenario's built-in human detailed briefing. | Scenario `detailed_briefing_text` |
-| `kwoo` | `{"detailed_briefing": "kwoo"}` | Append Kwoo-generated expert context to the base prompt. | `FARM_FAIRY_KWOO_CONTEXT_PATH`; legacy `FARM_ARE_KWOO_CONTEXT_PATH` is accepted |
+| `kwoo` | `{"detailed_briefing": "kwoo"}` | Append Kwoo-generated expert context to the base prompt. | `FARM_FAIRY_KWOO_CONTEXT_PATH` |
 | `library` | `{"detailed_briefing": "library"}` | Append same-L3 structured L2 skill-library context. This is not a Python package; it comes from `knowledge_library_pilot/<scenario_slug>/library_same_l3.md`. | Scenario-specific `library_same_l3.md` |
 | `l2_human_same` | `{"detailed_briefing": "l2_human_same"}` | Same-source-L3 human/structured L2 skill context. | Same-L3 skill JSON under `knowledge_library_pilot` |
 | `l2_human_differ` | `{"detailed_briefing": "l2_human_differ"}` | Cross-L3 transferred human/structured L2 skill context. | Cross-L3 skill JSON under `knowledge_library_pilot` |
 | `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | Cross-L3 L2 skills retrieved by text similarity. | Generated retrieval context |
 | `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | Text-similar cross-L3 L2 skills grouped by establishment/management/harvest quotas. | Generated retrieval context |
-| `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | Cross-L3 L2 skills retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH`; legacy `FARM_ARE_RETRIEVED_CONTEXT_PATH` is accepted |
+| `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | Cross-L3 L2 skills retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l2_pathsim_grouped_differ` | `{"detailed_briefing": "l2_pathsim_grouped_differ"}` | Path-similar cross-L3 L2 skills grouped by farming stage. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | Same-L3 reference context retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_differ` | `{"detailed_briefing": "l3_pathsim_differ"}` | Cross-L3 reference context retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
@@ -400,7 +400,7 @@ Supported providers:
   - Environment variables: optional `VLLM_API_KEY`, optional `VLLM_API_BASE`
   - Default endpoint: `http://localhost:8000/v1`
 
-`deepseek-json` and `qwen-json` are legacy ARE labels. In FAIRY they are compatibility aliases for function calling, not JSON-only agents.
+`deepseek-json` and `qwen-json` are compatibility aliases for function calling, not JSON-only agents.
 
 ## One End-to-End Command
 
@@ -549,7 +549,7 @@ Parameters:
 Difference between `--scenario-kwargs` and `--init-kwargs`:
 
 - `--scenario-kwargs` controls how the scenario object is constructed. Full-season `detailed_briefing` is a dataclass/constructor field, so it belongs here.
-- `--init-kwargs` controls how `setup()` initializes the already-created scenario. Most migrated FARM scenarios do not use it.
+- `--init-kwargs` controls how `setup()` initializes the already-created scenario. Most FARM scenarios do not use it.
 
 The detail true/false/kwoo modes all use `--scenario-kwargs`:
 
@@ -1168,16 +1168,13 @@ runtime_log.jsonl                 # per-call details
 ```bash
 PYTHONPATH=. pytest -q tests/test_fairy_migration_smoke.py -q
 python -m py_compile fairy/cli.py fairy/controllers/app_agent.py fairy/controllers/run_artifacts.py
-rg "from are\\.|import are\\.|from rsare\\.|import rsare\\." fairy tests scripts \
-  --glob '!scripts/selected_four_figures/data/**' \
-  --glob '!scripts/iclr_validation_runner*.json'
+rg "from are\\.|import are\\.|from rsare\\.|import rsare\\." fairy tests scripts
 ```
 
-For the `rg` guard, no output and return code 1 means no ARE/rsare runtime imports were found.
+For the import guard, no output and return code 1 means no external framework runtime imports were found.
 
-## Migration Boundaries And Known Limits
+## Known Limits
 
-- FAIRY migrates FARM business logic, not the entire ARE benchmark framework.
 - `farm_rewoo_modular` can enter `ReWOO plan fallback`; that means it is not yet full paper-run-level ReWOO planning.
 - A2A on can significantly increase wall time and expert tokens. Always compare both main-agent token usage and `a2a.expert_metrics`.
 - `tool_errors` in oracle baselines may be part of the intended scenario management plan; they do not always mean baseline construction failed.

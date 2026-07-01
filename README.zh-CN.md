@@ -2,7 +2,7 @@
 
 [English README](README.md)
 
-FAIRY 是一个独立的农场智能体仿真运行时，用于 FARM 场景执行、oracle 工作流生成、回放和评估。它把原先嵌在 ARE 里的 FARM 业务逻辑迁移成独立的 `fairy` Python 包，并保留 FarmAgent 风格的轻量控制器和 OpenAI-compatible function calling 工具调用路径。
+FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
 ## 系统定位
 
@@ -131,13 +131,13 @@ PYTHONPATH=. python -m fairy.cli \
 |---|---|---|---|
 | `false` | `{"detailed_briefing": false}` | 只使用基础 L3 prompt，不注入额外 detail/context。 | 无 |
 | `true` | `{"detailed_briefing": true}` | 使用场景自带的人工 detailed briefing。 | 场景内置 `detailed_briefing_text` |
-| `kwoo` | `{"detailed_briefing": "kwoo"}` | 在基础 prompt 后追加 Kwoo 生成的 expert context。 | `FARM_FAIRY_KWOO_CONTEXT_PATH` 指向 Kwoo JSON/text；兼容 `FARM_ARE_KWOO_CONTEXT_PATH` |
+| `kwoo` | `{"detailed_briefing": "kwoo"}` | 在基础 prompt 后追加 Kwoo 生成的 expert context。 | `FARM_FAIRY_KWOO_CONTEXT_PATH` 指向 Kwoo JSON/text |
 | `library` | `{"detailed_briefing": "library"}` | 在基础 prompt 后追加同 L3 的结构化 L2 skill library。不是 Python 包；文件来自 `knowledge_library_pilot/<scenario_slug>/library_same_l3.md`。 | 该场景必须在 `knowledge_library_pilot` 下有 `library_same_l3.md` |
 | `l2_human_same` | `{"detailed_briefing": "l2_human_same"}` | 注入同 source L3 的人工/结构化 L2 skill context。 | `knowledge_library_pilot` 中同 L3 skill JSON |
 | `l2_human_differ` | `{"detailed_briefing": "l2_human_differ"}` | 注入其他 L3 source 转移来的人工/结构化 L2 skill context。 | `knowledge_library_pilot` cross-L3 skill JSON |
 | `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | 注入文本相似度检索到的跨 L3 L2 skills。 | 已生成的 retrieval context |
 | `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | 文本相似度检索跨 L3 L2 skills，并按 establishment/management/harvest 分组配额。 | 已生成的 retrieval context |
-| `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | 注入 workflow/path 相似度检索到的跨 L3 L2 skills。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指向 retrieval JSON；兼容 `FARM_ARE_RETRIEVED_CONTEXT_PATH` |
+| `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | 注入 workflow/path 相似度检索到的跨 L3 L2 skills。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指向 retrieval JSON |
 | `l2_pathsim_grouped_differ` | `{"detailed_briefing": "l2_pathsim_grouped_differ"}` | workflow/path 相似度检索跨 L3 L2 skills，并按农事阶段分组配额。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | 注入 workflow/path 相似度检索到的同 L3 reference context。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_differ` | `{"detailed_briefing": "l3_pathsim_differ"}` | 注入 workflow/path 相似度检索到的跨 L3 reference context。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
@@ -332,7 +332,7 @@ fairy/
   controllers/   Engine、控制器、A2A app-agent、run artifacts
   physics/       FARM 物理引擎和 profiles
   scenarios/     Scenario 基类、registry、baseline/action-tick/full-season 场景
-  evaluation/    migrated FARM evaluation/FOS helpers
+  evaluation/    FARM evaluation/FOS helpers
 scripts/
   build_oracle_baselines.py     生成 oracle yield baselines
   rebatch_fos_from_traces.py    对 FAIRY agent workflows 重放并重新算 FOS/yield loss
@@ -400,7 +400,7 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
   - 环境变量：可选 `VLLM_API_KEY`，可选 `VLLM_API_BASE`
   - 默认 endpoint：`http://localhost:8000/v1`
 
-`deepseek-json` 和 `qwen-json` 是旧 ARE 配置名的兼容别名；在 FAIRY 里仍然走 function calling，不再走 JSON-only agent。
+`deepseek-json` 和 `qwen-json` 是兼容别名；在 FAIRY 里仍然走 function calling，不再走 JSON-only agent。
 
 ## 端到端示例命令
 
@@ -549,7 +549,7 @@ fairy-run \
 `--scenario-kwargs` 和 `--init-kwargs` 的区别：
 
 - `--scenario-kwargs`：控制“这个场景对象怎么创建”。例如 full-season 场景的 `detailed_briefing` 是 dataclass/constructor 字段，所以必须放这里。
-- `--init-kwargs`：控制“创建后 setup 怎么初始化”。目前大多数迁移 FARM 场景不需要它，保持 `{}` 即可。
+- `--init-kwargs`：控制“创建后 setup 怎么初始化”。目前大多数 FARM 场景不需要它，保持 `{}` 即可。
 
 detail true/false/kwoo 这些都走 `--scenario-kwargs`：
 
@@ -1168,16 +1168,13 @@ runtime_log.jsonl                 # 每次调用细节
 ```bash
 PYTHONPATH=. pytest -q tests/test_fairy_migration_smoke.py -q
 python -m py_compile fairy/cli.py fairy/controllers/app_agent.py fairy/controllers/run_artifacts.py
-rg "from are\\.|import are\\.|from rsare\\.|import rsare\\." fairy tests scripts \
-  --glob '!scripts/selected_four_figures/data/**' \
-  --glob '!scripts/iclr_validation_runner*.json'
+rg "from are\\.|import are\\.|from rsare\\.|import rsare\\." fairy tests scripts
 ```
 
-`rg` 没输出且返回码为 1 表示没有匹配到 ARE/rsare runtime imports。
+import guard 没输出且返回码为 1 表示没有匹配到外部框架 runtime imports。
 
-## 迁移边界和已知限制
+## 已知限制
 
-- FAIRY 迁移 FARM 业务，不迁移完整 ARE benchmark framework。
 - `farm_rewoo_modular` 当前可能进入 fallback：`ReWOO plan fallback`。这说明还不是完整 paper-run 级 ReWOO planner。
 - A2A on 会显著增加 wall time 和专家 token。比较 A2A on/off 时必须同时看主 agent token 和 `a2a.expert_metrics`。
 - Oracle baseline 中的 `tool_errors` 可能是场景设计的一部分，不一定代表 baseline 构建失败。
