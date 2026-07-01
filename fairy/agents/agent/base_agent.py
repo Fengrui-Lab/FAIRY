@@ -1,5 +1,7 @@
 # agents/agent/base_agent.py
 
+import dataclasses
+import json
 import time
 from datetime import datetime, timezone, timedelta
 from typing import Any
@@ -58,12 +60,21 @@ class BaseAgent:
             dict: A dictionary containing the model's response, input tokens, output tokens, etc.
         """
         start_time = time.perf_counter()
+        normalized_tools = self._jsonable(tools or [])
+        tool_names = []
+        for tool in normalized_tools:
+            function = tool.get("function", {}) if isinstance(tool, dict) else {}
+            name = function.get("name")
+            if name:
+                tool_names.append(name)
         self.record_event(
             "llm_call_start",
             model=getattr(self.llm, "model", None),
             provider=getattr(self.llm, "provider", None),
             message_count=len(messages),
             tool_schema_count=len(tools or []),
+            messages=self._jsonable(messages),
+            tool_names=tool_names,
         )
         try:
             response = self.llm.chat_completion(messages, tools)
@@ -95,6 +106,30 @@ class BaseAgent:
             },
         )
         return message
+
+    def _jsonable(self, value: Any) -> Any:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, dict):
+            return {str(k): self._jsonable(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [self._jsonable(v) for v in value]
+        if dataclasses.is_dataclass(value):
+            return self._jsonable(dataclasses.asdict(value))
+        if hasattr(value, "model_dump"):
+            try:
+                return self._jsonable(value.model_dump())
+            except Exception:
+                pass
+        if hasattr(value, "dict"):
+            try:
+                return self._jsonable(value.dict())
+            except Exception:
+                pass
+        try:
+            return self._jsonable(json.loads(json.dumps(value)))
+        except Exception:
+            return str(value)
 
     def env_time_str(self):
         if self.time_manager:

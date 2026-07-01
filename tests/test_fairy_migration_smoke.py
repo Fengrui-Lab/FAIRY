@@ -597,6 +597,10 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert agent.telemetry["llm_calls"] == 2
     assert len(workflow) == 2
     assert agent.messages.runtime_metrics[0]["tokens"]["total_tokens"] == 16
+    llm_start = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_start")
+    assert llm_start["messages"][0]["role"] == "system"
+    assert llm_start["messages"][-1]["role"] == "user"
+    assert "FarmWorldApp__get_inventory" in llm_start["tool_names"]
 
 
 def test_agent_runtime_events_capture_limits_and_parse_errors() -> None:
