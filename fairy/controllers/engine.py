@@ -152,12 +152,68 @@ class Engine:
             self.scenario.setup()
             self._register_scenario_apps()
         assert self.agent is not None, "Agent run requires an agent"
+        self._apply_scenario_system_prompt()
+        agent_task = self._resolve_agent_task()
         self.agent.run(
-            input=self.scenario.scenario_input,
+            input=agent_task,
             max_tool_calls=max_tool_calls,
             timeout_seconds=timeout_seconds,
         )
         return self.agent.workflow
+
+    def _apply_scenario_system_prompt(self) -> None:
+        additional_system_prompt = getattr(self.scenario, "additional_system_prompt", None)
+        if not additional_system_prompt or self.agent is None:
+            return
+        messages = getattr(getattr(self.agent, "messages", None), "messages", [])
+        if not messages:
+            return
+        first_message = messages[0]
+        if not isinstance(first_message, dict) or first_message.get("role") != "system":
+            return
+        content = str(first_message.get("content") or "")
+        if additional_system_prompt in content:
+            return
+        first_message["content"] = f"{content}\n\n{additional_system_prompt}"
+
+    def _resolve_agent_task(self) -> str:
+        event_task = self._agent_briefing_from_events()
+        if event_task:
+            if self.agent is not None and hasattr(self.agent, "record_event"):
+                self.agent.record_event(
+                    "agent_task_source",
+                    status="ok",
+                    source="event_briefing",
+                    content_preview=event_task[:1000],
+                )
+            return event_task
+        scenario_input = str(getattr(self.scenario, "scenario_input", "") or "")
+        if self.agent is not None and hasattr(self.agent, "record_event"):
+            self.agent.record_event(
+                "agent_task_source",
+                status="ok",
+                source="scenario_input",
+                content_preview=scenario_input[:1000],
+            )
+        return scenario_input
+
+    def _agent_briefing_from_events(self) -> str:
+        for event in getattr(self.scenario, "events", []) or []:
+            app = getattr(event, "app", None)
+            function = getattr(event, "function", None)
+            app_name = getattr(app, "name", app.__class__.__name__ if app is not None else "")
+            function_name = getattr(function, "__name__", "")
+            if app_name != "AgentUserInterface" or function_name != "send_message_to_agent":
+                continue
+            kwargs = getattr(event, "kwargs", {}) or {}
+            content = kwargs.get("content")
+            if content is None:
+                args = getattr(event, "args", ()) or ()
+                content = args[0] if args else None
+            text = str(content or "").strip()
+            if text:
+                return text
+        return ""
 
     def run_scenario_oracle(self, run_oracle: bool = True, **setup_kwargs: Any):
         self.scenario.setup(**setup_kwargs)
@@ -489,9 +545,11 @@ class Engine:
         self.scenario.setup()
         self._register_scenario_apps()
         assert self.agent is not None, "Dynamic run requires an agent"
+        self._apply_scenario_system_prompt()
+        agent_task = self._resolve_agent_task()
 
         def run_agent():
-            self.agent.run(input=self.scenario.scenario_input)
+            self.agent.run(input=agent_task)
 
         agent_thread = Thread(target=run_agent, name="Agent", daemon=True)
         agent_thread.start()

@@ -3,6 +3,7 @@
 import time
 import json
 import re
+import os
 from pathlib import Path
 from collections import deque, OrderedDict
 from datetime import datetime, timezone, timedelta
@@ -22,9 +23,37 @@ class AgentRunLimitExceeded(RuntimeError):
         super().__init__(f"Agent run stopped by {limit_type}: {limit_value}")
 
 
+class RecoverableToolCallError(RuntimeError):
+    def __init__(self, original: Exception, tool_name: str, tool_call_id: str):
+        self.original = original
+        self.tool_name = tool_name
+        self.tool_call_id = tool_call_id
+        super().__init__(f"{type(original).__name__}: {original}")
+
+
+def _is_rate_limit_error(error: Exception) -> bool:
+    text = f"{type(error).__name__}: {error}".lower()
+    return (
+        "ratelimiterror" in text
+        or "rate limit" in text
+        or "too many requests" in text
+        or "error code: 429" in text
+        or "http/1.1 429" in text
+        or "status code: 429" in text
+    )
+
+
 class Agent(BaseAgent):
 
-    def __init__(self, name, llm, system_message="", messages=None, toolsets=None):
+    def __init__(
+        self,
+        name,
+        llm,
+        system_message="",
+        messages=None,
+        toolsets=None,
+        hidden_tool_names: set[str] | frozenset[str] | None = None,
+    ):
         """
         Agent extends BaseAgent with function-calling logic.
         
@@ -41,10 +70,15 @@ class Agent(BaseAgent):
         self.tools_map = None
         if toolsets is not None:
             self.tools, self.tool_schemas, self.tools_map = \
-                build_toolset(toolsets)
+                build_toolset(toolsets, excluded_tool_names=hidden_tool_names)
         self.tool_call_count = 0
         self.llm_turn_count = 0
         self.stop_reason: str | None = None
+        self.max_llm_call_retries = int(os.getenv("FAIRY_AGENT_LLM_CALL_RETRIES", "5"))
+        self.llm_retry_sleep_seconds = float(os.getenv("FAIRY_AGENT_LLM_RETRY_SLEEP_S", "0"))
+        self.rate_limit_retry_sleep_seconds = float(
+            os.getenv("FAIRY_AGENT_RATE_LIMIT_SLEEP_S", "30")
+        )
 
     def before_llm_turn(self, task: str) -> str:
         return ""
@@ -98,6 +132,7 @@ class Agent(BaseAgent):
         name = tool_call.function.name
         tool_call_id = tool_call.id
         raw_arguments = tool_call.function.arguments
+        tool_type = tool_call.type
         try:
             args = json.loads(raw_arguments or "{}")
         except json.JSONDecodeError as exc:
@@ -110,14 +145,24 @@ class Agent(BaseAgent):
                 error_type=type(exc).__name__,
                 error_message=str(exc),
             )
-            raise
+            self.tool_call_count += 1
+            self._append_tool_error_observation(
+                tool_call=tool_call,
+                tool_name=name,
+                tool_type=tool_type,
+                tool_args={},
+                raw_arguments=raw_arguments,
+                exc=exc,
+                elapsed_time=0.0,
+                error_stage="tool_args_parse",
+            )
+            raise RecoverableToolCallError(exc, name, tool_call_id) from exc
 
         # Format environment time
         env_time = self.time_manager.time()
         env_datetime = datetime.fromtimestamp(env_time, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
 
         self.log(f"[Env Time: {env_datetime}] Calling tool: {name}({args})")
-        tool_type = tool_call.type
 
         # Call corresponding function with provided arguments
         start_time = time.perf_counter()
@@ -145,7 +190,18 @@ class Agent(BaseAgent):
                 error_type=type(exc).__name__,
                 error_message=str(exc),
             )
-            raise
+            self.tool_call_count += 1
+            self._append_tool_error_observation(
+                tool_call=tool_call,
+                tool_name=name,
+                tool_type=tool_type,
+                tool_args=args,
+                raw_arguments=raw_arguments,
+                exc=exc,
+                elapsed_time=elapsed_time,
+                error_stage="tool_call",
+            )
+            raise RecoverableToolCallError(exc, name, tool_call_id) from exc
         elapsed_time = round(time.perf_counter() - start_time, 6)
         self.tool_call_count += 1
 
@@ -179,6 +235,93 @@ class Agent(BaseAgent):
             content_preview=str(tool_response)[:500],
         )
         return tool_response
+
+    def _append_tool_error_observation(
+        self,
+        *,
+        tool_call: Any,
+        tool_name: str,
+        tool_type: str,
+        tool_args: dict[str, Any],
+        raw_arguments: str,
+        exc: Exception,
+        elapsed_time: float,
+        error_stage: str,
+    ) -> None:
+        env_ts = self.env_time_str()
+        error_text = (
+            f"[OUTPUT OF TOOL {tool_name}] ERROR:\n"
+            "***\n"
+            f"{type(exc).__name__}: {exc}\n"
+            f"Raw arguments: {raw_arguments}\n"
+            "***\n\n"
+            "Now retry with valid arguments or choose a different tool. "
+            "Do not repeat the same invalid call."
+        )
+        self.messages.messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": error_text,
+                "time": env_ts,
+            }
+        )
+        self.messages.runtime_metrics.append(
+            {
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "time": elapsed_time,
+                "status": "error",
+            }
+        )
+        self.workflow.add_node(
+            WorkflowStep(
+                op_type="TOOL_ERROR",
+                tool_name=tool_name,
+                tool_args=tool_args,
+                content=error_text,
+                time=env_ts,
+            )
+        )
+        self.record_event(
+            "tool_error_observation",
+            status="ok",
+            tool_name=tool_name,
+            tool_call_id=tool_call.id,
+            tool_type=tool_type,
+            tool_args=tool_args,
+            error_stage=error_stage,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+            content_preview=error_text[:500],
+        )
+
+    def _chat_completion_with_retries(self, messages, tools=None):
+        attempt = 0
+        while True:
+            try:
+                return self.chat_completion(messages, tools=tools)
+            except Exception as exc:
+                if attempt >= self.max_llm_call_retries:
+                    raise
+                attempt += 1
+                sleep_seconds = self._llm_retry_sleep_for_error(exc)
+                self.record_event(
+                    "llm_call_retry",
+                    status="retrying",
+                    attempt=attempt,
+                    max_retries=self.max_llm_call_retries,
+                    sleep_seconds=sleep_seconds,
+                    error_type=type(exc).__name__,
+                    error_message=str(exc),
+                )
+                if sleep_seconds > 0:
+                    time.sleep(sleep_seconds)
+
+    def _llm_retry_sleep_for_error(self, exc: Exception) -> float:
+        if _is_rate_limit_error(exc):
+            return max(0.0, self.rate_limit_retry_sleep_seconds)
+        return max(0.0, self.llm_retry_sleep_seconds)
 
     def run(
         self,
@@ -215,7 +358,9 @@ class Agent(BaseAgent):
                         status="ok",
                         content_preview=turn_context[:1000],
                     )
-                message = self.chat_completion(self.messages(), tools=self.tool_schemas)
+                message = self._chat_completion_with_retries(
+                    self.messages(), tools=self.tool_schemas
+                )
                 self.llm_turn_count += 1
                 self.after_llm_message(message)
                 if not message.tool_calls:  # if finished handling tool calls, break
@@ -225,7 +370,11 @@ class Agent(BaseAgent):
                 # === handle tool calls ===
                 for tool_call in message.tool_calls:
                     self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
-                    tool_response = self.call_function(tool_call)
+                    try:
+                        tool_response = self.call_function(tool_call)
+                    except RecoverableToolCallError as exc:
+                        self.after_agent_error(exc.original)
+                        continue
                     self.after_tool_response(tool_call, tool_response)
             wall_elapsed = round(time.perf_counter() - self.run_started_at_wall, 6)
             self.after_agent_run()

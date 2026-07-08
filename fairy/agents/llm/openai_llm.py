@@ -32,7 +32,7 @@ class OpenAILLM(BaseLLM):
         super().__init__(model, temperature, **kwargs)
         self.provider = "openai"
         self.api_key = api_key
-        self.api_client = OpenAI()
+        self.api_client = OpenAI(timeout=self.request_timeout)
 
         self.api_mode = self._resolve_api_mode(model)
 
@@ -64,6 +64,7 @@ class OpenAILLM(BaseLLM):
                 messages=messages,
                 tools=tools,
                 temperature=self.temperature,
+                **self.tool_call_options(tools),
             )
         elif self.api_mode == "reasoning":
             # https://developers.openai.com/api/docs/guides/migrate-to-responses
@@ -71,6 +72,7 @@ class OpenAILLM(BaseLLM):
                 model=self.model,
                 messages=messages,
                 tools=tools,
+                **self.tool_call_options(tools),
             )
         else:
             raise RuntimeError(f"Invalid API mode: {self.api_mode}")
@@ -80,5 +82,6 @@ class OpenAILLM(BaseLLM):
         return {
             'llm_class': self.llm_class,
             'model': self.model,
-            'temperature': self.temperature
+            'temperature': self.temperature,
+            'parallel_tool_calls': self.parallel_tool_calls,
         }

@@ -20,7 +20,11 @@ class QwenClient(BaseLLM):
         self.provider = "qwen"
         self.api_key = api_key or os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
         self.base_url = kwargs.get("base_url") or QWEN_API_BASE
-        self.api_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.api_client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=self.request_timeout,
+        )
 
     def chat_completion(self, messages, tools=None):
         return self.api_client.chat.completions.create(
@@ -28,6 +32,7 @@ class QwenClient(BaseLLM):
             messages=messages,
             tools=tools,
             temperature=self.temperature,
+            **self.tool_call_options(tools),
         )
 
     def to_dict(self):
@@ -36,4 +41,5 @@ class QwenClient(BaseLLM):
             "model": self.model,
             "temperature": self.temperature,
             "base_url": self.base_url,
+            "parallel_tool_calls": self.parallel_tool_calls,
         }

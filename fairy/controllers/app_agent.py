@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
-from fairy.agents.agent.agent import Agent
+from fairy.agents.agent.agent import Agent, AgentRunLimitExceeded
+from fairy.agents.agent.base_agent import CST
 from fairy.agents.agent.messages import Messages
 from fairy.apps.agent_user_interface import AgentUserInterface
 from fairy.apps.app import App
@@ -42,7 +44,7 @@ class AppAgent(App):
         app_agent_name: str,
         max_tool_calls: int | None = None,
     ) -> None:
-        super().__init__(name=f"{wrapped_app.name}Expert")
+        super().__init__(name=wrapped_app.name)
         self.wrapped_app = wrapped_app
         self.app_agent = app_agent
         self.app_agent_name = app_agent_name
@@ -82,11 +84,40 @@ class AppAgent(App):
         self.app_agent.runtime_events = []
         self.app_agent.tool_call_count = 0
         self.app_agent.llm_turn_count = 0
-        answer = self.app_agent.run(task, max_tool_calls=self.max_tool_calls)
+        timestamp = self.time_manager.time()
+        delegated_task = self._format_delegated_user_message(str(task), timestamp)
+        try:
+            answer = self.app_agent.run(delegated_task, max_tool_calls=self.max_tool_calls)
+        except AgentRunLimitExceeded as exc:
+            answer = (
+                "Expert agent stopped before completing the delegated task "
+                f"because it reached {exc.limit_type}={exc.limit_value}. "
+                "Treat this result as partial and verify completion before continuing."
+            )
+            self.app_agent.record_event(
+                "a2a_expert_limit_returned",
+                status="stopped",
+                limit_type=exc.limit_type,
+                limit_value=exc.limit_value,
+                answer=answer,
+            )
+        finally:
+            self.last_tool_call_count = int(getattr(self.app_agent, "tool_call_count", 0))
+            self.last_runtime_events = list(getattr(self.app_agent, "runtime_events", []))
         self.last_answer = str(answer)
-        self.last_tool_call_count = int(getattr(self.app_agent, "tool_call_count", 0))
-        self.last_runtime_events = list(getattr(self.app_agent, "runtime_events", []))
         return self.last_answer
+
+    def _format_delegated_user_message(self, task: str, timestamp: float) -> str:
+        timestamp_str = datetime.fromtimestamp(timestamp, tz=CST).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        return (
+            f"Received at: {timestamp_str}\n"
+            "Sender: User\n"
+            f"Message: {task}\n"
+            "Already read: True\n"
+            f"Read at: {timestamp_str}"
+        )
 
 
 def collect_a2a_traces(apps: list[Any]) -> list[dict[str, Any]]:
@@ -127,7 +158,7 @@ _A2A_TYPED_APP_AGENT_BY_CLASS: dict[str, str] = {
 def resolve_a2a_agent_name_for_app(
     app: Any,
     *,
-    policy: str = "typed_experts",
+    policy: str = "generic",
     fallback_app_agent: str = "default_app_agent",
 ) -> str:
     if policy == "typed_experts":
@@ -145,9 +176,10 @@ def apply_a2a_to_apps(
     app_agent_builder,
     app_agent_config_builder,
     app_prop: float,
-    policy: str = "typed_experts",
+    policy: str = "generic",
     app_agent_name: str = "default_app_agent",
     seed: int = 0,
+    max_tool_calls: int | None = None,
 ) -> A2AResult:
     if app_prop <= 0:
         return A2AResult(
@@ -202,11 +234,14 @@ def apply_a2a_to_apps(
             llm=llm_factory(),
             app=app,
         )
+        wrapper_max_tool_calls = config.max_iterations
+        if max_tool_calls is not None:
+            wrapper_max_tool_calls = min(config.max_iterations, max_tool_calls)
         wrapper = AppAgent(
             wrapped_app=app,
             app_agent=expert_agent,
             app_agent_name=resolved_app_agent_name,
-            max_tool_calls=config.max_iterations,
+            max_tool_calls=wrapper_max_tool_calls,
         )
         new_apps.append(wrapper)
         transformed_metadata.append(

@@ -110,15 +110,17 @@ def main() -> None:
     parser.add_argument("--model", default="deepseek-chat", help="LLM model for --agent")
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
+    parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
     parser.add_argument("--timeout-seconds", type=float, default=1200.0, help="Wall-time limit for --agent")
     parser.add_argument("--a2a", type=_str_to_bool, default=False, help="Enable Agent2Agent app wrappers")
     parser.add_argument("--a2a-app-prop", type=float, default=0.5, help="Fraction of eligible apps to wrap for A2A")
-    parser.add_argument("--a2a-policy", default="typed_experts", choices=["generic", "typed_experts"], help="A2A app-agent selection policy")
+    parser.add_argument("--a2a-policy", default="generic", choices=["generic", "typed_experts"], help="A2A app-agent selection policy")
     parser.add_argument("--a2a-app-agent", default="default_app_agent", help="Fallback app-agent profile")
     parser.add_argument("--a2a-model", default=None, help="A2A app-agent model; defaults to main model")
     parser.add_argument("--a2a-provider", default=None, help="A2A app-agent provider; defaults to main provider")
     parser.add_argument("--a2a-endpoint", default=None, help="A2A app-agent endpoint; defaults to main endpoint")
+    parser.add_argument("--a2a-max-tool-calls", type=int, default=None, help="Maximum tool calls per A2A expert agent; defaults to --max-tool-calls")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
     parser.add_argument("--replay", action="store_true", help="Replay a workflow against fresh scenario state")
@@ -202,6 +204,7 @@ def main() -> None:
             wall_time_seconds=time.perf_counter() - run_wall_start,
             max_tool_calls=None,
             timeout_seconds=None,
+            parallel_tool_calls=None,
             workflow_steps=len(active_workflow or source_workflow or Workflow()),
             tool_call_count=len(log_engine.run_log),
             runtime_metrics=[],
@@ -225,6 +228,7 @@ def main() -> None:
                 "provider": args.provider,
                 "model": args.model,
                 "temperature": args.temperature,
+                "parallel_tool_calls": args.parallel_tool_calls,
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
         )
@@ -241,6 +245,7 @@ def main() -> None:
                         "provider": app_provider,
                         "model": app_model,
                         "temperature": args.temperature,
+                        "parallel_tool_calls": args.parallel_tool_calls,
                         **({"base_url": app_endpoint} if app_endpoint else {}),
                     }
                 )
@@ -254,6 +259,11 @@ def main() -> None:
                 policy=args.a2a_policy,
                 app_agent_name=args.a2a_app_agent,
                 seed=int(getattr(scenario, "seed", 0) or 0),
+                max_tool_calls=(
+                    args.a2a_max_tool_calls
+                    if args.a2a_max_tool_calls is not None
+                    else args.max_tool_calls
+                ),
             )
             scenario.apps = a2a_result.apps
             a2a_metadata = {
@@ -338,6 +348,7 @@ def main() -> None:
             wall_time_seconds=wall_time_seconds,
             max_tool_calls=args.max_tool_calls,
             timeout_seconds=args.timeout_seconds,
+            parallel_tool_calls=args.parallel_tool_calls,
             workflow_steps=len(workflow),
             tool_call_count=agent.tool_call_count,
             runtime_metrics=runtime_metrics,

@@ -84,6 +84,7 @@ def build_run_report(
     wall_time_seconds: float,
     max_tool_calls: int | None,
     timeout_seconds: float | None,
+    parallel_tool_calls: bool | None,
     workflow_steps: int,
     tool_call_count: int,
     runtime_metrics: list[dict[str, Any]],
@@ -115,6 +116,7 @@ def build_run_report(
         "limits": {
             "max_tool_calls": max_tool_calls,
             "timeout_seconds": timeout_seconds,
+            "parallel_tool_calls": parallel_tool_calls,
         },
         "metrics": {
             "wall_time_seconds": round(wall_time_seconds, 6),

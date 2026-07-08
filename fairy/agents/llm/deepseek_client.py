@@ -24,7 +24,11 @@ class DeepSeekClient(BaseLLM):
         self.api_key = api_key or DEEPSEEK_API_KEY
         self.model = model
         self.base_url = kwargs.get("base_url") or DEEPSEEK_API_BASE
-        self.api_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.api_client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=self.request_timeout,
+        )
 
 
     # Chat Completion API
@@ -44,6 +48,7 @@ class DeepSeekClient(BaseLLM):
             messages=messages,
             tools=tools,
             temperature=self.temperature,
+            **self.tool_call_options(tools),
         )
 
         return response
@@ -52,5 +57,6 @@ class DeepSeekClient(BaseLLM):
         return {
             'client_class': self.client_class,
             'model': self.model,
-            'temperature': self.temperature
+            'temperature': self.temperature,
+            'parallel_tool_calls': self.parallel_tool_calls,
         }

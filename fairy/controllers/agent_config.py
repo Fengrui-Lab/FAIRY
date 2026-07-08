@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import textwrap
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -143,6 +144,106 @@ class AppAgentConfig:
         return self.agent_name
 
 
+GENERAL_SYSTEM_PROMPT_TEMPLATE = textwrap.dedent(
+    """Your name is MetaOSSAgent, part of the Meta Agents Research Environments. You are an expert assistant helping users with their tasks.
+
+You are helpful, harmless, and honest in all interactions. You have great problem-solving capabilities and can adapt to various task types and user needs.
+You always prioritize accuracy and reliability in your responses."""
+)
+
+FARM_WORLD_GENERAL_SYSTEM_PROMPT = textwrap.dedent(
+    """You are an experienced farm manager for a soybean farm in Harbin, Heilongjiang. You manage 64 ridges across a 268m x 71m field through the full growing season: field preparation, planting, crop monitoring, and harvest.
+
+You think and act like a seasoned farmer: practical, methodical, and grounded in real agronomic knowledge."""
+)
+
+FUNCTION_CALL_AGENT_INSTRUCTIONS = textwrap.dedent(
+    """You solve tasks by reasoning step by step and calling the provided function tools.
+
+Function-calling rules:
+- Use the provided tool schema for tool calls; do not hand-write JSON action blobs in the assistant message.
+- Take one physical action at a time, observe the result, then decide the next step.
+- Use real values, not placeholders.
+- If a tool takes no input, call it with an empty argument object.
+- Continue until the task is complete or impossible with available tools.
+- Only message the user when the full task is done or cannot be completed."""
+)
+
+APP_AGENT_HINTS = textwrap.dedent(
+    """If you were not able to complete all parts of the delegated task due to missing information or tools, include a suggestion alongside your result.
+Only include a suggestion if you are sure that you lack the information or tools to complete part of the task."""
+)
+
+ARE_SIMULATION_ENVIRONMENT_INSTRUCTIONS = textwrap.dedent(
+    """You are an agent operating in a virtual environment that serves as the personal workspace of a user. Your role is to assist the user by interacting with applications and tools available in this environment.
+
+Environment characteristics:
+- This is a dynamic environment that can change at any time.
+- The user has full control over the environment and can modify it as needed.
+- You have access to multiple applications, each with their own tools.
+
+Available tools are provided through the function-calling tool schema.
+
+Fundamental rules for task execution:
+1. Communication: only message the user when completely done or if the task is impossible.
+2. Execution: work silently, complete tasks fully, no progress updates.
+3. Compliance: follow user instructions exactly; ask for clarification only if the environment does not provide enough information.
+4. Problem solving: try alternative approaches before reporting failure.
+5. Information: use available tools to gather missing information before asking the user.
+6. Ambiguity: execute clear parts immediately; if a remaining part is ambiguous or impossible, stop and ask for clarification about that part.
+
+{environment_hints}"""
+)
+
+FARM_WORLD_ENVIRONMENT_INSTRUCTIONS = textwrap.dedent(
+    """You are managing a soybean farm through a set of applications, each controlling a physical subsystem on the farm.
+
+Available tools are provided through the function-calling tool schema.
+
+Each tool call represents one physical action. Call one tool, observe the result, then decide the next step. Only message the user when the full task is done or cannot be completed.
+
+{environment_hints}"""
+)
+
+SYSTEM_PROMPT_TEMPLATE = textwrap.dedent(
+    """<general_instructions>
+{general_instructions}
+</general_instructions>
+
+<agent_instructions>
+{agent_instructions}
+</agent_instructions>
+
+<environment_instructions>
+{environment_instructions}
+</environment_instructions>"""
+)
+
+DEFAULT_FUNCTION_CALL_SYSTEM_PROMPT = SYSTEM_PROMPT_TEMPLATE.format(
+    general_instructions=GENERAL_SYSTEM_PROMPT_TEMPLATE,
+    agent_instructions=FUNCTION_CALL_AGENT_INSTRUCTIONS,
+    environment_instructions=ARE_SIMULATION_ENVIRONMENT_INSTRUCTIONS.format(
+        environment_hints="",
+    ),
+)
+
+FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT = SYSTEM_PROMPT_TEMPLATE.format(
+    general_instructions=FARM_WORLD_GENERAL_SYSTEM_PROMPT,
+    agent_instructions=FUNCTION_CALL_AGENT_INSTRUCTIONS,
+    environment_instructions=FARM_WORLD_ENVIRONMENT_INSTRUCTIONS.format(
+        environment_hints="",
+    ),
+)
+
+DEFAULT_APP_AGENT_SYSTEM_MESSAGE = SYSTEM_PROMPT_TEMPLATE.format(
+    general_instructions=GENERAL_SYSTEM_PROMPT_TEMPLATE,
+    agent_instructions=FUNCTION_CALL_AGENT_INSTRUCTIONS,
+    environment_instructions=ARE_SIMULATION_ENVIRONMENT_INSTRUCTIONS.format(
+        environment_hints=APP_AGENT_HINTS,
+    ),
+)
+
+
 PLANNING_ADDENDUM = (
     "\n\n<research_family_instructions>\n"
     "Before calling tools, create a compact plan with explicit milestones.\n"
@@ -200,12 +301,6 @@ GRAPH_MEMORY_ADDENDUM = (
 )
 
 
-DEFAULT_APP_AGENT_SYSTEM_MESSAGE = (
-    "You are an expert sub-agent for one FAIRY app. Use only the app tools "
-    "available to you, complete the delegated task, and return a concise final "
-    "answer. If a final answer tool is available, call it when done."
-)
-
 WEATHER_APP_AGENT_ADDENDUM = (
     "\n\n<app_expert_instructions>\n"
     "You are the weather and field-conditions expert.\n"
@@ -246,13 +341,22 @@ class AgentConfigBuilder:
         self.farm_system_prompt = farm_system_prompt
 
     def build(self, agent_name: str) -> ControllerAgentConfig:
-        base_prompt = self.farm_system_prompt
+        farm_prompt = self.farm_system_prompt or FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT
+        generic_prompt = self.farm_system_prompt or DEFAULT_FUNCTION_CALL_SYSTEM_PROMPT
         match agent_name:
-            case "default" | "farm_world":
+            case "default":
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt,
+                        system_prompt=generic_prompt,
+                        max_iterations=80,
+                    ),
+                )
+            case "farm_world":
+                return ControllerAgentConfig(
+                    agent_name=agent_name,
+                    base_agent_config=ReactBaseAgentConfig(
+                        system_prompt=farm_prompt,
                         max_iterations=80,
                     ),
                 )
@@ -260,7 +364,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt,
+                        system_prompt=farm_prompt,
                         max_iterations=80,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -273,7 +377,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + PLANNING_ADDENDUM,
+                        system_prompt=farm_prompt + PLANNING_ADDENDUM,
                         max_iterations=100,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -287,7 +391,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + REFLECTIVE_ADDENDUM,
+                        system_prompt=farm_prompt + REFLECTIVE_ADDENDUM,
                         max_iterations=100,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -303,7 +407,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + DELEGATION_ADDENDUM,
+                        system_prompt=farm_prompt + DELEGATION_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -326,7 +430,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + VERIFIER_ADDENDUM,
+                        system_prompt=farm_prompt + VERIFIER_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -341,7 +445,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + REWOO_ADDENDUM,
+                        system_prompt=farm_prompt + REWOO_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -360,7 +464,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + TREE_SEARCH_ADDENDUM,
+                        system_prompt=farm_prompt + TREE_SEARCH_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -379,7 +483,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + CRITIC_ADDENDUM,
+                        system_prompt=farm_prompt + CRITIC_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(
@@ -398,7 +502,7 @@ class AgentConfigBuilder:
                 return ControllerAgentConfig(
                     agent_name=agent_name,
                     base_agent_config=ReactBaseAgentConfig(
-                        system_prompt=base_prompt + GRAPH_MEMORY_ADDENDUM,
+                        system_prompt=farm_prompt + GRAPH_MEMORY_ADDENDUM,
                         max_iterations=110,
                     ),
                     research_profile=ResearchAgentProfileConfig(

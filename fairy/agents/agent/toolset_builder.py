@@ -45,8 +45,13 @@ def build_tool_schema(tool: Any) -> dict[str, Any]:
     }
 
 
-def build_toolset(toolsets: list[Any]):
+def build_toolset(
+    toolsets: list[Any],
+    *,
+    excluded_tool_names: set[str] | frozenset[str] | None = None,
+):
     assert isinstance(toolsets, list)
+    excluded_tool_names = excluded_tool_names or set()
     tools: list[Any] = []
     tools_map: dict[str, Callable[..., Any]] = {}
     tool_schemas: list[dict[str, Any]] = []
@@ -54,8 +59,9 @@ def build_toolset(toolsets: list[Any]):
         for tool in agent_toolset(toolset):
             schema = build_tool_schema(tool)
             name = schema["function"]["name"]
+            if name in excluded_tool_names:
+                continue
             tool_schemas.append(schema)
             tools_map[name] = tool
             tools.append(tool)
     return tools, tool_schemas, tools_map
-

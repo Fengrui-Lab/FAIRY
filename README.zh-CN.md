@@ -237,6 +237,7 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
 | `a2a_policy` | A2A policy；A2A off 时为 `off`。 |
 | `a2a_app_agent` | A2A fallback app-agent profile；A2A off 时为空。 |
 | `detail_enabled` | `--detail` 规范化后的值；未设置为空。 |
+| `parallel_tool_calls` | 本次运行是否允许模型在一个 assistant turn 里一次返回多个工具调用。 |
 | `scenario_kwargs` | 实际透传给 `fairy.cli --scenario-kwargs` 的 JSON 字符串。 |
 | `scenario_initialization_kwargs` | 实际透传给 `fairy.cli --init-kwargs` 的 JSON 字符串。 |
 | `wall_s` | cell subprocess wall-clock 秒数。 |
@@ -246,11 +247,11 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
 | `timeout_grace_s` | 触发 timeout 后等待 graceful shutdown 的秒数；未 timeout 为空。 |
 | `score` | 从 `run_report.evaluation.validation.success` 映射出的分数：成功为 `1.0`，失败为 `0.0`。 |
 | `status` | `run_report.status`，例如 `completed`、`stopped`、`failed`。 |
-| `workflow_combined` | 旧 `output.jsonl` rationale 中解析出的 workflow combined score；新 run_report 路径可能为空。 |
-| `fos` | FOS 总分；来自旧 rationale 或 FOS report。 |
-| `outcome` | FOS outcome component。 |
-| `decision` | FOS decision component。 |
-| `efficiency` | FOS efficiency component。 |
+| `workflow_combined` | 旧 `output.jsonl` rationale 中解析出的 workflow combined score；新 run_report 路径可能为空。最终 workflow/FOS 表请看 rebatch 输出。 |
+| `fos` | 旧兼容 FOS 总分。论文/正式统计请看 `scripts/rebatch_fos_from_traces.py` 的输出。 |
+| `outcome` | 旧兼容 FOS outcome。正式统计请看 rebatch 输出。 |
+| `decision` | 旧兼容 FOS decision。正式统计请看 rebatch 输出。 |
+| `efficiency` | 旧兼容 FOS efficiency。正式统计请看 rebatch 输出。 |
 | `reasoning_steps` | LLM call 数；没有 LLM metrics 时退回旧 output.jsonl 估算。 |
 | `llm_calls` | `run_report.metrics.llm_call_count`。 |
 | `tool_calls` | `run_report.metrics.tool_call_count`。 |
@@ -315,6 +316,8 @@ PYTHONPATH=. uv run python scripts/rebatch_fos_from_traces.py \
 ```text
 validation_runs/quickstart/rebatch_fos/summary_v2.csv
 ```
+
+正式看 FOS、yield loss、KTC/path matching 时，以这个 rebatch summary 为准，不要用 `iclr_validation_runner.py` 的 `results.csv` 里的旧兼容 FOS 列。`results.csv` 主要用来看 return code、timeout、费用、token/tool 次数和产物路径。
 
 关键列：
 
@@ -966,6 +969,28 @@ scripts/kwoo_expansion_result.json
 scripts/kwoo_l1l2_expansion_result.json
 ```
 
+如果要跑 `selected_l2_l1_20_30` 这 50 个 L1/L2 场景，不要把 `selected_l2_l1_20_30` 当成单个 scenario id 直接传给 batch runner。先从 manifest 里取出真实 scenario id，再传给 `--scenarios`：
+
+```bash
+SCENARIOS=$(awk -F, 'NF>=3 && $1 !~ /^#/ {print $3}' \
+  scripts/fullseason/selected_l2_l1_20_30_scenario_ids.txt | paste -sd, -)
+
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
+  --phase selected_l2_l1_20_30_detail_false \
+  --output-root validation_runs/selected_l2_l1_20_30_detail_false/phase5_paper_matrix \
+  --families farm_baseline_react \
+  --scenarios "$SCENARIOS" \
+  --repeats 1 \
+  --provider deepseek \
+  --model deepseek-chat \
+  --detail false \
+  --a2a false \
+  --parallel-tool-calls false \
+  --max-concurrent 1 \
+  --agent-max-iterations 200 \
+  --cell-timeout-s 1200
+```
+
 ## Oracle Baselines：yield loss 的分母从这里来
 
 `scripts/build_oracle_baselines.py` 会跑每个场景的 oracle，必要时把物理推进到 R8 成熟期，然后写出每个场景的 oracle yield baseline。FOS 里的核心 yield loss 使用它作为分母：
@@ -1135,10 +1160,13 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--cell-timeout-s` | int | `300` | 单 cell subprocess 超时。 |
 | `--cell-timeout-grace-s` | int | `60` | 超时后先 SIGINT 等待多久，再 terminate/kill。 |
 | `--agent-max-iterations` | int | `200` | 传给 `fairy-run --max-tool-calls`。 |
+| `--parallel-tool-calls` | `true` / `false` | `true` | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
 | `--wait-for-user-input-timeout` | float | `5.0` | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none | 透传给 FAIRY CLI。 |
 | `--detail` | detail mode | none | 自动合并进 `--scenario-kwargs` 的 `detailed_briefing`。 |
 | `--a2a`, `--a2a-*` | 同 FAIRY CLI | off | 批量 A2A 配置。 |
+
+跑 `selected_l2_l1_20_30` 这类场景池时，先按上面“场景池”一节的命令生成 `SCENARIOS`，这里传 `--scenarios "$SCENARIOS"`。
 
 输出：
 

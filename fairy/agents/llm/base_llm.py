@@ -1,5 +1,21 @@
 # llm/base_llm.py
 
+import os
+
+
+def _coerce_bool(value, field_name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None or value == "":
+        return True
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "yes", "on"}:
+            return True
+        if normalized in {"0", "false", "no", "off"}:
+            return False
+    raise ValueError(f"{field_name} must be a boolean value, got {value!r}")
+
 
 class BaseLLM:
     llm_class: str = "BaseLLM"
@@ -17,6 +33,21 @@ class BaseLLM:
         # Store any additional initialization parameters (e.g., api_key)
         self.params = kwargs
         self.llm_class = self.__class__.llm_class
+        raw_timeout = kwargs.get("timeout", os.getenv("FAIRY_LLM_REQUEST_TIMEOUT_S"))
+        self.request_timeout = (
+            float(raw_timeout) if raw_timeout not in (None, "") else None
+        )
+        raw_parallel_tool_calls = kwargs.get(
+            "parallel_tool_calls", os.getenv("FAIRY_PARALLEL_TOOL_CALLS", "true")
+        )
+        self.parallel_tool_calls = _coerce_bool(
+            raw_parallel_tool_calls, "parallel_tool_calls"
+        )
+
+    def tool_call_options(self, tools=None):
+        if tools is None:
+            return {}
+        return {"parallel_tool_calls": self.parallel_tool_calls}
 
     def chat_completion(self, messages, tools=None):
         """

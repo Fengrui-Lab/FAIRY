@@ -83,6 +83,7 @@ RUNNER_DEFAULTS = {
     "cell_timeout_grace_s": 60,
     "agent_max_iterations": 200,
     "wait_for_user_input_timeout": 5.0,
+    "parallel_tool_calls": True,
     "scenario_kwargs": None,
     "init_kwargs": None,
     "detail": None,
@@ -116,6 +117,7 @@ def _build_cell_command(
     agent_max_iterations: int = 200,
     agent_timeout_seconds: int | float | None = None,
     wait_for_user_input_timeout: float = 5.0,
+    parallel_tool_calls: bool = True,
     a2a_enabled: bool = False,
     a2a_app_prop: float = 0.5,
     a2a_policy: str = "typed_experts",
@@ -143,6 +145,8 @@ def _build_cell_command(
         str(agent_max_iterations),
         "--timeout-seconds",
         str(agent_timeout_seconds or 1200),
+        "--parallel-tool-calls",
+        "true" if parallel_tool_calls else "false",
     ]
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
@@ -370,8 +374,9 @@ def _load_runner_config(config_path: Path | None) -> dict:
             config[field_name] = _serialize_json_arg(config[field_name], field_name)
     if "detail" in config:
         config["detail"] = _normalize_detail_arg(config["detail"])
-    if "a2a" in config:
-        config["a2a"] = _str_to_bool(config["a2a"])
+    for field_name in ("a2a", "parallel_tool_calls"):
+        if field_name in config:
+            config[field_name] = _str_to_bool(config[field_name])
     return config
 
 
@@ -595,6 +600,12 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         default=defaults.get("wait_for_user_input_timeout"),
     )
     parser.add_argument(
+        "--parallel-tool-calls",
+        type=_str_to_bool,
+        default=defaults.get("parallel_tool_calls"),
+        help="Allow a model response to contain multiple tool calls.",
+    )
+    parser.add_argument(
         "--scenario-kwargs",
         default=defaults.get("scenario_kwargs"),
         help=(
@@ -675,6 +686,7 @@ def run_cell(
     model_family: str,
     agent_max_iterations: int,
     wait_for_user_input_timeout: float,
+    parallel_tool_calls: bool,
     a2a_enabled: bool,
     a2a_app_prop: float,
     a2a_policy: str,
@@ -733,6 +745,7 @@ def run_cell(
         agent_max_iterations=agent_max_iterations,
         agent_timeout_seconds=timeout_s,
         wait_for_user_input_timeout=wait_for_user_input_timeout,
+        parallel_tool_calls=parallel_tool_calls,
         a2a_enabled=a2a_enabled,
         a2a_app_prop=a2a_app_prop,
         a2a_policy=a2a_policy,
@@ -848,6 +861,7 @@ def run_cell(
         "a2a_app_prop": a2a_app_prop if a2a_enabled else 0.0,
         "a2a_policy": a2a_policy if a2a_enabled else "off",
         "a2a_app_agent": a2a_app_agent if a2a_enabled else "",
+        "parallel_tool_calls": parallel_tool_calls,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
         "scenario_initialization_kwargs": scenario_initialization_kwargs or "",
@@ -933,6 +947,7 @@ def main() -> int:
                 model_family,
                 args.agent_max_iterations,
                 args.wait_for_user_input_timeout,
+                bool(args.parallel_tool_calls),
                 bool(args.a2a),
                 args.a2a_app_prop,
                 args.a2a_policy,

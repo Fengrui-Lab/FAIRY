@@ -60,6 +60,7 @@ class BaseAgent:
             dict: A dictionary containing the model's response, input tokens, output tokens, etc.
         """
         start_time = time.perf_counter()
+        llm_messages = self._llm_compatible_messages(messages)
         normalized_tools = self._jsonable(tools or [])
         tool_names = []
         for tool in normalized_tools:
@@ -71,13 +72,13 @@ class BaseAgent:
             "llm_call_start",
             model=getattr(self.llm, "model", None),
             provider=getattr(self.llm, "provider", None),
-            message_count=len(messages),
+            message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
-            messages=self._jsonable(messages),
+            messages=self._jsonable(llm_messages),
             tool_names=tool_names,
         )
         try:
-            response = self.llm.chat_completion(messages, tools)
+            response = self.llm.chat_completion(llm_messages, tools)
         except Exception as exc:
             elapsed_time = round(time.perf_counter() - start_time, 6)
             self.record_event(
@@ -91,13 +92,20 @@ class BaseAgent:
         elapsed_time = round(time.perf_counter() - start_time, 6)
         self.messages.llm_response(response, elapsed_time)
         message = response.choices[0].message
+        assistant_content = getattr(message, "content", None)
+        tool_calls = self._tool_call_details(getattr(message, "tool_calls", None) or [])
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         self.record_event(
             "llm_call_end",
             status="ok",
             wall_time_seconds=elapsed_time,
-            tool_call_count=len(getattr(message, "tool_calls", None) or []),
+            assistant_content=assistant_content,
+            assistant_content_is_empty=not bool(str(assistant_content or "").strip()),
+            rationale=assistant_content,
+            rationale_source="assistant_content" if assistant_content else "empty_assistant_content",
+            tool_call_count=len(tool_calls),
+            tool_calls=tool_calls,
             tokens={
                 "prompt_tokens": getattr(usage, "prompt_tokens", 0) if usage else 0,
                 "cached_tokens": getattr(prompt_details, "cached_tokens", 0) if prompt_details else 0,
@@ -106,6 +114,46 @@ class BaseAgent:
             },
         )
         return message
+
+    def _tool_call_details(self, tool_calls: list[Any]) -> list[dict[str, Any]]:
+        details: list[dict[str, Any]] = []
+        for tool_call in tool_calls:
+            function = getattr(tool_call, "function", None)
+            details.append(
+                {
+                    "id": getattr(tool_call, "id", None),
+                    "type": getattr(tool_call, "type", None),
+                    "function": {
+                        "name": getattr(function, "name", None),
+                        "arguments": getattr(function, "arguments", None),
+                    },
+                }
+            )
+        return self._jsonable(details)
+
+    def _llm_compatible_messages(self, messages: list[Any]) -> list[dict[str, Any]]:
+        allowed_keys = {
+            "role",
+            "content",
+            "name",
+            "tool_call_id",
+            "tool_calls",
+            "function_call",
+        }
+        compatible_messages: list[dict[str, Any]] = []
+        for message in messages:
+            jsonable_message = self._jsonable(message)
+            if isinstance(jsonable_message, dict):
+                compatible = {
+                    key: value
+                    for key, value in jsonable_message.items()
+                    if key in allowed_keys and value is not None
+                }
+                if compatible:
+                    compatible_messages.append(compatible)
+                continue
+            compatible_messages.append({"role": "assistant", "content": str(jsonable_message)})
+        return compatible_messages
 
     def _jsonable(self, value: Any) -> Any:
         if value is None or isinstance(value, (str, int, float, bool)):

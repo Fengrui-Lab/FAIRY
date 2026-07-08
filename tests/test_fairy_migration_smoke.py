@@ -4,12 +4,13 @@ import importlib
 import json
 import pkgutil
 import subprocess
-from datetime import date
+from datetime import date, datetime
 import pytest
 from pathlib import Path
 
 import fairy
 from fairy.agents.agent.agent import AgentRunLimitExceeded
+from fairy.agents.agent.base_agent import CST
 from fairy.agents.llm.base_llm import BaseLLM
 from fairy.apps.farm_world import FarmWorldApp, WeatherApp
 from fairy.apps.farm_world.physics_orchestrator import _build_weather_inputs
@@ -310,6 +311,33 @@ class _ScriptedLLM:
         return _Response(self.messages.pop(0))
 
 
+class _FailingLLM:
+    provider = "openai"
+    model = "failing-model"
+
+    def __init__(self, exc: Exception) -> None:
+        self.exc = exc
+
+    def chat_completion(self, messages, tools=None):
+        raise self.exc
+
+
+class _FlakyLLM:
+    provider = "openai"
+    model = "flaky-model"
+
+    def __init__(self, exc: Exception, message: _Message) -> None:
+        self.exc = exc
+        self.message = message
+        self.calls = 0
+
+    def chat_completion(self, messages, tools=None):
+        self.calls += 1
+        if self.calls == 1:
+            raise self.exc
+        return _Response(self.message)
+
+
 def test_controller_families_include_react_and_rewoo() -> None:
     families = AgentBuilder().list_agents()
     assert "farm_baseline_react" in families
@@ -319,6 +347,17 @@ def test_controller_families_include_react_and_rewoo() -> None:
     assert "farm_skill_rag" not in families
     with pytest.raises(ValueError):
         AgentConfigBuilder().build("farm_skill_rag")
+
+
+def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() -> None:
+    config = AgentConfigBuilder().build("farm_baseline_react")
+    prompt = config.base_agent_config.system_prompt
+
+    assert "soybean farm in Harbin, Heilongjiang" in prompt
+    assert "64 ridges across a 268m x 71m field" in prompt
+    assert "provided function tools" in prompt
+    assert "do not hand-write JSON action blobs" in prompt
+    assert "Action:" not in prompt
 
 
 def test_app_agent_profiles_match_are_names_and_prompts() -> None:
@@ -335,6 +374,8 @@ def test_app_agent_profiles_match_are_names_and_prompts() -> None:
     machinery = builder.build("machinery_expert_app_agent")
 
     assert weather.max_iterations == 60
+    assert "Meta Agents Research Environments" in weather.system_prompt
+    assert "provided function tools" in weather.system_prompt
     assert "weather and field-conditions expert" in weather.system_prompt
     assert machinery.max_iterations == 70
     assert "machinery and implement operations expert" in machinery.system_prompt
@@ -360,6 +401,7 @@ def test_a2a_typed_routing_and_wrapper_tool_exposure() -> None:
     assert result.metadata["transformed_apps"]
     assert all(app.name != "SystemAppExpert" for app in wrappers)
     assert all(app.max_tool_calls is not None for app in wrappers)
+    assert resolve_a2a_agent_name_for_app(WeatherApp()) == "default_app_agent"
     assert resolve_a2a_agent_name_for_app(WeatherApp(), policy="typed_experts") == (
         "weather_expert_app_agent"
     )
@@ -369,8 +411,29 @@ def test_a2a_typed_routing_and_wrapper_tool_exposure() -> None:
         fromlist=["build_toolset"],
     ).build_toolset(result.apps)
     schema_names = {schema["function"]["name"] for schema in schemas}
-    assert any(name.endswith("__expert_agent") for name in schema_names)
+    assert "WeatherApp__expert_agent" in schema_names
+    assert "WeatherAppExpert__expert_agent" not in schema_names
     assert "WeatherApp__get_current_weather" not in tools_map
+
+
+def test_a2a_expert_agent_limit_can_be_capped_by_runner_budget() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    result = apply_a2a_to_apps(
+        list(scenario.apps or []),
+        llm_factory=lambda: _ScriptedLLM([_Message(content="done")]),
+        app_agent_builder=AppAgentBuilder(),
+        app_agent_config_builder=AppAgentConfigBuilder(),
+        app_prop=1.0,
+        policy="typed_experts",
+        app_agent_name="default_app_agent",
+        seed=scenario.seed,
+        max_tool_calls=3,
+    )
+
+    wrappers = [app for app in result.apps if isinstance(app, AppAgent)]
+    assert wrappers
+    assert all(app.max_tool_calls == 3 for app in wrappers)
 
 
 def test_a2a_expert_agent_can_call_wrapped_app_tool() -> None:
@@ -396,7 +459,59 @@ def test_a2a_expert_agent_can_call_wrapped_app_tool() -> None:
 
     assert answer == "weather checked"
     assert wrapper.last_tool_call_count == 1
+    user_messages = [
+        message
+        for message in wrapper.app_agent.messages.messages
+        if isinstance(message, dict) and message["role"] == "user"
+    ]
+    assert user_messages
+    expected_time = datetime.fromtimestamp(wrapper.time_manager.time(), tz=CST).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    assert f"Received at: {expected_time}" in user_messages[0]["content"]
+    assert "Sender: User" in user_messages[0]["content"]
+    assert "Message: Check current weather." in user_messages[0]["content"]
+    assert "Already read: True" in user_messages[0]["content"]
+    assert f"Read at: {expected_time}" in user_messages[0]["content"]
     assert any(event["event_type"] == "tool_call_end" for event in wrapper.last_runtime_events)
+
+
+def test_a2a_expert_agent_limit_returns_partial_result() -> None:
+    weather = WeatherApp()
+    config = AppAgentConfigBuilder().build("weather_expert_app_agent")
+    expert = AppAgentBuilder().build(
+        config,
+        llm=_ScriptedLLM([_Message(tool_calls=[_ToolCall("WeatherApp__get_current_weather")])]),
+        app=weather,
+    )
+    wrapper = AppAgent(
+        wrapped_app=weather,
+        app_agent=expert,
+        app_agent_name="weather_expert_app_agent",
+        max_tool_calls=0,
+    )
+
+    answer = wrapper.expert_agent("Check current weather.")
+
+    assert "Expert agent stopped before completing the delegated task" in answer
+    assert "max_tool_calls=0" in answer
+    assert wrapper.last_answer == answer
+    assert wrapper.last_tool_call_count == 0
+    assert any(
+        event["event_type"] == "agent_limit_exceeded"
+        and event["status"] == "stopped"
+        for event in wrapper.last_runtime_events
+    )
+    assert any(
+        event["event_type"] == "agent_run_end"
+        and event["status"] == "stopped"
+        for event in wrapper.last_runtime_events
+    )
+    assert any(
+        event["event_type"] == "a2a_expert_limit_returned"
+        and event["status"] == "stopped"
+        for event in wrapper.last_runtime_events
+    )
 
 
 def test_collect_a2a_traces_exports_expert_prompt_events_and_metrics() -> None:
@@ -421,9 +536,10 @@ def test_collect_a2a_traces_exports_expert_prompt_events_and_metrics() -> None:
     wrapper.expert_agent("Check current weather.")
     traces = collect_a2a_traces([wrapper])
 
-    assert traces[0]["wrapper_app_name"] == "WeatherAppExpert"
+    assert traces[0]["wrapper_app_name"] == "WeatherApp"
     assert traces[0]["app_agent"] == "weather_expert_app_agent"
     assert "weather and field-conditions expert" in traces[0]["messages"][0]["content"]
+    assert "Message: Check current weather." in traces[0]["messages"][1]["content"]
     assert traces[0]["tool_call_count"] == 1
     assert traces[0]["runtime_metrics"][0]["tokens"]["total_tokens"] == 16
     assert any(event["event_type"] == "tool_call_end" for event in traces[0]["runtime_events"])
@@ -467,6 +583,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
         a2a_model="qwen-plus",
         a2a_provider="qwen",
         a2a_endpoint="http://localhost:8000/v1",
+        parallel_tool_calls=False,
     )
 
     joined = " ".join(cmd)
@@ -477,6 +594,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
     assert "--a2a-model qwen-plus" in joined
     assert "--a2a-provider qwen" in joined
     assert "--a2a-endpoint http://localhost:8000/v1" in joined
+    assert "--parallel-tool-calls false" in joined
 
 
 def test_rewoo_strategy_builds_plan_context() -> None:
@@ -564,6 +682,84 @@ def test_qwen_and_vllm_clients_use_function_call_path(monkeypatch) -> None:
     assert vllm.provider == "vllm"
 
 
+def test_vllm_qwen_client_disables_thinking_in_chat_template(monkeypatch) -> None:
+    monkeypatch.setenv("VLLM_API_KEY", "EMPTY")
+    monkeypatch.delenv("FAIRY_VLLM_ENABLE_THINKING", raising=False)
+    captured: dict = {}
+
+    class _CaptureCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return _Response(_Message(content="ok", tool_calls=None))
+
+    class _CaptureChat:
+        completions = _CaptureCompletions()
+
+    class _CaptureClient:
+        chat = _CaptureChat()
+
+    vllm = BaseLLM.llm_builder(
+        {
+            "provider": "vllm",
+            "model": "Qwen3.5-9B",
+            "base_url": "http://localhost:8000/v1",
+            "parallel_tool_calls": False,
+        }
+    )
+    vllm.api_client = _CaptureClient()
+
+    vllm.chat_completion([{"role": "user", "content": "Return ok"}], tools=[])
+
+    assert captured["extra_body"] == {
+        "chat_template_kwargs": {"enable_thinking": False}
+    }
+    assert captured["parallel_tool_calls"] is False
+
+
+def test_deepseek_client_passes_parallel_tool_calls(monkeypatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+    captured: dict = {}
+
+    class _CaptureCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            return _Response(_Message(content="ok", tool_calls=None))
+
+    class _CaptureChat:
+        completions = _CaptureCompletions()
+
+    class _CaptureClient:
+        chat = _CaptureChat()
+
+    deepseek = BaseLLM.llm_builder(
+        {
+            "provider": "deepseek",
+            "model": "deepseek-chat",
+            "parallel_tool_calls": False,
+        }
+    )
+    deepseek.api_client = _CaptureClient()
+
+    deepseek.chat_completion([{"role": "user", "content": "Return ok"}], tools=[])
+
+    assert captured["parallel_tool_calls"] is False
+
+
+def test_openai_compatible_clients_accept_request_timeout(monkeypatch) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+    monkeypatch.setenv("FAIRY_LLM_REQUEST_TIMEOUT_S", "12.5")
+
+    deepseek = BaseLLM.llm_builder(
+        {"provider": "deepseek", "model": "deepseek-chat"}
+    )
+    qwen = BaseLLM.llm_builder(
+        {"provider": "qwen", "model": "qwen-plus", "timeout": 7}
+    )
+
+    assert deepseek.request_timeout == 12.5
+    assert qwen.request_timeout == 7.0
+
+
 def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     scenario = ScenarioFarmWorldFieldPrep()
     scenario.setup()
@@ -597,10 +793,127 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert agent.telemetry["llm_calls"] == 2
     assert len(workflow) == 2
     assert agent.messages.runtime_metrics[0]["tokens"]["total_tokens"] == 16
-    llm_start = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_start")
+    llm_starts = [event for event in agent.runtime_events if event["event_type"] == "llm_call_start"]
+    llm_start = llm_starts[0]
     assert llm_start["messages"][0]["role"] == "system"
     assert llm_start["messages"][-1]["role"] == "user"
     assert "FarmWorldApp__get_inventory" in llm_start["tool_names"]
+    assert all("time" not in message for event in llm_starts for message in event["messages"])
+    llm_ends = [event for event in agent.runtime_events if event["event_type"] == "llm_call_end"]
+    tool_call_end = llm_ends[0]
+    final_end = llm_ends[1]
+    assert tool_call_end["assistant_content"] is None
+    assert tool_call_end["assistant_content_is_empty"] is True
+    assert tool_call_end["rationale"] is None
+    assert tool_call_end["rationale_source"] == "empty_assistant_content"
+    assert tool_call_end["tool_calls"][0]["function"]["name"] == "FarmWorldApp__get_inventory"
+    assert final_end["assistant_content"] == "done"
+    assert final_end["assistant_content_is_empty"] is False
+    assert final_end["rationale"] == "done"
+    assert final_end["rationale_source"] == "assistant_content"
+
+
+def test_farm_agent_hides_user_message_injection_tool_but_replay_keeps_it() -> None:
+    scenario_cls = get_scenario_class("scenario_full_season_hb_wetjune_short_spray_window")
+    scenario = scenario_cls()
+    scenario.setup()
+
+    _, _, replay_tools_map = __import__(
+        "fairy.agents.agent.toolset_builder",
+        fromlist=["build_toolset"],
+    ).build_toolset(list(scenario.apps or []))
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=scenario.apps,
+    )
+
+    assert "AgentUserInterface__send_message_to_agent" in replay_tools_map
+    assert "AgentUserInterface__send_message_to_agent" not in agent.tools_map
+    assert "AgentUserInterface__send_message_to_user" in agent.tools_map
+
+
+def test_farm_agent_key_tool_descriptions_are_restored() -> None:
+    scenario = ScenarioFarmWorldFieldPrepPhysicsActionTick()
+    scenario.setup()
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=scenario.apps,
+    )
+    descriptions = {
+        schema["function"]["name"]: schema["function"]["description"]
+        for schema in agent.tool_schemas
+    }
+
+    expected_phrases = {
+        "AgentUserInterface__send_message_to_user": "Send a message to the user",
+        "SystemApp__advance_time": "Advance the simulation clock",
+        "SystemApp__get_current_time": "Get the current time",
+        "SystemApp__wait_for_notification": "Wait until the next notification",
+    }
+    for tool_name, phrase in expected_phrases.items():
+        assert phrase in descriptions[tool_name]
+
+
+def test_engine_appends_scenario_additional_system_prompt_for_agent_run() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.additional_system_prompt = "SCENARIO-SPECIFIC-SYSTEM-HINT"
+    scenario.setup()
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=scenario.apps,
+    )
+
+    Engine(agent, scenario).run_scenario_agent(
+        max_tool_calls=2,
+        timeout_seconds=30,
+        setup_scenario=False,
+    )
+
+    llm_start = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_start")
+    assert "SCENARIO-SPECIFIC-SYSTEM-HINT" in llm_start["messages"][0]["content"]
+
+
+def test_l3_agent_run_uses_event_briefing_as_controller_task() -> None:
+    scenario_cls = get_scenario_class("scenario_full_season_hb_wetjune_short_spray_window")
+    scenario = scenario_cls(detailed_briefing="kwoo")
+    scenario.setup()
+    assert scenario.scenario_input == ""
+
+    agent = build_controller_agent(
+        "farm_rewoo_modular",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=scenario.apps,
+    )
+    engine = Engine(agent, scenario)
+
+    engine.run_scenario_agent(max_tool_calls=2, timeout_seconds=30, setup_scenario=False)
+
+    task_source = next(
+        event for event in agent.runtime_events if event["event_type"] == "agent_task_source"
+    )
+    assert task_source["source"] == "event_briefing"
+    assert "湿六月" in task_source["content_preview"]
+
+    llm_start = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_start")
+    assert "Today's date in 'YYYY-MM-DD HH' format is" in llm_start["messages"][0]["content"]
+    user_message = next(message for message in llm_start["messages"] if message["role"] == "user")
+    assert "湿六月" in user_message["content"]
+    assert "Kwoo context" in user_message["content"]
+    assert "ReWOO plan-work-solve" in user_message["content"]
+
+    controller_context = next(
+        event for event in agent.runtime_events if event["event_type"] == "controller_context"
+    )
+    assert "ReWOO plan-work-solve" in controller_context["content_preview"]
+    assert "ReWOO plan fallback" not in controller_context["content_preview"]
+    system_messages = [message["content"] for message in llm_start["messages"] if message["role"] == "system"]
+    assert not any("ReWOO plan-work-solve" in content for content in system_messages)
+    assert agent.telemetry["planned_steps"] > 0
+    assert agent.telemetry["executed_steps"] == 1
+    assert agent.telemetry["plan_parse_failures"] == 0
 
 
 def test_agent_runtime_events_capture_limits_and_parse_errors() -> None:
@@ -643,15 +956,192 @@ def test_agent_runtime_events_capture_limits_and_parse_errors() -> None:
     )
     parse_engine = Engine(parse_agent, parse_scenario)
 
-    with pytest.raises(json.JSONDecodeError):
-        parse_engine.run_scenario_agent(
+    parse_engine.run_scenario_agent(
+        max_tool_calls=5,
+        timeout_seconds=30,
+        setup_scenario=False,
+    )
+    assert any(
+        event["event_type"] == "tool_args_parse_error"
+        for event in parse_agent.runtime_events
+    )
+    assert any(
+        event["event_type"] == "tool_error_observation"
+        and event["error_stage"] == "tool_args_parse"
+        for event in parse_agent.runtime_events
+    )
+    assert any(
+        message.get("role") == "tool"
+        and "JSONDecodeError" in str(message.get("content"))
+        and "Now retry with valid arguments" in str(message.get("content"))
+        for message in parse_agent.messages.messages
+        if isinstance(message, dict)
+    )
+    assert any(
+        event["event_type"] == "agent_run_end" and event["status"] == "ok"
+        for event in parse_agent.runtime_events
+    )
+    assert not any(
+        event["event_type"] == "agent_run_error"
+        for event in parse_agent.runtime_events
+    )
+
+
+def test_agent_runtime_events_capture_llm_call_errors() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_FailingLLM(RuntimeError("provider rejected number schema")),
+        toolsets=scenario.apps,
+    )
+    engine = Engine(agent, scenario)
+
+    with pytest.raises(RuntimeError, match="provider rejected number schema"):
+        engine.run_scenario_agent(
             max_tool_calls=5,
             timeout_seconds=30,
             setup_scenario=False,
         )
+
+    llm_errors = [
+        event
+        for event in agent.runtime_events
+        if event["event_type"] == "llm_call_error"
+    ]
+    assert llm_errors
+    assert llm_errors[0]["status"] == "error"
+    assert llm_errors[0]["error_type"] == "RuntimeError"
+    assert "provider rejected number schema" in llm_errors[0]["error_message"]
     assert any(
-        event["event_type"] == "tool_args_parse_error"
-        for event in parse_agent.runtime_events
+        event["event_type"] == "agent_run_error"
+        and event["error_type"] == "RuntimeError"
+        for event in agent.runtime_events
+    )
+
+
+def test_agent_runtime_events_capture_llm_call_retry_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FAIRY_AGENT_RATE_LIMIT_SLEEP_S", "0")
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    llm = _FlakyLLM(
+        RuntimeError("temporary rate limit"),
+        _Message(content="done", tool_calls=None),
+    )
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=llm,
+        toolsets=scenario.apps,
+    )
+    engine = Engine(agent, scenario)
+
+    engine.run_scenario_agent(
+        max_tool_calls=5,
+        timeout_seconds=30,
+        setup_scenario=False,
+    )
+
+    assert llm.calls == 2
+    assert any(
+        event["event_type"] == "llm_call_error"
+        and "temporary rate limit" in event["error_message"]
+        for event in agent.runtime_events
+    )
+    assert any(
+        event["event_type"] == "llm_call_retry"
+        and event["status"] == "retrying"
+        and event["sleep_seconds"] == 0
+        for event in agent.runtime_events
+    )
+    assert any(
+        event["event_type"] == "agent_run_end" and event["status"] == "ok"
+        for event in agent.runtime_events
+    )
+    assert not any(
+        event["event_type"] == "agent_run_error"
+        for event in agent.runtime_events
+    )
+
+
+def test_agent_llm_retry_defaults_wait_for_rate_limits(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("FAIRY_AGENT_LLM_CALL_RETRIES", raising=False)
+    monkeypatch.delenv("FAIRY_AGENT_LLM_RETRY_SLEEP_S", raising=False)
+    monkeypatch.delenv("FAIRY_AGENT_RATE_LIMIT_SLEEP_S", raising=False)
+
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=[],
+    )
+
+    assert agent.max_llm_call_retries == 5
+    assert agent.llm_retry_sleep_seconds == 0
+    assert agent.rate_limit_retry_sleep_seconds == 30
+    assert agent._llm_retry_sleep_for_error(RuntimeError("error code: 429")) == 30
+    assert agent._llm_retry_sleep_for_error(RuntimeError("connection reset")) == 0
+
+
+def test_agent_runtime_events_capture_tool_call_errors() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM(
+            [
+                _Message(
+                    tool_calls=[
+                        _ToolCall(
+                            "TractorApp__plant_seeds",
+                            '{"start_ridge": 0, "end_ridge": 3, "bad_arg": 1}',
+                        )
+                    ]
+                )
+            ]
+        ),
+        toolsets=scenario.apps,
+    )
+    engine = Engine(agent, scenario)
+
+    engine.run_scenario_agent(
+        max_tool_calls=5,
+        timeout_seconds=30,
+        setup_scenario=False,
+    )
+
+    tool_errors = [
+        event
+        for event in agent.runtime_events
+        if event["event_type"] == "tool_call_error"
+    ]
+    assert tool_errors
+    assert tool_errors[0]["status"] == "error"
+    assert tool_errors[0]["tool_name"] == "TractorApp__plant_seeds"
+    assert tool_errors[0]["tool_args"] == {
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "bad_arg": 1,
+    }
+    assert tool_errors[0]["error_type"] == "TypeError"
+    assert tool_errors[0]["error_message"]
+    assert any(
+        event["event_type"] == "tool_error_observation"
+        and event["error_stage"] == "tool_call"
+        for event in agent.runtime_events
+    )
+    assert any(
+        message.get("role") == "tool"
+        and "TypeError" in str(message.get("content"))
+        and "Now retry with valid arguments" in str(message.get("content"))
+        for message in agent.messages.messages
+        if isinstance(message, dict)
+    )
+    assert any(
+        event["event_type"] == "agent_run_end" and event["status"] == "ok"
+        for event in agent.runtime_events
+    )
+    assert not any(
+        event["event_type"] == "agent_run_error"
+        for event in agent.runtime_events
     )
 
 
@@ -719,6 +1209,7 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
         wall_time_seconds=12.3456789,
         max_tool_calls=3,
         timeout_seconds=30,
+        parallel_tool_calls=False,
         workflow_steps=4,
         tool_call_count=3,
         runtime_metrics=[],
@@ -729,3 +1220,4 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
     assert report["stopped_reason"] == "max_tool_calls"
     assert report["stop_reason"] == "max_tool_calls"
     assert report["wall_time_seconds"] == 12.345679
+    assert report["limits"]["parallel_tool_calls"] is False

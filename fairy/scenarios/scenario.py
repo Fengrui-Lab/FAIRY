@@ -25,6 +25,7 @@ class Scenario:
     seed: int = 0
     detailed_briefing: bool = True
     expects_agent_harvest: bool = True
+    additional_system_prompt: str | None = None
 
     def __post_init__(self) -> None:
         self._apply_migrated_class_defaults()

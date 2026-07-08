@@ -45,6 +45,9 @@
   `<AppName>Expert__expert_agent`; main-run workflows then show the delegation
   call, while real app-tool details live in `run_report.a2a` and
   `<scenario>.runtime_log.jsonl`.
+- Runtime log JSONL uses `record_type`, not `event` or `event_type`, at the
+  top level. Nested A2A expert traces inside `run_report.a2a.expert_traces`
+  still contain the agent's in-memory `event_type` records.
 - Always inspect `run_report.a2a.expert_metrics` when comparing A2A on/off.
   Main-agent token usage can drop while expert-agent token usage rises sharply.
 - In the 2026-07-01 controller/A2A smoke audit,
@@ -54,6 +57,35 @@
   `max_tool_calls=70` limit instead of completing bounded `fly_survey` calls.
   Treat this as an A2A task-decomposition/expert-prompt issue, not an API
   parse failure.
+- In the 2026-07-02 L3 A2A smoke, the main agent's `--max-tool-calls=6` did
+  not originally bound the child expert loop; `TractorApp` executed many expert
+  turns. The CLI now forwards `--max-tool-calls` as the default child cap unless
+  `--a2a-max-tool-calls` is set.
+
+## LLM Runtime Observability
+
+- `llm_call_end` should record both the exact assistant content returned by the
+  provider and whether it is empty. Function-call responses can have empty
+  content while still carrying valid tool calls; do not infer missing reasoning
+  from a tool call alone.
+- Long provider reads can block beyond the outer agent-loop wall-time limit.
+  Use `FAIRY_LLM_REQUEST_TIMEOUT_S` or a client `timeout` config to bound a
+  single OpenAI-compatible HTTP request so the failure is logged and retried or
+  surfaced.
+- Qwen served through vLLM can return `reasoning` with empty `content` unless
+  the request passes `chat_template_kwargs.enable_thinking=false`. FAIRY's
+  `VLLMClient` does this by default for model names containing `qwen`. Tool
+  calling still requires the vLLM server itself to be started with both
+  `--enable-auto-tool-choice` and `--tool-call-parser`; otherwise every request
+  containing OpenAI `tools` fails before the agent loop can act.
+- Agent-facing tool descriptions come directly from app method docstrings via
+  `AppTool.to_open_ai()`. Removing a docstring makes the corresponding OpenAI
+  tool `description` empty, which changes model-visible behavior even though
+  the Python tool still executes.
+- `--parallel-tool-calls` controls whether OpenAI-compatible providers may
+  return multiple tool calls in one LLM turn. The default is `true` for backward
+  compatibility; set it to `false` when an experiment requires strict
+  observe-after-each-action behavior.
 
 ## Paper-Controller Smoke Gaps
 

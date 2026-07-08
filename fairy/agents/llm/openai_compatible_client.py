@@ -15,7 +15,11 @@ class OpenAICompatibleClient(BaseLLM):
         self.provider = "llama-api"
         self.api_key = api_key or os.getenv("LLAMA_API_KEY") or os.getenv("OPENAI_API_KEY")
         self.base_url = kwargs.get("base_url") or os.getenv("LLAMA_API_BASE")
-        self.api_client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        self.api_client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+            timeout=self.request_timeout,
+        )
 
     def chat_completion(self, messages, tools=None):
         return self.api_client.chat.completions.create(
@@ -23,4 +27,5 @@ class OpenAICompatibleClient(BaseLLM):
             messages=messages,
             tools=tools,
             temperature=self.temperature,
+            **self.tool_call_options(tools),
         )

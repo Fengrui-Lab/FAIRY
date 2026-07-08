@@ -237,6 +237,7 @@ Complete `results.csv` columns:
 | `a2a_policy` | A2A policy; `off` when A2A is disabled. |
 | `a2a_app_agent` | A2A fallback app-agent profile; empty when A2A is off. |
 | `detail_enabled` | Normalized `--detail` value; empty when unset. |
+| `parallel_tool_calls` | Whether OpenAI-compatible clients were allowed to return multiple tool calls in one assistant turn. |
 | `scenario_kwargs` | JSON string passed to `fairy.cli --scenario-kwargs`. |
 | `scenario_initialization_kwargs` | JSON string passed to `fairy.cli --init-kwargs`. |
 | `wall_s` | Cell subprocess wall-clock seconds. |
@@ -246,11 +247,11 @@ Complete `results.csv` columns:
 | `timeout_grace_s` | Graceful shutdown window after timeout; empty when no timeout occurred. |
 | `score` | `1.0` when `run_report.evaluation.validation.success` is true, otherwise `0.0`. |
 | `status` | `run_report.status`, for example `completed`, `stopped`, or `failed`. |
-| `workflow_combined` | Workflow combined score parsed from legacy `output.jsonl` rationale; may be empty for new run-report-only cells. |
-| `fos` | Total FOS score from legacy rationale or FOS report. |
-| `outcome` | FOS outcome component. |
-| `decision` | FOS decision component. |
-| `efficiency` | FOS efficiency component. |
+| `workflow_combined` | Workflow combined score parsed from legacy `output.jsonl` rationale; may be empty for new run-report-only cells. Use rebatch output for final workflow/FOS tables. |
+| `fos` | Total FOS score from legacy rationale or FOS report. Use `scripts/rebatch_fos_from_traces.py` output for paper metrics. |
+| `outcome` | FOS outcome component from inline/legacy parsing; use rebatch output for final tables. |
+| `decision` | FOS decision component from inline/legacy parsing; use rebatch output for final tables. |
+| `efficiency` | FOS efficiency component from inline/legacy parsing; use rebatch output for final tables. |
 | `reasoning_steps` | LLM call count, or legacy output-jsonl estimate if LLM metrics are unavailable. |
 | `llm_calls` | `run_report.metrics.llm_call_count`. |
 | `tool_calls` | `run_report.metrics.tool_call_count`. |
@@ -315,6 +316,8 @@ Open this first:
 ```text
 validation_runs/quickstart/rebatch_fos/summary_v2.csv
 ```
+
+Use this rebatch summary, not `iclr_validation_runner.py`'s `results.csv`, for final FOS/yield-loss/path-matching tables. `results.csv` is the run-control table: it is useful for return codes, timeouts, costs, token counts, and artifact paths, while FOS columns there are legacy/inline compatibility fields and may be empty or incomplete for modern FAIRY run bundles.
 
 Key columns:
 
@@ -966,6 +969,28 @@ scripts/kwoo_expansion_result.json
 scripts/kwoo_l1l2_expansion_result.json
 ```
 
+To run the selected L2/L1 20/30 pool with `iclr_validation_runner.py`, expand the manifest to real scenario IDs first. The manifest is CSV-like, and the third field is the registered scenario ID:
+
+```bash
+SCENARIOS=$(awk -F, 'NF>=3 && $1 !~ /^#/ {print $3}' \
+  scripts/fullseason/selected_l2_l1_20_30_scenario_ids.txt | paste -sd, -)
+
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
+  --phase selected_l2_l1_20_30_detail_false \
+  --output-root validation_runs/selected_l2_l1_20_30_detail_false/phase5_paper_matrix \
+  --families farm_baseline_react \
+  --scenarios "$SCENARIOS" \
+  --repeats 1 \
+  --provider deepseek \
+  --model deepseek-chat \
+  --detail false \
+  --a2a false \
+  --parallel-tool-calls false \
+  --max-concurrent 1 \
+  --agent-max-iterations 200 \
+  --cell-timeout-s 1200
+```
+
 ## Oracle Baselines: Where Yield Loss Comes From
 
 `scripts/build_oracle_baselines.py` runs each scenario under oracle control, optionally extrapolates physics to R8 maturity, and writes an oracle yield baseline. The main FOS yield-loss denominator comes from this file:
@@ -1135,10 +1160,13 @@ Parameters:
 | `--cell-timeout-s` | int | `300` | Per-cell subprocess timeout. |
 | `--cell-timeout-grace-s` | int | `60` | After timeout, wait this long after SIGINT before terminate/kill. |
 | `--agent-max-iterations` | int | `200` | Passed to `fairy-run --max-tool-calls`. |
+| `--parallel-tool-calls` | `true` / `false` | `true` | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--wait-for-user-input-timeout` | float | `5.0` | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none | Passed through to FAIRY CLI. |
 | `--detail` | detail mode | none | Merged into `--scenario-kwargs` as `detailed_briefing`. |
 | `--a2a`, `--a2a-*` | same as FAIRY CLI | off | Batch A2A settings. |
+
+For named pools such as `selected_l2_l1_20_30`, use the manifest-expansion snippet in the Scenario Pools section and pass the resulting `"$SCENARIOS"` string here.
 
 Outputs:
 

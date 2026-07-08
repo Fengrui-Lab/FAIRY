@@ -13,11 +13,37 @@ class AgentUserInterface(App):
     @app_tool()
     @event_registered()
     def send_message_to_agent(self, content: str) -> str:
+        """
+        Send a message to the agent.
+
+        This is normally used by scenario setup or replay to deliver the task
+        briefing to the agent. Agent runs hide this tool from the agent-facing
+        toolset so the model cannot inject new user messages into its own
+        conversation.
+
+        Args:
+            content: The message content to send to the agent.
+
+        Returns:
+            The content that was sent.
+        """
         self.messages.append(content)
         return content
 
     @app_tool()
     @event_registered()
     def send_message_to_user(self, content: str) -> str:
+        """
+        Send a message to the user.
+
+        Use this as the final communication channel when the task is complete
+        or cannot be completed with the available tools.
+
+        Args:
+            content: The content to send to the user.
+
+        Returns:
+            The content that was sent.
+        """
         self.messages.append(content)
         return content

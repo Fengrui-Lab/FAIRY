@@ -35,6 +35,13 @@ class SystemApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_current_time(self) -> dict:
+        """
+        Get the current time, date, and weekday.
+
+        Returns a dictionary with the keys "current_timestamp" (epoch
+        timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
+        "current_weekday" (Monday, Tuesday, etc.).
+        """
         timestamp = self.time_manager.time()
         date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
         return {
@@ -59,6 +66,23 @@ class SystemApp(App):
         hours: int = 0,
         days: int = 0,
     ) -> dict:
+        """
+        Advance the simulation clock by a specified amount of time.
+
+        Use this fast-forward tool when waiting for biological or physical
+        processes to play out, such as crop growth, soil drying, treatment
+        residual decay, irrigation effects, or post-harvest drying. After time
+        advances, subsequent state reads reflect the evolved world.
+
+        Args:
+            seconds: Seconds to advance.
+            minutes: Minutes to advance.
+            hours: Hours to advance.
+            days: Days to advance.
+
+        Returns:
+            A dictionary containing the new current time.
+        """
         total_seconds = (
             int(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400
         )
@@ -95,10 +119,19 @@ class SystemApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def wait_for_notification(self, timeout: int = 0) -> None:
+        """
+        Wait until the next notification or user message is received.
+
+        Use this only when there are no other useful tasks to perform. If
+        timeout is greater than zero, waiting ends after at most that many
+        seconds even if no notification arrives.
+
+        Args:
+            timeout: Maximum number of seconds to wait.
+        """
         timeout = int(timeout)
         assert timeout >= 0, "Timeout must be non-negative"
         self.wait_for_notification_timeout = WaitForNotificationTimeout(
             timeout=timeout, time_created=self.time_manager.time()
         )
         self.wait_for_next_notification()
-

@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from fairy.agents.agent.agent import Agent
+from fairy.agents.agent.base_agent import CST
 from fairy.controllers.app_agent import FinalAnswerApp
 from fairy.controllers.agent_config import (
     AgentConfigBuilder as ControllerConfigBuilder,
     AppAgentConfig,
     AppAgentConfigBuilder,
     ControllerAgentConfig,
+    FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT,
     ResearchAgentProfileConfig,
 )
 from fairy.controllers.research_strategies import (
@@ -17,6 +20,9 @@ from fairy.controllers.research_strategies import (
     StrategyLogSnapshot,
 )
 from fairy.controllers.skill_library import DynamicSkillLibrary
+
+
+FARM_AGENT_HIDDEN_TOOL_NAMES = frozenset({"AgentUserInterface__send_message_to_agent"})
 
 
 CONTROLLER_FAMILIES = [
@@ -34,11 +40,7 @@ CONTROLLER_FAMILIES = [
 ]
 
 
-DEFAULT_FARM_SYSTEM_MESSAGE = (
-    "你是一个智能农场管理助手，负责协调农场的各种设备和操作。"
-    "你需要根据天气、土壤状况等信息，合理安排农场作业。"
-    "请按照农艺流程的正确顺序完成任务。"
-)
+DEFAULT_FARM_SYSTEM_MESSAGE = FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT
 
 
 class ResearchARESimulationAgent(Agent):
@@ -59,6 +61,7 @@ class ResearchARESimulationAgent(Agent):
             system_message=system_message,
             messages=messages,
             toolsets=toolsets,
+            hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
         )
         self.controller_profile = controller_profile
         self.reflection_memory: list[str] = []
@@ -162,7 +165,7 @@ class ResearchARESimulationAgent(Agent):
         return "\n\n".join(segments)
 
     def before_llm_turn(self, task: str) -> str:
-        return self._controller_context(task)
+        return ""
 
     def after_llm_message(self, message: Any) -> None:
         self.telemetry["llm_calls"] = int(self.telemetry["llm_calls"]) + 1
@@ -230,9 +233,41 @@ class ResearchARESimulationAgent(Agent):
             telemetry=dict(self.telemetry),
         )
 
+    def _build_task_with_research_context(self, task: str) -> str:
+        context = self._controller_context(task)
+        if context.strip():
+            self.record_event(
+                "controller_context",
+                status="ok",
+                content_preview=context[:1000],
+            )
+        if not context.strip():
+            return task
+        if str(task).strip():
+            return f"{task}\n\n{context}"
+        return context
+
+    def _ensure_current_time_system_prompt(self) -> None:
+        if self.time_manager is None or not self.messages.messages:
+            return
+        first_message = self.messages.messages[0]
+        if not isinstance(first_message, dict) or first_message.get("role") != "system":
+            return
+        content = str(first_message.get("content") or "")
+        if "Today's date in 'YYYY-MM-DD HH' format is" in content:
+            return
+        date_str = datetime.fromtimestamp(
+            self.time_manager.time(), tz=CST
+        ).strftime("%Y-%m-%d %H")
+        first_message["content"] = (
+            f"{content}\n\nToday's date in 'YYYY-MM-DD HH' format is {date_str}"
+        )
+
     def run(self, input, **kwargs):
         self._reset_research_state()
-        return super().run(input, **kwargs)
+        self._ensure_current_time_system_prompt()
+        task = self._build_task_with_research_context(str(input))
+        return super().run(task, **kwargs)
 
 
 ControllerAgent = ResearchARESimulationAgent
