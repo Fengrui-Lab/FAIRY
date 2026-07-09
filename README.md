@@ -1145,26 +1145,26 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 
 Parameters:
 
-| Parameter | Type/values | Default | Meaning |
-|---|---|---|---|
-| `--config` | JSON path | none | Load defaults from JSON. CLI args override config values. |
-| `--phase` | string | required | Experiment phase label. Used for logging/organization. |
-| `--output-root` | path | required | Root directory for cell outputs and `results.csv`. |
-| `--families` | comma-separated or config list | required | Controller list. |
-| `--scenarios` | comma-separated or config list | required | Scenario list. |
-| `--repeats` | int | `1` | Runs per family x scenario pair. |
+| Parameter | Type/values | Default                          | Meaning |
+|---|---|----------------------------------|---|
+| `--config` | JSON path | none                             | Load defaults from JSON. CLI args override config values. |
+| `--phase` | string | required                         | Experiment phase label. Used for logging/organization. |
+| `--output-root` | path | required                         | Root directory for cell outputs and `results.csv`. |
+| `--families` | comma-separated or config list | required                         | Controller list. |
+| `--scenarios` | comma-separated or config list | required                         | Scenario list. |
+| `--repeats` | int | `1`                              | Runs per family x scenario pair. |
 | `--model`, `--provider`, `--endpoint` | string | `gpt-4o-mini`, `llama-api`, none | LLM configuration. |
-| `--model-family` | string | inferred | Reporting label for CSV. |
-| `--cost-cap-dollars` | float | `10.0` | Estimated spend cap. Remaining cells are cancelled at 80 percent of cap. |
-| `--max-concurrent` | int | `1` | Parallel cells. |
-| `--cell-timeout-s` | int | `300` | Per-cell subprocess timeout. |
-| `--cell-timeout-grace-s` | int | `60` | After timeout, wait this long after SIGINT before terminate/kill. |
-| `--agent-max-iterations` | int | `200` | Passed to `fairy-run --max-tool-calls`. |
-| `--parallel-tool-calls` | `true` / `false` | `true` | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
-| `--wait-for-user-input-timeout` | float | `5.0` | Legacy runner field; current FAIRY CLI does not directly use it. |
-| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none | Passed through to FAIRY CLI. |
-| `--detail` | detail mode | none | Merged into `--scenario-kwargs` as `detailed_briefing`. |
-| `--a2a`, `--a2a-*` | same as FAIRY CLI | off | Batch A2A settings. |
+| `--model-family` | string | inferred                         | Reporting label for CSV. |
+| `--cost-cap-dollars` | float | `9999.0`                         | Estimated spend cap. Remaining cells are cancelled at 80 percent of cap. |
+| `--max-concurrent` | int | `1`                              | Parallel cells. |
+| `--cell-timeout-s` | int | `300`                            | Per-cell subprocess timeout. |
+| `--cell-timeout-grace-s` | int | `60`                             | After timeout, wait this long after SIGINT before terminate/kill. |
+| `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
+| `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
+| `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
+| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
+| `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`. |
+| `--a2a`, `--a2a-*` | same as FAIRY CLI | off                              | Batch A2A settings. |
 
 For named pools such as `selected_l2_l1_20_30`, use the manifest-expansion snippet in the Scenario Pools section and pass the resulting `"$SCENARIOS"` string here.
 

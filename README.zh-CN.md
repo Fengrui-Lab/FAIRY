@@ -1145,26 +1145,26 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 
 参数：
 
-| 参数 | 类型/取值 | 默认值 | 含义 |
-|---|---|---|---|
-| `--config` | JSON path | none | 从 JSON 配置读取默认值；CLI 会覆盖 config。 |
-| `--phase` | string | 必填 | 实验阶段标签，只用于日志/组织。 |
-| `--output-root` | path | 必填 | 写 cell 目录和 `results.csv` 的根目录。 |
-| `--families` | 逗号分隔或 config list | 必填 | controller 列表。 |
-| `--scenarios` | 逗号分隔或 config list | 必填 | scenario 列表。 |
-| `--repeats` | int | `1` | 每个 family × scenario 跑几次。 |
+| 参数 | 类型/取值 | 默认值                              | 含义 |
+|---|---|----------------------------------|---|
+| `--config` | JSON path | none                             | 从 JSON 配置读取默认值；CLI 会覆盖 config。 |
+| `--phase` | string | 必填                               | 实验阶段标签，只用于日志/组织。 |
+| `--output-root` | path | 必填                               | 写 cell 目录和 `results.csv` 的根目录。 |
+| `--families` | 逗号分隔或 config list | 必填                               | controller 列表。 |
+| `--scenarios` | 逗号分隔或 config list | 必填                               | scenario 列表。 |
+| `--repeats` | int | `1`                              | 每个 family × scenario 跑几次。 |
 | `--model`, `--provider`, `--endpoint` | string | `gpt-4o-mini`, `llama-api`, none | LLM 配置。 |
-| `--model-family` | string | 自动推断 | CSV 里的模型族标签。 |
-| `--cost-cap-dollars` | float | `10.0` | 估算费用上限；达到 80% 时取消剩余 cells。 |
-| `--max-concurrent` | int | `1` | 并行 cell 数。 |
-| `--cell-timeout-s` | int | `300` | 单 cell subprocess 超时。 |
-| `--cell-timeout-grace-s` | int | `60` | 超时后先 SIGINT 等待多久，再 terminate/kill。 |
-| `--agent-max-iterations` | int | `200` | 传给 `fairy-run --max-tool-calls`。 |
-| `--parallel-tool-calls` | `true` / `false` | `true` | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
-| `--wait-for-user-input-timeout` | float | `5.0` | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
-| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none | 透传给 FAIRY CLI。 |
-| `--detail` | detail mode | none | 自动合并进 `--scenario-kwargs` 的 `detailed_briefing`。 |
-| `--a2a`, `--a2a-*` | 同 FAIRY CLI | off | 批量 A2A 配置。 |
+| `--model-family` | string | 自动推断                             | CSV 里的模型族标签。 |
+| `--cost-cap-dollars` | float | `9999.0`                         | 估算费用上限；达到 80% 时取消剩余 cells。 |
+| `--max-concurrent` | int | `1`                              | 并行 cell 数。 |
+| `--cell-timeout-s` | int | `300`                            | 单 cell subprocess 超时。 |
+| `--cell-timeout-grace-s` | int | `60`                             | 超时后先 SIGINT 等待多久，再 terminate/kill。 |
+| `--agent-max-iterations` | int | `200`                            | 传给 `fairy-run --max-tool-calls`。 |
+| `--parallel-tool-calls` | `true` / `false` | `true`                           | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
+| `--wait-for-user-input-timeout` | float | `5.0`                            | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
+| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | 透传给 FAIRY CLI。 |
+| `--detail` | detail mode | none                             | 自动合并进 `--scenario-kwargs` 的 `detailed_briefing`。 |
+| `--a2a`, `--a2a-*` | 同 FAIRY CLI | off                              | 批量 A2A 配置。 |
 
 跑 `selected_l2_l1_20_30` 这类场景池时，先按上面“场景池”一节的命令生成 `SCENARIOS`，这里传 `--scenarios "$SCENARIOS"`。
 

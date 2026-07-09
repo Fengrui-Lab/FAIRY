@@ -77,7 +77,7 @@ RUNNER_DEFAULTS = {
     "model_family": None,
     "endpoint": None,
     "log_level": "INFO",
-    "cost_cap_dollars": 10.0,
+    "cost_cap_dollars": 9999.0,
     "max_concurrent": 1,
     "cell_timeout_s": 300,
     "cell_timeout_grace_s": 60,
