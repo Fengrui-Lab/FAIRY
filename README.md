@@ -11,7 +11,7 @@ FAIRY executes FARM scenarios as reproducible agent experiments. A run is define
 | Input | Meaning |
 |---|---|
 | `scenario_id` | FARM scenario. Defines initial farm state, available apps, task objective, and validation rules. |
-| `controller_id` | Agent controller. Defines ReAct, ReWOO, planner, verifier, critic, memory, graph-memory, or related execution strategy. |
+| `controller_id` | Agent controller profile. Selects ReAct plus optional planning, verification, memory, or strategy context; see the controller capability table for exact behavior. |
 | `provider` / `model` | OpenAI-compatible function-calling model service. |
 | `scenario_kwargs` | Scenario constructor options, including full-season detailed-context modes. |
 | `limits` | Execution bounds such as maximum tool calls and wall-clock timeout. |
@@ -119,6 +119,8 @@ Key fields:
 | `metrics.tool_call_count` | Number of executed tool calls. |
 | `evaluation` | Scenario validation summary. |
 | `artifacts` | Paths to all files produced by this run. |
+
+`scenario_farm_world_field_prep` is a legacy interaction smoke scenario and has no `validate()` hook. Its `evaluation.validation.success=true` and batch `score=1.0` mean only that no validation hook failed; they are not task-quality scores. Use physics/full-season scenarios plus rebatch metrics for experimental conclusions.
 
 Inspect agent-run artifacts in this order:
 
@@ -512,6 +514,22 @@ farm_tree_search
 farm_critic_refiner
 farm_graph_memory
 ```
+
+Controller capability boundaries:
+
+| Controller | Implemented behavior |
+|---|---|
+| `default`, `farm_world`, `farm_baseline_react` | One function-calling ReAct loop. The FARM variants use the farm system prompt and telemetry. |
+| `farm_planner_executor` | Adds a planning scaffold and replanning instruction to the same ReAct loop; it is not a separate planner process plus executor process. |
+| `farm_reflective_memory` | Records reflection entries and telemetry. The current single-task run does not re-inject newly written memory into later LLM turns. |
+| `farm_multi_specialist` | Adds specialist reasoning instructions. Real app-level expert agents are enabled separately with `--a2a true`. |
+| `farm_adaptive_verifier` | Adds verification instructions and telemetry; it does not launch a separate verifier model or dynamically change the compute budget. |
+| `farm_rewoo_modular` | Parses task text into deterministic plan-work-solve context. Parse failure produces `ReWOO plan fallback` and continues as ReAct. |
+| `farm_tree_search` | Generates and scores deterministic candidate-plan text with one error-triggered backtrack signal; it does not execute branches in parallel. |
+| `farm_critic_refiner` | Generates actor/critic precondition context and counters. A reported blocked action is advisory context, not a tool-execution guard. |
+| `farm_graph_memory` | Records objective/action/outcome graph nodes and telemetry. Newly written graph state is not re-injected during the same single-task run. |
+
+`farm_skill_rag` is intentionally not registered. The six JSON records under `fairy/controllers/research_skills/` are retained for compatibility and direct `DynamicSkillLibrary` use, but no bundled controller enables them.
 
 ### 2. Oracle / Replay / Evaluate Mode
 
@@ -969,6 +987,29 @@ scripts/kwoo_expansion_result.json
 scripts/kwoo_l1l2_expansion_result.json
 ```
 
+There are two independent uses of the word "skill":
+
+- Controller skills are the six small JSON records consumed by `DynamicSkillLibrary`; bundled controllers currently leave this library disabled.
+- Full-season L2/L3 skill contexts are scenario briefing inputs selected through `detailed_briefing`. They are generated from `knowledge_library_pilot` and candidate workflows and do not require a skill-enabled controller.
+
+Generate and run automatic retrieval contexts with the retrieval harness:
+
+```bash
+PYTHONPATH=. uv run python scripts/fullseason/run_l3_skill_retrieval_experiments.py \
+  --groups l2_pathsim_differ,l3_pathsim_differ \
+  --scenarios <target_scenario_ids> \
+  --reference-scenarios <reference_scenario_ids> \
+  --candidate-output-root <detail_false_output_root> \
+  --output-root validation_runs/<experiment_name> \
+  --families farm_baseline_react \
+  --provider <provider> \
+  --model <model> \
+  --parallel-tool-calls false \
+  --cost-cap-dollars 9999
+```
+
+`--candidate-output-root` must contain a runner `results.csv` plus successful FAIRY run bundles with `agent_workflow.json`. If it is omitted and a path-similarity group is requested, the harness first runs its own `detail_false` candidate pass. Path-similarity scoring uses the declared canonical oracle action graph: AUI nodes are excluded, consecutive `advance_time` calls are merged, positional arguments are bound to their real tool parameter names, and season time is reconstructed from declared time advances. The harness defaults to `--parallel-tool-calls true` and `--cost-cap-dollars 9999`; set an explicit lower cap for paid providers.
+
 To run the selected L2/L1 20/30 pool with `iclr_validation_runner.py`, expand the manifest to real scenario IDs first. The manifest is CSV-like, and the third field is the registered scenario ID:
 
 ```bash
@@ -1251,6 +1292,9 @@ For the import guard, no output and return code 1 means no external framework ru
 
 ## Known Limits
 
-- `farm_rewoo_modular` can enter `ReWOO plan fallback`; that means it is not yet full paper-run-level ReWOO planning.
+- Research controller names describe lightweight context/telemetry strategies around one ReAct loop; consult the controller capability table before treating them as independent algorithm implementations.
+- `farm_rewoo_modular` can enter `ReWOO plan fallback`; it is not a separate paper-grade ReWOO planner.
+- Legacy scenarios under `fairy/scenarios/baseline_farm_world/` have no `validate()` hook. Their successful evaluation and runner `score=1.0` must not be interpreted as task success.
+- Several ARE compatibility names in `fairy.types` are import-only shims (`ConditionCheckEvent`, `Hint`, and related classes). Current migrated scenarios do not rely on their behavior; new code must not treat them as implemented event-loop primitives.
 - A2A on can significantly increase wall time and expert tokens. Always compare both main-agent token usage and `a2a.expert_metrics`.
 - `tool_errors` in oracle baselines may be part of the intended scenario management plan; they do not always mean baseline construction failed.

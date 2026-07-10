@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import importlib
 import json
 import pkgutil
@@ -561,7 +562,7 @@ def test_engine_registers_wrapped_farm_world_for_system_time_advance() -> None:
     )
     scenario.apps = result.apps
 
-    engine = Engine(agent=None, scenario=scenario)
+    Engine(agent=None, scenario=scenario)
     system_app = next(app for app in scenario.apps or [] if isinstance(app, SystemApp))
 
     assert getattr(system_app, "_farm_world_app", None).__class__.__name__ == "FarmWorldApp"
@@ -641,6 +642,121 @@ def test_dynamic_skill_library_retrieves_migrated_skills() -> None:
 
     assert results
     assert results[0][0].skill_id == "weather_window_assessment"
+
+
+def test_skill_retrieval_oracle_workflow_is_canonical() -> None:
+    from scripts.fullseason import run_l3_skill_retrieval_experiments as retrieval
+
+    scenario_id = "scenario_full_season_hb_heihe43_early_density_weed_nutrient_recovery"
+    workflow = retrieval._oracle_workflow(scenario_id)
+    steps = list(workflow.values())
+
+    assert len(steps) == 147
+    timestamps = [step.get("time") for step in steps]
+    assert all(isinstance(timestamp, (int, float)) for timestamp in timestamps)
+    assert timestamps == sorted(timestamps)
+    assert timestamps[-1] > timestamps[0]
+    assert all(not str(step.get("tool_name") or "").startswith("AgentUserInterface__") for step in steps)
+    assert not any(
+        left.get("tool_name") == right.get("tool_name") == "SystemApp__advance_time"
+        for left, right in zip(steps, steps[1:])
+    )
+    planting = next(step for step in steps if step.get("tool_name") == "TractorApp__plant_seeds")
+    assert set(planting["tool_args"]) == {
+        "start_ridge",
+        "end_ridge",
+        "depth_cm",
+        "seed_spacing_cm",
+    }
+    assert retrieval._metric_score(workflow, workflow) == pytest.approx(1.0)
+
+
+def test_all_pathsim_skill_builders_accept_fairy_workflows(monkeypatch) -> None:
+    from scripts.fullseason import run_l3_skill_retrieval_experiments as retrieval
+
+    target = "scenario_full_season_hb_heihe43_early_density_weed_nutrient_recovery"
+    reference = "scenario_full_season_hb_coldspring_planting_window_heihe50"
+    workflows = {
+        scenario_id: retrieval._oracle_workflow(scenario_id)
+        for scenario_id in (target, reference)
+    }
+    monkeypatch.setattr(
+        retrieval,
+        "_load_candidate_agent_workflow",
+        lambda _root, scenario_id: workflows[scenario_id],
+    )
+    unused_root = Path("/tmp/fairy-pathsim-test")
+
+    contexts = {
+        "l2_pathsim_differ": retrieval._build_l2_pathsim_contexts(
+            unused_root, [target], 4
+        ),
+        "l2_pathsim_grouped_differ": retrieval._build_l2_pathsim_grouped_contexts(
+            unused_root, [target]
+        ),
+        "l3_pathsim_same": retrieval._build_l3_pathsim_contexts(
+            unused_root, [target], [target, reference], 4, same=True
+        ),
+        "l3_pathsim_differ": retrieval._build_l3_pathsim_contexts(
+            unused_root, [target], [target, reference], 4, same=False
+        ),
+    }
+
+    for mode, context_map in contexts.items():
+        assert target in context_map, mode
+        assert context_map[target].strip(), mode
+
+
+def test_skill_retrieval_runner_passes_parallel_tool_setting() -> None:
+    from scripts.fullseason import run_l3_skill_retrieval_experiments as retrieval
+
+    args = argparse.Namespace(
+        families="farm_baseline_react",
+        scenarios="scenario_x",
+        repeats=1,
+        model="deepseek-chat",
+        provider="deepseek",
+        cost_cap_dollars=9999.0,
+        max_concurrent=1,
+        cell_timeout_s=1800,
+        cell_timeout_grace_s=120,
+        agent_max_iterations=300,
+        parallel_tool_calls=False,
+        wait_for_user_input_timeout=5.0,
+        log_level="INFO",
+        endpoint=None,
+    )
+    command = retrieval.build_runner_command(
+        args,
+        group="detail_false",
+        scenario_kwargs={"detailed_briefing": False},
+        output_dir=Path("/tmp/fairy-skill-runner"),
+    )
+
+    assert "--parallel-tool-calls" in command
+    assert command[command.index("--parallel-tool-calls") + 1] == "false"
+
+    from scripts.fullseason import (
+        run_deepseek_json_l3_20_retrieval_experiments as deepseek_retrieval,
+    )
+
+    wrapper_args = argparse.Namespace(
+        families="farm_baseline_react",
+        repeats=1,
+        model="deepseek-chat",
+        provider="deepseek",
+        cost_cap_dollars=200.0,
+        max_concurrent=1,
+        cell_timeout_s=1200,
+        cell_timeout_grace_s=60,
+        agent_max_iterations=200,
+        parallel_tool_calls="false",
+        wait_for_user_input_timeout=5.0,
+    )
+    wrapper_command = deepseek_retrieval._base_runner_cmd(wrapper_args)
+
+    assert "--parallel-tool-calls" in wrapper_command
+    assert wrapper_command[wrapper_command.index("--parallel-tool-calls") + 1] == "false"
 
 
 def test_controller_builder_creates_tool_enabled_agent() -> None:

@@ -1,5 +1,10 @@
 # AI Change Log
 
+- 2026-07-10: Repaired L2/L3 path-similarity retrieval to score the canonical
+  declared oracle action graph with ARE-equivalent named/default arguments;
+  added path-sim entry tests, parallel-tool-call forwarding, and accurate
+  controller/skill capability documentation.
+
 - Migrated FARM business into a standalone `fairy` package with FarmAgent-style controller runtime and local compatibility layers for ARE tool/event decorators.
 - Added FAIRY controller family layer for ReAct/ReWOO-style FARM agents and research strategy profiles.
 - Added productized run observability: `run_report.json` as the primary

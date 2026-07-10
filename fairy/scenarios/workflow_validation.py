@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
@@ -273,10 +274,20 @@ def workflow_from_oracle_events(scenario: Any) -> dict[str, dict[str, Any]]:
         tool_name = f"{app_name}__{fn}" if cls in {"DroneApp", "RobotApp"} else f"{cls}__{fn}"
         tool_args = dict(getattr(event, "kwargs", {}) or {})
         args = list(getattr(event, "args", ()) or ())
-        if args:
-            # CapturedEvent stores positional arguments. Preserve them as arg0,
-            # arg1 when no richer signature binding is available.
-            tool_args.update({f"arg{i}": value for i, value in enumerate(args)})
+        try:
+            signature = inspect.signature(function)
+            parameters = list(signature.parameters)
+            call_args = [app, *args] if parameters and parameters[0] == "self" else args
+            bound = signature.bind_partial(*call_args, **tool_args)
+            bound.apply_defaults()
+            tool_args = {
+                name: value
+                for name, value in bound.arguments.items()
+                if name != "self"
+            }
+        except (TypeError, ValueError):
+            if args:
+                tool_args.update({f"arg{i}": value for i, value in enumerate(args)})
         is_advance_time = cls == "SystemApp" and fn == "advance_time"
         event_id = getattr(event, "event_id", None) or f"oracle_{step_index}"
 

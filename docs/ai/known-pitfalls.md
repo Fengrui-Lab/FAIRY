@@ -93,6 +93,19 @@
   steps from the task. The smoke audit recorded planner calls and parse
   failures, but the controller context was the fallback path rather than a
   successful plan-work-solve plan.
+- Research family names represent lightweight context and telemetry strategies
+  around one ReAct loop. Planner, verifier, critic, tree-search, and graph-memory
+  profiles are not separate model processes or parallel execution engines.
+
+## Retrieval Oracle Workflow Shape
+
+- Path-similarity retrieval must use `workflow_from_oracle_events()` after
+  scenario setup, not the executed `Engine.build_oracle_workflow()` export.
+  The executed export contains formatted string timestamps, AUI nodes, and
+  synthetic daily `advance_time` calls introduced by FAIRY's scheduler.
+- Bind captured positional arguments against the tool function signature and
+  apply defaults before scoring. Otherwise workflow arguments become `arg0`,
+  `arg1`, and no longer match ARE's named-argument workflow representation.
 
 ## Workflow Output Paths
 

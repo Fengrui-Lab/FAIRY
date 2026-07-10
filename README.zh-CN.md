@@ -11,7 +11,7 @@ FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入�
 | 输入 | 含义 |
 |---|---|
 | `scenario_id` | FARM 场景。定义初始农场状态、可用 app、任务目标和验证规则。 |
-| `controller_id` | agent 控制器。定义 ReAct、ReWOO、planner、verifier、critic、memory、graph-memory 等运行策略。 |
+| `controller_id` | agent 控制器 profile。选择 ReAct 及可选的 planning、verification、memory 或 strategy context；准确行为见控制器能力表。 |
 | `provider` / `model` | OpenAI-compatible function calling 模型服务。 |
 | `scenario_kwargs` | 场景构造参数，例如 full-season 的 detailed context 模式。 |
 | `limits` | 运行边界，例如最大工具调用数和 wall-clock timeout。 |
@@ -119,6 +119,8 @@ validation_runs/quickstart/agent/farm_baseline_react__scenario_farm_world_field_
 | `metrics.tool_call_count` | 实际工具调用数。 |
 | `evaluation` | 场景验证摘要。 |
 | `artifacts` | 本次运行所有输出文件路径。 |
+
+`scenario_farm_world_field_prep` 是没有 `validate()` hook 的 legacy 交互 smoke 场景。它的 `evaluation.validation.success=true` 和 batch `score=1.0` 只表示没有验证 hook 失败，不是任务质量分数。实验结论应使用 physics/full-season 场景及 rebatch 指标。
 
 Agent run 的详细产物按以下顺序检查：
 
@@ -512,6 +514,22 @@ farm_tree_search
 farm_critic_refiner
 farm_graph_memory
 ```
+
+控制器能力边界：
+
+| 控制器 | 实际实现 |
+|---|---|
+| `default`, `farm_world`, `farm_baseline_react` | 单个 function-calling ReAct loop；FARM 版本使用农场 system prompt 和 telemetry。 |
+| `farm_planner_executor` | 在同一个 ReAct loop 上增加 planning scaffold 和 replan 指令；不是独立 planner 进程加 executor 进程。 |
+| `farm_reflective_memory` | 记录 reflection 和 telemetry；当前单任务 run 不会把新写入的 memory 重新注入后续 LLM turn。 |
+| `farm_multi_specialist` | 增加 specialist reasoning 指令；真实 app 专家 agent 需要另外设置 `--a2a true`。 |
+| `farm_adaptive_verifier` | 增加 verification 指令和 telemetry；不会启动独立 verifier 模型，也不会动态改变计算预算。 |
+| `farm_rewoo_modular` | 用确定性规则把 task 文本解析成 plan-work-solve context；解析失败会记录 `ReWOO plan fallback` 并继续 ReAct。 |
+| `farm_tree_search` | 生成并打分确定性的候选计划文本，工具错误后提供一次 backtrack signal；不会并行执行多条分支。 |
+| `farm_critic_refiner` | 生成 actor/critic 前置条件 context 和计数；其中 blocked action 是提示，不是工具执行拦截器。 |
+| `farm_graph_memory` | 记录 objective/action/outcome 图节点和 telemetry；当前单任务 run 不会重新注入刚写入的 graph state。 |
+
+`farm_skill_rag` 已按设计不注册。`fairy/controllers/research_skills/` 下的 6 个 JSON 仍保留给兼容和直接调用 `DynamicSkillLibrary`，但 FAIRY 内置 controller 不会启用它们。
 
 ### 2. Oracle / Replay / Evaluate 模式
 
@@ -969,6 +987,29 @@ scripts/kwoo_expansion_result.json
 scripts/kwoo_l1l2_expansion_result.json
 ```
 
+这里有两种互相独立的 “skill”：
+
+- Controller skill 是 `DynamicSkillLibrary` 读取的 6 个小型 JSON；当前内置 controller 不启用它们。
+- Full-season L2/L3 skill context 是通过 `detailed_briefing` 注入场景 briefing 的实验上下文，来自 `knowledge_library_pilot` 和 candidate workflow，不要求 controller 开启 skill library。
+
+自动生成并运行 retrieval context 使用：
+
+```bash
+PYTHONPATH=. uv run python scripts/fullseason/run_l3_skill_retrieval_experiments.py \
+  --groups l2_pathsim_differ,l3_pathsim_differ \
+  --scenarios <target_scenario_ids> \
+  --reference-scenarios <reference_scenario_ids> \
+  --candidate-output-root <detail_false_output_root> \
+  --output-root validation_runs/<experiment_name> \
+  --families farm_baseline_react \
+  --provider <provider> \
+  --model <model> \
+  --parallel-tool-calls false \
+  --cost-cap-dollars 9999
+```
+
+`--candidate-output-root` 必须包含 runner 的 `results.csv`，以及成功 FAIRY run bundle 中的 `agent_workflow.json`。如果省略它并请求 path-similarity group，harness 会先跑一轮自己的 `detail_false` candidate。Path-similarity 使用场景声明的 canonical oracle action graph：排除 AUI 节点、合并连续 `advance_time`、把位置参数绑定回真实工具参数名，并从声明的时间推进中重建 season time。harness 默认 `--parallel-tool-calls true`、`--cost-cap-dollars 9999`；付费 provider 应显式设置更低费用上限。
+
 如果要跑 `selected_l2_l1_20_30` 这 50 个 L1/L2 场景，不要把 `selected_l2_l1_20_30` 当成单个 scenario id 直接传给 batch runner。先从 manifest 里取出真实 scenario id，再传给 `--scenarios`：
 
 ```bash
@@ -1251,6 +1292,9 @@ import guard 没输出且返回码为 1 表示没有匹配到外部框架 runtim
 
 ## 已知限制
 
-- `farm_rewoo_modular` 当前可能进入 fallback：`ReWOO plan fallback`。这说明还不是完整 paper-run 级 ReWOO planner。
+- Research controller 名称表示围绕同一个 ReAct loop 的轻量 context/telemetry 策略；把它们当作独立算法实现前应先看控制器能力表。
+- `farm_rewoo_modular` 当前可能进入 fallback：`ReWOO plan fallback`。它不是独立的 paper-grade ReWOO planner。
+- `fairy/scenarios/baseline_farm_world/` 下的 legacy 场景没有 `validate()` hook，不能把其 evaluation success 或 runner `score=1.0` 解读成任务成功。
+- `fairy.types` 中若干 ARE 兼容名称只是可导入 shim，例如 `ConditionCheckEvent`、`Hint` 等。当前迁移场景不依赖其行为；新代码不能把它们当作已经实现的事件循环原语。
 - A2A on 会显著增加 wall time 和专家 token。比较 A2A on/off 时必须同时看主 agent token 和 `a2a.expert_metrics`。
 - Oracle baseline 中的 `tool_errors` 可能是场景设计的一部分，不一定代表 baseline 构建失败。

@@ -65,6 +65,15 @@ def _csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _str_to_bool(value: str) -> bool:
+    normalized = str(value).strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected true/false, got {value!r}")
+
+
 def parse_args() -> argparse.Namespace:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     parser = argparse.ArgumentParser(
@@ -106,11 +115,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default="deepseek-chat")
     parser.add_argument("--provider", default="deepseek")
     parser.add_argument("--endpoint", default=None)
-    parser.add_argument("--cost-cap-dollars", type=float, default=10.0)
+    parser.add_argument("--cost-cap-dollars", type=float, default=9999.0)
     parser.add_argument("--max-concurrent", type=int, default=1)
     parser.add_argument("--cell-timeout-s", type=int, default=1800)
     parser.add_argument("--cell-timeout-grace-s", type=int, default=120)
     parser.add_argument("--agent-max-iterations", type=int, default=300)
+    parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True)
     parser.add_argument("--wait-for-user-input-timeout", type=float, default=5.0)
     parser.add_argument("--log-level", default="INFO")
     parser.add_argument("--pathsim-top-k", type=int, default=4)
@@ -175,6 +185,8 @@ def build_runner_command(
         str(args.cell_timeout_grace_s),
         "--agent-max-iterations",
         str(args.agent_max_iterations),
+        "--parallel-tool-calls",
+        "true" if args.parallel_tool_calls else "false",
         "--wait-for-user-input-timeout",
         str(args.wait_for_user_input_timeout),
         "--log-level",
@@ -352,14 +364,18 @@ def _load_registry():
 
 
 def _oracle_workflow(scenario_id: str) -> dict[str, Any]:
-    from fairy.controllers.engine import Engine
+    from fairy.scenarios.workflow_validation import workflow_from_oracle_events
 
     scenario_cls = _load_registry().get_scenario(scenario_id)
     scenario = scenario_cls()
-    workflow = Engine(agent=None, scenario=scenario).build_oracle_workflow(
-        run_oracle=True
-    )
-    return workflow.to_dict()
+    scenario.setup()
+    workflow = workflow_from_oracle_events(scenario)
+    current_time = float(getattr(scenario, "start_time", 0.0) or 0.0)
+    for step in workflow.values():
+        step["time"] = current_time
+        if step.get("tool_name") == "SystemApp__advance_time":
+            current_time += _advance_time_seconds(step.get("tool_args") or {})
+    return workflow
 
 
 def _metric_score(oracle_wf: dict[str, Any], agent_wf: dict[str, Any]) -> float:

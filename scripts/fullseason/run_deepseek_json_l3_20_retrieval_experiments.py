@@ -151,6 +151,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cell-timeout-s", type=int, default=1200)
     parser.add_argument("--cell-timeout-grace-s", type=int, default=60)
     parser.add_argument("--agent-max-iterations", type=int, default=200)
+    parser.add_argument(
+        "--parallel-tool-calls",
+        choices=("true", "false"),
+        default="true",
+    )
     parser.add_argument("--wait-for-user-input-timeout", type=float, default=5.0)
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
@@ -178,6 +183,8 @@ def _base_runner_cmd(args: argparse.Namespace) -> list[str]:
         str(args.cell_timeout_grace_s),
         "--agent-max-iterations",
         str(args.agent_max_iterations),
+        "--parallel-tool-calls",
+        args.parallel_tool_calls,
         "--wait-for-user-input-timeout",
         str(args.wait_for_user_input_timeout),
     ]
