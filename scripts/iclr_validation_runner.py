@@ -83,6 +83,7 @@ RUNNER_DEFAULTS = {
     "cell_timeout_grace_s": 60,
     "progress_interval_s": 60.0,
     "agent_max_iterations": 200,
+    "max_output_tokens": 2048,
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
     "scenario_kwargs": None,
@@ -117,6 +118,7 @@ def _build_cell_command(
     scenario_initialization_kwargs: str | None = None,
     agent_max_iterations: int = 200,
     agent_timeout_seconds: int | float | None = None,
+    max_output_tokens: int = 2048,
     wait_for_user_input_timeout: float = 5.0,
     parallel_tool_calls: bool = True,
     a2a_enabled: bool = False,
@@ -146,6 +148,8 @@ def _build_cell_command(
         str(agent_max_iterations),
         "--timeout-seconds",
         str(agent_timeout_seconds or 1200),
+        "--max-output-tokens",
+        str(max_output_tokens),
         "--parallel-tool-calls",
         "true" if parallel_tool_calls else "false",
     ]
@@ -460,6 +464,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
         "cell_timeout_s",
         "cell_timeout_grace_s",
         "agent_max_iterations",
+        "max_output_tokens",
     ):
         if field_name in config and config[field_name] is not None:
             config[field_name] = int(config[field_name])
@@ -703,6 +708,14 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         default=defaults.get("agent_max_iterations"),
     )
     parser.add_argument(
+        "--max-output-tokens",
+        "--max-tokens",
+        dest="max_output_tokens",
+        type=int,
+        default=defaults.get("max_output_tokens"),
+        help="Maximum completion tokens per LLM call.",
+    )
+    parser.add_argument(
         "--wait-for-user-input-timeout",
         type=float,
         default=defaults.get("wait_for_user_input_timeout"),
@@ -777,6 +790,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             + ", ".join(f"--{name.replace('_', '-')}" for name in missing)
             + " (provide on CLI or in --config)"
         )
+    if args.max_output_tokens <= 0:
+        parser.error("--max-output-tokens must be a positive integer")
     return args
 
 
@@ -793,6 +808,7 @@ def run_cell(
     detail_enabled: bool | None,
     model_family: str,
     agent_max_iterations: int,
+    max_output_tokens: int,
     wait_for_user_input_timeout: float,
     parallel_tool_calls: bool,
     a2a_enabled: bool,
@@ -830,6 +846,7 @@ def run_cell(
             "endpoint": endpoint,
             "level": _classify_level(cell.scenario),
             "a2a_enabled": a2a_enabled,
+            "max_output_tokens": max_output_tokens,
             "detail_enabled": detail_enabled,
             "wall_s": 0.0,
             "return_code": -3,
@@ -854,6 +871,7 @@ def run_cell(
         scenario_initialization_kwargs=scenario_initialization_kwargs,
         agent_max_iterations=agent_max_iterations,
         agent_timeout_seconds=timeout_s,
+        max_output_tokens=max_output_tokens,
         wait_for_user_input_timeout=wait_for_user_input_timeout,
         parallel_tool_calls=parallel_tool_calls,
         a2a_enabled=a2a_enabled,
@@ -979,6 +997,7 @@ def run_cell(
         "a2a_policy": a2a_policy if a2a_enabled else "off",
         "a2a_app_agent": a2a_app_agent if a2a_enabled else "",
         "parallel_tool_calls": parallel_tool_calls,
+        "max_output_tokens": max_output_tokens,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
         "scenario_initialization_kwargs": scenario_initialization_kwargs or "",
@@ -1038,6 +1057,7 @@ def main() -> int:
         f"=== {args.phase}: {total_cells} cells, "
         f"provider={args.provider}, model={args.model}, family={model_family}, "
         f"a2a={bool(args.a2a)}, detail={detail_enabled}, "
+        f"max_output_tokens={args.max_output_tokens}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
     )
 
@@ -1064,6 +1084,7 @@ def main() -> int:
                 detail_enabled,
                 model_family,
                 args.agent_max_iterations,
+                args.max_output_tokens,
                 args.wait_for_user_input_timeout,
                 bool(args.parallel_tool_calls),
                 bool(args.a2a),

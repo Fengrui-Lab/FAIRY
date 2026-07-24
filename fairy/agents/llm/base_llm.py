@@ -37,6 +37,13 @@ class BaseLLM:
         self.request_timeout = (
             float(raw_timeout) if raw_timeout not in (None, "") else None
         )
+        raw_max_tokens = kwargs.get(
+            "max_output_tokens",
+            kwargs.get("max_tokens", os.getenv("FAIRY_LLM_MAX_OUTPUT_TOKENS", "2048")),
+        )
+        self.max_output_tokens = int(raw_max_tokens)
+        if self.max_output_tokens <= 0:
+            raise ValueError("max_output_tokens must be a positive integer")
         raw_parallel_tool_calls = kwargs.get(
             "parallel_tool_calls", os.getenv("FAIRY_PARALLEL_TOOL_CALLS", "true")
         )
@@ -48,6 +55,9 @@ class BaseLLM:
         if tools is None:
             return {}
         return {"parallel_tool_calls": self.parallel_tool_calls}
+
+    def output_token_options(self, *, parameter: str = "max_tokens"):
+        return {parameter: self.max_output_tokens}
 
     def chat_completion(self, messages, tools=None):
         """

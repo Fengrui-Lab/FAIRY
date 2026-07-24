@@ -94,6 +94,14 @@
   return multiple tool calls in one LLM turn. The default is `true` for backward
   compatibility; set it to `false` when an experiment requires strict
   observe-after-each-action behavior.
+- Every real-agent LLM call has a completion cap. `fairy.cli` and
+  `scripts/iclr_validation_runner.py` expose it as `--max-output-tokens`
+  (alias `--max-tokens`), defaulting to `2048`; direct `BaseLLM` construction
+  uses `FAIRY_LLM_MAX_OUTPUT_TOKENS` when no explicit value is supplied. The
+  effective cap is recorded as `run_report.limits.max_output_tokens` and in
+  runner `results.csv`. This cap prevents unbounded generation but does not
+  interrupt a provider that stalls without producing tokens; request and cell
+  timeouts remain separate controls.
 
 ## Paper-Controller Smoke Gaps
 

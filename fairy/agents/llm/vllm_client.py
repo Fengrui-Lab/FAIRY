@@ -42,6 +42,7 @@ class VLLMClient(BaseLLM):
             "messages": messages,
             "tools": tools,
             "temperature": self.temperature,
+            **self.output_token_options(),
             **self.tool_call_options(tools),
         }
         if self.enable_thinking is not None:
@@ -60,4 +61,5 @@ class VLLMClient(BaseLLM):
             "base_url": self.base_url,
             "enable_thinking": self.enable_thinking,
             "parallel_tool_calls": self.parallel_tool_calls,
+            "max_output_tokens": self.max_output_tokens,
         }

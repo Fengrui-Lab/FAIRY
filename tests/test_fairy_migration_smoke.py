@@ -589,6 +589,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
         a2a_provider="qwen",
         a2a_endpoint="http://localhost:8000/v1",
         parallel_tool_calls=False,
+        max_output_tokens=4096,
     )
 
     joined = " ".join(cmd)
@@ -600,6 +601,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
     assert "--a2a-provider qwen" in joined
     assert "--a2a-endpoint http://localhost:8000/v1" in joined
     assert "--parallel-tool-calls false" in joined
+    assert "--max-output-tokens 4096" in joined
 
 
 def test_rewoo_strategy_builds_plan_context() -> None:
@@ -834,6 +836,7 @@ def test_vllm_qwen_client_disables_thinking_in_chat_template(monkeypatch) -> Non
         "chat_template_kwargs": {"enable_thinking": False}
     }
     assert captured["parallel_tool_calls"] is False
+    assert captured["max_tokens"] == 2048
 
 
 def test_deepseek_client_passes_parallel_tool_calls(monkeypatch) -> None:
@@ -856,6 +859,7 @@ def test_deepseek_client_passes_parallel_tool_calls(monkeypatch) -> None:
             "provider": "deepseek",
             "model": "deepseek-chat",
             "parallel_tool_calls": False,
+            "max_output_tokens": 4096,
         }
     )
     deepseek.api_client = _CaptureClient()
@@ -863,6 +867,34 @@ def test_deepseek_client_passes_parallel_tool_calls(monkeypatch) -> None:
     deepseek.chat_completion([{"role": "user", "content": "Return ok"}], tools=[])
 
     assert captured["parallel_tool_calls"] is False
+    assert captured["max_tokens"] == 4096
+
+
+def test_llm_max_output_tokens_default_and_environment_override(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+    monkeypatch.delenv("FAIRY_LLM_MAX_OUTPUT_TOKENS", raising=False)
+
+    default_client = BaseLLM.llm_builder(
+        {"provider": "deepseek", "model": "deepseek-chat"}
+    )
+    assert default_client.max_output_tokens == 2048
+
+    monkeypatch.setenv("FAIRY_LLM_MAX_OUTPUT_TOKENS", "3072")
+    environment_client = BaseLLM.llm_builder(
+        {"provider": "deepseek", "model": "deepseek-chat"}
+    )
+    assert environment_client.max_output_tokens == 3072
+
+    with pytest.raises(ValueError, match="positive integer"):
+        BaseLLM.llm_builder(
+            {
+                "provider": "deepseek",
+                "model": "deepseek-chat",
+                "max_output_tokens": 0,
+            }
+        )
 
 
 def test_openai_compatible_clients_accept_request_timeout(monkeypatch) -> None:
@@ -919,6 +951,7 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert agent.messages.runtime_metrics[0]["tokens"]["total_tokens"] == 16
     llm_starts = [event for event in agent.runtime_events if event["event_type"] == "llm_call_start"]
     llm_start = llm_starts[0]
+    assert llm_start["max_output_tokens"] is None
     assert llm_start["messages"][0]["role"] == "system"
     assert llm_start["messages"][-1]["role"] == "user"
     assert "FarmWorldApp__get_inventory" in llm_start["tool_names"]
@@ -1594,6 +1627,7 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
         max_tool_calls=3,
         timeout_seconds=30,
         parallel_tool_calls=False,
+        max_output_tokens=2048,
         workflow_steps=4,
         tool_call_count=3,
         runtime_metrics=[],
@@ -1605,3 +1639,4 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
     assert report["stop_reason"] == "max_tool_calls"
     assert report["wall_time_seconds"] == 12.345679
     assert report["limits"]["parallel_tool_calls"] is False
+    assert report["limits"]["max_output_tokens"] == 2048

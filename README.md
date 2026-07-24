@@ -212,6 +212,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --max-concurrent 1 \
   --cell-timeout-s 600 \
   --agent-max-iterations 100 \
+  --max-output-tokens 2048 \
   --cost-cap-dollars 5
 ```
 
@@ -240,6 +241,7 @@ Complete `results.csv` columns:
 | `a2a_app_agent` | A2A fallback app-agent profile; empty when A2A is off. |
 | `detail_enabled` | Normalized `--detail` value; empty when unset. |
 | `parallel_tool_calls` | Whether OpenAI-compatible clients were allowed to return multiple tool calls in one assistant turn. |
+| `max_output_tokens` | Per-LLM-call completion-token cap passed to the provider as `max_tokens`; defaults to `2048`. |
 | `scenario_kwargs` | JSON string passed to `fairy.cli --scenario-kwargs`. |
 | `scenario_initialization_kwargs` | JSON string passed to `fairy.cli --init-kwargs`. |
 | `wall_s` | Cell subprocess wall-clock seconds. |
@@ -1202,6 +1204,7 @@ Parameters:
 | `--cell-timeout-grace-s` | int | `60`                             | After timeout, wait this long after SIGINT before terminate/kill. |
 | `--progress-interval-s` | float | `60`                              | Print live LLM/tool/token/last-event progress for each running cell. Set `0` to disable. |
 | `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
+| `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; forwarded to the provider and recorded in each run report. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |

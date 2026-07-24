@@ -64,6 +64,7 @@ class OpenAILLM(BaseLLM):
                 messages=messages,
                 tools=tools,
                 temperature=self.temperature,
+                **self.output_token_options(),
                 **self.tool_call_options(tools),
             )
         elif self.api_mode == "reasoning":
@@ -72,6 +73,7 @@ class OpenAILLM(BaseLLM):
                 model=self.model,
                 messages=messages,
                 tools=tools,
+                **self.output_token_options(parameter="max_completion_tokens"),
                 **self.tool_call_options(tools),
             )
         else:
@@ -84,4 +86,5 @@ class OpenAILLM(BaseLLM):
             'model': self.model,
             'temperature': self.temperature,
             'parallel_tool_calls': self.parallel_tool_calls,
+            'max_output_tokens': self.max_output_tokens,
         }

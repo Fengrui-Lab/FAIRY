@@ -85,6 +85,7 @@ class BaseAgent:
             "llm_call_start",
             model=getattr(self.llm, "model", None),
             provider=getattr(self.llm, "provider", None),
+            max_output_tokens=getattr(self.llm, "max_output_tokens", None),
             message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
             messages=self._jsonable(llm_messages),

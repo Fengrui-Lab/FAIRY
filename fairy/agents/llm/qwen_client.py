@@ -32,6 +32,7 @@ class QwenClient(BaseLLM):
             messages=messages,
             tools=tools,
             temperature=self.temperature,
+            **self.output_token_options(),
             **self.tool_call_options(tools),
         )
 
@@ -42,4 +43,5 @@ class QwenClient(BaseLLM):
             "temperature": self.temperature,
             "base_url": self.base_url,
             "parallel_tool_calls": self.parallel_tool_calls,
+            "max_output_tokens": self.max_output_tokens,
         }

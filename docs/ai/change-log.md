@@ -1,5 +1,12 @@
 # AI Change Log
 
+- 2026-07-24: Added a provider-enforced per-call output-token cap for real
+  agents. Both FAIRY CLI entry points accept `--max-output-tokens` /
+  `--max-tokens`, default `2048`; vLLM, DeepSeek, Qwen, generic
+  OpenAI-compatible, and OpenAI clients now forward the cap using the
+  provider-appropriate request field. Run reports and batch CSV rows preserve
+  the effective value for experiment audits.
+
 - 2026-07-10: Repaired L2/L3 path-similarity retrieval to score the canonical
   declared oracle action graph with ARE-equivalent named/default arguments;
   added path-sim entry tests, parallel-tool-call forwarding, and accurate

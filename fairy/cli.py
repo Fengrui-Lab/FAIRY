@@ -125,6 +125,14 @@ def main() -> None:
     parser.add_argument("--provider", default="deepseek", help="LLM provider for --agent")
     parser.add_argument("--model", default="deepseek-chat", help="LLM model for --agent")
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
+    parser.add_argument(
+        "--max-output-tokens",
+        "--max-tokens",
+        dest="max_output_tokens",
+        type=int,
+        default=2048,
+        help="Maximum completion tokens per LLM call",
+    )
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
     parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
@@ -156,6 +164,8 @@ def main() -> None:
         for scenario_id in list_scenarios():
             print(scenario_id)
         return
+    if args.max_output_tokens <= 0:
+        parser.error("--max-output-tokens must be a positive integer")
     if not args.scenario:
         parser.error("--scenario is required unless --list is used")
     scenario_class = get_scenario_class(args.scenario)
@@ -221,6 +231,7 @@ def main() -> None:
             max_tool_calls=None,
             timeout_seconds=None,
             parallel_tool_calls=None,
+            max_output_tokens=None,
             workflow_steps=len(active_workflow or source_workflow or Workflow()),
             tool_call_count=len(log_engine.run_log),
             runtime_metrics=[],
@@ -247,6 +258,7 @@ def main() -> None:
                 "provider": args.provider,
                 "model": args.model,
                 "temperature": args.temperature,
+                "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
@@ -264,6 +276,7 @@ def main() -> None:
                         "provider": app_provider,
                         "model": app_model,
                         "temperature": args.temperature,
+                        "max_output_tokens": args.max_output_tokens,
                         "parallel_tool_calls": args.parallel_tool_calls,
                         **({"base_url": app_endpoint} if app_endpoint else {}),
                     }
@@ -372,6 +385,7 @@ def main() -> None:
             max_tool_calls=args.max_tool_calls,
             timeout_seconds=args.timeout_seconds,
             parallel_tool_calls=args.parallel_tool_calls,
+            max_output_tokens=args.max_output_tokens,
             workflow_steps=len(workflow),
             tool_call_count=agent.tool_call_count,
             runtime_metrics=runtime_metrics,
