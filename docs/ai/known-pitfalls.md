@@ -64,6 +64,14 @@
 
 ## LLM Runtime Observability
 
+- `runtime_log.jsonl` is finalized only after a cell exits because it contains
+  full per-turn contexts. During execution, use `<scenario>.progress.jsonl` or
+  the batch runner heartbeat. The progress stream omits full `messages` to keep
+  logging cost independent of context-window size and survives timeout/kill.
+- The validation runner checkpoints `results.csv` after every completed cell.
+  A killed batch therefore retains completed rows; do not regress to writing
+  the CSV only after the whole matrix exits. Final runtime JSONL files are
+  written through a temporary file and atomically renamed.
 - `llm_call_end` should record both the exact assistant content returned by the
   provider and whether it is empty. Function-call responses can have empty
   content while still carrying valid tool calls; do not infer missing reasoning
@@ -112,3 +120,27 @@
 - `Workflow.save_workflow()` creates parent directories before writing. README
   quickstart commands intentionally point `--workflow` at fresh directories; do
   not reintroduce call sites that require users to run `mkdir` first.
+
+## Rebatch Replay Time Contract
+
+- Agent workflow `time` is the human-readable **post-tool** timestamp. Never
+  align a fresh scenario to that value before invoking the recorded tool;
+  doing so applies every simulated tool duration twice, most severely for
+  `SystemApp__advance_time`.
+- New agent traces also store exact epoch values in `time_before` and
+  `time_after`. Rebatch must use those fields when present. For old traces it
+  reconstructs `advance_time`'s pre-call timestamp as post time minus the
+  requested duration, uses the previous post time for writes, and treats a
+  read's timestamp as its observation time.
+- Replay physics is monotonic. A requested timestamp earlier than
+  `physics.last_physics_sim_time` is a divergence, not a clock adjustment.
+- Rebatch validates mutating-tool success/error semantics and return values,
+  then compares the complete final FARM inventory and yield summary with
+  `run_report.outcome`. A mismatch must fail the cell; never emit FOS or yield
+  metrics from a divergent state. A bundle without that outcome checkpoint is
+  also unverified and must fail rather than produce metrics.
+- Sensor observations are not byte-reproducible across Python processes
+  because `App.set_seed()` currently derives RNG seeds with Python's salted
+  `hash()`. Preserve the recorded read return in EventLog, count observation
+  mismatches separately, and rely on strict writes plus the final outcome
+  checkpoint for state-replay validity.

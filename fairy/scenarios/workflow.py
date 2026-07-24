@@ -15,9 +15,11 @@ class WorkflowStep:
     tool_args: dict[str, Any] | None = None
     depends_on: list[str] = field(default_factory=list)
     time: str | None = None
+    time_before: float | None = None
+    time_after: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        data = {
             "name": self.name,
             "content": self.content,
             "op_type": self.op_type,
@@ -26,6 +28,11 @@ class WorkflowStep:
             "depends_on": self.depends_on,
             "time": self.time,
         }
+        if self.time_before is not None:
+            data["time_before"] = self.time_before
+        if self.time_after is not None:
+            data["time_after"] = self.time_after
+        return data
 
 
 class Workflow:

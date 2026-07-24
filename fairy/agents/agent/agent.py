@@ -158,9 +158,13 @@ class Agent(BaseAgent):
             )
             raise RecoverableToolCallError(exc, name, tool_call_id) from exc
 
-        # Format environment time
-        env_time = self.time_manager.time()
-        env_datetime = datetime.fromtimestamp(env_time, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+        # Record exact simulation time on both sides of the tool call.  The
+        # human-readable ``time`` field remains the post-call timestamp for
+        # backward compatibility with existing workflow consumers.
+        env_time_before = self.time_manager.time()
+        env_datetime = datetime.fromtimestamp(env_time_before, tz=CST).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
         self.log(f"[Env Time: {env_datetime}] Calling tool: {name}({args})")
 
@@ -200,6 +204,7 @@ class Agent(BaseAgent):
                 exc=exc,
                 elapsed_time=elapsed_time,
                 error_stage="tool_call",
+                time_before=env_time_before,
             )
             raise RecoverableToolCallError(exc, name, tool_call_id) from exc
         elapsed_time = round(time.perf_counter() - start_time, 6)
@@ -212,7 +217,10 @@ class Agent(BaseAgent):
             del self.messages.messages[message_count_before_tool:]
 
         # Add time prefix to tool response
-        env_ts = self.env_time_str()
+        env_time_after = self.time_manager.time()
+        env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         self.messages.tool_call_response(tool_response, tool_call, elapsed_time, env_ts)
         if deferred_messages:
             self.messages.messages.extend(deferred_messages)
@@ -221,7 +229,10 @@ class Agent(BaseAgent):
             tool_name=name,
             tool_args=args,
             content=tool_response,
-            time=env_ts)
+            time=env_ts,
+            time_before=env_time_before,
+            time_after=env_time_after,
+        )
         )
         self.record_event(
             "tool_call_end",
@@ -247,8 +258,12 @@ class Agent(BaseAgent):
         exc: Exception,
         elapsed_time: float,
         error_stage: str,
+        time_before: float | None = None,
     ) -> None:
-        env_ts = self.env_time_str()
+        env_time_after = self.time_manager.time()
+        env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         error_text = (
             f"[OUTPUT OF TOOL {tool_name}] ERROR:\n"
             "***\n"
@@ -281,6 +296,10 @@ class Agent(BaseAgent):
                 tool_args=tool_args,
                 content=error_text,
                 time=env_ts,
+                time_before=(
+                    float(time_before) if time_before is not None else env_time_after
+                ),
+                time_after=env_time_after,
             )
         )
         self.record_event(

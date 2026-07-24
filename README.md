@@ -1200,6 +1200,7 @@ Parameters:
 | `--max-concurrent` | int | `1`                              | Parallel cells. |
 | `--cell-timeout-s` | int | `300`                            | Per-cell subprocess timeout. |
 | `--cell-timeout-grace-s` | int | `60`                             | After timeout, wait this long after SIGINT before terminate/kill. |
+| `--progress-interval-s` | float | `60`                              | Print live LLM/tool/token/last-event progress for each running cell. Set `0` to disable. |
 | `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
@@ -1213,9 +1214,10 @@ Outputs:
 
 | File | Purpose |
 |---|---|
-| `<output-root>/results.csv` | One row per cell: return code, status, cost, tool/LLM calls, telemetry, run_report path. |
+| `<output-root>/results.csv` | One row per completed cell: return code, status, cost, tool/LLM calls, telemetry, run_report path. Atomically checkpointed after every cell. |
 | `<output-root>/<family>__<scenario>__rN/stdout.log` | Cell stdout. |
 | `<output-root>/<family>__<scenario>__rN/stderr.log` | Cell stderr, timeout notes, tracebacks. |
+| `<output-root>/<family>__<scenario>__rN/<scenario>.progress.jsonl` | Lightweight live event stream, available while running and retained after timeout/kill. |
 | `<output-root>/<family>__<scenario>__rN/<scenario>.run_report.json` | Main cell report. |
 | Other `<scenario>.*` artifacts | Same as ordinary agent run. |
 

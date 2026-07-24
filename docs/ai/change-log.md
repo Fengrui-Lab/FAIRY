@@ -75,3 +75,18 @@
   it now consumes cell bundles with `*.agent_workflow.json` plus
   `*.run_report.json`, reads token/runtime metrics from `run_report`, and no
   longer discovers or reads the previous ARE trace export format.
+- Corrected FAIRY rebatch time semantics: agent workflows now record exact
+  pre/post tool epochs, legacy `advance_time` steps are reconstructed from the
+  post-call timestamp without advancing twice, physics cannot rewind, and
+  divergent mutating returns or final FARM outcome checkpoints fail the cell.
+  The exact20 27B and 35B detail=true traces passed 40/40 strict outcome
+  replays after the change.
+- Added live long-cell observability without changing experiment inputs:
+  agents emit a lightweight `<scenario>.progress.jsonl` as events occur, and
+  `iclr_validation_runner.py` prints configurable LLM/tool/token heartbeats.
+  Full message contexts remain in the final `runtime_log.jsonl` so progress
+  logging overhead does not scale with context size.
+  Runner subprocesses are unbuffered, `results.csv` is atomically checkpointed
+  after every cell, and final JSONL artifacts use atomic replacement so an
+  interrupted batch retains completed summaries without exposing half-written
+  final logs.

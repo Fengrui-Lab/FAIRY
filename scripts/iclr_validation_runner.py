@@ -81,6 +81,7 @@ RUNNER_DEFAULTS = {
     "max_concurrent": 1,
     "cell_timeout_s": 300,
     "cell_timeout_grace_s": 60,
+    "progress_interval_s": 60.0,
     "agent_max_iterations": 200,
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
@@ -176,33 +177,133 @@ def _wait_for_cell_process(
     timeout_grace_s: int,
     stderr_h,
     cmd: list[str],
+    progress_path: Path | None = None,
+    progress_label: str | None = None,
+    progress_interval_s: float = 60.0,
 ) -> tuple[int, bool, bool]:
     """Wait for a cell process, asking it to stop cleanly before killing it."""
+    started = time.monotonic()
+    deadline = started + timeout_s
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        wait_seconds = remaining
+        if progress_interval_s > 0:
+            wait_seconds = min(wait_seconds, progress_interval_s)
+        try:
+            return proc.wait(timeout=wait_seconds), False, False
+        except subprocess.TimeoutExpired:
+            if time.monotonic() >= deadline:
+                break
+            print(
+                _format_cell_progress(
+                    progress_path,
+                    progress_label or "cell",
+                    time.monotonic() - started,
+                ),
+                flush=True,
+            )
+
+    stderr_h.write(
+        f"\nTimed out after {timeout_s}s; sending SIGINT for graceful shutdown: "
+        f"{shlex.join(cmd)}\n"
+    )
+    stderr_h.flush()
     try:
-        return proc.wait(timeout=timeout_s), False, False
+        proc.send_signal(signal.SIGINT)
+        return proc.wait(timeout=timeout_grace_s), True, False
     except subprocess.TimeoutExpired:
         stderr_h.write(
-            f"\nTimed out after {timeout_s}s; sending SIGINT for graceful shutdown: "
-            f"{shlex.join(cmd)}\n"
+            f"\nGraceful shutdown did not finish within {timeout_grace_s}s; "
+            "terminating process.\n"
         )
         stderr_h.flush()
+        proc.terminate()
         try:
-            proc.send_signal(signal.SIGINT)
-            return proc.wait(timeout=timeout_grace_s), True, False
+            return proc.wait(timeout=10), True, True
         except subprocess.TimeoutExpired:
-            stderr_h.write(
-                f"\nGraceful shutdown did not finish within {timeout_grace_s}s; "
-                "terminating process.\n"
-            )
+            stderr_h.write("\nProcess did not terminate; killing process.\n")
             stderr_h.flush()
-            proc.terminate()
-            try:
-                return proc.wait(timeout=10), True, True
-            except subprocess.TimeoutExpired:
-                stderr_h.write("\nProcess did not terminate; killing process.\n")
-                stderr_h.flush()
-                proc.kill()
-                return proc.wait(), True, True
+            proc.kill()
+            return proc.wait(), True, True
+
+
+def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
+    snapshot: dict[str, object] = {
+        "records": 0,
+        "llm_calls": 0,
+        "tool_calls": 0,
+        "tool_errors": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "last_type": None,
+        "last_tool": None,
+        "last_timestamp": None,
+        "idle_seconds": None,
+    }
+    if path is None or not path.exists():
+        return snapshot
+    try:
+        with path.open(encoding="utf-8") as handle:
+            for raw_line in handle:
+                try:
+                    row = json.loads(raw_line)
+                except json.JSONDecodeError:
+                    continue
+                snapshot["records"] = int(snapshot["records"]) + 1
+                record_type = row.get("record_type")
+                if record_type == "llm_call_end":
+                    snapshot["llm_calls"] = int(snapshot["llm_calls"]) + 1
+                    tokens = row.get("tokens") or {}
+                    snapshot["prompt_tokens"] = int(snapshot["prompt_tokens"]) + int(
+                        tokens.get("prompt_tokens") or 0
+                    )
+                    snapshot["completion_tokens"] = int(
+                        snapshot["completion_tokens"]
+                    ) + int(tokens.get("completion_tokens") or 0)
+                elif record_type == "tool_call_end":
+                    snapshot["tool_calls"] = int(snapshot["tool_calls"]) + 1
+                elif record_type in {"tool_call_error", "tool_args_parse_error"}:
+                    snapshot["tool_errors"] = int(snapshot["tool_errors"]) + 1
+                snapshot["last_type"] = record_type
+                snapshot["last_tool"] = row.get("tool_name")
+                snapshot["last_timestamp"] = row.get("wall_timestamp")
+        snapshot["idle_seconds"] = max(0.0, time.time() - path.stat().st_mtime)
+    except OSError:
+        pass
+    return snapshot
+
+
+def _format_cell_progress(path: Path | None, label: str, elapsed_s: float) -> str:
+    progress = _runtime_progress_snapshot(path)
+    if not progress["records"]:
+        return f"  [progress] {label} elapsed={elapsed_s:.0f}s waiting_for_first_event"
+    last = str(progress["last_type"] or "unknown")
+    if progress["last_tool"]:
+        last += f":{progress['last_tool']}"
+    idle = progress["idle_seconds"]
+    idle_text = f"{float(idle):.0f}s" if idle is not None else "unknown"
+    return (
+        f"  [progress] {label} elapsed={elapsed_s:.0f}s "
+        f"llm={progress['llm_calls']} tools={progress['tool_calls']} "
+        f"tool_errors={progress['tool_errors']} "
+        f"tokens_in={progress['prompt_tokens']} "
+        f"tokens_out={progress['completion_tokens']} "
+        f"last={last} idle={idle_text}"
+    )
+
+
+def _write_results_csv(csv_path: Path, rows: list[dict]) -> None:
+    if not rows:
+        return
+    fieldnames = sorted({key for row in rows for key in row})
+    temporary_path = csv_path.with_suffix(csv_path.suffix + ".tmp")
+    with temporary_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+    temporary_path.replace(csv_path)
 
 
 def _load_env_file(env: dict[str, str]) -> None:
@@ -366,6 +467,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
         "cost_cap_dollars",
         "wait_for_user_input_timeout",
         "a2a_app_prop",
+        "progress_interval_s",
     ):
         if field_name in config and config[field_name] is not None:
             config[field_name] = float(config[field_name])
@@ -590,6 +692,12 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         default=defaults.get("cell_timeout_grace_s"),
     )
     parser.add_argument(
+        "--progress-interval-s",
+        type=float,
+        default=defaults.get("progress_interval_s"),
+        help="Print a live per-cell heartbeat at this interval; 0 disables it.",
+    )
+    parser.add_argument(
         "--agent-max-iterations",
         type=int,
         default=defaults.get("agent_max_iterations"),
@@ -695,12 +803,14 @@ def run_cell(
     a2a_provider: str | None,
     a2a_endpoint: str | None,
     timeout_grace_s: int = 60,
+    progress_interval_s: float = 60.0,
 ) -> dict:
     """Run one cell as a subprocess; capture output and parse FOS / workflow."""
     cell_dir = output_root / f"{cell.family}__{cell.scenario}__r{cell.repeat}"
     cell_dir.mkdir(parents=True, exist_ok=True)
 
     env = os.environ.copy()
+    env.setdefault("PYTHONUNBUFFERED", "1")
     _load_env_file(env)
     try:
         command_provider, resolved_endpoint = _prepare_provider_env(
@@ -770,7 +880,14 @@ def run_cell(
             env=env,
         )
         return_code, timed_out, force_killed = _wait_for_cell_process(
-            proc, timeout_s, timeout_grace_s, stderr_h, cmd
+            proc,
+            timeout_s,
+            timeout_grace_s,
+            stderr_h,
+            cmd,
+            progress_path=cell_dir / f"{cell.scenario}.progress.jsonl",
+            progress_label=f"{cell.family}__{cell.scenario}__r{cell.repeat}",
+            progress_interval_s=progress_interval_s,
         )
         wall_s = time.time() - t0
 
@@ -929,6 +1046,7 @@ def main() -> int:
     aborted = False
     cap_threshold = args.cost_cap_dollars * 0.80
     started = time.time()
+    csv_path = args.output_root / "results.csv"
 
     with ThreadPoolExecutor(max_workers=args.max_concurrent) as pool:
         futures = {
@@ -956,6 +1074,7 @@ def main() -> int:
                 args.a2a_provider,
                 args.a2a_endpoint,
                 args.cell_timeout_grace_s,
+                args.progress_interval_s,
             ): cell
             for cell in cells
         }
@@ -982,6 +1101,7 @@ def main() -> int:
                 }
             cumulative_cost += float(row.get("estimated_cost_dollars") or 0.0)
             rows.append(row)
+            _write_results_csv(csv_path, rows)
             completed += 1
             stamp = f"[{completed}/{total_cells}] cum=${cumulative_cost:.3f}"
             fos = row.get("fos")
@@ -1004,14 +1124,8 @@ def main() -> int:
                         f.cancel()
 
     # Write CSV.
-    csv_path = args.output_root / "results.csv"
     if rows:
-        fieldnames = sorted({k for row in rows for k in row.keys()})
-        with csv_path.open("w", newline="", encoding="utf-8") as h:
-            w = csv.DictWriter(h, fieldnames=fieldnames)
-            w.writeheader()
-            for r in rows:
-                w.writerow(r)
+        _write_results_csv(csv_path, rows)
         print(f"  wrote {csv_path} ({len(rows)} rows)")
 
     # Summary.

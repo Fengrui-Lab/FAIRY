@@ -21,9 +21,11 @@ def write_json(path: Path, data: Any) -> None:
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
+    temporary_path = path.with_suffix(path.suffix + ".tmp")
+    with open(temporary_path, "w", encoding="utf-8") as f:
         for row in rows:
             f.write(json.dumps(row, ensure_ascii=False, default=json_default) + "\n")
+    temporary_path.replace(path)
 
 
 def token_usage_from_metrics(metrics: list[dict[str, Any]]) -> dict[str, Any]:

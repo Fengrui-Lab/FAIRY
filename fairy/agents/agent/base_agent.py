@@ -3,8 +3,9 @@
 import dataclasses
 import json
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
+
 from fairy.agents.agent.messages import Messages
 from fairy.scenarios.workflow import Workflow, WorkflowStep
 
@@ -29,6 +30,7 @@ class BaseAgent:
         self.time_manager = None
         self.workflow = Workflow()
         self.runtime_events: list[dict[str, Any]] = []
+        self.runtime_event_sink = None
         self.run_started_at_wall: float | None = None
         self.run_wall_timeout_seconds: float | None = None
 
@@ -45,6 +47,17 @@ class BaseAgent:
             **payload,
         }
         self.runtime_events.append(event)
+        sink = self.runtime_event_sink
+        if sink is not None:
+            try:
+                sink(dict(event))
+            except Exception as exc:
+                # Observability must never change agent execution semantics.
+                self.runtime_event_sink = None
+                self.log(
+                    "WARNING: live runtime event sink disabled after "
+                    f"{type(exc).__name__}: {exc}"
+                )
         return event
 
     def chat_completion(self, messages, tools=None):

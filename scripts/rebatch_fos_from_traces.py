@@ -45,23 +45,27 @@ Caveats:
       branch satisfy that.
     - Scenarios that aren't in the registry are skipped with status
       "scenario_not_in_registry".
-    - Per-tool exceptions during replay are tolerated (agents in the
-      original run also hit these); the event still gets logged with
-      whatever return_value the trace recorded so safety-violation
-      counting stays accurate.
+    - Every replayed return value and the final FARM outcome checkpoint are
+      checked against the trace. A mismatch fails that cell instead of
+      emitting metrics from a divergent physics state.
+    - Workflows written before exact pre/post timestamps were added use a
+      backward-compatible timing reconstruction and are labelled with
+      ``replay_legacy_timing_steps`` in the summary.
 """
 
 from __future__ import annotations
 
 import argparse
+import ast
 import csv
 import json
+import math
 import os
 import re
 import sys
 import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -73,6 +77,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 _DEFAULT_EXCLUDED_SWEEP_DIRS: tuple[str, ...] = ()
+_CST = timezone(timedelta(hours=8))
+
+
+class ReplayDivergenceError(RuntimeError):
+    """Raised when re-execution no longer represents the recorded run."""
 
 
 # ---------------------------------------------------------------------------
@@ -160,22 +169,31 @@ def _instantiate_scenario_for_replay(scenario_id: str, start_time: float, seed: 
 
 
 def _align_replay_time(scenario: Any, target_time: float | None) -> None:
-    """Align direct replay with the original trace scheduler time.
-
-    Rebatch replays completed tool calls by invoking app methods directly,
-    bypassing the Environment scheduler.  Direct calls therefore miss the
-    small per-event time increments that were present in the original run; by
-    harvest, those minutes can accumulate into a different calendar day and
-    make weather/trafficability gates disagree with the recorded trace.  Before
-    each replayed event, align every shared TimeManager to the raw event_time
-    and advance FARM physics to that event start.
-    """
+    """Set replay clocks to *target_time* and advance physics monotonically."""
     if target_time is None:
         return
     try:
         target = float(target_time)
     except (TypeError, ValueError):
         return
+
+    farm_world = next(
+        (
+            app
+            for app in scenario.apps or []
+            if app.__class__.__name__ == "FarmWorldApp"
+        ),
+        None,
+    )
+    physics = getattr(farm_world, "physics", None) if farm_world is not None else None
+    physics_time = getattr(physics, "last_physics_sim_time", None)
+    if physics_time is not None and target < float(physics_time) - 1.0:
+        raise ReplayDivergenceError(
+            "replay would move physics backwards: "
+            f"target={target:.6f}, physics={float(physics_time):.6f}"
+        )
+    if physics_time is not None:
+        target = max(target, float(physics_time))
 
     seen_time_managers: set[int] = set()
     for app in scenario.apps or []:
@@ -186,50 +204,12 @@ def _align_replay_time(scenario: Any, target_time: float | None) -> None:
         if ident in seen_time_managers:
             continue
         seen_time_managers.add(ident)
-        try:
-            tm.add_offset(target - float(tm.time()))
-        except Exception:
-            continue
+        tm.add_offset(target - float(tm.time()))
 
-    for app in scenario.apps or []:
-        if app.__class__.__name__ != "FarmWorldApp":
-            continue
-        advance = getattr(app, "advance_physics_time", None)
+    if farm_world is not None:
+        advance = getattr(farm_world, "advance_physics_time", None)
         if callable(advance):
-            try:
-                advance(target)
-            except Exception:
-                pass
-        break
-
-
-def _post_event_alignment_time(raw_ce: dict[str, Any], return_value: Any) -> float | None:
-    """Return the simulation time that should seed the next replayed event.
-
-    Most completed-event timestamps represent the time immediately after that
-    event. ``SystemApp.advance_time`` is the important exception in saved
-    traces: its ``event_time`` is the call time, while the advanced simulation
-    clock is reported in the tool return as ``current_timestamp``.
-    """
-    action = raw_ce.get("action") or {}
-    if action.get("app") == "SystemApp" and action.get("function") == "advance_time":
-        parsed = return_value
-        if isinstance(return_value, str):
-            import ast
-
-            try:
-                parsed = ast.literal_eval(return_value)
-            except (ValueError, SyntaxError):
-                parsed = None
-        if isinstance(parsed, dict):
-            try:
-                return float(parsed.get("current_timestamp"))
-            except (TypeError, ValueError):
-                pass
-    try:
-        return float(raw_ce.get("event_time"))
-    except (TypeError, ValueError):
-        return None
+            advance(target)
 
 
 def _find_agent_workflow_path(cell_dir: Path) -> Path | None:
@@ -295,31 +275,239 @@ def _tool_name_parts(tool_name: str) -> tuple[str, str]:
     return app_name, method_name
 
 
-def _workflow_step_timestamp(step: dict[str, Any], fallback: float | None) -> float:
-    raw = step.get("time")
+def _parse_workflow_timestamp(raw: Any, fallback: float | None = None) -> float:
     if isinstance(raw, (int, float)):
         return float(raw)
     if isinstance(raw, str) and raw.strip():
         text = raw.strip().replace("T", " ")
         try:
-            return datetime.fromisoformat(text).timestamp()
+            parsed = datetime.fromisoformat(text)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=_CST)
+            return parsed.timestamp()
         except ValueError:
             pass
     return float(fallback or 0.0)
 
 
-def _post_workflow_step_alignment_time(
+def _workflow_initial_timestamp(workflow: Any, fallback: float | None) -> float:
+    raw_steps = workflow.values() if isinstance(workflow, dict) else workflow
+    for step in raw_steps or []:
+        if isinstance(step, dict) and step.get("op_type") == "USER":
+            return _parse_workflow_timestamp(
+                step.get("time_after", step.get("time")), fallback
+            )
+    return float(fallback or 0.0)
+
+
+def _advance_time_seconds(args: dict[str, Any]) -> float:
+    return float(
+        int(args.get("seconds", 0) or 0)
+        + int(args.get("minutes", 0) or 0) * 60
+        + int(args.get("hours", 0) or 0) * 3600
+        + int(args.get("days", 0) or 0) * 86400
+    )
+
+
+def _workflow_step_times(
     step: dict[str, Any],
-    event_time: float,
-    return_value: Any,
-) -> float:
+    method: Any,
+    previous_post_time: float | None,
+) -> tuple[float, float, bool]:
+    """Return (pre-call time, post-call time, exact timing available)."""
+    post_time = _parse_workflow_timestamp(
+        step.get("time_after", step.get("time")), previous_post_time
+    )
+    raw_pre_time = step.get("time_before")
+    if raw_pre_time is not None:
+        return _parse_workflow_timestamp(raw_pre_time, post_time), post_time, True
+
     tool_name = str(step.get("tool_name") or "")
-    if tool_name == "SystemApp__advance_time" and isinstance(return_value, dict):
+    args = step.get("tool_args") if isinstance(step.get("tool_args"), dict) else {}
+    if tool_name == "SystemApp__advance_time":
+        return post_time - _advance_time_seconds(args), post_time, False
+
+    from fairy.types import OperationType
+
+    if _operation_type_for_method(method) == OperationType.READ:
+        return post_time, post_time, False
+    return float(previous_post_time or post_time), post_time, False
+
+
+_VOLATILE_REPLAY_KEYS = {
+    "action_id",
+    "charge_complete_at",
+    "current_datetime",
+    "current_timestamp",
+    "current_weekday",
+    "elapsed_s",
+    "effect_ready_at",
+    "inspection_id",
+    "last_physics_sim_time",
+    "mission_id",
+    "op_id",
+}
+
+
+def _parse_recorded_return(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    stripped = value.strip()
+    if not stripped or stripped[0] not in "[{(\"'":
+        return value
+    try:
+        return json.loads(stripped)
+    except (TypeError, ValueError):
         try:
-            return float(return_value.get("current_timestamp"))
-        except (TypeError, ValueError):
-            pass
-    return event_time
+            return ast.literal_eval(stripped)
+        except (ValueError, SyntaxError):
+            return value
+
+
+def _replay_value_mismatch(recorded: Any, actual: Any, path: str = "return") -> str | None:
+    recorded = _parse_recorded_return(recorded)
+    if isinstance(recorded, dict) and isinstance(actual, dict):
+        recorded_by_key = {str(key): value for key, value in recorded.items()}
+        actual_by_key = {str(key): value for key, value in actual.items()}
+        recorded_keys = set(recorded_by_key).difference(_VOLATILE_REPLAY_KEYS)
+        actual_keys = set(actual_by_key).difference(_VOLATILE_REPLAY_KEYS)
+        if recorded_keys != actual_keys:
+            return (
+                f"{path} keys differ: recorded_only={sorted(recorded_keys - actual_keys)}, "
+                f"actual_only={sorted(actual_keys - recorded_keys)}"
+            )
+        for key in sorted(recorded_keys):
+            mismatch = _replay_value_mismatch(
+                recorded_by_key[key], actual_by_key[key], f"{path}.{key}"
+            )
+            if mismatch is not None:
+                return mismatch
+        return None
+    if isinstance(recorded, (list, tuple)) and isinstance(actual, (list, tuple)):
+        if len(recorded) != len(actual):
+            return f"{path} length differs: recorded={len(recorded)}, actual={len(actual)}"
+        for index, (recorded_item, actual_item) in enumerate(zip(recorded, actual)):
+            mismatch = _replay_value_mismatch(
+                recorded_item, actual_item, f"{path}[{index}]"
+            )
+            if mismatch is not None:
+                return mismatch
+        return None
+    if isinstance(recorded, (int, float)) and isinstance(actual, (int, float)):
+        if math.isclose(float(recorded), float(actual), rel_tol=1e-9, abs_tol=2e-6):
+            return None
+    elif recorded == actual:
+        return None
+    return f"{path} differs: recorded={recorded!r}, actual={actual!r}"
+
+
+def _assert_replay_result(
+    step: dict[str, Any],
+    actual_return: Any,
+    actual_exception: Exception | None,
+    *,
+    strict_return: bool,
+) -> str | None:
+    step_name = str(step.get("name") or "<unnamed>")
+    tool_name = str(step.get("tool_name") or "<unknown>")
+    recorded_return = step.get("content")
+    if step.get("op_type") == "TOOL_ERROR":
+        if actual_exception is None:
+            raise ReplayDivergenceError(
+                f"{step_name} {tool_name}: trace recorded TOOL_ERROR but replay succeeded"
+            )
+        recorded_text = str(recorded_return)
+        if type(actual_exception).__name__ not in recorded_text or str(actual_exception) not in recorded_text:
+            raise ReplayDivergenceError(
+                f"{step_name} {tool_name}: replay exception differs from recorded error: "
+                f"{type(actual_exception).__name__}: {actual_exception}"
+            )
+        return None
+    if actual_exception is not None:
+        raise ReplayDivergenceError(
+            f"{step_name} {tool_name}: replay raised "
+            f"{type(actual_exception).__name__}: {actual_exception}"
+        )
+    recorded_parsed = _parse_recorded_return(recorded_return)
+    recorded_error = (
+        recorded_parsed.get("error") if isinstance(recorded_parsed, dict) else None
+    )
+    actual_error = actual_return.get("error") if isinstance(actual_return, dict) else None
+    if bool(recorded_error) != bool(actual_error):
+        raise ReplayDivergenceError(
+            f"{step_name} {tool_name}: error outcome differs: "
+            f"recorded={recorded_error!r}, actual={actual_error!r}"
+        )
+    if recorded_error and actual_error:
+        return None
+
+    mismatch = _replay_value_mismatch(recorded_parsed, actual_return)
+    if mismatch is not None and strict_return:
+        raise ReplayDivergenceError(f"{step_name} {tool_name}: {mismatch}")
+    if mismatch is not None:
+        return mismatch
+    return None
+
+
+def _assert_replay_outcome(scenario: Any, recorded_outcome: Any) -> None:
+    if not isinstance(recorded_outcome, dict) or not recorded_outcome:
+        raise ReplayDivergenceError("run report has no outcome checkpoint")
+    farm_world = next(
+        (
+            app
+            for app in scenario.apps or []
+            if app.__class__.__name__ == "FarmWorldApp"
+        ),
+        None,
+    )
+    if farm_world is None:
+        raise ReplayDivergenceError("recorded outcome exists but FarmWorldApp is missing")
+
+    states = list(farm_world.physics.yield_recovery.states.values())
+    harvested_states = [state for state in states if getattr(state, "harvested", False)]
+    selected = harvested_states or states
+    actual_outcome: dict[str, Any] = {"inventory": farm_world.get_inventory()}
+    if states:
+        denominator = len(selected)
+        actual_outcome["yield_recovery"] = {
+            "ridges": len(states),
+            "harvested_ridges": len(harvested_states),
+            "avg_field_loss_fraction": round(
+                sum(float(getattr(state, "field_loss_fraction", 0.0)) for state in selected)
+                / denominator,
+                6,
+            ),
+            "avg_machine_loss_fraction": round(
+                sum(float(getattr(state, "machine_loss_fraction", 0.0)) for state in selected)
+                / denominator,
+                6,
+            ),
+            "avg_recovered_yield_g_m2_at_market_moisture": round(
+                sum(
+                    float(
+                        getattr(
+                            state,
+                            "recovered_yield_g_m2_at_market_moisture",
+                            0.0,
+                        )
+                    )
+                    for state in selected
+                )
+                / denominator,
+                6,
+            ),
+            "avg_quality_discount_fraction": round(
+                sum(
+                    float(getattr(state, "quality_discount_fraction", 0.0))
+                    for state in selected
+                )
+                / denominator,
+                6,
+            ),
+        }
+    mismatch = _replay_value_mismatch(recorded_outcome, actual_outcome, "outcome")
+    if mismatch is not None:
+        raise ReplayDivergenceError(mismatch)
 
 
 def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
@@ -346,10 +534,17 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         "n_skipped": 0,
         "skipped_reasons": {},
         "exec_errors": 0,
+        "exact_timing_steps": 0,
+        "legacy_timing_steps": 0,
+        "observation_mismatches": 0,
+        "observation_mismatch_examples": [],
+        "outcome_checkpoint_verified": False,
     }
 
     rebound_events = []
-    last_event_time: float | None = None
+    last_event_time: float | None = _workflow_initial_timestamp(
+        bundle.get("workflow"), scenario.start_time
+    )
     for step in tool_steps:
         tool_name = str(step.get("tool_name") or "")
         try:
@@ -373,34 +568,64 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         args = step.get("tool_args") or {}
         if not isinstance(args, dict):
             args = {}
-        event_time = _workflow_step_timestamp(step, last_event_time)
+        method = getattr(target_app, fn_name, None)
+        if not callable(method):
+            raise ReplayDivergenceError(
+                f"{step.get('name')} {tool_name}: target method is missing"
+            )
+        pre_time, post_time, exact_timing = _workflow_step_times(
+            step, method, last_event_time
+        )
+        timing_key = "exact_timing_steps" if exact_timing else "legacy_timing_steps"
+        info[timing_key] += 1
 
         exception_obj = None
+        actual_return = None
         try:
-            _align_replay_time(scenario, event_time)
-            method = getattr(target_app, fn_name, None)
-            if callable(method):
-                method(**args)
-        except Exception as exc:  # pragma: no cover - defensive replay tolerance
+            _align_replay_time(scenario, pre_time)
+            actual_return = method(**args)
+        except ReplayDivergenceError:
+            raise
+        except Exception as exc:
             exception_obj = exc
             info["exec_errors"] += 1
 
         return_value = step.get("content")
+        from fairy.types import OperationType
+
+        strict_return = (
+            tool_name == "SystemApp__advance_time"
+            or _operation_type_for_method(method) == OperationType.WRITE
+        )
+        observation_mismatch = _assert_replay_result(
+            step,
+            actual_return,
+            exception_obj,
+            strict_return=strict_return,
+        )
+        if observation_mismatch is not None:
+            info["observation_mismatches"] += 1
+            if len(info["observation_mismatch_examples"]) < 5:
+                info["observation_mismatch_examples"].append(
+                    f"{step.get('name')} {tool_name}: {observation_mismatch}"
+                )
+        _align_replay_time(scenario, post_time)
         rebound_events.append(
             _build_completed_event_from_workflow_step(
                 step,
                 target_app,
                 fn_name,
                 args,
-                event_time,
+                post_time,
                 return_value,
                 exception_obj,
             )
         )
         info["n_replayed"] += 1
-        last_event_time = _post_workflow_step_alignment_time(
-            step, event_time, return_value
-        )
+        last_event_time = post_time
+
+    _assert_replay_outcome(scenario, (bundle.get("run_report") or {}).get("outcome"))
+    info["outcome_checkpoint_verified"] = True
 
     env = SimpleNamespace(
         event_log=EventLog.from_list_view(rebound_events),
@@ -1063,6 +1288,15 @@ def replay_one_cell(
     row["replayed_events"] = info["n_replayed"]
     row["replay_skipped"] = info["n_skipped"]
     row["replay_exec_errors"] = info["exec_errors"]
+    row["replay_exact_timing_steps"] = info["exact_timing_steps"]
+    row["replay_legacy_timing_steps"] = info["legacy_timing_steps"]
+    row["replay_observation_mismatches"] = info["observation_mismatches"]
+    row["replay_observation_mismatch_examples"] = json.dumps(
+        info["observation_mismatch_examples"], ensure_ascii=False
+    )
+    row["replay_outcome_checkpoint_verified"] = info[
+        "outcome_checkpoint_verified"
+    ]
     if inline_donothing_kg is not None:
         row["donothing_biological_kg_inline"] = round(inline_donothing_kg, 2)
 
@@ -1480,6 +1714,11 @@ _SUMMARY_COLUMN_ORDER: list[str] = [
     "replayed_events",
     "replay_skipped",
     "replay_exec_errors",
+    "replay_exact_timing_steps",
+    "replay_legacy_timing_steps",
+    "replay_observation_mismatches",
+    "replay_observation_mismatch_examples",
+    "replay_outcome_checkpoint_verified",
     # Failure columns
     "path_correctness_v2_error",
     "run_error_source",

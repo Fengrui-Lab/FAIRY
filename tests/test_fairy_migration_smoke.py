@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import importlib
+import io
 import json
 import pkgutil
 import subprocess
+import sys
 from datetime import date, datetime
-import pytest
 from pathlib import Path
+
+import pytest
 
 import fairy
 from fairy.agents.agent.agent import AgentRunLimitExceeded
@@ -16,7 +20,6 @@ from fairy.agents.llm.base_llm import BaseLLM
 from fairy.apps.farm_world import FarmWorldApp, WeatherApp
 from fairy.apps.farm_world.physics_orchestrator import _build_weather_inputs
 from fairy.apps.system import SystemApp
-from fairy.controllers.engine import Engine
 from fairy.controllers.agent_builder import (
     AgentBuilder,
     AppAgentBuilder,
@@ -34,22 +37,23 @@ from fairy.controllers.app_agent import (
     collect_a2a_traces,
     resolve_a2a_agent_name_for_app,
 )
+from fairy.controllers.engine import Engine
 from fairy.controllers.research_strategies import ResearchStrategyCoordinator
 from fairy.controllers.skill_library import DynamicSkillLibrary
+from fairy.scenarios.baseline_farm_world.scenario_field_prep import (
+    ScenarioFarmWorldFieldPrep,
+)
 from fairy.scenarios.farm_world_fullseason.scenario_full_season_baseline_balanced_season import (
     ScenarioFullSeasonBalanced,
+)
+from fairy.scenarios.farm_world_fullseason_v2.scenario_full_season_hb_base_hn84_std_normal import (
+    ScenarioFullSeasonHBBaseHN84StdNormal,
 )
 from fairy.scenarios.farm_world_physics.scenario_field_prep_physics_action_tick import (
     ScenarioFarmWorldFieldPrepPhysicsActionTick,
 )
 from fairy.scenarios.farm_world_physics.scenario_irrigation_physics_action_tick import (
     ScenarioFarmWorldIrrigationPhysicsActionTick,
-)
-from fairy.scenarios.farm_world_fullseason_v2.scenario_full_season_hb_base_hn84_std_normal import (
-    ScenarioFullSeasonHBBaseHN84StdNormal,
-)
-from fairy.scenarios.baseline_farm_world.scenario_field_prep import (
-    ScenarioFarmWorldFieldPrep,
 )
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow, WorkflowStep
@@ -908,6 +912,10 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert agent.telemetry["tool_calls"] == 1
     assert agent.telemetry["llm_calls"] == 2
     assert len(workflow) == 2
+    tool_step = next(step for step in workflow.dag.values() if step.op_type == "TOOL")
+    assert isinstance(tool_step.time_before, float)
+    assert isinstance(tool_step.time_after, float)
+    assert tool_step.time_after >= tool_step.time_before
     assert agent.messages.runtime_metrics[0]["tokens"]["total_tokens"] == 16
     llm_starts = [event for event in agent.runtime_events if event["event_type"] == "llm_call_start"]
     llm_start = llm_starts[0]
@@ -927,6 +935,139 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert final_end["assistant_content_is_empty"] is False
     assert final_end["rationale"] == "done"
     assert final_end["rationale_source"] == "assistant_content"
+
+
+def test_agent_runtime_event_sink_receives_live_events() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=_ScriptedLLM([_Message(content="done", tool_calls=None)]),
+        toolsets=scenario.apps,
+    )
+    live_events = []
+    agent.runtime_event_sink = live_events.append
+
+    Engine(agent, scenario).run_scenario_agent(
+        max_tool_calls=2,
+        timeout_seconds=30,
+        setup_scenario=False,
+    )
+
+    assert [event["event_type"] for event in live_events] == [
+        event["event_type"] for event in agent.runtime_events
+    ]
+    assert live_events[-1]["event_type"] == "agent_run_end"
+
+
+def test_iclr_runner_summarizes_live_progress(tmp_path: Path) -> None:
+    from scripts.iclr_validation_runner import _runtime_progress_snapshot
+
+    progress_path = tmp_path / "scenario.progress.jsonl"
+    rows = [
+        {"record_type": "agent_run_start", "wall_timestamp": "start"},
+        {
+            "record_type": "llm_call_end",
+            "wall_timestamp": "llm",
+            "tokens": {"prompt_tokens": 120, "completion_tokens": 8},
+        },
+        {
+            "record_type": "tool_call_end",
+            "wall_timestamp": "tool",
+            "tool_name": "WeatherApp__get_current_weather",
+        },
+        {
+            "record_type": "tool_call_error",
+            "wall_timestamp": "error",
+            "tool_name": "TractorApp__harvest",
+        },
+    ]
+    progress_path.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    snapshot = _runtime_progress_snapshot(progress_path)
+
+    assert snapshot["records"] == 4
+    assert snapshot["llm_calls"] == 1
+    assert snapshot["tool_calls"] == 1
+    assert snapshot["tool_errors"] == 1
+    assert snapshot["prompt_tokens"] == 120
+    assert snapshot["completion_tokens"] == 8
+    assert snapshot["last_type"] == "tool_call_error"
+    assert snapshot["last_tool"] == "TractorApp__harvest"
+
+
+def test_live_progress_omits_full_message_history(tmp_path: Path) -> None:
+    from fairy.cli import _append_live_progress
+
+    progress_path = tmp_path / "scenario.progress.jsonl"
+    _append_live_progress(
+        progress_path,
+        {
+            "event_index": 3,
+            "event_type": "llm_call_start",
+            "messages": [{"role": "user", "content": "large context"}],
+            "message_count": 1,
+        },
+    )
+
+    row = json.loads(progress_path.read_text(encoding="utf-8"))
+    assert row["record_index"] == 3
+    assert row["record_type"] == "llm_call_start"
+    assert row["message_count"] == 1
+    assert "messages" not in row
+
+
+def test_iclr_runner_progress_poll_preserves_process_wait(
+    tmp_path: Path, capsys
+) -> None:
+    from scripts.iclr_validation_runner import _wait_for_cell_process
+
+    progress_path = tmp_path / "scenario.progress.jsonl"
+    progress_path.write_text(
+        json.dumps({"record_type": "agent_run_start"}) + "\n",
+        encoding="utf-8",
+    )
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(0.12)"],
+    )
+
+    return_code, timed_out, force_killed = _wait_for_cell_process(
+        proc,
+        timeout_s=1,
+        timeout_grace_s=0.1,
+        stderr_h=io.StringIO(),
+        cmd=[sys.executable, "-c", "sleep"],
+        progress_path=progress_path,
+        progress_label="test-cell",
+        progress_interval_s=0.03,
+    )
+
+    assert return_code == 0
+    assert timed_out is False
+    assert force_killed is False
+    assert "[progress] test-cell" in capsys.readouterr().out
+
+
+def test_iclr_runner_checkpoints_results_csv(tmp_path: Path) -> None:
+    from scripts.iclr_validation_runner import _write_results_csv
+
+    csv_path = tmp_path / "results.csv"
+    _write_results_csv(csv_path, [{"scenario": "one", "return_code": 0}])
+    _write_results_csv(
+        csv_path,
+        [
+            {"scenario": "one", "return_code": 0},
+            {"scenario": "two", "return_code": -2, "timed_out": True},
+        ],
+    )
+
+    rows = list(csv.DictReader(csv_path.open(encoding="utf-8")))
+    assert [row["scenario"] for row in rows] == ["one", "two"]
+    assert rows[1]["timed_out"] == "True"
+    assert not csv_path.with_suffix(".csv.tmp").exists()
 
 
 def test_farm_agent_hides_user_message_injection_tool_but_replay_keeps_it() -> None:
@@ -1309,6 +1450,133 @@ def test_rebatch_uses_run_report_token_metrics() -> None:
         "total_tokens_per_scenario": "120.00",
         "avg_runtime_s_per_agent_call": "5.00",
     }
+
+
+def test_rebatch_legacy_advance_time_uses_post_call_timestamp_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    from fairy.time_manager import TimeManager
+    from scripts import rebatch_fos_from_traces as rebatch
+
+    class FarmWorldApp:
+        name = "FarmWorldApp"
+
+        def __init__(self, time_manager: TimeManager) -> None:
+            self.time_manager = time_manager
+            self.physics = SimpleNamespace(
+                last_physics_sim_time=None,
+                yield_recovery=SimpleNamespace(states={}),
+            )
+
+        def register_time_manager(self, time_manager: TimeManager) -> None:
+            self.time_manager = time_manager
+
+        def prepare_for_time_advance(self, current_sim_time: float) -> None:
+            self.advance_physics_time(current_sim_time)
+
+        def advance_physics_time(self, target_sim_time: float | None = None) -> None:
+            target = float(
+                self.time_manager.time() if target_sim_time is None else target_sim_time
+            )
+            previous = self.physics.last_physics_sim_time
+            if previous is None or target > previous:
+                self.physics.last_physics_sim_time = target
+
+        def get_inventory(self) -> dict[str, float]:
+            return {"harvest_grain_kg": 0.0, "warehouse_grain_kg": 0.0}
+
+    time_manager = TimeManager()
+    time_manager.reset(100.0)
+    farm_world = FarmWorldApp(time_manager)
+    system = SystemApp()
+    system.register_time_manager(time_manager)
+    system.attach_farm_world_app(farm_world)
+    scenario = SimpleNamespace(
+        scenario_id="scenario_test",
+        start_time=100.0,
+        apps=[farm_world, system],
+    )
+    monkeypatch.setattr(
+        rebatch,
+        "_instantiate_scenario_for_replay",
+        lambda *_args, **_kwargs: scenario,
+    )
+    bundle = {
+        "scenario_id": "scenario_test",
+        "start_time": 100.0,
+        "seed": 0,
+        "run_report": {
+            "outcome": {
+                "inventory": {
+                    "harvest_grain_kg": 0.0,
+                    "warehouse_grain_kg": 0.0,
+                }
+            }
+        },
+        "workflow": {
+            "step0": {"name": "step0", "op_type": "USER", "time": 100.0},
+            "step1": {
+                "name": "step1",
+                "op_type": "TOOL",
+                "tool_name": "SystemApp__advance_time",
+                "tool_args": {"days": 1},
+                "time": 86500.0,
+                "content": {
+                    "status": "ok",
+                    "advanced_seconds": 86400,
+                    "current_timestamp": 86500.0,
+                    "current_datetime": "1970-01-02 00:01:40",
+                },
+            },
+        },
+    }
+
+    replayed_scenario, _, info = rebatch._replay_fairy_run_bundle(bundle)
+
+    assert info["legacy_timing_steps"] == 1
+    assert info["exact_timing_steps"] == 0
+    assert info["outcome_checkpoint_verified"] is True
+    assert replayed_scenario.apps[0].physics.last_physics_sim_time == pytest.approx(
+        86500.0, abs=0.01
+    )
+    assert replayed_scenario.apps[0].time_manager.time() == pytest.approx(
+        86500.0, abs=0.01
+    )
+
+    exact_step = dict(bundle["workflow"]["step1"])
+    exact_step.update(time=99999.0, time_before=100.0, time_after=86500.0)
+    pre_time, post_time, exact = rebatch._workflow_step_times(
+        exact_step, system.advance_time, None
+    )
+    assert (pre_time, post_time, exact) == (100.0, 86500.0, True)
+
+
+def test_rebatch_rejects_mutating_tool_return_divergence() -> None:
+    from scripts.rebatch_fos_from_traces import (
+        ReplayDivergenceError,
+        _assert_replay_outcome,
+        _assert_replay_result,
+    )
+
+    step = {
+        "name": "step7",
+        "op_type": "TOOL",
+        "tool_name": "TractorApp__harvest",
+        "content": {"status": "ok", "harvested_ridges": [0, 1, 2, 3]},
+    }
+
+    with pytest.raises(ReplayDivergenceError, match="harvested_ridges"):
+        _assert_replay_result(
+            step,
+            {"status": "ok", "harvested_ridges": []},
+            None,
+            strict_return=True,
+        )
+
+    with pytest.raises(ReplayDivergenceError, match="no outcome checkpoint"):
+        _assert_replay_outcome(None, {})
 
 
 def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:

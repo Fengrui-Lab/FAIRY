@@ -9,15 +9,22 @@ from typing import Any
 
 from fairy.agents.agent.agent import AgentRunLimitExceeded
 from fairy.agents.llm.base_llm import BaseLLM
-from fairy.controllers.engine import Engine
-from fairy.controllers.agent_builder import AgentBuilder, AppAgentBuilder
-from fairy.controllers.agent_builder import build_controller_agent
+from fairy.controllers.agent_builder import (
+    AgentBuilder,
+    AppAgentBuilder,
+    build_controller_agent,
+)
 from fairy.controllers.agent_config import AppAgentConfigBuilder
 from fairy.controllers.app_agent import apply_a2a_to_apps, collect_a2a_traces
-from fairy.controllers.run_artifacts import build_run_report, metric_totals, write_json, write_jsonl
+from fairy.controllers.engine import Engine
+from fairy.controllers.run_artifacts import (
+    build_run_report,
+    metric_totals,
+    write_json,
+    write_jsonl,
+)
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow
-
 
 _LEGACY_ARTIFACT_SUFFIXES = (
     ".events.jsonl",
@@ -45,19 +52,28 @@ def _cleanup_repo_side_exports() -> None:
 
 
 def _runtime_log_rows(runtime_events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for i, event in enumerate(runtime_events):
-        row = dict(event)
-        record_type = row.pop("event_type", None)
-        row.pop("event_index", None)
-        rows.append(
-            {
-                "record_index": i,
-                "record_type": record_type,
-                **row,
-            }
-        )
-    return rows
+    return [_runtime_log_row(event, i) for i, event in enumerate(runtime_events)]
+
+
+def _runtime_log_row(event: dict[str, Any], fallback_index: int) -> dict[str, Any]:
+    row = dict(event)
+    record_type = row.pop("event_type", None)
+    record_index = row.pop("event_index", fallback_index)
+    return {
+        "record_index": record_index,
+        "record_type": record_type,
+        **row,
+    }
+
+
+def _append_live_progress(path: Path, event: dict[str, Any]) -> None:
+    row = _runtime_log_row(event, int(event.get("event_index", 0)))
+    # Full message histories remain in runtime_log.jsonl.  Keeping them out of
+    # the live stream makes heartbeat I/O independent of context-window size.
+    row.pop("messages", None)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
 
 
 def _tool_replay_log_rows(run_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -223,6 +239,9 @@ def main() -> None:
         run_wall_start = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
         _cleanup_legacy_artifacts(output_dir, args.scenario)
+        progress_log_path = output_dir / f"{args.scenario}.progress.jsonl"
+        if progress_log_path.exists():
+            progress_log_path.unlink()
         llm = BaseLLM.llm_builder(
             {
                 "provider": args.provider,
@@ -277,6 +296,9 @@ def main() -> None:
             llm=llm,
             toolsets=scenario.apps,
         )
+        agent.runtime_event_sink = lambda event: _append_live_progress(
+            progress_log_path, event
+        )
         engine = Engine(agent=agent, scenario=scenario)
         workflow = None
         final_message = None
@@ -305,6 +327,7 @@ def main() -> None:
         runtime_metrics = list(agent.messages.runtime_metrics)
         controller_telemetry = dict(getattr(agent, "telemetry", {}) or {})
         artifacts: dict[str, str] = {}
+        artifacts["progress_log"] = str(progress_log_path)
 
         workflow_path = output_dir / f"{args.scenario}.agent_workflow.json"
         workflow.save_workflow(str(workflow_path))
