@@ -14,7 +14,11 @@ from fairy.controllers.agent_builder import (
     AppAgentBuilder,
     build_controller_agent,
 )
-from fairy.controllers.agent_config import AppAgentConfigBuilder
+from fairy.controllers.agent_config import (
+    FARM_SYSTEM_PROMPT_MODES,
+    AppAgentConfigBuilder,
+    get_farm_world_system_prompt,
+)
 from fairy.controllers.app_agent import apply_a2a_to_apps, collect_a2a_traces
 from fairy.controllers.engine import Engine
 from fairy.controllers.run_artifacts import (
@@ -122,6 +126,15 @@ def main() -> None:
     parser.add_argument("-o", "--oracle", action="store_true", help="Run oracle only")
     parser.add_argument("--agent", action="store_true", help="Run a real function-calling agent")
     parser.add_argument("--controller", default="farm_baseline_react", help="Controller family for --agent")
+    parser.add_argument(
+        "--system-prompt-mode",
+        choices=FARM_SYSTEM_PROMPT_MODES,
+        default="fairy",
+        help=(
+            "FARM controller system prompt: 'fairy' keeps the current prompt; "
+            "'are' ports compatible legacy ARE behavior rules"
+        ),
+    )
     parser.add_argument("--provider", default="deepseek", help="LLM provider for --agent")
     parser.add_argument("--model", default="deepseek-chat", help="LLM model for --agent")
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
@@ -225,6 +238,7 @@ def main() -> None:
             provider=None,
             model=None,
             temperature=None,
+            system_prompt_mode=None,
             run_type="oracle_replay_evaluate",
             stopped_reason="completed",
             wall_time_seconds=time.perf_counter() - run_wall_start,
@@ -308,6 +322,7 @@ def main() -> None:
             args.controller,
             llm=llm,
             toolsets=scenario.apps,
+            system_message=get_farm_world_system_prompt(args.system_prompt_mode),
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
@@ -379,6 +394,7 @@ def main() -> None:
             provider=args.provider,
             model=args.model,
             temperature=args.temperature,
+            system_prompt_mode=args.system_prompt_mode,
             run_type="agent",
             stopped_reason=stopped_reason,
             wall_time_seconds=wall_time_seconds,

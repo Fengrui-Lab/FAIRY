@@ -86,6 +86,7 @@ RUNNER_DEFAULTS = {
     "max_output_tokens": 2048,
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
+    "system_prompt_mode": "fairy",
     "scenario_kwargs": None,
     "init_kwargs": None,
     "detail": None,
@@ -121,6 +122,7 @@ def _build_cell_command(
     max_output_tokens: int = 2048,
     wait_for_user_input_timeout: float = 5.0,
     parallel_tool_calls: bool = True,
+    system_prompt_mode: str = "fairy",
     a2a_enabled: bool = False,
     a2a_app_prop: float = 0.5,
     a2a_policy: str = "typed_experts",
@@ -152,6 +154,8 @@ def _build_cell_command(
         str(max_output_tokens),
         "--parallel-tool-calls",
         "true" if parallel_tool_calls else "false",
+        "--system-prompt-mode",
+        system_prompt_mode,
     ]
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
@@ -727,6 +731,15 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         help="Allow a model response to contain multiple tool calls.",
     )
     parser.add_argument(
+        "--system-prompt-mode",
+        choices=("fairy", "are"),
+        default=defaults.get("system_prompt_mode"),
+        help=(
+            "FARM controller system prompt: 'fairy' keeps the current prompt; "
+            "'are' ports compatible legacy ARE behavior rules."
+        ),
+    )
+    parser.add_argument(
         "--scenario-kwargs",
         default=defaults.get("scenario_kwargs"),
         help=(
@@ -792,6 +805,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
+    if args.system_prompt_mode not in {"fairy", "are"}:
+        parser.error("--system-prompt-mode must be one of: fairy, are")
     return args
 
 
@@ -811,6 +826,7 @@ def run_cell(
     max_output_tokens: int,
     wait_for_user_input_timeout: float,
     parallel_tool_calls: bool,
+    system_prompt_mode: str,
     a2a_enabled: bool,
     a2a_app_prop: float,
     a2a_policy: str,
@@ -846,6 +862,7 @@ def run_cell(
             "endpoint": endpoint,
             "level": _classify_level(cell.scenario),
             "a2a_enabled": a2a_enabled,
+            "system_prompt_mode": system_prompt_mode,
             "max_output_tokens": max_output_tokens,
             "detail_enabled": detail_enabled,
             "wall_s": 0.0,
@@ -874,6 +891,7 @@ def run_cell(
         max_output_tokens=max_output_tokens,
         wait_for_user_input_timeout=wait_for_user_input_timeout,
         parallel_tool_calls=parallel_tool_calls,
+        system_prompt_mode=system_prompt_mode,
         a2a_enabled=a2a_enabled,
         a2a_app_prop=a2a_app_prop,
         a2a_policy=a2a_policy,
@@ -997,6 +1015,7 @@ def run_cell(
         "a2a_policy": a2a_policy if a2a_enabled else "off",
         "a2a_app_agent": a2a_app_agent if a2a_enabled else "",
         "parallel_tool_calls": parallel_tool_calls,
+        "system_prompt_mode": system_prompt_mode,
         "max_output_tokens": max_output_tokens,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
@@ -1057,6 +1076,7 @@ def main() -> int:
         f"=== {args.phase}: {total_cells} cells, "
         f"provider={args.provider}, model={args.model}, family={model_family}, "
         f"a2a={bool(args.a2a)}, detail={detail_enabled}, "
+        f"system_prompt_mode={args.system_prompt_mode}, "
         f"max_output_tokens={args.max_output_tokens}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
     )
@@ -1087,6 +1107,7 @@ def main() -> int:
                 args.max_output_tokens,
                 args.wait_for_user_input_timeout,
                 bool(args.parallel_tool_calls),
+                args.system_prompt_mode,
                 bool(args.a2a),
                 args.a2a_app_prop,
                 args.a2a_policy,
@@ -1114,6 +1135,7 @@ def main() -> int:
                     "model_family": model_family,
                     "model": args.model,
                     "a2a_enabled": bool(args.a2a),
+                    "system_prompt_mode": args.system_prompt_mode,
                     "detail_enabled": detail_enabled,
                     "wall_s": None,
                     "return_code": -2,

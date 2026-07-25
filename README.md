@@ -241,6 +241,7 @@ Complete `results.csv` columns:
 | `a2a_app_agent` | A2A fallback app-agent profile; empty when A2A is off. |
 | `detail_enabled` | Normalized `--detail` value; empty when unset. |
 | `parallel_tool_calls` | Whether OpenAI-compatible clients were allowed to return multiple tool calls in one assistant turn. |
+| `system_prompt_mode` | FARM controller prompt condition: `fairy` or native-function-calling-compatible `are`. |
 | `max_output_tokens` | Per-LLM-call completion-token cap passed to the provider as `max_tokens`; defaults to `2048`. |
 | `scenario_kwargs` | JSON string passed to `fairy.cli --scenario-kwargs`. |
 | `scenario_initialization_kwargs` | JSON string passed to `fairy.cli --init-kwargs`. |
@@ -594,6 +595,7 @@ fairy-run \
   -s <scenario_id> \
   --agent \
   --controller <controller_id> \
+  --system-prompt-mode fairy \
   --provider <provider> \
   --model <model> \
   --temperature 0.1 \
@@ -608,6 +610,7 @@ Parameters:
 |---|---|---|---|
 | `--agent` | flag | false | Run a real function-calling agent. |
 | `--controller` | controller id | `farm_baseline_react` | Controller family. Use `--list-controllers` to inspect. |
+| `--system-prompt-mode` | `fairy` / `are` | `fairy` | Select the FARM controller prompt. `are` keeps native function calling and ports all compatible legacy ARE reasoning, one-tool, observation, error-recovery, tool-economy, and tool-output-use rules. |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client type. |
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
 | `--temperature` | float | `0.1` | Sampling temperature. Some reasoning/OpenAI models may ignore it. |
@@ -831,6 +834,7 @@ Final overview:
 | `scenario_id` | Scenario ID. |
 | `controller_id` | Agent controller; `null` for oracle/replay mode. |
 | `provider`, `model`, `temperature` | LLM configuration. |
+| `system_prompt_mode` | `fairy` or `are` for agent runs; `null` for oracle/replay. |
 | `status` | `completed`, `stopped`, or `failed`. |
 | `stopped_reason` | `agent_finished`, `completed`, `max_tool_calls`, `timeout`, `error`, etc. |
 | `limits` | The configured `max_tool_calls` and `timeout_seconds`. |
@@ -1206,6 +1210,7 @@ Parameters:
 | `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; forwarded to the provider and recorded in each run report. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
+| `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
 | `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`. |
@@ -1236,7 +1241,7 @@ PYTHONPATH=. uv run python scripts/summarize_runs.py validation_runs/manual \
 Columns:
 
 ```text
-run_dir, run_type, scenario_id, controller_id, model, status,
+run_dir, run_type, scenario_id, controller_id, system_prompt_mode, model, status,
 stopped_reason, success, wall_time_seconds, workflow_steps,
 tool_call_count, total_tokens, cached_tokens, warehouse_grain_kg,
 harvested_ridges, yield_g_m2

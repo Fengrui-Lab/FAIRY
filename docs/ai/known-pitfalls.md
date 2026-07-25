@@ -94,6 +94,14 @@
   return multiple tool calls in one LLM turn. The default is `true` for backward
   compatibility; set it to `false` when an experiment requires strict
   observe-after-each-action behavior.
+- `--system-prompt-mode are` is an ARE-guidance A/B condition, not a protocol
+  rollback. It preserves FAIRY native function calling and ports every
+  compatible legacy ARE behavior rule: explicit pre-call reasoning, one-tool
+  sequencing, system-provided observations, error recovery, tool economy, and
+  using outputs for later decisions. Conflicting text-JSON `Action:`,
+  `action_input`, `<end_action>`, example-format, and embedded-tool-catalog
+  instructions stay excluded. The default `fairy` mode is unchanged. Both the
+  per-run report and batch CSV record the selected mode.
 - Every real-agent LLM call has a completion cap. `fairy.cli` and
   `scripts/iclr_validation_runner.py` expose it as `--max-output-tokens`
   (alias `--max-tokens`), defaulting to `2048`; direct `BaseLLM` construction

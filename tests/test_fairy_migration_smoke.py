@@ -30,6 +30,7 @@ from fairy.controllers.agent_config import (
     AgentConfigBuilder,
     AppAgentConfigBuilder,
     ResearchAgentProfileConfig,
+    get_farm_world_system_prompt,
 )
 from fairy.controllers.app_agent import (
     AppAgent,
@@ -362,7 +363,35 @@ def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() ->
     assert "64 ridges across a 268m x 71m field" in prompt
     assert "provided function tools" in prompt
     assert "do not hand-write JSON action blobs" in prompt
+    assert "Don't call tools unnecessarily" not in prompt
     assert "Action:" not in prompt
+
+
+def test_are_system_prompt_mode_ports_compatible_legacy_behavior_rules() -> None:
+    fairy_prompt = get_farm_world_system_prompt("fairy")
+    are_prompt = get_farm_world_system_prompt("are")
+    compatible_are_rules = (
+        "Thought: briefly explain what you are thinking and why a tool is needed.",
+        "Only ONE tool call is allowed per turn.",
+        "For booleans, use true/false in lowercase.",
+        "Do NOT generate or fabricate the Observation",
+        "If a tool call fails, analyze the error and try a different approach.",
+        "Don't call tools unnecessarily - use your reasoning when you can solve something directly.",
+        "Pay attention to tool outputs and use them to inform subsequent actions.",
+    )
+
+    for rule in compatible_are_rules:
+        assert rule not in fairy_prompt
+        assert rule in are_prompt
+    assert "provided function tools" in are_prompt
+    assert "do not hand-write JSON action blobs" in are_prompt
+    assert "\nAction:\n" not in are_prompt
+    assert "<end_action>" not in are_prompt
+    assert '"action_input"' not in are_prompt
+    assert "FORMAT SPECIFICATION" not in are_prompt
+    assert "EXAMPLE CYCLE" not in are_prompt
+    with pytest.raises(ValueError, match="Unknown FARM system prompt mode"):
+        get_farm_world_system_prompt("unknown")
 
 
 def test_app_agent_profiles_match_are_names_and_prompts() -> None:
@@ -590,6 +619,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
         a2a_endpoint="http://localhost:8000/v1",
         parallel_tool_calls=False,
         max_output_tokens=4096,
+        system_prompt_mode="are",
     )
 
     joined = " ".join(cmd)
@@ -602,6 +632,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
     assert "--a2a-endpoint http://localhost:8000/v1" in joined
     assert "--parallel-tool-calls false" in joined
     assert "--max-output-tokens 4096" in joined
+    assert "--system-prompt-mode are" in joined
 
 
 def test_rewoo_strategy_builds_plan_context() -> None:
@@ -1621,6 +1652,7 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
         provider="deepseek",
         model="deepseek-chat",
         temperature=0.1,
+        system_prompt_mode="are",
         run_type="agent",
         stopped_reason="max_tool_calls",
         wall_time_seconds=12.3456789,
@@ -1638,5 +1670,6 @@ def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:
     assert report["stopped_reason"] == "max_tool_calls"
     assert report["stop_reason"] == "max_tool_calls"
     assert report["wall_time_seconds"] == 12.345679
+    assert report["system_prompt_mode"] == "are"
     assert report["limits"]["parallel_tool_calls"] is False
     assert report["limits"]["max_output_tokens"] == 2048

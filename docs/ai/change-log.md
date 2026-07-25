@@ -1,5 +1,13 @@
 # AI Change Log
 
+- 2026-07-25: Added an auditable FARM system-prompt switch for tool-use A/B
+  experiments. `fairy-run` and `scripts/iclr_validation_runner.py` accept
+  `--system-prompt-mode fairy|are`; `fairy` preserves the existing prompt and
+  `are` ports all legacy ARE behavior rules compatible with native function
+  calling. Only the conflicting text-JSON action format, markers, examples, and
+  embedded tool catalog remain excluded. Run reports and batch CSV rows record
+  the selected mode.
+
 - 2026-07-24: Added a provider-enforced per-call output-token cap for real
   agents. Both FAIRY CLI entry points accept `--max-output-tokens` /
   `--max-tokens`, default `2048`; vLLM, DeepSeek, Qwen, generic

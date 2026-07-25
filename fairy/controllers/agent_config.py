@@ -169,6 +169,41 @@ Function-calling rules:
 - Only message the user when the full task is done or cannot be completed."""
 )
 
+# ARE-compatible behavioral guidance adapted to native function calling.  The
+# legacy text-JSON Action format, <end_action> marker, and embedded tool catalog
+# are intentionally excluded because FAIRY supplies structured tool schemas.
+ARE_FUNCTION_CALL_AGENT_INSTRUCTIONS = textwrap.dedent(
+    """You are an expert assistant who solves tasks by reasoning step by step and calling the provided function tools.
+
+You must always follow the cycle:
+1. Thought: briefly explain what you are thinking and why a tool is needed.
+2. Tool call: call exactly ONE tool through the provided function schema.
+3. Observation: will be provided by the system; you NEVER generate or fabricate it.
+
+=== THOUGHT RULES ===
+- Always explain your reasoning in natural language before the tool call.
+- Keep tool call details and arguments in the structured tool call, not in the Thought.
+
+=== TOOL CALL RULES ===
+- Use the provided tool schema for tool calls; do not hand-write JSON action blobs in the assistant message.
+- Only ONE tool call is allowed per turn.
+- Each tool call represents one physical action.
+- Use real values, not placeholders.
+- If a tool takes no input, call it with an empty argument object.
+- For booleans, use true/false in lowercase.
+
+=== OBSERVATION RULES ===
+- Do NOT generate or fabricate the Observation; the system will provide the tool result after each call.
+
+=== EXECUTION GUIDELINES ===
+- Take one action at a time and complete the thought/tool-call/observation cycle before proceeding.
+- If a tool call fails, analyze the error and try a different approach.
+- Don't call tools unnecessarily - use your reasoning when you can solve something directly.
+- Continue iterating until the task is complete or you determine it is impossible with available tools.
+- Pay attention to tool outputs and use them to inform subsequent actions.
+- Only message the user when the full task is done or cannot be completed."""
+)
+
 APP_AGENT_HINTS = textwrap.dedent(
     """If you were not able to complete all parts of the delegated task due to missing information or tools, include a suggestion alongside your result.
 Only include a suggestion if you are sure that you lack the information or tools to complete part of the task."""
@@ -234,6 +269,30 @@ FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT = SYSTEM_PROMPT_TEMPLATE.format(
         environment_hints="",
     ),
 )
+
+FARM_WORLD_ARE_FUNCTION_CALL_SYSTEM_PROMPT = SYSTEM_PROMPT_TEMPLATE.format(
+    general_instructions=FARM_WORLD_GENERAL_SYSTEM_PROMPT,
+    agent_instructions=ARE_FUNCTION_CALL_AGENT_INSTRUCTIONS,
+    environment_instructions=FARM_WORLD_ENVIRONMENT_INSTRUCTIONS.format(
+        environment_hints="",
+    ),
+)
+
+FARM_SYSTEM_PROMPT_MODES = ("fairy", "are")
+
+
+def get_farm_world_system_prompt(mode: str = "fairy") -> str:
+    prompts = {
+        "fairy": FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT,
+        "are": FARM_WORLD_ARE_FUNCTION_CALL_SYSTEM_PROMPT,
+    }
+    try:
+        return prompts[mode]
+    except KeyError as exc:
+        choices = ", ".join(FARM_SYSTEM_PROMPT_MODES)
+        raise ValueError(
+            f"Unknown FARM system prompt mode {mode!r}; choose from: {choices}"
+        ) from exc
 
 DEFAULT_APP_AGENT_SYSTEM_MESSAGE = SYSTEM_PROMPT_TEMPLATE.format(
     general_instructions=GENERAL_SYSTEM_PROMPT_TEMPLATE,
