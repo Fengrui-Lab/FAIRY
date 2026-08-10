@@ -107,10 +107,30 @@ Built-in manifests:
 | Selected L2+L1 (50) | same manifest | `SCENARIOS=$(awk -F, 'NF>=3 && $1 !~ /^#/ {print $3}' scripts/fullseason/selected_l2_l1_20_30_scenario_ids.txt \| paste -sd, -)` |
 | L2 skill set (72) | `scripts/fullseason/l2_skill_scenario_ids.txt` | `SCENARIOS=$(grep -vE '^[[:space:]]*(#|$)' scripts/fullseason/l2_skill_scenario_ids.txt \| paste -sd, -)` |
 
-`L3-mini` means the canonical 20-scenario set above. It is the same scenario
-set used by the legacy ARE `table3_20` runs and the FAIRY 9B/27B/35B `exact20`
-comparisons. Do not confuse it with the disjoint 20-scenario retrieval target
-set defined in `run_deepseek_json_l3_20_retrieval_experiments.py`.
+`L3-mini` contains exactly these 20 scenarios:
+
+```text
+scenario_full_season_hb_organic_residue_weed_establishment
+scenario_full_season_hb_organic_patch_weed_mechanical_capacity
+scenario_full_season_hb_micronutrient_deficiency_flowering_patch
+scenario_full_season_hb_local_soil_constraint_nutrition_patch
+scenario_full_season_heinong84_edge_low_fertility
+scenario_full_season_hb_cloudy_wet_low_radiation_biomass
+scenario_full_season_hb_poordrainage_wetjune_disease_trafficability
+scenario_full_season_hb_staggered_wetjune_canopy_disease
+scenario_full_season_hb_soy_after_soy_wetjune_disease
+scenario_full_season_hb_dryr5r6_hn58_std_waterlimit
+scenario_full_season_hb_drought_recovery_false_disease_signal
+scenario_full_season_hb_heinong58_resistant_biotic_water_budget_priority
+scenario_full_season_hb_hn60_high_fastdrain_dryr5r6
+scenario_full_season_hb_dryr5r6_insect_threshold_waterstress
+scenario_full_season_hb_dryer_capacity_batch_harvest_storage
+scenario_full_season_hb_grain_moisture_sensor_failure_harvest
+scenario_full_season_hb_laterain_shattering_drying_tradeoff
+scenario_full_season_hb_cool_august_lategrain_laterain
+scenario_full_season_hb_compacted_headland_stand_recovery
+scenario_full_season_hb_hn50_hn84_hn58_mixed_stress
+```
 
 After setting `SCENARIOS`, reuse the command in section 2 with:
 
