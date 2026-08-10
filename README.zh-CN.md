@@ -448,7 +448,7 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
 
 - Qwen / DashScope
   - `--provider qwen`
-  - 常用模型：`qwen-plus`、`qwen-max`
+  - 推荐模型：`qwen3.6-flash`；固定复现快照：`qwen3.6-flash-2026-04-16`
   - 环境变量：`QWEN_API_KEY` 或 `DASHSCOPE_API_KEY`，可选 `QWEN_API_BASE`
   - 默认 endpoint：`https://dashscope.aliyuncs.com/compatible-mode/v1`
 
@@ -676,7 +676,9 @@ fairy-run \
   --agent \
   --controller farm_baseline_react \
   --provider qwen \
-  --model qwen-plus \
+  --model qwen3.6-flash-2026-04-16 \
+  --temperature 0.1 \
+  --parallel-tool-calls false \
   --output-dir validation_runs/manual/qwen__farm_baseline_react__scenario_full_season_balanced__r1
 ```
 

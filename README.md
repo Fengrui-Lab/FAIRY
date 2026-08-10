@@ -448,7 +448,7 @@ Supported providers:
 
 - Qwen / DashScope
   - `--provider qwen`
-  - Common models: `qwen-plus`, `qwen-max`
+  - Recommended model: `qwen3.6-flash`; reproducible snapshot: `qwen3.6-flash-2026-04-16`
   - Environment variables: `QWEN_API_KEY` or `DASHSCOPE_API_KEY`, optional `QWEN_API_BASE`
   - Default endpoint: `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
@@ -676,7 +676,9 @@ fairy-run \
   --agent \
   --controller farm_baseline_react \
   --provider qwen \
-  --model qwen-plus \
+  --model qwen3.6-flash-2026-04-16 \
+  --temperature 0.1 \
+  --parallel-tool-calls false \
   --output-dir validation_runs/manual/qwen__farm_baseline_react__scenario_full_season_balanced__r1
 ```
 

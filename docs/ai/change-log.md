@@ -1,5 +1,12 @@
 # AI Change Log
 
+- 2026-08-10: Verified Qwen Cloud native function calling with both
+  `qwen3.6-flash` and the fixed `qwen3.6-flash-2026-04-16` snapshot. A FAIRY
+  physics smoke completed 14/14 oracle tool steps at temperature 0.1 with no
+  LLM, tool, or parallel-call errors. The responses included
+  `reasoning_content`, reflecting the provider's default thinking mode. Added
+  the tested setup to the replication guide and ignored local `.env` files.
+
 - 2026-08-10: Canonicalized the 20-scenario `L3-mini` manifest from the legacy
   ARE 27B/35B `table3_20` batches. The same set backs the FAIRY 9B/27B/35B
   `exact20` comparisons and is now selectable as `l3_mini_20` when building

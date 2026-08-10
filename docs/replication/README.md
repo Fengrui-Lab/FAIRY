@@ -41,7 +41,9 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-## 2. Configure DeepSeek Cloud
+## 2. Configure a cloud provider
+
+### DeepSeek Cloud
 
 ```bash
 export DEEPSEEK_API_KEY='<key>'
@@ -76,6 +78,49 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --progress-interval-s 60 \
   --cost-cap-dollars 9999
 ```
+
+### Qwen Cloud
+
+Use the OpenAI-compatible DashScope endpoint with the Qwen provider. The
+rolling model alias is `qwen3.6-flash`; use the dated
+`qwen3.6-flash-2026-04-16` snapshot when a published experiment must not move
+to a newer backend revision.
+
+```bash
+export QWEN_API_KEY='<key>'
+# DASHSCOPE_API_KEY is accepted as an alternative.
+# Optional endpoint override:
+# export QWEN_API_BASE='https://dashscope.aliyuncs.com/compatible-mode/v1'
+
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
+  --phase qwen36_flash_smoke \
+  --output-root validation_runs/qwen36_flash_smoke/phase5_paper_matrix \
+  --families farm_baseline_react \
+  --scenarios scenario_farm_world_field_prep_physics_action_tick \
+  --repeats 1 \
+  --provider qwen \
+  --model qwen3.6-flash-2026-04-16 \
+  --model-family Qwen \
+  --a2a false \
+  --system-prompt-mode fairy \
+  --parallel-tool-calls false \
+  --max-output-tokens 512 \
+  --agent-max-iterations 40 \
+  --max-concurrent 1 \
+  --cell-timeout-s 600 \
+  --progress-interval-s 30 \
+  --cost-cap-dollars 9999
+```
+
+This path was verified with the rolling `qwen3.6-flash` alias: the physics
+smoke completed all 14 oracle tool steps with no LLM, tool, or parallel-call
+errors. Qwen3.6 Flash returned `reasoning_content`, so this configuration uses
+the provider's default thinking mode; FAIRY does not currently override
+`enable_thinking`.
+
+The batch runner currently uses the `fairy.cli` default temperature `0.1` for
+all providers. The same value is passed to the main agent and, when enabled,
+all A2A agents. Confirm it in `run_report.json` under `temperature`.
 
 `--parallel-tool-calls false` requests one tool call per model turn, adds that
 rule to the system message, and keeps only the first call if a provider still
