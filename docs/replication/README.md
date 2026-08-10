@@ -104,18 +104,20 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --a2a false \
   --system-prompt-mode fairy \
   --parallel-tool-calls false \
-  --max-output-tokens 512 \
-  --agent-max-iterations 40 \
+  --max-output-tokens 2048 \
+  --agent-max-iterations 200 \
   --max-concurrent 1 \
-  --cell-timeout-s 600 \
-  --progress-interval-s 30 \
+  --cell-timeout-s 3600 \
+  --progress-interval-s 60 \
   --cost-cap-dollars 9999
 ```
 
 This path was verified with the rolling `qwen3.6-flash` alias: the physics
 smoke completed all 14 oracle tool steps with no LLM, tool, or parallel-call
-errors. Qwen3.6 Flash returned `reasoning_content`, so this configuration uses
-the provider's default thinking mode; FAIRY does not currently override
+errors. The short scenario reduces the number of tool turns, but keeps the same
+`2048` output-token, `200` iteration, and `3600` second limits used for L3 runs.
+Qwen3.6 Flash returned `reasoning_content`, so this configuration uses the
+provider's default thinking mode; FAIRY does not currently override
 `enable_thinking`.
 
 The batch runner currently uses the `fairy.cli` default temperature `0.1` for

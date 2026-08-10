@@ -5,7 +5,10 @@
   physics smoke completed 14/14 oracle tool steps at temperature 0.1 with no
   LLM, tool, or parallel-call errors. The responses included
   `reasoning_content`, reflecting the provider's default thinking mode. Added
-  the tested setup to the replication guide and ignored local `.env` files.
+  the tested setup to the replication guide and ignored local `.env` files. A
+  full L3-mini scenario then completed on the fixed snapshot with the standard
+  2048-token cap: 98 LLM calls, 97 tool calls, no tool/parallel violations, and
+  an exact replay outcome checkpoint.
 
 - 2026-08-10: Canonicalized the 20-scenario `L3-mini` manifest from the legacy
   ARE 27B/35B `table3_20` batches. The same set backs the FAIRY 9B/27B/35B
