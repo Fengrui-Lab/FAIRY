@@ -98,6 +98,10 @@ def build_run_report(
     error: dict[str, Any] | None = None,
     controller_telemetry: dict[str, Any] | None = None,
     a2a: dict[str, Any] | None = None,
+    start_time: float | None = None,
+    seed: int | None = None,
+    scenario_kwargs: dict[str, Any] | None = None,
+    init_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     totals = metric_totals(runtime_metrics)
     status = "completed" if stopped_reason in {"agent_finished", "completed"} and error is None else "stopped"
@@ -109,6 +113,10 @@ def build_run_report(
         "schema_version": 1,
         "run_type": run_type,
         "scenario_id": scenario_id,
+        "start_time": start_time,
+        "seed": seed,
+        "scenario_kwargs": scenario_kwargs or {},
+        "init_kwargs": init_kwargs or {},
         "controller_id": controller_id,
         "provider": provider,
         "model": model,

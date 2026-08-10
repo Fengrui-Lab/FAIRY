@@ -1,5 +1,6 @@
 # agents/agent/base_agent.py
 
+import copy
 import dataclasses
 import json
 import time
@@ -104,10 +105,13 @@ class BaseAgent:
             )
             raise
         elapsed_time = round(time.perf_counter() - start_time, 6)
-        self.messages.llm_response(response, elapsed_time)
-        message = response.choices[0].message
+        raw_message = response.choices[0].message
+        raw_tool_calls = list(getattr(raw_message, "tool_calls", None) or [])
+        message = self._enforce_tool_call_policy(raw_message, raw_tool_calls)
+        self.messages.llm_response(response, elapsed_time, message=message)
         assistant_content = getattr(message, "content", None)
         tool_calls = self._tool_call_details(getattr(message, "tool_calls", None) or [])
+        raw_tool_call_details = self._tool_call_details(raw_tool_calls)
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         self.record_event(
@@ -120,6 +124,9 @@ class BaseAgent:
             rationale_source="assistant_content" if assistant_content else "empty_assistant_content",
             tool_call_count=len(tool_calls),
             tool_calls=tool_calls,
+            raw_tool_call_count=len(raw_tool_call_details),
+            raw_tool_calls=raw_tool_call_details,
+            dropped_tool_call_count=len(raw_tool_call_details) - len(tool_calls),
             tokens={
                 "prompt_tokens": getattr(usage, "prompt_tokens", 0) if usage else 0,
                 "cached_tokens": getattr(prompt_details, "cached_tokens", 0) if prompt_details else 0,
@@ -128,6 +135,33 @@ class BaseAgent:
             },
         )
         return message
+
+    def _enforce_tool_call_policy(self, message: Any, tool_calls: list[Any]) -> Any:
+        parallel_allowed = bool(getattr(self.llm, "parallel_tool_calls", True))
+        if parallel_allowed or len(tool_calls) <= 1:
+            return message
+
+        effective_tool_calls = tool_calls[:1]
+        if hasattr(message, "model_copy"):
+            normalized = message.model_copy(update={"tool_calls": effective_tool_calls})
+        elif dataclasses.is_dataclass(message):
+            normalized = dataclasses.replace(message, tool_calls=effective_tool_calls)
+        elif isinstance(message, dict):
+            normalized = {**message, "tool_calls": effective_tool_calls}
+        else:
+            normalized = copy.copy(message)
+            setattr(normalized, "tool_calls", effective_tool_calls)
+
+        self.record_event(
+            "parallel_tool_call_violation",
+            status="normalized",
+            policy="keep_first",
+            raw_tool_call_count=len(tool_calls),
+            effective_tool_call_count=1,
+            kept_tool_call=self._tool_call_details(effective_tool_calls)[0],
+            dropped_tool_calls=self._tool_call_details(tool_calls[1:]),
+        )
+        return normalized
 
     def _tool_call_details(self, tool_calls: list[Any]) -> list[dict[str, Any]]:
         details: list[dict[str, Any]] = []

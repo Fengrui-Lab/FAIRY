@@ -279,20 +279,26 @@ FARM_WORLD_ARE_FUNCTION_CALL_SYSTEM_PROMPT = SYSTEM_PROMPT_TEMPLATE.format(
 )
 
 FARM_SYSTEM_PROMPT_MODES = ("fairy", "are")
+SINGLE_TOOL_CALL_INSTRUCTION = "Only ONE tool call is allowed per turn."
 
 
-def get_farm_world_system_prompt(mode: str = "fairy") -> str:
+def get_farm_world_system_prompt(
+    mode: str = "fairy", *, parallel_tool_calls: bool = True
+) -> str:
     prompts = {
         "fairy": FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT,
         "are": FARM_WORLD_ARE_FUNCTION_CALL_SYSTEM_PROMPT,
     }
     try:
-        return prompts[mode]
+        prompt = prompts[mode]
     except KeyError as exc:
         choices = ", ".join(FARM_SYSTEM_PROMPT_MODES)
         raise ValueError(
             f"Unknown FARM system prompt mode {mode!r}; choose from: {choices}"
         ) from exc
+    if not parallel_tool_calls and SINGLE_TOOL_CALL_INSTRUCTION not in prompt:
+        prompt = f"{prompt.rstrip()}\n\n{SINGLE_TOOL_CALL_INSTRUCTION}\n"
+    return prompt
 
 DEFAULT_APP_AGENT_SYSTEM_MESSAGE = SYSTEM_PROMPT_TEMPLATE.format(
     general_instructions=GENERAL_SYSTEM_PROMPT_TEMPLATE,

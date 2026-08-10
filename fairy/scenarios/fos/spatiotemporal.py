@@ -36,6 +36,7 @@ from fairy.scenarios.fos.calibration import (
     category_for_tool,
     temporal_kernel,
 )
+from fairy.scenarios.workflow_validation import _make_bfcl_key
 
 NUM_RIDGES = 64
 _SECONDS_PER_DAY = 86400.0
@@ -960,12 +961,6 @@ def compute_farm_fos_v2(
 # ---------------------------------------------------------------------------
 # Baselines (computed from the SAME workflow dicts, for a fair comparison)
 # ---------------------------------------------------------------------------
-def _make_key(tool_name: str, tool_args: dict[str, Any] | None) -> tuple:
-    if not tool_args:
-        return (tool_name,)
-    return (tool_name, tuple(sorted((k, str(v)) for k, v in tool_args.items())))
-
-
 def baseline_bfcl(
     oracle_workflow: dict[str, dict[str, Any]],
     agent_workflow: dict[str, dict[str, Any]],
@@ -980,9 +975,13 @@ def baseline_bfcl(
         ks = set()
         for step in wf.values():
             tool = step.get("tool_name")
-            if not tool or step.get("op_type") == "USER":
+            if (
+                not tool
+                or step.get("op_type") == "USER"
+                or tool.startswith("AgentUserInterface__")
+            ):
                 continue
-            ks.add(_make_key(tool, step.get("tool_args")))
+            ks.add(_make_bfcl_key(tool, step.get("tool_args")))
         return ks
 
     oracle_keys = keyset(oracle_workflow)

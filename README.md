@@ -1,6 +1,6 @@
 # FAIRY
 
-[中文说明](README.zh-CN.md)
+[中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md)
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 
@@ -213,6 +213,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --cell-timeout-s 600 \
   --agent-max-iterations 100 \
   --max-output-tokens 2048 \
+  --parallel-tool-calls true \
+  --system-prompt-mode fairy \
   --cost-cap-dollars 5
 ```
 
@@ -599,6 +601,8 @@ fairy-run \
   --provider <provider> \
   --model <model> \
   --temperature 0.1 \
+  --max-output-tokens 2048 \
+  --parallel-tool-calls true \
   --max-tool-calls 300 \
   --timeout-seconds 1200 \
   --output-dir <path/to/run_dir>
@@ -614,7 +618,9 @@ Parameters:
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client type. |
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
 | `--temperature` | float | `0.1` | Sampling temperature. Some reasoning/OpenAI models may ignore it. |
+| `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; passed to the provider as `max_tokens`. |
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
+| `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
 | `--max-tool-calls` | int | `300` | Maximum main-agent tool calls. If reached, `run_report.status=stopped` and `stopped_reason=max_tool_calls`. |
 | `--timeout-seconds` | float | `1200.0` | Maximum main-agent wall time. If reached, `stopped_reason=timeout`. |
 | `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Put `detailed_briefing` / detail-context mode here. |
@@ -837,7 +843,7 @@ Final overview:
 | `system_prompt_mode` | `fairy` or `are` for agent runs; `null` for oracle/replay. |
 | `status` | `completed`, `stopped`, or `failed`. |
 | `stopped_reason` | `agent_finished`, `completed`, `max_tool_calls`, `timeout`, `error`, etc. |
-| `limits` | The configured `max_tool_calls` and `timeout_seconds`. |
+| `limits` | The configured `max_tool_calls`, `timeout_seconds`, `parallel_tool_calls`, and `max_output_tokens`. |
 | `metrics.wall_time_seconds` | Real elapsed wall time from Python `time.perf_counter()`. |
 | `metrics.workflow_steps` | Number of workflow nodes. |
 | `metrics.tool_call_count` | Main-agent or replay tool-call count. |
@@ -1187,7 +1193,12 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --cost-cap-dollars 5 \
   --max-concurrent 1 \
   --cell-timeout-s 600 \
-  --agent-max-iterations 100
+  --cell-timeout-grace-s 60 \
+  --progress-interval-s 60 \
+  --agent-max-iterations 100 \
+  --max-output-tokens 2048 \
+  --parallel-tool-calls true \
+  --system-prompt-mode fairy
 ```
 
 Parameters:

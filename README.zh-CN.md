@@ -1,6 +1,6 @@
 # FAIRY
 
-[English README](README.md)
+[English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md)
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
@@ -212,6 +212,9 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --max-concurrent 1 \
   --cell-timeout-s 600 \
   --agent-max-iterations 100 \
+  --max-output-tokens 2048 \
+  --parallel-tool-calls true \
+  --system-prompt-mode fairy \
   --cost-cap-dollars 5
 ```
 
@@ -240,6 +243,8 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
 | `a2a_app_agent` | A2A fallback app-agent profile；A2A off 时为空。 |
 | `detail_enabled` | `--detail` 规范化后的值；未设置为空。 |
 | `parallel_tool_calls` | 本次运行是否允许模型在一个 assistant turn 里一次返回多个工具调用。 |
+| `system_prompt_mode` | FARM controller 使用的 system prompt：`fairy` 或兼容 native function calling 的 `are`。 |
+| `max_output_tokens` | 每次 LLM 调用的最大 completion token 数；以 `max_tokens` 传给 provider，默认 `2048`。 |
 | `scenario_kwargs` | 实际透传给 `fairy.cli --scenario-kwargs` 的 JSON 字符串。 |
 | `scenario_initialization_kwargs` | 实际透传给 `fairy.cli --init-kwargs` 的 JSON 字符串。 |
 | `wall_s` | cell subprocess wall-clock 秒数。 |
@@ -592,9 +597,12 @@ fairy-run \
   -s <scenario_id> \
   --agent \
   --controller <controller_id> \
+  --system-prompt-mode fairy \
   --provider <provider> \
   --model <model> \
   --temperature 0.1 \
+  --max-output-tokens 2048 \
+  --parallel-tool-calls true \
   --max-tool-calls 300 \
   --timeout-seconds 1200 \
   --output-dir <path/to/run_dir>
@@ -606,10 +614,13 @@ fairy-run \
 |---|---|---|---|
 | `--agent` | flag | false | 运行真实 function-calling agent。 |
 | `--controller` | controller id | `farm_baseline_react` | 控制器家族。用 `--list-controllers` 查看。 |
+| `--system-prompt-mode` | `fairy` / `are` | `fairy` | 选择 FARM controller prompt。`are` 保留 native function calling，并迁移所有与 FAIRY 不冲突的旧 ARE 推理、单工具调用、观察、错误恢复、工具经济性和工具输出利用规则。 |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client 类型。 |
 | `--model` | string | `deepseek-chat` | provider 下的模型名。 |
 | `--temperature` | float | `0.1` | 采样温度。reasoning/openAI 某些模型可能忽略该值。 |
+| `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用允许的最大 completion token 数；以 `max_tokens` 传给 provider。 |
 | `--endpoint` | URL | provider 默认 | 覆盖 OpenAI-compatible base URL。会传成 client 的 `base_url`。 |
+| `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
 | `--max-tool-calls` | int | `300` | 主 agent 最多允许多少次工具调用。到达后 `run_report.status=stopped`，`stopped_reason=max_tool_calls`。 |
 | `--timeout-seconds` | float | `1200.0` | 主 agent 最大 wall time。到达后 `stopped_reason=timeout`。 |
 | `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。`detailed_briefing` / detail-context 模式就放这里。 |
@@ -829,9 +840,10 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 | `scenario_id` | 场景 ID。 |
 | `controller_id` | agent controller；oracle/replay 模式为 `null`。 |
 | `provider`, `model`, `temperature` | LLM 配置。 |
+| `system_prompt_mode` | agent run 为 `fairy` 或 `are`；oracle/replay 模式为 `null`。 |
 | `status` | `completed`、`stopped` 或 `failed`。 |
 | `stopped_reason` | `agent_finished`、`completed`、`max_tool_calls`、`timeout`、`error` 等。 |
-| `limits` | 本次设置的 `max_tool_calls` 和 `timeout_seconds`。 |
+| `limits` | 本次设置的 `max_tool_calls`、`timeout_seconds`、`parallel_tool_calls` 和 `max_output_tokens`。 |
 | `metrics.wall_time_seconds` | 真实运行耗时，来自 Python `time.perf_counter()`。 |
 | `metrics.workflow_steps` | workflow 节点数。 |
 | `metrics.tool_call_count` | 主 agent 或 replay 的工具调用数。 |
@@ -1181,7 +1193,12 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --cost-cap-dollars 5 \
   --max-concurrent 1 \
   --cell-timeout-s 600 \
-  --agent-max-iterations 100
+  --cell-timeout-grace-s 60 \
+  --progress-interval-s 60 \
+  --agent-max-iterations 100 \
+  --max-output-tokens 2048 \
+  --parallel-tool-calls true \
+  --system-prompt-mode fairy
 ```
 
 参数：
@@ -1200,8 +1217,11 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--max-concurrent` | int | `1`                              | 并行 cell 数。 |
 | `--cell-timeout-s` | int | `300`                            | 单 cell subprocess 超时。 |
 | `--cell-timeout-grace-s` | int | `60`                             | 超时后先 SIGINT 等待多久，再 terminate/kill。 |
+| `--progress-interval-s` | float | `60`                              | 每隔指定秒数输出运行中 cell 的 LLM/tool/token/最近事件进度；设为 `0` 关闭。 |
 | `--agent-max-iterations` | int | `200`                            | 传给 `fairy-run --max-tool-calls`。 |
+| `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用的最大 completion token 数；传给 provider，并记录在每个 run report 中。 |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
+| `--system-prompt-mode` | `fairy` / `are` | `fairy` | 传给 `fairy-run`，并记录在 `run_report.json` 和 `results.csv`。`are` 迁移与 FAIRY 兼容的旧 ARE 行为规则，但不会恢复相冲突的文本 JSON `Action:`/`<end_action>` 协议或内嵌工具目录。 |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | 透传给 FAIRY CLI。 |
 | `--detail` | detail mode | none                             | 自动合并进 `--scenario-kwargs` 的 `detailed_briefing`。 |
@@ -1216,6 +1236,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `<output-root>/results.csv` | 每个 cell 一行：return code、status、cost、tool/LLM calls、telemetry、run_report 路径。 |
 | `<output-root>/<family>__<scenario>__rN/stdout.log` | 该 cell 的 stdout。 |
 | `<output-root>/<family>__<scenario>__rN/stderr.log` | 该 cell 的 stderr、timeout/traceback。 |
+| `<output-root>/<family>__<scenario>__rN/<scenario>.progress.jsonl` | 运行中的轻量事件流；timeout/kill 后仍会保留。 |
 | `<output-root>/<family>__<scenario>__rN/<scenario>.run_report.json` | cell 的主报告。 |
 | 其他 `<scenario>.*` artifacts | 同普通 agent run。 |
 
@@ -1231,7 +1252,7 @@ PYTHONPATH=. uv run python scripts/summarize_runs.py validation_runs/manual \
 输出列：
 
 ```text
-run_dir, run_type, scenario_id, controller_id, model, status,
+run_dir, run_type, scenario_id, controller_id, system_prompt_mode, model, status,
 stopped_reason, success, wall_time_seconds, workflow_steps,
 tool_call_count, total_tokens, cached_tokens, warehouse_grain_kg,
 harvested_ridges, yield_g_m2

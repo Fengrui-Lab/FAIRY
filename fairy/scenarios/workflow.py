@@ -17,6 +17,7 @@ class WorkflowStep:
     time: str | None = None
     time_before: float | None = None
     time_after: float | None = None
+    error_stage: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = {
@@ -32,6 +33,8 @@ class WorkflowStep:
             data["time_before"] = self.time_before
         if self.time_after is not None:
             data["time_after"] = self.time_after
+        if self.error_stage is not None:
+            data["error_stage"] = self.error_stage
         return data
 
 

@@ -93,7 +93,12 @@
 - `--parallel-tool-calls` controls whether OpenAI-compatible providers may
   return multiple tool calls in one LLM turn. The default is `true` for backward
   compatibility; set it to `false` when an experiment requires strict
-  observe-after-each-action behavior.
+  observe-after-each-action behavior. In FARM runs, `false` also adds an explicit
+  one-tool-per-turn instruction to the system message. Some providers, including
+  DeepSeek, may ignore the request option and still return several calls.
+  `BaseAgent` therefore enforces `false` after receipt: only the first call enters
+  conversation state and executes, while `parallel_tool_call_violation` and
+  `llm_call_end` retain raw/effective/dropped call details for audit.
 - `--system-prompt-mode are` is an ARE-guidance A/B condition, not a protocol
   rollback. It preserves FAIRY native function calling and ports every
   compatible legacy ARE behavior rule: explicit pre-call reasoning, one-tool
@@ -150,13 +155,22 @@
   read's timestamp as its observation time.
 - Replay physics is monotonic. A requested timestamp earlier than
   `physics.last_physics_sim_time` is a divergence, not a clock adjustment.
-- Rebatch validates mutating-tool success/error semantics and return values,
-  then compares the complete final FARM inventory and yield summary with
-  `run_report.outcome`. A mismatch must fail the cell; never emit FOS or yield
-  metrics from a divergent state. A bundle without that outcome checkpoint is
-  also unverified and must fail rather than produce metrics.
-- Sensor observations are not byte-reproducible across Python processes
-  because `App.set_seed()` currently derives RNG seeds with Python's salted
-  `hash()`. Preserve the recorded read return in EventLog, count observation
-  mismatches separately, and rely on strict writes plus the final outcome
-  checkpoint for state-replay validity.
+- Rebatch re-executes successful WRITE actions in recorded order, validates
+  their return/error semantics, then compares the complete final FARM inventory
+  and yield summary with `run_report.outcome`. A mismatch must fail the cell;
+  never emit FOS or yield metrics from a divergent state. A bundle without that
+  outcome checkpoint is also unverified and must fail rather than produce
+  metrics.
+- READ actions are observations, not commands to generate a new observation.
+  Rebatch restores their recorded return values into EventLog without calling
+  the app again. This avoids new sensor noise and avoids read-side device state
+  changes during replay while preserving exactly what the agent observed.
+- A recorded `TOOL_ERROR` for a missing app or method is a valid failed event
+  with no state change. Restore it with its original app/method identity and
+  error text; do not skip it and do not require the hallucinated method to exist.
+  Conversely, a recorded successful call whose app/method is absent is a corrupt
+  or incompatible trace and must fail replay.
+- New `run_report.json` files persist `start_time`, `seed`, `scenario_kwargs`,
+  and `init_kwargs`. Older batch traces recover constructor/setup kwargs from
+  their neighboring `results.csv`. Rebatch must instantiate and set up the
+  scenario through the same parameter path as the original CLI run.

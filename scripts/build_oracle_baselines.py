@@ -69,6 +69,10 @@ L2_SKILL_SCENARIO_IDS_PATH = (
     REPO_ROOT
     / "scripts/fullseason/l2_skill_scenario_ids.txt"
 )
+L3_MINI_20_SCENARIO_IDS_PATH = (
+    REPO_ROOT
+    / "scripts/fullseason/l3_mini_20_scenario_ids.txt"
+)
 
 
 # Match the per-scenario list the FOS validation paper sweep covers, plus
@@ -171,6 +175,10 @@ def _plain_scenario_id_list(path: Path, label: str) -> list[str]:
 
 def _l2_skill_scenarios() -> list[str]:
     return _plain_scenario_id_list(L2_SKILL_SCENARIO_IDS_PATH, "L2 skill")
+
+
+def _l3_mini_20_scenarios() -> list[str]:
+    return _plain_scenario_id_list(L3_MINI_20_SCENARIO_IDS_PATH, "L3-mini 20")
 
 
 def _ensure_selected_l2_l1_scenario_imported(scenario_id: str) -> None:
@@ -458,6 +466,8 @@ def _resolve_scenarios(spec: str) -> list[str]:
         return _selected_l2_l1_scenarios()
     if spec in {"l2_skill_72", "l2_skills", "l2_skill"}:
         return _l2_skill_scenarios()
+    if spec in {"l3_mini_20", "l3-mini-20", "l3_mini"}:
+        return _l3_mini_20_scenarios()
     if spec in DEFAULT_SCENARIO_GROUPS:
         return list(DEFAULT_SCENARIO_GROUPS[spec])
     return [s.strip() for s in spec.split(",") if s.strip()]
@@ -473,7 +483,7 @@ def main() -> int:
         help=(
             "Comma-separated scenario IDs, or one of: 'all', 'round12', "
             "'round3', 'round4', 'full'/'formal90'/'l3_fullseason', "
-            "'selected_l2_l1_20_30', 'l2_skill_72'. "
+            "'selected_l2_l1_20_30', 'l2_skill_72', 'l3_mini_20'. "
             "Default: all."
         ),
     )

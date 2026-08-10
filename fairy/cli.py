@@ -210,7 +210,9 @@ def main() -> None:
             if source_workflow is None:
                 source_workflow = Workflow.load_workflow(str(workflow_path))
             active_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
-            active_workflow = active_engine.replay_workflow(source_workflow)
+            active_workflow = active_engine.replay_workflow(
+                source_workflow, **init_kwargs
+            )
             replay_path = output_dir / f"{args.scenario}.replay.json"
             active_workflow.save_workflow(str(replay_path))
             artifacts["replay_workflow"] = str(replay_path)
@@ -252,6 +254,10 @@ def main() -> None:
             artifacts=artifacts,
             evaluation=report,
             outcome=log_engine.outcome_summary(),
+            start_time=getattr(log_engine.scenario, "start_time", None),
+            seed=getattr(log_engine.scenario, "seed", None),
+            scenario_kwargs=scenario_kwargs,
+            init_kwargs=init_kwargs,
         )
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
@@ -322,7 +328,10 @@ def main() -> None:
             args.controller,
             llm=llm,
             toolsets=scenario.apps,
-            system_message=get_farm_world_system_prompt(args.system_prompt_mode),
+            system_message=get_farm_world_system_prompt(
+                args.system_prompt_mode,
+                parallel_tool_calls=args.parallel_tool_calls,
+            ),
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
@@ -411,6 +420,10 @@ def main() -> None:
             error=error,
             controller_telemetry=controller_telemetry,
             a2a=a2a_metadata,
+            start_time=getattr(scenario, "start_time", None),
+            seed=getattr(scenario, "seed", None),
+            scenario_kwargs=scenario_kwargs,
+            init_kwargs=init_kwargs,
         )
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()

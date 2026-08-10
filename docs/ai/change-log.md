@@ -1,5 +1,21 @@
 # AI Change Log
 
+- 2026-08-10: Canonicalized the 20-scenario `L3-mini` manifest from the legacy
+  ARE 27B/35B `table3_20` batches. The same set backs the FAIRY 9B/27B/35B
+  `exact20` comparisons and is now selectable as `l3_mini_20` when building
+  oracle baselines. This set is disjoint from the retrieval experiment's
+  separate 20-scenario target list.
+
+- 2026-08-10: Made single-tool mode provider-independent and made FAIRY trace
+  replay event-faithful. When `parallel_tool_calls=false`, only the first tool
+  call returned by a provider enters agent context and executes, and FARM system
+  prompts explicitly instruct the model to return one tool call per turn; raw
+  and dropped calls remain in runtime telemetry. Rebatch now re-executes successful writes,
+  restores recorded reads and no-op tool failures, rejects missing successful
+  tools, restores original scenario constructor/setup parameters, and retains
+  strict final FARM outcome verification. A 181-event DeepSeek full-season
+  trace replayed with 0 skipped events and an exact outcome checkpoint match.
+
 - 2026-07-25: Added an auditable FARM system-prompt switch for tool-use A/B
   experiments. `fairy-run` and `scripts/iclr_validation_runner.py` accept
   `--system-prompt-mode fairy|are`; `fairy` preserves the existing prompt and

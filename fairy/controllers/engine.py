@@ -236,8 +236,10 @@ class Engine:
             run_oracle=run_oracle, **setup_kwargs
         )
 
-    def replay_workflow(self, workflow: Workflow) -> Workflow:
-        self.scenario.setup()
+    def replay_workflow(
+        self, workflow: Workflow, **setup_kwargs: Any
+    ) -> Workflow:
+        self.scenario.setup(**setup_kwargs)
         self._register_scenario_apps()
         _, _, tools_map = build_toolset(list(self.scenario.apps or []))
         replayed = Workflow()

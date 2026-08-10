@@ -58,6 +58,11 @@ from fairy.scenarios.farm_world_physics.scenario_irrigation_physics_action_tick 
 )
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow, WorkflowStep
+from fairy.scenarios.workflow_validation import (
+    ensure_oracle_workflow,
+    workflow_from_oracle_events,
+)
+from fairy.scenarios.fos.spatiotemporal import baseline_bfcl
 
 
 def test_all_fairy_modules_import() -> None:
@@ -114,6 +119,122 @@ def test_baseline_field_prep_oracle_sequence() -> None:
     ]
 
 
+def test_ensure_oracle_workflow_preserves_custom_oracle_solution() -> None:
+    expected = Engine(None, ScenarioFarmWorldFieldPrep()).run_scenario_oracle(
+        run_oracle=False
+    ).to_dict()
+
+    assert ensure_oracle_workflow(ScenarioFarmWorldFieldPrep()) == expected
+
+
+def test_ensure_oracle_workflow_canonicalizes_captured_events() -> None:
+    from fairy.scenarios.fos.spatiotemporal import _season_day_map
+
+    expected_scenario = ScenarioFullSeasonHBBaseHN84StdNormal()
+    expected_scenario.setup()
+    expected = workflow_from_oracle_events(expected_scenario)
+
+    actual = ensure_oracle_workflow(ScenarioFullSeasonHBBaseHN84StdNormal())
+
+    assert actual == expected
+    steps = list(actual.values())
+    assert all(step.get("time") is None for step in steps)
+    assert all(
+        not str(step.get("tool_name") or "").startswith("AgentUserInterface__")
+        for step in steps
+    )
+    assert not any(
+        left.get("tool_name") == right.get("tool_name") == "SystemApp__advance_time"
+        for left, right in zip(steps, steps[1:])
+    )
+    season_days = _season_day_map(actual)
+    assert season_days["step37"] == pytest.approx(15.0)
+    assert season_days["step43"] == pytest.approx(15.0 + 1.0 / 24.0)
+
+
+def test_bfcl_normalizes_json_numbers_and_ignores_agent_ui() -> None:
+    oracle = {
+        "step0": {
+            "tool_name": "TractorApp__plant_seeds",
+            "tool_args": {"depth_cm": 4.0, "settings": {"passes": [1.0, 2.5]}},
+            "op_type": "WRITE",
+        },
+        "step1": {
+            "tool_name": "AgentUserInterface__send_message_to_user",
+            "tool_args": {"content": "done"},
+            "op_type": "WRITE",
+        },
+    }
+    agent = {
+        "step0": {
+            "tool_name": "TractorApp__plant_seeds",
+            "tool_args": {"depth_cm": 4, "settings": {"passes": [1, 2.5]}},
+            "op_type": "WRITE",
+        },
+    }
+
+    assert baseline_bfcl(oracle, agent) == pytest.approx(1.0)
+
+
+def test_bfcl_normalizes_execution_equivalent_defaults_and_time_units() -> None:
+    oracle = {
+        "step0": {
+            "tool_name": "SystemApp__advance_time",
+            "tool_args": {"seconds": 0, "minutes": 0, "hours": 1, "days": 0},
+            "op_type": "WRITE",
+        },
+        "step1": {
+            "tool_name": "TractorApp__replant_seeds",
+            "tool_args": {
+                "start_ridge": 0,
+                "end_ridge": 3,
+                "depth_cm": 4.0,
+                "spacing_cm": 7.9,
+                "full_replant": False,
+            },
+            "op_type": "WRITE",
+        },
+    }
+    agent = {
+        "step0": {
+            "tool_name": "SystemApp__advance_time",
+            "tool_args": {"minutes": 60},
+            "op_type": "WRITE",
+        },
+        "step1": {
+            "tool_name": "TractorApp__replant_seeds",
+            "tool_args": {
+                "start_ridge": 0,
+                "end_ridge": 3,
+                "depth_cm": 4,
+                "spacing_cm": 7.9,
+            },
+            "op_type": "WRITE",
+        },
+    }
+
+    assert baseline_bfcl(oracle, agent) == pytest.approx(1.0)
+
+
+def test_bfcl_keeps_booleans_distinct_from_integers() -> None:
+    oracle = {
+        "step0": {
+            "tool_name": "ExampleApp__set_mode",
+            "tool_args": {"enabled": True},
+            "op_type": "WRITE",
+        }
+    }
+    agent = {
+        "step0": {
+            "tool_name": "ExampleApp__set_mode",
+            "tool_args": {"enabled": 1},
+            "op_type": "WRITE",
+        }
+    }
+
+    assert baseline_bfcl(oracle, agent) == pytest.approx(0.0)
+
+
 def test_physics_action_tick_oracle_smoke() -> None:
     scenario = ScenarioFarmWorldFieldPrepPhysicsActionTick()
     workflow = Engine(None, scenario).run_scenario_oracle(run_oracle=False)
@@ -166,6 +287,25 @@ def test_fullseason_v2_l2_skill_72_registered() -> None:
     assert len(skill_ids) == 72
     assert len(source_l3_ids) == 20
     assert not [scenario_id for scenario_id in skill_ids if scenario_id not in registered]
+
+
+def test_l3_mini_20_manifest_matches_oracle_alias_and_registry() -> None:
+    from scripts.build_oracle_baselines import _resolve_scenarios
+
+    mini_ids = [
+        line.strip()
+        for line in Path(
+            "scripts/fullseason/l3_mini_20_scenario_ids.txt"
+        ).read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+    assert len(mini_ids) == 20
+    assert len(set(mini_ids)) == 20
+    assert _resolve_scenarios("l3_mini_20") == mini_ids
+    assert not [
+        scenario_id for scenario_id in mini_ids if scenario_id not in set(list_scenarios())
+    ]
 
 
 def test_fullseason_v2_oracle_replay_evaluate_smoke(tmp_path: Path) -> None:
@@ -392,6 +532,20 @@ def test_are_system_prompt_mode_ports_compatible_legacy_behavior_rules() -> None
     assert "EXAMPLE CYCLE" not in are_prompt
     with pytest.raises(ValueError, match="Unknown FARM system prompt mode"):
         get_farm_world_system_prompt("unknown")
+
+
+def test_single_tool_policy_is_reflected_in_farm_system_prompt() -> None:
+    fairy_prompt = get_farm_world_system_prompt(
+        "fairy", parallel_tool_calls=False
+    )
+    are_prompt = get_farm_world_system_prompt("are", parallel_tool_calls=False)
+
+    instruction = "Only ONE tool call is allowed per turn."
+    assert fairy_prompt.count(instruction) == 1
+    assert are_prompt.count(instruction) == 1
+    assert instruction not in get_farm_world_system_prompt(
+        "fairy", parallel_tool_calls=True
+    )
 
 
 def test_app_agent_profiles_match_are_names_and_prompts() -> None:

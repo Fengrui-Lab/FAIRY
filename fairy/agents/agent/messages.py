@@ -18,7 +18,7 @@ class Messages:
     def system_notify(self, input,time=None):
         self.messages.append({"role": "system", "content": input,"time": time})
 
-    def llm_response(self, response, elapsed_time):
+    def llm_response(self, response, elapsed_time, message=None):
 
         # if tools is not None and response.choices[0].message.tool_calls:
         #     message_type = ToolCallRequestMessage
@@ -35,7 +35,9 @@ class Messages:
         #     message_type = ChatResponseMessage
         #     response_tool_calls = None
 
-        self.messages.append(response.choices[0].message)
+        self.messages.append(
+            response.choices[0].message if message is None else message
+        )
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         tokens = {

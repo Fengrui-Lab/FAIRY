@@ -28,6 +28,8 @@ def _make_serializable(value: Any) -> Any:
 
 
 def _normalize_value(value: Any) -> Any:
+    if isinstance(value, bool):
+        return ("__json_bool__", value)
     if isinstance(value, float) and value == int(value):
         return int(value)
     if isinstance(value, list):
@@ -42,6 +44,35 @@ def _make_key(tool_name: str, tool_args: dict[str, Any] | None) -> tuple[Any, ..
         return (tool_name,)
     normalized = tuple(sorted((k, _normalize_value(v)) for k, v in tool_args.items()))
     return (tool_name, normalized)
+
+
+def _make_bfcl_key(
+    tool_name: str, tool_args: dict[str, Any] | None
+) -> tuple[Any, ...]:
+    """Build a BFCL key from execution-equivalent JSON arguments."""
+    args = dict(tool_args or {})
+    if tool_name == "SystemApp__advance_time":
+        components = [
+            args.get("seconds", 0),
+            args.get("minutes", 0),
+            args.get("hours", 0),
+            args.get("days", 0),
+        ]
+        if not all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            for value in components
+        ):
+            return _make_key(tool_name, args)
+        elapsed_seconds = (
+            components[0]
+            + components[1] * 60
+            + components[2] * 3600
+            + components[3] * 86400
+        )
+        args = {"elapsed_seconds": elapsed_seconds}
+    elif tool_name == "TractorApp__replant_seeds":
+        args.setdefault("full_replant", False)
+    return _make_key(tool_name, args)
 
 
 def _extract_tool_steps(
@@ -332,13 +363,18 @@ def ensure_oracle_workflow(scenario: Any) -> dict[str, dict[str, Any]]:
         return cached
 
     from fairy.controllers.engine import Engine
+    from fairy.scenarios.scenario import Scenario
 
     oracle_scenario = scenario.__class__()
     for attr in ("start_time", "seed", "detailed_briefing"):
         if hasattr(scenario, attr):
             setattr(oracle_scenario, attr, getattr(scenario, attr))
     engine = Engine(agent=None, scenario=oracle_scenario)
-    workflow = engine.run_scenario_oracle(run_oracle=True).to_dict()
+    engine_workflow = engine.run_scenario_oracle(run_oracle=True)
+    if type(oracle_scenario).oracle_solution is Scenario.oracle_solution:
+        workflow = workflow_from_oracle_events(oracle_scenario)
+    else:
+        workflow = engine_workflow.to_dict()
     _normalize_workflow_times(workflow)
     scenario._cached_oracle_workflow = workflow
     return workflow

@@ -300,6 +300,7 @@ class Agent(BaseAgent):
                     float(time_before) if time_before is not None else env_time_after
                 ),
                 time_after=env_time_after,
+                error_stage=error_stage,
             )
         )
         self.record_event(

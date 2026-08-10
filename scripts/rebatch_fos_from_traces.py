@@ -10,11 +10,11 @@ phase5_paper_matrix/<family>__<scenario>__rN/):
        — this gets us a fresh, fully-wired set of apps including the
        physics orchestrator with its initial state.
     3. Replay the workflow's TOOL steps against the fresh scenario's apps.
-       The agent's tool-mutating actions
+       The agent's successful tool-mutating actions
        (plant_seeds, irrigate, advance_time, harvest, ...) re-drive
-       the physics engines forward. Read-only actions are no-ops on
-       state but still get logged so FOS Decision/Efficiency see the
-       same agent history.
+       the physics engines forward. Recorded read observations and failed
+       tool calls are restored as events without inventing new state changes,
+       so FOS Decision/Efficiency see the original agent history.
     4. Build a minimal env-stub holding the replayed event log.
     5. Call `evaluate_fos(...)` with the *current* FOS code (e.g.
        Scheme B + extrapolate_to_maturity) and emit a per-cell JSON
@@ -45,9 +45,9 @@ Caveats:
       branch satisfy that.
     - Scenarios that aren't in the registry are skipped with status
       "scenario_not_in_registry".
-    - Every replayed return value and the final FARM outcome checkpoint are
-      checked against the trace. A mismatch fails that cell instead of
-      emitting metrics from a divergent physics state.
+    - Successful state-changing return values and the final FARM outcome
+      checkpoint are checked against the trace. A mismatch fails that cell
+      instead of emitting metrics from a divergent physics state.
     - Workflows written before exact pre/post timestamps were added use a
       backward-compatible timing reconstruction and are labelled with
       ``replay_legacy_timing_steps`` in the summary.
@@ -95,6 +95,21 @@ def _operation_type_for_method(method: Any):
     return getattr(method, "_event_operation_type", None) or OperationType.READ
 
 
+def _named_replay_noop(method_name: str):
+    def recorded_event_noop(**_kwargs: Any) -> None:
+        return None
+
+    recorded_event_noop.__name__ = method_name
+    return recorded_event_noop
+
+
+def _synthetic_replay_app(app_name: str) -> Any:
+    app_class = type(app_name, (), {})
+    app = app_class()
+    app.name = app_name
+    return app
+
+
 def _build_completed_event_from_workflow_step(
     step: dict[str, Any],
     target_app: Any,
@@ -103,6 +118,7 @@ def _build_completed_event_from_workflow_step(
     event_time: float,
     return_value: Any,
     exception: Any,
+    method: Any | None = None,
 ):
     """Assemble a CompletedEvent from a FAIRY workflow step."""
     from fairy.types import (
@@ -112,15 +128,15 @@ def _build_completed_event_from_workflow_step(
         EventType,
     )
 
-    method = getattr(target_app, method_name, None)
-    if method is None:
-        method = lambda **_kw: None  # noqa: E731
+    action_method = method or getattr(target_app, method_name, None)
+    if not callable(action_method):
+        action_method = _named_replay_noop(method_name)
 
     action = Action(
-        function=method,
+        function=action_method,
         app=target_app,
         args={k: v for k, v in args.items() if k != "self"},
-        operation_type=_operation_type_for_method(method),
+        operation_type=_operation_type_for_method(action_method),
         action_id=step.get("name"),
     )
     metadata = EventMetadata(
@@ -138,14 +154,20 @@ def _build_completed_event_from_workflow_step(
     )
 
 
-def _instantiate_scenario_for_replay(scenario_id: str, start_time: float, seed: int):
+def _instantiate_scenario_for_replay(
+    scenario_id: str,
+    start_time: float | None,
+    seed: int | None,
+    scenario_kwargs: dict[str, Any] | None = None,
+    init_kwargs: dict[str, Any] | None = None,
+):
     """Look up the scenario class in the registry and prepare it for
     replay (apps + physics initialised, but events flow not driven)."""
     from fairy.scenarios.registry import registry
     from fairy.time_manager import TimeManager
 
     cls = registry.get_scenario(scenario_id)
-    scenario = cls()
+    scenario = cls(**dict(scenario_kwargs or {}))
     if start_time is not None:
         scenario.start_time = float(start_time)
     if seed is not None:
@@ -154,15 +176,16 @@ def _instantiate_scenario_for_replay(scenario_id: str, start_time: float, seed: 
     # AND build_events_flow() (scenario events). The events are
     # benign here — we don't run them through the env, only call tools
     # directly via the agent's trace.
-    scenario.initialize()
-    if start_time is not None:
+    scenario.setup(**dict(init_kwargs or {}))
+    effective_start_time = getattr(scenario, "start_time", None)
+    if effective_start_time is not None:
         # In a real run, Environment.register_apps() replaces every app's
         # constructor-created clock with one shared environment clock reset to
         # scenario.start_time. Replay calls tool methods directly, so it must
         # mirror that registration step or FARM full-season time jumps replay
         # from wall-clock app construction time.
         tm = TimeManager()
-        tm.reset(float(start_time))
+        tm.reset(float(effective_start_time))
         for app in scenario.apps or []:
             app.register_time_manager(tm)
     return scenario
@@ -242,6 +265,13 @@ def _load_fairy_run_bundle(cell_dir: Path) -> dict[str, Any] | None:
         run_report.get("scenario_id")
         or workflow_path.name.removesuffix(".agent_workflow.json")
     )
+    csv_config = _scenario_config_from_results_csv(cell_dir)
+    scenario_kwargs = run_report.get("scenario_kwargs")
+    init_kwargs = run_report.get("init_kwargs")
+    if not isinstance(scenario_kwargs, dict):
+        scenario_kwargs = csv_config.get("scenario_kwargs", {})
+    if not isinstance(init_kwargs, dict):
+        init_kwargs = csv_config.get("init_kwargs", {})
     return {
         "cell_dir": cell_dir,
         "workflow_path": workflow_path,
@@ -250,7 +280,9 @@ def _load_fairy_run_bundle(cell_dir: Path) -> dict[str, Any] | None:
         "run_report": run_report,
         "scenario_id": scenario_id,
         "start_time": run_report.get("start_time"),
-        "seed": run_report.get("seed") or 0,
+        "seed": run_report.get("seed"),
+        "scenario_kwargs": scenario_kwargs,
+        "init_kwargs": init_kwargs,
     }
 
 
@@ -362,6 +394,14 @@ def _parse_recorded_return(value: Any) -> Any:
             return ast.literal_eval(stripped)
         except (ValueError, SyntaxError):
             return value
+
+
+def _tool_error_happened_before_execution(step: dict[str, Any]) -> bool:
+    error_stage = str(step.get("error_stage") or "")
+    if error_stage:
+        return error_stage == "tool_args_parse"
+    # Compatibility for traces written before WorkflowStep.error_stage.
+    return "JSONDecodeError:" in str(step.get("content") or "")
 
 
 def _replay_value_mismatch(recorded: Any, actual: Any, path: str = "return") -> str | None:
@@ -518,19 +558,34 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
     if not scenario_id:
         raise ValueError("FAIRY run bundle has no scenario_id")
     start_time = bundle.get("start_time")
-    seed = bundle.get("seed") or 0
+    seed = bundle.get("seed")
+    scenario_kwargs = bundle.get("scenario_kwargs") or {}
+    init_kwargs = bundle.get("init_kwargs") or {}
 
-    scenario = _instantiate_scenario_for_replay(scenario_id, start_time, seed)
+    scenario = _instantiate_scenario_for_replay(
+        scenario_id,
+        start_time,
+        seed,
+        scenario_kwargs=scenario_kwargs,
+        init_kwargs=init_kwargs,
+    )
+    effective_start_time = getattr(scenario, "start_time", start_time)
+    effective_seed = getattr(scenario, "seed", seed)
     apps_by_name = {a.name: a for a in scenario.apps or []}
     apps_by_class = {a.__class__.__name__: a for a in scenario.apps or []}
 
     tool_steps = _iter_fairy_tool_steps(bundle.get("workflow"))
     info = {
         "scenario_id": scenario_id,
-        "start_time": start_time,
-        "seed": seed,
+        "start_time": effective_start_time,
+        "seed": effective_seed,
+        "scenario_kwargs": scenario_kwargs,
+        "init_kwargs": init_kwargs,
         "n_completed_events": len(tool_steps),
         "n_replayed": 0,
+        "n_executed": 0,
+        "n_restored_observations": 0,
+        "n_restored_error_events": 0,
         "n_skipped": 0,
         "skipped_reasons": {},
         "exec_errors": 0,
@@ -549,66 +604,82 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         tool_name = str(step.get("tool_name") or "")
         try:
             target_app_name, fn_name = _tool_name_parts(tool_name)
-        except ValueError:
-            info["n_skipped"] += 1
-            info["skipped_reasons"]["bad_tool_name"] = (
-                info["skipped_reasons"].get("bad_tool_name", 0) + 1
-            )
-            continue
+        except ValueError as exc:
+            raise ReplayDivergenceError(
+                f"{step.get('name')} has an invalid tool name: {tool_name!r}"
+            ) from exc
+        recorded_error = step.get("op_type") == "TOOL_ERROR"
         target_app = apps_by_name.get(target_app_name) or apps_by_class.get(
             target_app_name
         )
         if target_app is None:
-            info["n_skipped"] += 1
-            info["skipped_reasons"][f"unknown_app:{target_app_name}"] = (
-                info["skipped_reasons"].get(f"unknown_app:{target_app_name}", 0) + 1
-            )
-            continue
+            if not recorded_error:
+                raise ReplayDivergenceError(
+                    f"{step.get('name')} {tool_name}: target app is missing"
+                )
+            target_app = _synthetic_replay_app(target_app_name)
 
         args = step.get("tool_args") or {}
         if not isinstance(args, dict):
-            args = {}
+            raise ReplayDivergenceError(
+                f"{step.get('name')} {tool_name}: tool_args must be an object"
+            )
         method = getattr(target_app, fn_name, None)
-        if not callable(method):
+        method_exists = callable(method)
+        if not method_exists and not recorded_error:
             raise ReplayDivergenceError(
                 f"{step.get('name')} {tool_name}: target method is missing"
             )
+        replay_method = method if method_exists else _named_replay_noop(fn_name)
         pre_time, post_time, exact_timing = _workflow_step_times(
-            step, method, last_event_time
+            step, replay_method, last_event_time
         )
         timing_key = "exact_timing_steps" if exact_timing else "legacy_timing_steps"
         info[timing_key] += 1
 
         exception_obj = None
         actual_return = None
-        try:
-            _align_replay_time(scenario, pre_time)
-            actual_return = method(**args)
-        except ReplayDivergenceError:
-            raise
-        except Exception as exc:
-            exception_obj = exc
-            info["exec_errors"] += 1
+        _align_replay_time(scenario, pre_time)
 
-        return_value = step.get("content")
         from fairy.types import OperationType
 
-        strict_return = (
-            tool_name == "SystemApp__advance_time"
-            or _operation_type_for_method(method) == OperationType.WRITE
+        operation_type = _operation_type_for_method(replay_method)
+        failed_before_execution = recorded_error and _tool_error_happened_before_execution(
+            step
         )
-        observation_mismatch = _assert_replay_result(
-            step,
-            actual_return,
-            exception_obj,
-            strict_return=strict_return,
+        should_execute = method_exists and not failed_before_execution and (
+            recorded_error
+            or operation_type == OperationType.WRITE
+            or tool_name == "SystemApp__advance_time"
         )
-        if observation_mismatch is not None:
-            info["observation_mismatches"] += 1
-            if len(info["observation_mismatch_examples"]) < 5:
-                info["observation_mismatch_examples"].append(
-                    f"{step.get('name')} {tool_name}: {observation_mismatch}"
+
+        if should_execute:
+            try:
+                actual_return = method(**args)
+                info["n_executed"] += 1
+            except ReplayDivergenceError:
+                raise
+            except Exception as exc:
+                exception_obj = exc
+                info["n_executed"] += 1
+                info["exec_errors"] += 1
+
+            _assert_replay_result(
+                step,
+                actual_return,
+                exception_obj,
+                strict_return=True,
+            )
+        elif recorded_error:
+            if not str(step.get("content") or "").strip():
+                raise ReplayDivergenceError(
+                    f"{step.get('name')} {tool_name}: TOOL_ERROR has no recorded error"
                 )
+            info["n_restored_error_events"] += 1
+        else:
+            info["n_restored_observations"] += 1
+
+        return_value = step.get("content")
         _align_replay_time(scenario, post_time)
         rebound_events.append(
             _build_completed_event_from_workflow_step(
@@ -618,7 +689,8 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
                 args,
                 post_time,
                 return_value,
-                exception_obj,
+                return_value if recorded_error else exception_obj,
+                method=replay_method,
             )
         )
         info["n_replayed"] += 1
@@ -866,6 +938,46 @@ def _result_cell_matches(cell_dir: Path, raw_cell_dir: str, results_path: Path) 
             continue
 
     return raw_path.name == target.name
+
+
+def _parse_json_object_cell(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, dict):
+        return dict(raw)
+    if raw in (None, ""):
+        return {}
+    try:
+        value = json.loads(str(raw))
+    except (TypeError, json.JSONDecodeError):
+        return {}
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _scenario_config_from_results_csv(cell_dir: Path) -> dict[str, dict[str, Any]]:
+    """Recover constructor/setup kwargs for run reports written before they were embedded."""
+    for parent in (cell_dir, *cell_dir.parents):
+        results_path = parent / "results.csv"
+        if not results_path.is_file():
+            continue
+        try:
+            with results_path.open(newline="", encoding="utf-8") as handle:
+                for result_row in csv.DictReader(handle):
+                    if not _result_cell_matches(
+                        cell_dir,
+                        result_row.get("cell_dir") or "",
+                        results_path,
+                    ):
+                        continue
+                    return {
+                        "scenario_kwargs": _parse_json_object_cell(
+                            result_row.get("scenario_kwargs")
+                        ),
+                        "init_kwargs": _parse_json_object_cell(
+                            result_row.get("init_kwargs")
+                        ),
+                    }
+        except OSError:
+            continue
+    return {"scenario_kwargs": {}, "init_kwargs": {}}
 
 
 def _detailed_briefing_from_results_csv(cell_dir: Path) -> str:
@@ -1286,6 +1398,9 @@ def replay_one_cell(
     row["l3_pool"] = _l3_pool_for_scenario(info["scenario_id"])
     row["level"] = _classify_level(info["scenario_id"])
     row["replayed_events"] = info["n_replayed"]
+    row["replay_executed_actions"] = info["n_executed"]
+    row["replay_restored_observations"] = info["n_restored_observations"]
+    row["replay_restored_error_events"] = info["n_restored_error_events"]
     row["replay_skipped"] = info["n_skipped"]
     row["replay_exec_errors"] = info["exec_errors"]
     row["replay_exact_timing_steps"] = info["exact_timing_steps"]
@@ -1712,6 +1827,9 @@ _SUMMARY_COLUMN_ORDER: list[str] = [
     # Artefact paths & replay bookkeeping
     "fos_path",
     "replayed_events",
+    "replay_executed_actions",
+    "replay_restored_observations",
+    "replay_restored_error_events",
     "replay_skipped",
     "replay_exec_errors",
     "replay_exact_timing_steps",
