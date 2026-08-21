@@ -50,6 +50,11 @@
   still contain the agent's in-memory `event_type` records.
 - Always inspect `run_report.a2a.expert_metrics` when comparing A2A on/off.
   Main-agent token usage can drop while expert-agent token usage rises sharply.
+- Legacy A2A run reports retain only each wrapper's last expert workflow. If a
+  wrapper was delegated more than once, the earlier inner tool calls are absent
+  even though the main workflow still contains every `expert_agent` call. Such
+  an artifact cannot support exact state replay; do not treat the wrapper
+  summary as if it were the missing tool sequence.
 - In the 2026-07-01 controller/A2A smoke audit,
   `farm_multi_specialist + scenario_farm_world_drone_survey + A2A on` failed
   because the main agent delegated a broad full-field survey to
@@ -153,18 +158,18 @@
   reconstructs `advance_time`'s pre-call timestamp as post time minus the
   requested duration, uses the previous post time for writes, and treats a
   read's timestamp as its observation time.
-- Replay physics is monotonic. A requested timestamp earlier than
-  `physics.last_physics_sim_time` is a divergence, not a clock adjustment.
-- Rebatch re-executes successful WRITE actions in recorded order, validates
-  their return/error semantics, then compares the complete final FARM inventory
-  and yield summary with `run_report.outcome`. A mismatch must fail the cell;
-  never emit FOS or yield metrics from a divergent state. A bundle without that
-  outcome checkpoint is also unverified and must fail rather than produce
-  metrics.
-- READ actions are observations, not commands to generate a new observation.
-  Rebatch restores their recorded return values into EventLog without calling
-  the app again. This avoids new sensor noise and avoids read-side device state
-  changes during replay while preserving exactly what the agent observed.
+- Replay timestamp alignment updates the apps' shared `TimeManager` only. It
+  must not call `FarmWorldApp.advance_physics_time()` before every tool: normal
+  FAIRY runs let the invoked tool decide when physics advances, and an eager
+  replay tick commits pending actions too early and changes harvest/yield.
+- Match ARE replay semantics: invoke every executable READ/WRITE tool in trace
+  order to rebuild app and physics state, catch tool exceptions, and construct
+  evaluation events with the return values recorded in the trace. A replayed
+  random READ may return a different sample because FARM app seeds use Python's
+  process-salted hash; that new sample must not replace what the agent observed.
+- A reconstructed event's `event_time` is its pre-call time. The post-call time
+  is used only to align the scenario before the next tool. Using post-call time
+  on the event shifts FARM-FOS timing even when final physics state is correct.
 - A recorded `TOOL_ERROR` for a missing app or method is a valid failed event
   with no state change. Restore it with its original app/method identity and
   error text; do not skip it and do not require the hallucinated method to exist.

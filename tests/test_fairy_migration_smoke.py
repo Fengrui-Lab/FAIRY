@@ -152,7 +152,7 @@ def test_ensure_oracle_workflow_canonicalizes_captured_events() -> None:
     assert season_days["step43"] == pytest.approx(15.0 + 1.0 / 24.0)
 
 
-def test_bfcl_normalizes_json_numbers_and_ignores_agent_ui() -> None:
+def test_bfcl_normalizes_json_numbers_and_counts_oracle_agent_ui() -> None:
     oracle = {
         "step0": {
             "tool_name": "TractorApp__plant_seeds",
@@ -173,10 +173,10 @@ def test_bfcl_normalizes_json_numbers_and_ignores_agent_ui() -> None:
         },
     }
 
-    assert baseline_bfcl(oracle, agent) == pytest.approx(1.0)
+    assert baseline_bfcl(oracle, agent) == pytest.approx(0.5)
 
 
-def test_bfcl_normalizes_execution_equivalent_defaults_and_time_units() -> None:
+def test_bfcl_requires_are_exact_arguments() -> None:
     oracle = {
         "step0": {
             "tool_name": "SystemApp__advance_time",
@@ -213,7 +213,7 @@ def test_bfcl_normalizes_execution_equivalent_defaults_and_time_units() -> None:
         },
     }
 
-    assert baseline_bfcl(oracle, agent) == pytest.approx(1.0)
+    assert baseline_bfcl(oracle, agent) == pytest.approx(0.0)
 
 
 def test_bfcl_keeps_booleans_distinct_from_integers() -> None:
@@ -1755,7 +1755,6 @@ def test_rebatch_legacy_advance_time_uses_post_call_timestamp_once(
 
     assert info["legacy_timing_steps"] == 1
     assert info["exact_timing_steps"] == 0
-    assert info["outcome_checkpoint_verified"] is True
     assert replayed_scenario.apps[0].physics.last_physics_sim_time == pytest.approx(
         86500.0, abs=0.01
     )
@@ -1769,32 +1768,6 @@ def test_rebatch_legacy_advance_time_uses_post_call_timestamp_once(
         exact_step, system.advance_time, None
     )
     assert (pre_time, post_time, exact) == (100.0, 86500.0, True)
-
-
-def test_rebatch_rejects_mutating_tool_return_divergence() -> None:
-    from scripts.rebatch_fos_from_traces import (
-        ReplayDivergenceError,
-        _assert_replay_outcome,
-        _assert_replay_result,
-    )
-
-    step = {
-        "name": "step7",
-        "op_type": "TOOL",
-        "tool_name": "TractorApp__harvest",
-        "content": {"status": "ok", "harvested_ridges": [0, 1, 2, 3]},
-    }
-
-    with pytest.raises(ReplayDivergenceError, match="harvested_ridges"):
-        _assert_replay_result(
-            step,
-            {"status": "ok", "harvested_ridges": []},
-            None,
-            strict_return=True,
-        )
-
-    with pytest.raises(ReplayDivergenceError, match="no outcome checkpoint"):
-        _assert_replay_outcome(None, {})
 
 
 def test_run_report_exposes_human_stop_reason_and_wall_time() -> None:

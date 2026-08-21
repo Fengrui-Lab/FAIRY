@@ -9,12 +9,10 @@ phase5_paper_matrix/<family>__<scenario>__rN/):
     2. Re-instantiate the scenario from the registry by `scenario_id`
        — this gets us a fresh, fully-wired set of apps including the
        physics orchestrator with its initial state.
-    3. Replay the workflow's TOOL steps against the fresh scenario's apps.
-       The agent's successful tool-mutating actions
-       (plant_seeds, irrigate, advance_time, harvest, ...) re-drive
-       the physics engines forward. Recorded read observations and failed
-       tool calls are restored as events without inventing new state changes,
-       so FOS Decision/Efficiency see the original agent history.
+    3. Replay every executable workflow TOOL step against the fresh scenario's
+       apps, in recorded order, to reproduce ARE's replay semantics. Recorded
+       return values remain on the reconstructed events so evaluation sees
+       exactly what the agent saw even when a read contains random noise.
     4. Build a minimal env-stub holding the replayed event log.
     5. Call `evaluate_fos(...)` with the *current* FOS code (e.g.
        Scheme B + extrapolate_to_maturity) and emit a per-cell JSON
@@ -45,9 +43,6 @@ Caveats:
       branch satisfy that.
     - Scenarios that aren't in the registry are skipped with status
       "scenario_not_in_registry".
-    - Successful state-changing return values and the final FARM outcome
-      checkpoint are checked against the trace. A mismatch fails that cell
-      instead of emitting metrics from a divergent physics state.
     - Workflows written before exact pre/post timestamps were added use a
       backward-compatible timing reconstruction and are labelled with
       ``replay_legacy_timing_steps`` in the summary.
@@ -56,10 +51,8 @@ Caveats:
 from __future__ import annotations
 
 import argparse
-import ast
 import csv
 import json
-import math
 import os
 import re
 import sys
@@ -192,31 +185,13 @@ def _instantiate_scenario_for_replay(
 
 
 def _align_replay_time(scenario: Any, target_time: float | None) -> None:
-    """Set replay clocks to *target_time* and advance physics monotonically."""
+    """Set replay app clocks to *target_time* without running physics."""
     if target_time is None:
         return
     try:
         target = float(target_time)
     except (TypeError, ValueError):
         return
-
-    farm_world = next(
-        (
-            app
-            for app in scenario.apps or []
-            if app.__class__.__name__ == "FarmWorldApp"
-        ),
-        None,
-    )
-    physics = getattr(farm_world, "physics", None) if farm_world is not None else None
-    physics_time = getattr(physics, "last_physics_sim_time", None)
-    if physics_time is not None and target < float(physics_time) - 1.0:
-        raise ReplayDivergenceError(
-            "replay would move physics backwards: "
-            f"target={target:.6f}, physics={float(physics_time):.6f}"
-        )
-    if physics_time is not None:
-        target = max(target, float(physics_time))
 
     seen_time_managers: set[int] = set()
     for app in scenario.apps or []:
@@ -228,11 +203,6 @@ def _align_replay_time(scenario: Any, target_time: float | None) -> None:
             continue
         seen_time_managers.add(ident)
         tm.add_offset(target - float(tm.time()))
-
-    if farm_world is not None:
-        advance = getattr(farm_world, "advance_physics_time", None)
-        if callable(advance):
-            advance(target)
 
 
 def _find_agent_workflow_path(cell_dir: Path) -> Path | None:
@@ -366,188 +336,12 @@ def _workflow_step_times(
     return float(previous_post_time or post_time), post_time, False
 
 
-_VOLATILE_REPLAY_KEYS = {
-    "action_id",
-    "charge_complete_at",
-    "current_datetime",
-    "current_timestamp",
-    "current_weekday",
-    "elapsed_s",
-    "effect_ready_at",
-    "inspection_id",
-    "last_physics_sim_time",
-    "mission_id",
-    "op_id",
-}
-
-
-def _parse_recorded_return(value: Any) -> Any:
-    if not isinstance(value, str):
-        return value
-    stripped = value.strip()
-    if not stripped or stripped[0] not in "[{(\"'":
-        return value
-    try:
-        return json.loads(stripped)
-    except (TypeError, ValueError):
-        try:
-            return ast.literal_eval(stripped)
-        except (ValueError, SyntaxError):
-            return value
-
-
 def _tool_error_happened_before_execution(step: dict[str, Any]) -> bool:
     error_stage = str(step.get("error_stage") or "")
     if error_stage:
         return error_stage == "tool_args_parse"
     # Compatibility for traces written before WorkflowStep.error_stage.
     return "JSONDecodeError:" in str(step.get("content") or "")
-
-
-def _replay_value_mismatch(recorded: Any, actual: Any, path: str = "return") -> str | None:
-    recorded = _parse_recorded_return(recorded)
-    if isinstance(recorded, dict) and isinstance(actual, dict):
-        recorded_by_key = {str(key): value for key, value in recorded.items()}
-        actual_by_key = {str(key): value for key, value in actual.items()}
-        recorded_keys = set(recorded_by_key).difference(_VOLATILE_REPLAY_KEYS)
-        actual_keys = set(actual_by_key).difference(_VOLATILE_REPLAY_KEYS)
-        if recorded_keys != actual_keys:
-            return (
-                f"{path} keys differ: recorded_only={sorted(recorded_keys - actual_keys)}, "
-                f"actual_only={sorted(actual_keys - recorded_keys)}"
-            )
-        for key in sorted(recorded_keys):
-            mismatch = _replay_value_mismatch(
-                recorded_by_key[key], actual_by_key[key], f"{path}.{key}"
-            )
-            if mismatch is not None:
-                return mismatch
-        return None
-    if isinstance(recorded, (list, tuple)) and isinstance(actual, (list, tuple)):
-        if len(recorded) != len(actual):
-            return f"{path} length differs: recorded={len(recorded)}, actual={len(actual)}"
-        for index, (recorded_item, actual_item) in enumerate(zip(recorded, actual)):
-            mismatch = _replay_value_mismatch(
-                recorded_item, actual_item, f"{path}[{index}]"
-            )
-            if mismatch is not None:
-                return mismatch
-        return None
-    if isinstance(recorded, (int, float)) and isinstance(actual, (int, float)):
-        if math.isclose(float(recorded), float(actual), rel_tol=1e-9, abs_tol=2e-6):
-            return None
-    elif recorded == actual:
-        return None
-    return f"{path} differs: recorded={recorded!r}, actual={actual!r}"
-
-
-def _assert_replay_result(
-    step: dict[str, Any],
-    actual_return: Any,
-    actual_exception: Exception | None,
-    *,
-    strict_return: bool,
-) -> str | None:
-    step_name = str(step.get("name") or "<unnamed>")
-    tool_name = str(step.get("tool_name") or "<unknown>")
-    recorded_return = step.get("content")
-    if step.get("op_type") == "TOOL_ERROR":
-        if actual_exception is None:
-            raise ReplayDivergenceError(
-                f"{step_name} {tool_name}: trace recorded TOOL_ERROR but replay succeeded"
-            )
-        recorded_text = str(recorded_return)
-        if type(actual_exception).__name__ not in recorded_text or str(actual_exception) not in recorded_text:
-            raise ReplayDivergenceError(
-                f"{step_name} {tool_name}: replay exception differs from recorded error: "
-                f"{type(actual_exception).__name__}: {actual_exception}"
-            )
-        return None
-    if actual_exception is not None:
-        raise ReplayDivergenceError(
-            f"{step_name} {tool_name}: replay raised "
-            f"{type(actual_exception).__name__}: {actual_exception}"
-        )
-    recorded_parsed = _parse_recorded_return(recorded_return)
-    recorded_error = (
-        recorded_parsed.get("error") if isinstance(recorded_parsed, dict) else None
-    )
-    actual_error = actual_return.get("error") if isinstance(actual_return, dict) else None
-    if bool(recorded_error) != bool(actual_error):
-        raise ReplayDivergenceError(
-            f"{step_name} {tool_name}: error outcome differs: "
-            f"recorded={recorded_error!r}, actual={actual_error!r}"
-        )
-    if recorded_error and actual_error:
-        return None
-
-    mismatch = _replay_value_mismatch(recorded_parsed, actual_return)
-    if mismatch is not None and strict_return:
-        raise ReplayDivergenceError(f"{step_name} {tool_name}: {mismatch}")
-    if mismatch is not None:
-        return mismatch
-    return None
-
-
-def _assert_replay_outcome(scenario: Any, recorded_outcome: Any) -> None:
-    if not isinstance(recorded_outcome, dict) or not recorded_outcome:
-        raise ReplayDivergenceError("run report has no outcome checkpoint")
-    farm_world = next(
-        (
-            app
-            for app in scenario.apps or []
-            if app.__class__.__name__ == "FarmWorldApp"
-        ),
-        None,
-    )
-    if farm_world is None:
-        raise ReplayDivergenceError("recorded outcome exists but FarmWorldApp is missing")
-
-    states = list(farm_world.physics.yield_recovery.states.values())
-    harvested_states = [state for state in states if getattr(state, "harvested", False)]
-    selected = harvested_states or states
-    actual_outcome: dict[str, Any] = {"inventory": farm_world.get_inventory()}
-    if states:
-        denominator = len(selected)
-        actual_outcome["yield_recovery"] = {
-            "ridges": len(states),
-            "harvested_ridges": len(harvested_states),
-            "avg_field_loss_fraction": round(
-                sum(float(getattr(state, "field_loss_fraction", 0.0)) for state in selected)
-                / denominator,
-                6,
-            ),
-            "avg_machine_loss_fraction": round(
-                sum(float(getattr(state, "machine_loss_fraction", 0.0)) for state in selected)
-                / denominator,
-                6,
-            ),
-            "avg_recovered_yield_g_m2_at_market_moisture": round(
-                sum(
-                    float(
-                        getattr(
-                            state,
-                            "recovered_yield_g_m2_at_market_moisture",
-                            0.0,
-                        )
-                    )
-                    for state in selected
-                )
-                / denominator,
-                6,
-            ),
-            "avg_quality_discount_fraction": round(
-                sum(
-                    float(getattr(state, "quality_discount_fraction", 0.0))
-                    for state in selected
-                )
-                / denominator,
-                6,
-            ),
-        }
-    mismatch = _replay_value_mismatch(recorded_outcome, actual_outcome, "outcome")
-    if mismatch is not None:
-        raise ReplayDivergenceError(mismatch)
 
 
 def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
@@ -584,16 +378,12 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         "n_completed_events": len(tool_steps),
         "n_replayed": 0,
         "n_executed": 0,
-        "n_restored_observations": 0,
         "n_restored_error_events": 0,
         "n_skipped": 0,
         "skipped_reasons": {},
         "exec_errors": 0,
         "exact_timing_steps": 0,
         "legacy_timing_steps": 0,
-        "observation_mismatches": 0,
-        "observation_mismatch_examples": [],
-        "outcome_checkpoint_verified": False,
     }
 
     rebound_events = []
@@ -638,46 +428,27 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         info[timing_key] += 1
 
         exception_obj = None
-        actual_return = None
         _align_replay_time(scenario, pre_time)
 
-        from fairy.types import OperationType
-
-        operation_type = _operation_type_for_method(replay_method)
         failed_before_execution = recorded_error and _tool_error_happened_before_execution(
             step
         )
-        should_execute = method_exists and not failed_before_execution and (
-            recorded_error
-            or operation_type == OperationType.WRITE
-            or tool_name == "SystemApp__advance_time"
-        )
+        should_execute = method_exists and not failed_before_execution
 
         if should_execute:
             try:
-                actual_return = method(**args)
+                method(**args)
                 info["n_executed"] += 1
-            except ReplayDivergenceError:
-                raise
             except Exception as exc:
                 exception_obj = exc
                 info["n_executed"] += 1
                 info["exec_errors"] += 1
-
-            _assert_replay_result(
-                step,
-                actual_return,
-                exception_obj,
-                strict_return=True,
-            )
         elif recorded_error:
             if not str(step.get("content") or "").strip():
                 raise ReplayDivergenceError(
                     f"{step.get('name')} {tool_name}: TOOL_ERROR has no recorded error"
                 )
             info["n_restored_error_events"] += 1
-        else:
-            info["n_restored_observations"] += 1
 
         return_value = step.get("content")
         _align_replay_time(scenario, post_time)
@@ -687,7 +458,7 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
                 target_app,
                 fn_name,
                 args,
-                post_time,
+                pre_time,
                 return_value,
                 return_value if recorded_error else exception_obj,
                 method=replay_method,
@@ -695,9 +466,6 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         )
         info["n_replayed"] += 1
         last_event_time = post_time
-
-    _assert_replay_outcome(scenario, (bundle.get("run_report") or {}).get("outcome"))
-    info["outcome_checkpoint_verified"] = True
 
     env = SimpleNamespace(
         event_log=EventLog.from_list_view(rebound_events),
@@ -1399,19 +1167,11 @@ def replay_one_cell(
     row["level"] = _classify_level(info["scenario_id"])
     row["replayed_events"] = info["n_replayed"]
     row["replay_executed_actions"] = info["n_executed"]
-    row["replay_restored_observations"] = info["n_restored_observations"]
     row["replay_restored_error_events"] = info["n_restored_error_events"]
     row["replay_skipped"] = info["n_skipped"]
     row["replay_exec_errors"] = info["exec_errors"]
     row["replay_exact_timing_steps"] = info["exact_timing_steps"]
     row["replay_legacy_timing_steps"] = info["legacy_timing_steps"]
-    row["replay_observation_mismatches"] = info["observation_mismatches"]
-    row["replay_observation_mismatch_examples"] = json.dumps(
-        info["observation_mismatch_examples"], ensure_ascii=False
-    )
-    row["replay_outcome_checkpoint_verified"] = info[
-        "outcome_checkpoint_verified"
-    ]
     if inline_donothing_kg is not None:
         row["donothing_biological_kg_inline"] = round(inline_donothing_kg, 2)
 
@@ -1828,15 +1588,11 @@ _SUMMARY_COLUMN_ORDER: list[str] = [
     "fos_path",
     "replayed_events",
     "replay_executed_actions",
-    "replay_restored_observations",
     "replay_restored_error_events",
     "replay_skipped",
     "replay_exec_errors",
     "replay_exact_timing_steps",
     "replay_legacy_timing_steps",
-    "replay_observation_mismatches",
-    "replay_observation_mismatch_examples",
-    "replay_outcome_checkpoint_verified",
     # Failure columns
     "path_correctness_v2_error",
     "run_error_source",

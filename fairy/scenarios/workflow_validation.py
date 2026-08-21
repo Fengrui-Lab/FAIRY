@@ -46,35 +46,6 @@ def _make_key(tool_name: str, tool_args: dict[str, Any] | None) -> tuple[Any, ..
     return (tool_name, normalized)
 
 
-def _make_bfcl_key(
-    tool_name: str, tool_args: dict[str, Any] | None
-) -> tuple[Any, ...]:
-    """Build a BFCL key from execution-equivalent JSON arguments."""
-    args = dict(tool_args or {})
-    if tool_name == "SystemApp__advance_time":
-        components = [
-            args.get("seconds", 0),
-            args.get("minutes", 0),
-            args.get("hours", 0),
-            args.get("days", 0),
-        ]
-        if not all(
-            isinstance(value, (int, float)) and not isinstance(value, bool)
-            for value in components
-        ):
-            return _make_key(tool_name, args)
-        elapsed_seconds = (
-            components[0]
-            + components[1] * 60
-            + components[2] * 3600
-            + components[3] * 86400
-        )
-        args = {"elapsed_seconds": elapsed_seconds}
-    elif tool_name == "TractorApp__replant_seeds":
-        args.setdefault("full_replant", False)
-    return _make_key(tool_name, args)
-
-
 def _extract_tool_steps(
     workflow: dict[str, dict[str, Any]] | list[dict[str, Any]],
 ) -> list[dict[str, Any]]:

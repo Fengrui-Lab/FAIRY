@@ -264,11 +264,19 @@ Use `rebatch_fos/summary_v2.csv` as the metric table. Important columns are:
 | Tool/path baselines | `path_correctness(%)`, `ktc_score(%)`, `core_path_correctness(%)`, `ktc(%)`, `bfcl_success(%)` |
 | FARM metrics | `farm_fos(%)`, `farm_fos_v2_total(%)`, its path/parameter/terminal components, and diagnosis columns |
 | Work/cost | `agent_tool_calls`, `llm_calls_with_usage`, average input/output/cached tokens per call, total tokens per scenario, average LLM seconds per call, runtime per scenario |
-| Replay integrity | `replay_exec_errors`, `replay_observation_mismatches`, `replay_outcome_checkpoint_verified` |
+| Replay execution | `replayed_events`, `replay_executed_actions`, `replay_restored_error_events`, `replay_exec_errors`, exact/legacy timing step counts |
 
 `yield_loss(%)` is biological loss relative to the matching oracle baseline.
 Recovered-yield loss also reflects harvest/post-harvest execution. Do not average
 rows whose `status` is not `ok`; first inspect their replay and run error columns.
+Replay follows ARE semantics: it executes every executable recorded tool in
+order to rebuild scenario state, while evaluation events retain the return
+values recorded in the original trace. Random sensor reads are therefore not
+required to reproduce the same random sample in a new process.
+Legacy A2A runs are an exception when their artifacts retain only the last
+expert workflow per wrapped app: the omitted earlier expert tool calls cannot
+be reconstructed from the main `expert_agent` summary call. Do not report an
+exact replay for such a bundle.
 Some full-season scenarios define no generic decision gates; their
 `decision_breakdown` is empty and `decision(%)` is therefore zero. For those
 scenarios, report the FARM-specific scores and their diagnostic columns instead

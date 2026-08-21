@@ -36,7 +36,7 @@ from fairy.scenarios.fos.calibration import (
     category_for_tool,
     temporal_kernel,
 )
-from fairy.scenarios.workflow_validation import _make_bfcl_key
+from fairy.scenarios.workflow_validation import _make_key
 
 NUM_RIDGES = 64
 _SECONDS_PER_DAY = 86400.0
@@ -975,13 +975,9 @@ def baseline_bfcl(
         ks = set()
         for step in wf.values():
             tool = step.get("tool_name")
-            if (
-                not tool
-                or step.get("op_type") == "USER"
-                or tool.startswith("AgentUserInterface__")
-            ):
+            if not tool or step.get("op_type") == "USER":
                 continue
-            ks.add(_make_bfcl_key(tool, step.get("tool_args")))
+            ks.add(_make_key(tool, step.get("tool_args")))
         return ks
 
     oracle_keys = keyset(oracle_workflow)

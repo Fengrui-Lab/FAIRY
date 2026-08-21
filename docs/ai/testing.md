@@ -36,11 +36,12 @@
   These should emit `deepseek/deepseek-chat` runner commands with `--scenario-kwargs {"detailed_briefing": ...}`.
 - Rebatch FOS smoke over an ARE trace:
   `python scripts/rebatch_fos_from_traces.py --root /Users/quao/Desktop/Second-year/CWSN/FarmARE_physics/validation_runs/deepseek_json_l3_remaining70_l2_textsim_grouped_differ_20260606_160418/l2_textsim_grouped_differ --out-root validation_runs/rebatch_fos_smoke --limit 1 --workers 1 --extrapolate --oracle-baselines validation_runs/oracle_baselines_formal90_current --summary-name smoke_summary.csv`.
-- Rebatch timing/divergence regression tests:
-  `uv run --with pytest pytest -q tests/test_fairy_migration_smoke.py -k 'rebatch_legacy_advance_time_uses_post_call_timestamp_once or rebatch_rejects_mutating_tool_return_divergence'`.
-  A valid replay must report zero failed cells; legacy traces may report
-  `replay_observation_mismatches` because sensor RNG uses process-salted seeds,
-  but mutating returns and `run_report.outcome` must still match.
+- Rebatch replay-contract regression tests:
+  `PYTHONPATH=. uv run pytest -q tests/test_replay_contract.py tests/test_fairy_migration_smoke.py -k 'replay or rebatch or bfcl'`.
+  Replay must execute every executable READ/WRITE tool in recorded order, use
+  exact pre/post timestamps when available, and retain the trace's recorded
+  return value in each evaluation event. Do not compare random sensor output
+  across processes; FARM app seeds currently use Python's process-salted hash.
 - Controller smoke includes `farm_baseline_react` and `farm_rewoo_modular` through `tests/test_fairy_migration_smoke.py`.
 - Live progress regression checks:
   `uv run --with pytest pytest -q tests/test_fairy_migration_smoke.py -k 'runtime_event_sink_receives_live_events or iclr_runner_summarizes_live_progress'`.

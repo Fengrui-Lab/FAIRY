@@ -115,6 +115,15 @@ class ReplayApp(App):
         return {"amount": amount}
 
 
+class ReplayFarmWorldApp(App):
+    def __init__(self) -> None:
+        super().__init__(name="FarmWorldApp")
+        self.advance_calls = 0
+
+    def advance_physics_time(self, _target: float | None = None) -> None:
+        self.advance_calls += 1
+
+
 def _bundle(steps: list[dict]) -> dict:
     return {
         "scenario_id": "test_scenario",
@@ -152,13 +161,12 @@ def _step(
     return step
 
 
-def test_replay_executes_writes_and_restores_reads_and_missing_tool_errors(
+def test_replay_executes_reads_and_writes_and_restores_pre_execution_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     app = ReplayApp()
     scenario = SimpleNamespace(apps=[app], start_time=1000.0)
     monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
-    monkeypatch.setattr(rebatch, "_assert_replay_outcome", lambda *a, **k: None)
     steps = [
         _step("step0", "ReplayApp__observe", content={"value": 1}),
         _step(
@@ -177,10 +185,9 @@ def test_replay_executes_writes_and_restores_reads_and_missing_tool_errors(
 
     _, env, info = rebatch._replay_fairy_run_bundle(_bundle(steps))
 
-    assert app.read_calls == 0
+    assert app.read_calls == 1
     assert app.write_calls == 1
-    assert info["n_executed"] == 1
-    assert info["n_restored_observations"] == 1
+    assert info["n_executed"] == 2
     assert info["n_restored_error_events"] == 1
     assert info["n_skipped"] == 0
     events = env.event_log.list_view()
@@ -199,7 +206,6 @@ def test_replay_rejects_missing_method_on_recorded_success(
 ) -> None:
     scenario = SimpleNamespace(apps=[ReplayApp()], start_time=1000.0)
     monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
-    monkeypatch.setattr(rebatch, "_assert_replay_outcome", lambda *a, **k: None)
 
     with pytest.raises(rebatch.ReplayDivergenceError, match="target method is missing"):
         rebatch._replay_fairy_run_bundle(
@@ -213,7 +219,6 @@ def test_replay_does_not_execute_tool_after_argument_parse_error(
     app = ReplayApp()
     scenario = SimpleNamespace(apps=[app], start_time=1000.0)
     monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
-    monkeypatch.setattr(rebatch, "_assert_replay_outcome", lambda *a, **k: None)
     parse_error = _step(
         "step0",
         "ReplayApp__mutate",
@@ -228,6 +233,35 @@ def test_replay_does_not_execute_tool_after_argument_parse_error(
     assert info["n_executed"] == 0
     assert info["n_restored_error_events"] == 1
     assert env.event_log.list_view()[0].failed()
+
+
+def test_replay_uses_recorded_return_and_pre_call_event_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = ReplayApp()
+    scenario = SimpleNamespace(apps=[app], start_time=1000.0)
+    monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
+    step = _step("step0", "ReplayApp__observe", content={"value": 1})
+    step.update(time_before=1000.0, time_after=2000.0, time=2000.0)
+
+    _, env, info = rebatch._replay_fairy_run_bundle(_bundle([step]))
+
+    event = env.event_log.list_view()[0]
+    assert app.read_calls == 1
+    assert info["n_executed"] == 1
+    assert event.metadata.return_value == {"value": 1}
+    assert event.event_time == 1000.0
+
+
+def test_replay_time_alignment_does_not_tick_physics() -> None:
+    farm_world = ReplayFarmWorldApp()
+    scenario = SimpleNamespace(apps=[farm_world])
+    before = farm_world.time_manager.time()
+
+    rebatch._align_replay_time(scenario, before + 3600.0)
+
+    assert farm_world.time_manager.time() == pytest.approx(before + 3600.0, abs=0.01)
+    assert farm_world.advance_calls == 0
 
 
 def test_run_report_persists_replay_initialization_metadata() -> None:
