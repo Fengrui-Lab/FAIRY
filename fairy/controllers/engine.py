@@ -5,7 +5,7 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from threading import Thread
-from typing import Any
+from typing import Any, Callable
 
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.apps.system import SystemApp
@@ -146,6 +146,8 @@ class Engine:
         *,
         max_tool_calls: int | None = None,
         timeout_seconds: float | None = None,
+        history_window: int | None = None,
+        history_window_sink: Callable[[dict[str, Any]], None] | None = None,
         setup_scenario: bool = True,
     ):
         if setup_scenario:
@@ -158,6 +160,8 @@ class Engine:
             input=agent_task,
             max_tool_calls=max_tool_calls,
             timeout_seconds=timeout_seconds,
+            history_window=history_window,
+            history_window_sink=history_window_sink,
         )
         return self.agent.workflow
 

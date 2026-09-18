@@ -80,6 +80,12 @@ def _append_live_progress(path: Path, event: dict[str, Any]) -> None:
         handle.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
 
 
+def _append_history_window_audit(path: Path, record: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+
+
 def _tool_replay_log_rows(run_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for i, entry in enumerate(run_log):
@@ -149,6 +155,15 @@ def main() -> None:
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
     parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
+    parser.add_argument(
+        "--history-window",
+        type=int,
+        default=None,
+        help=(
+            "Number of completed LLM/tool turns retained in each model prompt; "
+            "omit to retain all history, or use 0 to retain no completed turns"
+        ),
+    )
     parser.add_argument("--timeout-seconds", type=float, default=1200.0, help="Wall-time limit for --agent")
     parser.add_argument("--a2a", type=_str_to_bool, default=False, help="Enable Agent2Agent app wrappers")
     parser.add_argument("--a2a-app-prop", type=float, default=0.5, help="Fraction of eligible apps to wrap for A2A")
@@ -169,6 +184,8 @@ def main() -> None:
     parser.add_argument("--list", action="store_true", help="List scenarios")
     parser.add_argument("--list-controllers", action="store_true", help="List controller families")
     args = parser.parse_args()
+    if args.history_window is not None and args.history_window < 0:
+        parser.error("--history-window must be greater than or equal to 0")
     if args.list_controllers:
         for controller_id in AgentBuilder().list_agents():
             print(controller_id)
@@ -336,6 +353,18 @@ def main() -> None:
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
         )
+        history_window_sink = None
+        if args.history_window is not None:
+            history_window_log_path = (
+                output_dir
+                / "history_window"
+                / f"{args.scenario}.history_window.jsonl"
+            )
+            history_window_log_path.parent.mkdir(parents=True, exist_ok=True)
+            history_window_log_path.write_text("", encoding="utf-8")
+            history_window_sink = lambda record: _append_history_window_audit(
+                history_window_log_path, record
+            )
         engine = Engine(agent=agent, scenario=scenario)
         workflow = None
         final_message = None
@@ -345,6 +374,8 @@ def main() -> None:
             workflow = engine.run_scenario_agent(
                 max_tool_calls=args.max_tool_calls,
                 timeout_seconds=args.timeout_seconds,
+                history_window=args.history_window,
+                history_window_sink=history_window_sink,
                 setup_scenario=False,
             )
             final_message = agent.messages.messages[-1] if agent.messages.messages else None

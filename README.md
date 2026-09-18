@@ -622,6 +622,7 @@ Parameters:
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
 | `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
 | `--max-tool-calls` | int | `300` | Maximum main-agent tool calls. If reached, `run_report.status=stopped` and `stopped_reason=max_tool_calls`. |
+| `--history-window` | non-negative int | all history | Retain this many completed LLM/tool turns in each main-Agent model prompt. Parallel calls stay grouped in one turn. This does not change A2A expert history. Window audit data is written only to `history_window/<scenario>.history_window.jsonl`; existing report and CSV schemas are unchanged. |
 | `--timeout-seconds` | float | `1200.0` | Maximum main-agent wall time. If reached, `stopped_reason=timeout`. |
 | `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Put `detailed_briefing` / detail-context mode here. |
 | `--init-kwargs` | JSON object string | `{}` | Arguments passed to `scenario.setup(**init_kwargs)`. Most FARM scenarios do not need this; keep `{}` unless a scenario's `setup()` explicitly requires extra initialization arguments. |
@@ -1221,6 +1222,7 @@ Parameters:
 | `--cell-timeout-grace-s` | int | `60`                             | After timeout, wait this long after SIGINT before terminate/kill. |
 | `--progress-interval-s` | float | `60`                              | Print live LLM/tool/token/last-event progress for each running cell. Set `0` to disable. |
 | `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
+| `--history-window` | non-negative int | all history | Passed to `fairy-run` for the main Agent only; A2A expert history is unchanged. Retains complete LLM/tool turns and leaves parallel tool calling at its existing default. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; forwarded to the provider and recorded in each run report. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
@@ -1230,6 +1232,8 @@ Parameters:
 | `--a2a`, `--a2a-*` | same as FAIRY CLI | off                              | Batch A2A settings. |
 
 For named pools such as `selected_l2_l1_20_30`, use the manifest-expansion snippet in the Scenario Pools section and pass the resulting `"$SCENARIOS"` string here.
+
+For legacy runs, treat a missing history-window sidecar as `all` only when the cell completed successfully and its expected artifacts are complete. A failed or incomplete cell must not be classified from sidecar absence alone.
 
 Outputs:
 

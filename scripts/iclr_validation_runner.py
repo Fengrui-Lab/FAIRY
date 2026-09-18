@@ -83,9 +83,10 @@ RUNNER_DEFAULTS = {
     "cell_timeout_grace_s": 60,
     "progress_interval_s": 60.0,
     "agent_max_iterations": 200,
+    "history_window": None,
     "max_output_tokens": 2048,
     "wait_for_user_input_timeout": 5.0,
-    "parallel_tool_calls": True,
+    "parallel_tool_calls": False,
     "system_prompt_mode": "fairy",
     "scenario_kwargs": None,
     "init_kwargs": None,
@@ -118,6 +119,7 @@ def _build_cell_command(
     scenario_creation_kwargs: str | None = None,
     scenario_initialization_kwargs: str | None = None,
     agent_max_iterations: int = 200,
+    history_window: int | None = None,
     agent_timeout_seconds: int | float | None = None,
     max_output_tokens: int = 2048,
     wait_for_user_input_timeout: float = 5.0,
@@ -157,6 +159,8 @@ def _build_cell_command(
         "--system-prompt-mode",
         system_prompt_mode,
     ]
+    if history_window is not None:
+        cmd.extend(["--history-window", str(history_window)])
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
     if a2a_enabled:
@@ -468,6 +472,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
         "cell_timeout_s",
         "cell_timeout_grace_s",
         "agent_max_iterations",
+        "history_window",
         "max_output_tokens",
     ):
         if field_name in config and config[field_name] is not None:
@@ -712,6 +717,15 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         default=defaults.get("agent_max_iterations"),
     )
     parser.add_argument(
+        "--history-window",
+        type=int,
+        default=defaults.get("history_window"),
+        help=(
+            "Number of completed LLM/tool turns retained in each model prompt; "
+            "omit to retain all history, or use 0 to retain no completed turns."
+        ),
+    )
+    parser.add_argument(
         "--max-output-tokens",
         "--max-tokens",
         dest="max_output_tokens",
@@ -805,6 +819,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         )
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
+    if args.history_window is not None and args.history_window < 0:
+        parser.error("--history-window must be greater than or equal to 0")
     if args.system_prompt_mode not in {"fairy", "are"}:
         parser.error("--system-prompt-mode must be one of: fairy, are")
     return args
@@ -823,6 +839,7 @@ def run_cell(
     detail_enabled: bool | None,
     model_family: str,
     agent_max_iterations: int,
+    history_window: int | None,
     max_output_tokens: int,
     wait_for_user_input_timeout: float,
     parallel_tool_calls: bool,
@@ -887,6 +904,7 @@ def run_cell(
         scenario_creation_kwargs=scenario_creation_kwargs,
         scenario_initialization_kwargs=scenario_initialization_kwargs,
         agent_max_iterations=agent_max_iterations,
+        history_window=history_window,
         agent_timeout_seconds=timeout_s,
         max_output_tokens=max_output_tokens,
         wait_for_user_input_timeout=wait_for_user_input_timeout,
@@ -1104,6 +1122,7 @@ def main() -> int:
                 detail_enabled,
                 model_family,
                 args.agent_max_iterations,
+                args.history_window,
                 args.max_output_tokens,
                 args.wait_for_user_input_timeout,
                 bool(args.parallel_tool_calls),

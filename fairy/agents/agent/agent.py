@@ -7,11 +7,12 @@ import os
 from pathlib import Path
 from collections import deque, OrderedDict
 from datetime import datetime, timezone, timedelta
-from typing import Any
+from typing import Any, Callable
 
 CST = timezone(timedelta(hours=8))
 
 from fairy.agents.agent.base_agent import BaseAgent
+from fairy.agents.agent.history_window import TurnSpan, select_history_window
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.scenarios.workflow import WorkflowStep
 
@@ -349,10 +350,15 @@ class Agent(BaseAgent):
         *,
         max_tool_calls: int | None = None,
         timeout_seconds: float | None = None,
+        history_window: int | None = None,
+        history_window_sink: Callable[[dict[str, Any]], None] | None = None,
     ):
         """
         Add the user input to the conversation history, then call chat_completion()
         """
+        if history_window is not None and history_window < 0:
+            raise ValueError("history_window must be greater than or equal to 0")
+
         self.run_started_at_wall = time.perf_counter()
         self.run_wall_timeout_seconds = timeout_seconds
         self.stop_reason = None
@@ -363,13 +369,31 @@ class Agent(BaseAgent):
             max_tool_calls=max_tool_calls,
             timeout_seconds=timeout_seconds,
         )
+        run_message_start = len(self.messages.messages)
+        initial_system_indices: list[int] = []
+        for index, existing_message in enumerate(
+            self.messages.messages[:run_message_start]
+        ):
+            role = (
+                existing_message.get("role")
+                if isinstance(existing_message, dict)
+                else getattr(existing_message, "role", None)
+            )
+            if role != "system":
+                break
+            initial_system_indices.append(index)
+
         self.messages.user_input(input, time=env_ts)
+        task_message_index = len(self.messages.messages) - 1
+        pinned_message_indices = [*initial_system_indices, task_message_index]
+        completed_turn_spans: list[TurnSpan] = []
         self.workflow.add_node(WorkflowStep(op_type="USER", content=input, time=env_ts))
 
         try:
             while True:
 
                 self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
+                current_turn_start = len(self.messages.messages)
                 turn_context = self.before_llm_turn(str(input))
                 if turn_context.strip():
                     self.messages.system_notify(turn_context, time=self.env_time_str())
@@ -378,8 +402,26 @@ class Agent(BaseAgent):
                         status="ok",
                         content_preview=turn_context[:1000],
                     )
+                prompt_messages = self.messages()
+                if history_window is not None:
+                    selection = select_history_window(
+                        prompt_messages,
+                        history_window=history_window,
+                        pinned_message_indices=pinned_message_indices,
+                        completed_turn_spans=completed_turn_spans,
+                        current_turn_start=current_turn_start,
+                    )
+                    prompt_messages = selection.messages
+                    if history_window_sink is not None:
+                        audit_record = {
+                            **selection.audit_record,
+                            "wall_timestamp": datetime.now(tz=CST).isoformat(),
+                            "sim_time": self.env_time_str(),
+                            "llm_turn_index": self.llm_turn_count,
+                        }
+                        history_window_sink(audit_record)
                 message = self._chat_completion_with_retries(
-                    self.messages(), tools=self.tool_schemas
+                    prompt_messages, tools=self.tool_schemas
                 )
                 self.llm_turn_count += 1
                 self.after_llm_message(message)
@@ -396,6 +438,14 @@ class Agent(BaseAgent):
                         self.after_agent_error(exc.original)
                         continue
                     self.after_tool_response(tool_call, tool_response)
+                completed_turn_spans.append(
+                    TurnSpan(
+                        turn_index=len(completed_turn_spans),
+                        start=current_turn_start,
+                        end=len(self.messages.messages),
+                        tool_call_count=len(message.tool_calls),
+                    )
+                )
             wall_elapsed = round(time.perf_counter() - self.run_started_at_wall, 6)
             self.after_agent_run()
             self.record_event(

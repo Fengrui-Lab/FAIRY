@@ -622,6 +622,7 @@ fairy-run \
 | `--endpoint` | URL | provider 默认 | 覆盖 OpenAI-compatible base URL。会传成 client 的 `base_url`。 |
 | `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
 | `--max-tool-calls` | int | `300` | 主 agent 最多允许多少次工具调用。到达后 `run_report.status=stopped`，`stopped_reason=max_tool_calls`。 |
+| `--history-window` | 非负整数 | 全部历史 | 在主 Agent 的每次模型调用中保留最近指定数量的已完成 LLM/tool turns；并行工具调用保持在同一个 turn 中。不影响 A2A expert history。窗口审计数据仅写入 `history_window/<scenario>.history_window.jsonl`；已有报告和 CSV schema 保持不变。 |
 | `--timeout-seconds` | float | `1200.0` | 主 agent 最大 wall time。到达后 `stopped_reason=timeout`。 |
 | `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。`detailed_briefing` / detail-context 模式就放这里。 |
 | `--init-kwargs` | JSON object string | `{}` | 调用 `scenario.setup(**init_kwargs)` 时传入的参数。普通 FARM 场景一般不用；只有某个场景的 `setup()` 明确需要额外初始化参数时才用。 |
@@ -1221,6 +1222,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--cell-timeout-grace-s` | int | `60`                             | 超时后先 SIGINT 等待多久，再 terminate/kill。 |
 | `--progress-interval-s` | float | `60`                              | 每隔指定秒数输出运行中 cell 的 LLM/tool/token/最近事件进度；设为 `0` 关闭。 |
 | `--agent-max-iterations` | int | `200`                            | 传给 `fairy-run --max-tool-calls`。 |
+| `--history-window` | 非负整数 | 全部历史 | 仅传给 `fairy-run` 的主 Agent；A2A expert history 保持不变。保留完整 LLM/tool turns，并保持并行工具调用的现有默认值。 |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用的最大 completion token 数；传给 provider，并记录在每个 run report 中。 |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | 传给 `fairy-run`，并记录在 `run_report.json` 和 `results.csv`。`are` 迁移与 FAIRY 兼容的旧 ARE 行为规则，但不会恢复相冲突的文本 JSON `Action:`/`<end_action>` 协议或内嵌工具目录。 |
@@ -1230,6 +1232,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--a2a`, `--a2a-*` | 同 FAIRY CLI | off                              | 批量 A2A 配置。 |
 
 跑 `selected_l2_l1_20_30` 这类场景池时，先按上面“场景池”一节的命令生成 `SCENARIOS`，这里传 `--scenarios "$SCENARIOS"`。
+
+对于旧实验，只有在 cell 成功完成且预期产物完整时，才能把缺少 history-window sidecar 解释为 `all`；失败或产物不完整的 cell 不能仅凭 sidecar 缺失来分类。
 
 输出：
 

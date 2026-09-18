@@ -16,6 +16,7 @@ import pytest
 import fairy
 from fairy.agents.agent.agent import AgentRunLimitExceeded
 from fairy.agents.agent.base_agent import CST
+from fairy.agents.agent.history_window import TurnSpan, select_history_window
 from fairy.agents.llm.base_llm import BaseLLM
 from fairy.apps.farm_world import FarmWorldApp, WeatherApp
 from fairy.apps.farm_world.physics_orchestrator import _build_weather_inputs
@@ -450,8 +451,10 @@ class _ScriptedLLM:
 
     def __init__(self, messages: list[_Message]) -> None:
         self.messages = list(messages)
+        self.inputs: list[list] = []
 
     def chat_completion(self, messages, tools=None):
+        self.inputs.append(list(messages))
         if not self.messages:
             return _Response(_Message(content="done", tool_calls=None))
         return _Response(self.messages.pop(0))
@@ -772,6 +775,7 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
         a2a_provider="qwen",
         a2a_endpoint="http://localhost:8000/v1",
         parallel_tool_calls=False,
+        history_window=30,
         max_output_tokens=4096,
         system_prompt_mode="are",
     )
@@ -785,8 +789,32 @@ def test_iclr_runner_passes_a2a_cli_flags() -> None:
     assert "--a2a-provider qwen" in joined
     assert "--a2a-endpoint http://localhost:8000/v1" in joined
     assert "--parallel-tool-calls false" in joined
+    assert "--history-window 30" in joined
     assert "--max-output-tokens 4096" in joined
     assert "--system-prompt-mode are" in joined
+
+
+def test_iclr_runner_accepts_history_window_config_with_parallel_calls(
+    tmp_path: Path,
+) -> None:
+    from scripts.iclr_validation_runner import _load_runner_config
+
+    config_path = tmp_path / "history-window.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "iclr_validation_runner": {
+                    "history_window": 30,
+                    "parallel_tool_calls": True,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    config = _load_runner_config(config_path)
+
+    assert config == {"history_window": 30, "parallel_tool_calls": True}
 
 
 def test_rewoo_strategy_builds_plan_context() -> None:
@@ -1153,6 +1181,154 @@ def test_agent_runtime_events_capture_llm_tool_metrics() -> None:
     assert final_end["assistant_content_is_empty"] is False
     assert final_end["rationale"] == "done"
     assert final_end["rationale_source"] == "assistant_content"
+
+
+def test_history_window_selector_keeps_complete_turns_and_current_context() -> None:
+    messages = [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "task"},
+        {"role": "system", "content": "turn-0-context"},
+        {"role": "assistant", "tool_calls": ["a", "b"]},
+        {"role": "tool", "tool_call_id": "a", "content": "a-result"},
+        {"role": "tool", "tool_call_id": "b", "content": "b-result"},
+        {"role": "assistant", "tool_calls": ["c"]},
+        {"role": "tool", "tool_call_id": "c", "content": "c-result"},
+        {"role": "system", "content": "current-context"},
+    ]
+    spans = [
+        TurnSpan(turn_index=0, start=2, end=6, tool_call_count=2),
+        TurnSpan(turn_index=1, start=6, end=8, tool_call_count=1),
+    ]
+
+    selection = select_history_window(
+        messages,
+        history_window=1,
+        pinned_message_indices=[0, 1],
+        completed_turn_spans=spans,
+        current_turn_start=8,
+    )
+
+    assert selection.messages == [messages[i] for i in (0, 1, 6, 7, 8)]
+    assert selection.audit_record["retained_turn_count"] == 1
+    assert selection.audit_record["dropped_turn_count"] == 1
+    assert selection.audit_record["retained_turn_spans"] == [
+        {"turn_index": 1, "start": 6, "end": 8, "tool_call_count": 1}
+    ]
+
+    zero_selection = select_history_window(
+        messages,
+        history_window=0,
+        pinned_message_indices=[0, 1],
+        completed_turn_spans=spans,
+        current_turn_start=8,
+    )
+    assert zero_selection.messages == [messages[i] for i in (0, 1, 8)]
+    assert zero_selection.audit_record["retained_turn_count"] == 0
+    assert zero_selection.audit_record["dropped_turn_count"] == 2
+    assert len(messages) == 9
+
+
+def test_agent_history_window_is_prompt_only_and_preserves_parallel_turns() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    llm = _ScriptedLLM(
+        [
+            _Message(
+                tool_calls=[
+                    _ToolCall("FarmWorldApp__get_inventory"),
+                    _ToolCall("WeatherApp__get_current_weather"),
+                ]
+            ),
+            _Message(tool_calls=[_ToolCall("SystemApp__get_current_time")]),
+            _Message(content="done", tool_calls=None),
+        ]
+    )
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=llm,
+        toolsets=scenario.apps,
+    )
+    audit_records = []
+
+    workflow = Engine(agent, scenario).run_scenario_agent(
+        max_tool_calls=5,
+        timeout_seconds=30,
+        history_window=1,
+        history_window_sink=audit_records.append,
+        setup_scenario=False,
+    )
+
+    assert [len(prompt) for prompt in llm.inputs] == [2, 5, 4]
+    assert [row["retained_turn_count"] for row in audit_records] == [0, 1, 1]
+    assert [row["dropped_turn_count"] for row in audit_records] == [0, 0, 1]
+    assert audit_records[1]["retained_turn_spans"][0]["tool_call_count"] == 2
+    assert audit_records[2]["retained_turn_spans"][0]["tool_call_count"] == 1
+    assert agent.tool_call_count == 3
+    assert len(workflow) == 4
+    assert len(agent.messages.messages) == 8
+    assert not any(
+        event["event_type"] == "history_window_selection"
+        for event in agent.runtime_events
+    )
+
+
+def test_agent_default_history_path_does_not_emit_window_audit() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    llm = _ScriptedLLM(
+        [
+            _Message(tool_calls=[_ToolCall("FarmWorldApp__get_inventory")]),
+            _Message(content="done", tool_calls=None),
+        ]
+    )
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=llm,
+        toolsets=scenario.apps,
+    )
+    audit_records = []
+
+    Engine(agent, scenario).run_scenario_agent(
+        max_tool_calls=5,
+        timeout_seconds=30,
+        history_window=None,
+        history_window_sink=audit_records.append,
+        setup_scenario=False,
+    )
+
+    assert [len(prompt) for prompt in llm.inputs] == [2, 4]
+    assert audit_records == []
+
+
+def test_history_window_audit_failure_stops_before_llm_call() -> None:
+    scenario = ScenarioFarmWorldFieldPrep()
+    scenario.setup()
+    llm = _ScriptedLLM([_Message(content="done", tool_calls=None)])
+    agent = build_controller_agent(
+        "farm_baseline_react",
+        llm=llm,
+        toolsets=scenario.apps,
+    )
+
+    def failing_sink(_record) -> None:
+        raise OSError("history window audit write failed")
+
+    with pytest.raises(OSError, match="history window audit write failed"):
+        Engine(agent, scenario).run_scenario_agent(
+            max_tool_calls=5,
+            timeout_seconds=30,
+            history_window=1,
+            history_window_sink=failing_sink,
+            setup_scenario=False,
+        )
+
+    assert llm.inputs == []
+    assert agent.runtime_events[-1]["event_type"] == "agent_run_error"
+    assert agent.runtime_events[-1]["error_type"] == "OSError"
+    assert not any(
+        event["event_type"] == "history_window_selection"
+        for event in agent.runtime_events
+    )
 
 
 def test_agent_runtime_event_sink_receives_live_events() -> None:
