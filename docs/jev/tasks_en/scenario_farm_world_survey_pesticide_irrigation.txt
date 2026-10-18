@@ -1,0 +1,26 @@
+The crop has reached the V4 growth stage (about 42 days after sowing). The sensors are raising an alarm about abnormal NDVI, and there has also been a long dry spell recently.
+Today diagnosis, spraying and irrigation must be completed. Rain is coming the day after tomorrow, so spraying must be finished today (rain would wash the pesticide off).
+Follow these steps:
+
+[Fixed-sensor monitoring stage]
+1. Check the current weather and confirm wind speed <5m/s and no rain (spraying conditions).
+2. Check the 3-day forecast (rain the day after tomorrow -> spraying must be done today).
+3. Read the canopy sensors (6 fixed sensors); NDVI is found to be low in the C3/C4 areas; pests are suspected.
+4. Read the soil sensors (6 fixed sensors) and confirm VWC<0.35 (the tractor can go into the field); also, ridges 50-58 in the S5/S6 area are found to be dry.
+
+[Drone aerial inspection stage]
+5. Check the Mavic3M status (battery about 90%) and fly a survey over the abnormal area ridges 15-40 to locate the extent of the pest damage.
+
+[Ground confirmation stage]
+6. Check Robot0's status and send the robot dog to ridge 27 for a ground re-check to confirm aphids.
+
+[Spraying stage]
+7. Check the tractor status (fuel 15L, not enough) and the warehouse inventory.
+8. Attach the sprayer, add 80L of fuel, load 200L of pesticide.
+9. Spray with the tractor's boom in 2 passes (20-29, 30-35), covering all infested areas.
+10. Detach the sprayer.
+
+[Irrigation stage]
+11. Irrigate ridges 50-58 for 1.5 hours.
+12. After irrigating, wait for the system to send a notification in about 2 hours, then read the sensors again to confirm soil moisture has recovered.
+13. When everything is done, end the task immediately and report to me.

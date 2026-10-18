@@ -1,0 +1,10 @@
+Yesterday the Mavic3M survey found low NDVI in the ridges 15-25 area; an aphid outbreak is suspected.
+Today please handle it with the following process:
+1. Check the current weather and confirm wind speed <5 m/s and no rain (spraying conditions).
+2. Check the 3-day forecast to confirm the spraying window for today and tomorrow.
+3. Read the canopy sensors and look at the NDVI distribution again.
+4. First use the Mavic3M to check the abnormal area; check the machine's status before using it.
+5. Read the soil sensors and confirm VWC<0.35 (the robot dog can go into the field).
+6. Then use Robot0 to re-check on the ground the abnormal areas reported by the Mavic3M; check the machine's status before using it.
+7. Apply pesticide manually to the abnormal spots.
+8. When everything is done, end the task immediately and then report.

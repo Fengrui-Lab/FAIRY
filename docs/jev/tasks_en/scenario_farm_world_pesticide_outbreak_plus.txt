@@ -1,0 +1,15 @@
+The crop has reached the V4-V5 growth stage (about 45 days after sowing). The fixed sensors show abnormally low NDVI in several areas; a large-scale aphid outbreak is suspected.
+Complete the inspection, re-check and spraying today.
+Follow these steps:
+1. Check the current weather and confirm wind speed <5m/s and no rain (spraying conditions).
+2. Check the forecast for the next 3 days to confirm the spraying window.
+3. Read the canopy sensors and find the areas with low NDVI.
+4. Check the Mavic3M status and fly an aerial survey over the abnormal strip indicated by the canopy sensors to confirm the extent of the pest damage; if it returns early because of low battery, charge the drone (about 30 minutes).
+   After charging is complete, continue flying the remaining uncovered area.
+5. Read the soil sensors and confirm VWC<0.35 (the tractor can go into the field).
+6. Check Robot0's status and use Robot0 to make 6 ground re-check points along the continuous infested strip confirmed by the drone: sample from low to high ridge numbers at a spacing of about 5 ridges, avoid the buffer ridges where no pests were seen, and sample more densely near the central hotspot, to confirm whether it is aphids;
+    if the battery is low, charge Robot0 (about 60 minutes). After charging is complete, continue re-checking the remaining areas not yet re-checked.
+7. Check the tractor status and the warehouse inventory.
+8. Attach the sprayer to the tractor, add 80.0L of fuel, then load 250.0L of pesticide into the spray tank.
+9. Spray with the tractor's boom (at most 10 ridges per pass), covering all infested areas.
+10. When everything is done, detach the sprayer, end the task immediately and report to me.

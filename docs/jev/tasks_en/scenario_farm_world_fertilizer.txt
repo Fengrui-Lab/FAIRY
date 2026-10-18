@@ -1,0 +1,10 @@
+The crop has reached the V3-V4 growth stage (about 35 days after sowing). The canopy sensors show low NDVI in some areas; a nutrient deficiency is suspected.
+Because soybeans fix their own nitrogen, nitrogen demand is low, but the phosphorus-potassium balance still affects yield.
+Follow these steps:
+1. Check the current weather and confirm it is suitable for field work (no rain).
+2. Check the forecast for the next 3 days to confirm the work window.
+3. Read the canopy sensors and find the areas with low NDVI.
+4. Check the Mavic3M status and fly a survey over the abnormal areas to confirm the nutrient deficiency.
+5. Check the tractor status (fuel, fertilizer spreader) and the warehouse fertilizer stock.
+6. Load 100kg of fertilizer and top-dress the deficient areas (NDVI less than 0.45) (about 10kg per ridge).
+7. When everything is done, end the task immediately and report to me.

@@ -1,0 +1,29 @@
+The crop has reached the V3 growth stage (about 35 days after sowing). Today a routine inspection must be completed, and any problems found must be dealt with.
+Follow these steps:
+
+[Fixed-sensor monitoring stage]
+1. Check today's weather and confirm there is no rain and wind speed <12m/s (drone flight conditions).
+2. Read the canopy sensors (6 fixed sensors monitor continuously); NDVI is found to be low in the C3 and C5 areas.
+3. Read the soil sensors (6 fixed sensors); VWC is found to be low in the S5 area (<0.20).
+
+[Drone aerial inspection stage]
+4. Check the Mavic3M drone's battery (currently about 65%, not full).
+5. Fly an inspection survey over all 64 ridges to locate the extent of the abnormal areas. When the battery runs low, the drone returns automatically and gives partial results.
+6. After it returns, check the drone's status and charge the drone (about 30 minutes).
+7. After charging is complete, continue flying the remaining uncovered area.
+8. Analyse the survey results and confirm two problems:
+   - NDVI is low in the ridges 22-27 area (0.40-0.48); a nutrient deficiency is suspected
+   - NDVI is also low in the ridges 40-50 area but not severely; it may be a lack of water
+
+[Ground confirmation stage]
+9. Check Robot0's status and send the robot dog to ridge 25 for a ground inspection to confirm it is a nutrient problem, not pests.
+
+[Top-dressing stage]
+10. Check the tractor status (fuel, fertilizer spreader) and the warehouse fertilizer stock.
+11. Load 100kg of fertilizer and top-dress ridges 22-27 (about 10kg per ridge).
+
+[Irrigation stage]
+12. Check the forecast for the next 3 days; if no rain is coming soon, irrigation is needed.
+13. Irrigate ridges 40-50 for 1.5 hours. Irrigation increases soil VWC by about 0.08.
+14. After irrigating, wait for the system to send a notification in about 2 hours, then read the sensors again to confirm soil moisture has returned to the normal range.
+15. When everything is done, end the task immediately and report to me.

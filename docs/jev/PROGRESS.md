@@ -293,3 +293,42 @@ The LLM did the same steps, except it fertilized with 8 `apply_fertilizer` calls
 `fos(%)` was 56.67 for all three runs, including Jev's exact oracle match. This confirms it is not meaningful for this scenario.
 
 **Caveat**: the task text lists every step and every value (3 days, 200 kg, 1.1 m). Because task-text numbers are on every numeric menu, this scenario is close to the easiest case for Jev. It shows the agent works end to end; it does not show Jev can plan when the task is less explicit.
+
+## Commit and push
+
+- Committed on `jev-agent` as `735ab8c`.
+- Checked before committing: no `.env` files, no API key values and no key-shaped strings in the commit.
+- Added remote `fairy-jev` → https://github.com/Synkrasis-Labs/fairy-jev and pushed `jev-agent` there.
+- Nothing was pushed to `origin` (quaoq/FAIRY).
+
+## Why did the LLM fertilize in 8 calls instead of 1? (evidence from the Step 2 log)
+
+**Answer: an LLM mistake (wrong tool choice). The 10-ridge limit then made the mistake cost 8 calls.**
+
+1. **Both tools were offered on every turn.** All 13 LLM calls listed both `TractorApp__base_fertilize` and `TractorApp__apply_fertilizer`.
+2. **The descriptions are clear.**
+   - `base_fertilize()`: "Apply base fertilizer across the full field using the tractor spreader." No arguments; one call covers all 64 ridges.
+   - `apply_fertilizer(start_ridge, end_ridge, kg_per_ridge)`: "Apply fertilizer across a contiguous block of ridges using the tractor spreader (up to 10 ridges per pass)."
+   - The task asks to "apply base fertilizer … spread it over the whole field".
+3. **What the LLM did** (log, turns 9–10):
+   - Turn 9: `apply_fertilizer(0, 63, 3.125)` → error "Range cannot exceed 10 ridges per pass".
+   - Turn 10: it kept the same tool and split the field into 7 blocks of up to 10 ridges. It never tried `base_fertilize`.
+   - It wrote no explanation text on any turn, so its reasoning is not visible.
+4. **It is not just slower; the farm ends up different.**
+   - Only `base_fertilize` records the field-prep step (`_completed_prep_ops`). Planting checks it: "Field preparation incomplete: must finish level -> base_fertilize -> form_ridges before planting".
+   - So in a scenario that continues to planting, this choice would block planting.
+5. **Same behaviour with the English task** (Step 3 run).
+
+Jev, with the same tool descriptions, picked `base_fertilize` (0.95 in the probe, 0.96 in the real run).
+
+## Step 4 prep – English task texts (APPROVED by the user)
+
+- I translated the 14 remaining task texts into `docs/jev/tasks_en/<scenario_id>.txt`.
+- Side-by-side review with the Chinese originals and flags: `docs/jev/tasks_en/REVIEW.md`.
+- Automatic check: the numbers found in each English text match the Chinese, except "30万" (= 300,000), written as `300000` in 3 files.
+- Defects in the original texts are flagged in REVIEW.md, not silently fixed:
+  - field_prep_plus has a cut-off sentence;
+  - drone_survey and pesticide_outbreak_plus have missing words;
+  - survey_pesticide_irrigation has a typo.
+
+- User approved all translations, with one fix: field_prep_plus step 3 now reads "please wait for the soil sensor notification."

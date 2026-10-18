@@ -1,0 +1,8 @@
+The crop has reached the V2 growth stage (about 22 days after sowing), and there has been a long dry spell with no rain recently.
+Follow these steps:
+1. Check today's weather.
+2. Check the forecast for the next 3 days; if rain is coming soon, there is no need to irrigate, let natural rainfall replenish the moisture.
+3. Read the 6 soil sensors and find the dry areas with VWC < 0.20 (normal is between 0.20-0.30).
+4. Irrigate the dry areas for 1.5 hours. Irrigation increases soil VWC by about 0.08.
+5. After irrigating, wait for the system to send a notification in about 2 hours, then read the sensors again to confirm soil moisture has returned to the normal range.
+6. When everything is done, end the task immediately and report to me on the irrigation.

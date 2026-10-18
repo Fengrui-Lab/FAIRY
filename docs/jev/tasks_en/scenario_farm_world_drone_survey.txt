@@ -1,0 +1,9 @@
+The crop has reached the V4 growth stage (about 42 days after sowing); a routine drone inspection is needed to monitor crop health.
+Follow these steps:
+1. Check the weather and confirm there is no rain and wind speed < 12m/s (drone flight conditions).
+2. Mavic3M: check the drone's battery (currently about 65%, not full).
+3. Fly an inspection survey over all 64 ridges. When the battery runs low, the drone returns automatically and gives partial results.
+4. After it returns, check the drone's status and charge the drone (about 30 minutes).
+5. After charging is complete, continue flying the remaining uncovered area.
+6. When all flights are done, if areas with low NDVI are found, send the robot dog to the abnormal ridges for a ground inspection to confirm pests or disease; before doing so, first check robot dog Robot0's battery.
+7. When everything is done, end the task immediately and report the inspection results to me.

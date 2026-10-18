@@ -1,0 +1,19 @@
+The weather window is only today and tomorrow (rain the day after tomorrow); field preparation and sowing must both be completed today.
+Follow these steps:
+
+[Field preparation stage]
+1. Check today's weather and confirm there is no rain, so the field can be worked.
+2. Check the 3-day weather forecast.
+3. Read the soil sensors and confirm VWC<0.35 (the tractor can drive on it) and soil temperature >10°C (suitable for sowing).
+4. Check the tractor's fuel level (currently 60L) and which implement is attached.
+5. Check the warehouse inventory and confirm there is enough fertilizer, seed and diesel.
+6. Level the ground: attach the grader -> rotary-till and level the whole field -> detach the grader.
+7. Apply base fertilizer: load 200kg of fertilizer -> spread it over the whole field.
+8. Form ridges: attach the furrower -> form the ridges (ridge width 1.1m) -> detach the furrower.
+
+[Sowing stage]
+9. Check the tractor's fuel level; adding 50.0 of fuel is recommended.
+10. Load the first batch of seeds (hopper maximum 300000 plants).
+11. Sow batch by batch, 4 ridges at a time (0-3, 4-7, ...), sowing depth 4cm, plant spacing 5cm.
+12. When the seeds run out, load the next batch.
+13. When all 64 ridges are sown, end the task immediately and report to me.

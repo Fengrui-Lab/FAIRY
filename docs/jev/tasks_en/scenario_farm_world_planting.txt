@@ -1,0 +1,10 @@
+Field preparation is complete (leveling, base fertilizer, ridging); sowing soybeans starts today.
+Follow these steps:
+1. Check today's weather and confirm there is no rain;
+2. Read the soil sensors and confirm VWC is between 0.20-0.30 and soil temperature >10°C (suitable for sowing).
+3. Check the tractor's fuel level (currently 80L, not full) and the hopper status.
+4. Check the warehouse seed stock.
+5. Load the first batch of seeds (hopper maximum 300000 plants).
+6. Sow batch by batch, 4 ridges at a time (e.g. 0-3, 4-7, ...). Sowing depth 4cm, plant spacing 5cm.
+7. When the seeds run out, load the next batch.
+8. When all 64 ridges are sown, end the task immediately and report to me.

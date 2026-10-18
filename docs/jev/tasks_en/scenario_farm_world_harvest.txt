@@ -1,0 +1,12 @@
+The soybeans are mature and the harvest stage has begun. Please follow a real farmer's workflow:
+1. Check today's weather (rainfall=0, harvesting possible) and the 3-day forecast
+2. Read the soil sensors and confirm VWC<0.35, so the ground can be driven on.
+3. Read the canopy sensors and see whether NDVI shows the whole field has turned yellow (at R8 it should be low).
+4. Confirm that all 64 ridges have reached R8 and the grain moisture is 13-18%.
+5. Fly the Mavic3M over the field once (fly_survey 0-63) to verify even ripening.
+6. Check the tractor status: first attach the harvester; the fuel is only 20 L -> then refuel to 100 L.
+7. 4 ridges per pass, 16 passes in total, starting from 0-3 up to 60-63.
+   Each pass puts about 980 kg of grain into the grain tank (capacity 2000 kg),
+   so every 2 passes you must unload_grain once to unload the grain into the warehouse.
+8. After everything is harvested and all grain is unloaded, detach the harvester, check the inventory and report the total yield.
+9. When everything is done, end the task immediately and report to me.
