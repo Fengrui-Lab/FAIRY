@@ -102,10 +102,29 @@ def test_invalid_ridge_range_is_executed_not_filtered() -> None:
     agent, workflow, _ = _run(
         [
             {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
-            {"arg__start": "ridge 20", "arg__end": "ridge 5"},
+            {"arg__start": "ridge 20"},
+            {"arg__end": "ridge 5"},
             {TOOL_QUESTION_ID: "done"},
         ]
     )
     step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
     assert step.tool_args == {"start": 20, "end": 5}
     assert "error" in str(step.content).lower()
+
+
+def test_end_ridge_is_asked_after_start_ridge() -> None:
+    agent, workflow, llm = _run(
+        [
+            {TOOL_QUESTION_ID: "TractorApp__apply_fertilizer"},
+            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3"},
+            {"arg__end_ridge": "ridge 19"},
+            {TOOL_QUESTION_ID: "done"},
+        ]
+    )
+    first_args, end_only = llm.requests[1][1], llm.requests[2][1]
+    assert set(first_args) == {"arg__start_ridge", "arg__kg_per_ridge"}
+    assert set(end_only) == {"arg__end_ridge"}
+    assert "`start_ridge` = ridge 10" in end_only["arg__end_ridge"]["instructions"]
+    assert len(end_only["arg__end_ridge"]["criteria"]) == 64  # nothing filtered
+    step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
+    assert step.tool_args == {"start_ridge": 10, "kg_per_ridge": 3.0, "end_ridge": 19}

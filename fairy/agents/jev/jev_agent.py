@@ -5,9 +5,12 @@ still executes the tool, enforces max_tool_calls / timeout, and records the
 workflow and runtime log, so run_report.json and agent_workflow.json have the
 same format as for the LLM agents.
 
-Each action takes up to two Jev requests:
+Each action takes up to three Jev requests:
   1. one Choice over the scenario's tools plus "done";
-  2. if the tool takes arguments, one Choice per argument, sent together.
+  2. if the tool takes arguments, one Choice per argument, sent together;
+  3. if the tool takes a ridge range, the end ridge is asked last, in its own
+     request that states the start ridge already chosen (questions in one
+     request cannot see each other's answers).
 The action's confidence is the lowest confidence among its questions.
 """
 
@@ -29,6 +32,9 @@ from fairy.agents.jev.menu import (
 
 TOOL_QUESTION_ID = "next_action"
 TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
+
+# End-of-range argument -> its start argument. The end is asked after the start.
+RANGE_END_TO_START = {"end_ridge": "start_ridge", "end": "start"}
 
 
 def _arg_question_id(arg_name: str) -> str:
@@ -140,18 +146,28 @@ class JevAgent(Agent):
 
         if pick != DONE_OPTION:
             menu = self.tool_menus[pick]
-            if menu.args:
-                arg_questions = {
+            names = {a.name for a in menu.args}
+            later = [
+                a for a in menu.args
+                if a.name in RANGE_END_TO_START and RANGE_END_TO_START[a.name] in names
+            ]
+            first = [a for a in menu.args if a not in later]
+            picked_keys: dict[str, str] = {}
+            for kind, group in (("arguments", first), ("end_ridge", later)):
+                if not group:
+                    continue
+                questions = {
                     _arg_question_id(a.name): {
                         "type": "choice",
-                        "instructions": self._arg_instructions(menu, a),
+                        "instructions": self._arg_instructions(menu, a, picked_keys),
                         "criteria": {key: None for key in a.options},
                     }
-                    for a in menu.args
+                    for a in group
                 }
-                arg_answers = self._ask("arguments", state, arg_questions)
-                for a in menu.args:
-                    answer = arg_answers[_arg_question_id(a.name)]
+                answers = self._ask(kind, state, questions)
+                for a in group:
+                    answer = answers[_arg_question_id(a.name)]
+                    picked_keys[a.name] = answer["choice"]
                     arguments[a.name] = a.options[answer["choice"]]
                     confidences[_arg_question_id(a.name)] = answer["confidence"]
 
@@ -191,13 +207,18 @@ class JevAgent(Agent):
         return SimpleNamespace(role="assistant", content=None, tool_calls=[tool_call])
 
     @staticmethod
-    def _arg_instructions(menu: ToolMenu, arg: Any) -> str:
+    def _arg_instructions(
+        menu: ToolMenu, arg: Any, picked_keys: dict[str, str] | None = None
+    ) -> str:
         text = (
             f"The farm agent has decided to call `{menu.tool_name}`: {menu.description} "
             f"Which value should its argument `{arg.name}` take?"
         )
         if arg.description:
             text += f" `{arg.name}`: {arg.description}"
+        start = RANGE_END_TO_START.get(arg.name)
+        if start and picked_keys and start in picked_keys:
+            text += f" The agent has already chosen `{start}` = {picked_keys[start]}."
         return text
 
     def _state(self) -> dict[str, Any]:

@@ -332,3 +332,108 @@ Jev, with the same tool descriptions, picked `base_fertilize` (0.95 in the probe
   - survey_pesticide_irrigation has a typo.
 
 - User approved all translations, with one fix: field_prep_plus step 3 now reads "please wait for the soil sensor notification."
+
+## Step 4 – decisions before running
+
+- **Step limit 60 tool calls**, the same for both agents and every scenario. The longest oracle needs 35 actions; 5 scenarios need more than 20, so the old limit of 20 would have stopped even a perfect agent.
+- Time limit 600 s per run, the same for both.
+- One run per agent per scenario. Both agents get the approved English task text.
+- Old commit `68fa710` keeps its Claude co-author line (user's choice). Nothing pushed since.
+
+## Step 4 – results (15 scenarios × 2 agents, 1 run each)
+
+Run: `python scripts/jev_run_small15.py --output-root validation_runs/jev_mvp/step4` (60 actions, 600 s, English tasks). All 30 runs finished without errors; no keys in the outputs.
+Scored: `python scripts/rebatch_fos_from_traces.py --root validation_runs/jev_mvp/step4 --out-root validation_runs/jev_mvp/step4_scoring --workers 4`. Combined numbers: `validation_runs/jev_mvp/step4_scoring/combined.json`.
+
+| Scenario | LLM step match / coverage / order | LLM actions | Jev step match / coverage / order | Jev actions | Jev avg confidence |
+|---|---|---|---|---|---|
+| drone_survey | 11.7 / 75.0 / 100 | 60 (limit) | 5.0 / 37.5 / 100 | 60 (limit) | 0.60 |
+| drone_survey_plus | 33.3 / 90.0 / 100 | 33 | 8.7 / 30.0 / 100 | 60 (limit) | 0.43 |
+| fertilizer | 53.3 / 88.9 / 100 | 15 | **77.8** / 77.8 / 100 | 9 | 0.78 |
+| field_prep | 52.4 / 91.7 / 96.4 | 21 | **100 / 100 / 100** | 13 | 0.93 |
+| field_prep_planting | 69.0 / 100 / 97.7 | 42 | 26.7 / 56.7 / 100 | 60 (limit) | 0.65 |
+| field_prep_plus | 36.0 / 78.6 / 96.4 | 25 | 8.3 / 35.7 / 100 | 60 (limit) | 0.42 |
+| harvest | 33.3 / 89.3 / 95.0 | 60 (limit) | 13.3 / 32.1 / 100 | 60 (limit) | 0.71 |
+| irrigation | 83.3 / 80.0 / 100 | 6 | 8.7 / 60.0 / 100 | 46 | 0.51 |
+| pesticide | 22.7 / 77.8 / 95.2 | 22 | **72.7 / 88.9** / 100 | 11 | 0.74 |
+| pesticide_outbreak | 52.9 / 64.7 / 100 | 16 | 18.3 / 64.7 / 100 | 60 (limit) | 0.62 |
+| pesticide_outbreak_plus | 40.7 / 40.7 / 100 | 18 | 6.7 / 18.5 / 100 | 60 (limit) | 0.52 |
+| planting | 68.0 / 100 / 100 | 25 | 11.7 / 33.3 / 100 | 60 (limit) | 0.62 |
+| planting_plus | 45.2 / 95.7 / 100 | 42 | 14.0 / 34.8 / 100 | 60 (limit) | 0.44 |
+| survey_fertilizer_irrigation | 73.7 / 88.2 / 98.1 | 19 | 57.1 / 88.2 / 100 | 28 | 0.70 |
+| survey_pesticide_irrigation | 63.2 / 88.9 / 95.0 | 19 | 21.7 / 72.2 / 100 | 60 (limit) | 0.52 |
+| **Average** | **49.3 / 83.3 / 98.3** | 28.2 | **30.0 / 55.4 / 100** | 47.1 | |
+
+Totals: LLM about $0.40, average 24.9 s per run. Jev about $0.39, average 23.8 s per run.
+Note: "order" is 100 for Jev mostly because it matched few actions; with few matches, order is easy.
+
+**Why Jev did badly (from the Jev workflows)**
+1. **Start and end ridge are picked separately, and Jev picks them independently** (the docs say questions in one request cannot see each other's answers). Example, planting: `plant_seeds(start=8, end=7)` → error, repeated **52 times**. drone_survey shows the same pattern. This comes from our agreed design (one question per argument).
+2. **It repeats the same action without making progress.** drone_survey: `check_status` ×42. irrigation: `wait_for_notification` ×23 and `irrigate_ridge(25)` ×6.
+3. **Task numbers land in unrelated arguments.** For example `wait_for_notification(timeout=22)`, where 22 comes from "22 days after sowing". This follows the agreed rule (task numbers go on every numeric menu).
+
+Jev did better than the LLM where each action needs few or no ridge ranges: field_prep, fertilizer, pesticide.
+
+**LLM run-to-run difference**: on field_prep, the LLM finished in 21 actions this time (52.4%). In Step 3 it hit the limit (55%). We use 1 run per agent, so single-scenario numbers carry noise.
+
+## Step 4b – fix: end ridge asked after start ridge (user's choice B)
+
+**Change** (`fairy/agents/jev/jev_agent.py`)
+- For tools with a ridge range (`start_ridge`/`end_ridge` or `start`/`end`), the end ridge is now asked in its own, later request.
+- That request says which start ridge was already chosen.
+- The end-ridge menu still has all 64 ridges, so invalid picks are still possible and still logged.
+- This follows the TypeSafe docs: use a second request when an earlier answer is needed.
+
+**Tests**: `tests/test_jev_agent.py` 5/5 passed. The new test checks that the end question comes second, names the chosen start, and keeps all 64 options.
+
+**Reruns** (user: 3 runs per agent per scenario). All in `validation_runs/jev_mvp/step4_final/`:
+- LLM: r1 is copied from Step 4 (the LLM agent did not change); r2 and r3 are new.
+- Jev: r1–r3 are all new, with the fix.
+- The pre-fix Jev runs stay in `validation_runs/jev_mvp/step4/` for the record.
+
+Command: `python scripts/jev_run_small15.py --output-root validation_runs/jev_mvp/step4_final --repeats 3`
+
+## Step 4b – results (3 runs per agent per scenario, after the fix)
+
+Scored: `python scripts/rebatch_fos_from_traces.py --root validation_runs/jev_mvp/step4_final --out-root validation_runs/jev_mvp/step4_final_scoring --workers 4`.
+All 90 runs scored OK; no keys in the outputs. Per-run numbers: `validation_runs/jev_mvp/step4_final_scoring/combined.json`.
+
+Step match = `core_path_correctness`, mean of 3 runs (lowest–highest).
+
+| Scenario | LLM step match | LLM actions | Jev step match | Jev actions | Jev hit limit | Jev confidence |
+|---|---|---|---|---|---|---|
+| drone_survey | 36.7 (12–75) | 35 | 5.0 (5–5) | 60 | 3/3 | 0.58 |
+| drone_survey_plus | 27.8 (20–33) | 44 | 7.0 (7–8) | 60 | 3/3 | 0.42 |
+| fertilizer | 45.8 (31–53) | 19 | **77.8** (78–78) | 9 | 0/3 | 0.84 |
+| field_prep | 52.5 (50–55) | 21 | **100** (100–100) | 13 | 0/3 | 0.95 |
+| field_prep_planting | 65.4 (60–69) | 46 | **87.8** (86–89) | 35 | 0/3 | 0.84 |
+| field_prep_plus | 36.2 (33–39) | 25 | 13.7 (8–25) | 58 | 2/3 | 0.46 |
+| harvest | 43.6 (33–64) | 57 | **89.8** (86–91) | 36 | 0/3 | 0.77 |
+| irrigation | 83.3 (83–83) | 6 | 8.2 (7–9) | 49 | 0/3 | 0.53 |
+| pesticide | 56.1 (23–73) | 15 | **72.7** (73–73) | 11 | 0/3 | 0.74 |
+| pesticide_outbreak | 56.9 (53–59) | 15 | 46.8 (23–59) | 29 | 0/3 | 0.71 |
+| pesticide_outbreak_plus | 43.2 (41–48) | 19 | 13.8 (7–28) | 55 | 2/3 | 0.54 |
+| planting | 72.0 (68–80) | 25 | **79.9** (51–96) | 34 | 0/3 | 0.76 |
+| planting_plus | 55.5 (45–68) | 40 | 19.5 (18–21) | 60 | 3/3 | 0.33 |
+| survey_fertilizer_irrigation | 72.9 (70–75) | 20 | 62.4 (62–64) | 26 | 0/3 | 0.70 |
+| survey_pesticide_irrigation | 54.4 (42–63) | 19 | 22.2 (22–23) | 60 | 3/3 | 0.58 |
+| **Average (45 runs each)** | **53.5** | 27.0 | **47.1** | 39.7 | 16/45 | 0.65 |
+
+Other averages:
+- Coverage: LLM 84.6, Jev 68.9.
+- Order: LLM 98.4, Jev 100.
+- Hit the 60-action limit: LLM 4 of 45 runs, Jev 16 of 45.
+- Cost: LLM $1.02 total ($0.023 per run), Jev $0.97 total ($0.022 per run).
+- Time: LLM 23.6 s per run, Jev 24.2 s per run.
+
+**Effect of the fix**: Jev's average step match went from 30.0 to 47.1. Jev now scores higher in 6 of 15 scenarios (before: 3), with big gains on harvest (13 → 90), field_prep_planting (27 → 88) and planting (12 → 80).
+
+**What still goes wrong for Jev** (run 1 of each):
+- It repeats one action instead of moving on:
+  - drone_survey: `check_status` ×54 in a row;
+  - irrigation: `wait_for_notification` 34 times;
+  - planting_plus: `advance_time` 35 times.
+- survey_pesticide_irrigation: `spray_pesticide` 41 times, 28 of them errors.
+- These are the scenarios where the task says "wait for a notification" / "wait until …", or where a step depends on an earlier result.
+
+Jev's runs vary much less than the LLM's (narrower lowest–highest ranges).
