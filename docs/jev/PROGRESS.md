@@ -437,3 +437,12 @@ Other averages:
 - These are the scenarios where the task says "wait for a notification" / "wait until …", or where a step depends on an earlier result.
 
 Jev's runs vary much less than the LLM's (narrower lowest–highest ranges).
+
+## Step 5 – comparison table
+
+- `docs/jev/results/comparison.csv`: one row per scenario plus AVERAGE, built from the 3-run results.
+  - Columns per agent: step match (mean, min, max), coverage, order, actions, runs that hit the limit, cost per run, time per run.
+  - Also: Jev's average confidence, and empty `are_*` columns for the ARE results.
+- `docs/jev/results/summary.md`: short factual summary (setup, how measured, results, per-scenario counts, log observations, setup facts).
+  - The log observations were checked the same way for both agents (run 1 of each agent's 5 lowest-scoring scenarios).
+- Rebuild the CSV: `python scripts/jev_compare_table.py --scoring validation_runs/jev_mvp/step4_final_scoring/summary_v2.csv --out docs/jev/results/comparison.csv`
