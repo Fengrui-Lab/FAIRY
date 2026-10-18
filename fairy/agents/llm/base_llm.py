@@ -146,5 +146,9 @@ class BaseLLM:
             case "vllm":
                 from .vllm_client import VLLMClient
                 return VLLMClient(model, temperature, **extra_params)
+            case "typesafe":
+                # Jev (TypeSafe System One); only used by the farm_jev controller.
+                from .typesafe_client import TypeSafeJevClient
+                return TypeSafeJevClient(model, temperature, **extra_params)
             case _:
                 raise ValueError(f"Unsupported LLM Provider: {provider}")

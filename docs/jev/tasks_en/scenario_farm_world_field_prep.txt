@@ -1,0 +1,10 @@
+The farm is entering the pre-planting preparation stage; all field preparation must be finished today. Follow these steps:
+1. Check today's weather and confirm there is no rain, so the field can be worked.
+2. Check the 3-day forecast (rain the day after tomorrow -> everything must be finished today).
+3. Read the soil sensors and confirm soil VWC < 0.35 (the tractor can drive on it).
+4. Check the tractor's fuel level and which implement is attached.
+5. Check the warehouse inventory and confirm there is enough fertilizer and diesel.
+6. Level the ground: first attach the grader, then rotary-till and level the whole field (grader width 3 m, speed 3 km/h); when finished, detach the grader.
+7. Apply base fertilizer: load 200 kg of fertilizer from the warehouse into the spreader, then spread it over the whole field (spreader width 6 m, speed 6 km/h).
+8. Form ridges: attach the furrower and form the ridges (ridge width 1.1 m, 4 ridges per pass, speed 4 km/h); when finished, detach the furrower.
+9. When everything is done, end the task immediately and report to me.

@@ -14,6 +14,9 @@ dependencies = [
   "numpy>=1.24",
 ]
 
+[project.optional-dependencies]
+jev = ["typesafe-sdk>=0.7.5"]
+
 [project.scripts]
 fairy-run = "fairy.cli:main"
 

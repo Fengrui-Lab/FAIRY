@@ -37,6 +37,7 @@ CONTROLLER_FAMILIES = [
     "farm_tree_search",
     "farm_critic_refiner",
     "farm_graph_memory",
+    "farm_jev",
 ]
 
 
@@ -329,6 +330,19 @@ def build_controller_agent(
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
 ) -> ResearchARESimulationAgent:
+    if family_id == "farm_jev":
+        # Jev picks actions from a menu instead of generating tool calls.
+        from fairy.agents.jev.jev_agent import JevAgent
+
+        if getattr(llm, "provider", None) != "typesafe":
+            raise ValueError("farm_jev requires --provider typesafe")
+        return JevAgent(
+            name=family_id,
+            llm=llm,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            toolsets=toolsets,
+            hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+        )
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)
