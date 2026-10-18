@@ -48,6 +48,12 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# Support direct script invocation from an uninstalled source checkout.
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from fairy.agents.llm.base_llm import DEFAULT_MAX_OUTPUT_TOKENS
+
 PYTHON_BIN = (
     str(REPO_ROOT / ".venv312" / "bin" / "python")
     if (REPO_ROOT / ".venv312" / "bin" / "python").exists()
@@ -83,7 +89,7 @@ RUNNER_DEFAULTS = {
     "cell_timeout_grace_s": 60,
     "progress_interval_s": 60.0,
     "agent_max_iterations": 200,
-    "max_output_tokens": 2048,
+    "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
     "system_prompt_mode": "fairy",
@@ -119,7 +125,7 @@ def _build_cell_command(
     scenario_initialization_kwargs: str | None = None,
     agent_max_iterations: int = 200,
     agent_timeout_seconds: int | float | None = None,
-    max_output_tokens: int = 2048,
+    max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
     wait_for_user_input_timeout: float = 5.0,
     parallel_tool_calls: bool = True,
     system_prompt_mode: str = "fairy",

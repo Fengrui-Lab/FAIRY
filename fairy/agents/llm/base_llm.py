@@ -2,6 +2,8 @@
 
 import os
 
+DEFAULT_MAX_OUTPUT_TOKENS = 2048
+
 
 def _coerce_bool(value, field_name: str) -> bool:
     if isinstance(value, bool):
@@ -15,6 +17,12 @@ def _coerce_bool(value, field_name: str) -> bool:
         if normalized in {"0", "false", "no", "off"}:
             return False
     raise ValueError(f"{field_name} must be a boolean value, got {value!r}")
+
+
+def _coerce_optional_bool(value, field_name: str) -> bool | None:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    return _coerce_bool(value, field_name)
 
 
 class BaseLLM:
@@ -39,8 +47,10 @@ class BaseLLM:
         )
         raw_max_tokens = kwargs.get(
             "max_output_tokens",
-            kwargs.get("max_tokens", os.getenv("FAIRY_LLM_MAX_OUTPUT_TOKENS", "2048")),
+            kwargs.get("max_tokens", os.getenv("FAIRY_LLM_MAX_OUTPUT_TOKENS", DEFAULT_MAX_OUTPUT_TOKENS)),
         )
+        if isinstance(raw_max_tokens, bool) or not isinstance(raw_max_tokens, (int, str)):
+            raise ValueError("max_output_tokens must be a positive integer")
         self.max_output_tokens = int(raw_max_tokens)
         if self.max_output_tokens <= 0:
             raise ValueError("max_output_tokens must be a positive integer")

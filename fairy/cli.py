@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from fairy.agents.agent.agent import AgentRunLimitExceeded
-from fairy.agents.llm.base_llm import BaseLLM
+from fairy.agents.llm.base_llm import DEFAULT_MAX_OUTPUT_TOKENS, BaseLLM
 from fairy.controllers.agent_builder import (
     AgentBuilder,
     AppAgentBuilder,
@@ -143,7 +143,7 @@ def main() -> None:
         "--max-tokens",
         dest="max_output_tokens",
         type=int,
-        default=2048,
+        default=DEFAULT_MAX_OUTPUT_TOKENS,
         help="Maximum completion tokens per LLM call",
     )
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
@@ -413,6 +413,8 @@ def main() -> None:
             max_output_tokens=args.max_output_tokens,
             workflow_steps=len(workflow),
             tool_call_count=agent.tool_call_count,
+            llm_config=agent.llm_config(),
+            response_policy=agent.response_policy(),
             runtime_metrics=runtime_metrics,
             artifacts=artifacts,
             evaluation=evaluation,

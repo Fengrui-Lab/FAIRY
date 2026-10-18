@@ -371,7 +371,9 @@ def test_weather_event_rain_event_is_physics_input_not_framework_event() -> None
     assert "rain_event" not in current_weather
 
 
-def test_end_to_end_oracle_replay_evaluate(tmp_path: Path) -> None:
+def test_end_to_end_oracle_replay_evaluate(tmp_path: Path, monkeypatch) -> None:
+    # Validation exports workflows relative to cwd; keep those test artifacts isolated.
+    monkeypatch.chdir(tmp_path)
     build_engine = Engine(None, ScenarioFarmWorldFieldPrepPhysicsActionTick())
     oracle_workflow = build_engine.build_oracle_workflow(run_oracle=False)
     oracle_path = tmp_path / "oracle.json"
@@ -989,9 +991,14 @@ def test_qwen_and_vllm_clients_use_function_call_path(monkeypatch) -> None:
     assert vllm.provider == "vllm"
 
 
-def test_vllm_qwen_client_disables_thinking_in_chat_template(monkeypatch) -> None:
+@pytest.mark.parametrize(
+    ("configured_thinking", "expected_thinking"),
+    [(None, None), (True, True), (False, False)],
+)
+def test_vllm_qwen_client_only_sets_thinking_when_explicit(
+    monkeypatch, configured_thinking, expected_thinking
+) -> None:
     monkeypatch.setenv("VLLM_API_KEY", "EMPTY")
-    monkeypatch.delenv("FAIRY_VLLM_ENABLE_THINKING", raising=False)
     captured: dict = {}
 
     class _CaptureCompletions:
@@ -1011,15 +1018,24 @@ def test_vllm_qwen_client_disables_thinking_in_chat_template(monkeypatch) -> Non
             "model": "Qwen3.5-9B",
             "base_url": "http://localhost:8000/v1",
             "parallel_tool_calls": False,
+            **(
+                {"enable_thinking": configured_thinking}
+                if configured_thinking is not None
+                else {}
+            ),
         }
     )
     vllm.api_client = _CaptureClient()
 
     vllm.chat_completion([{"role": "user", "content": "Return ok"}], tools=[])
 
-    assert captured["extra_body"] == {
-        "chat_template_kwargs": {"enable_thinking": False}
-    }
+    assert vllm.enable_thinking is expected_thinking
+    if expected_thinking is None:
+        assert "extra_body" not in captured
+    else:
+        assert captured["extra_body"] == {
+            "chat_template_kwargs": {"enable_thinking": expected_thinking}
+        }
     assert captured["parallel_tool_calls"] is False
     assert captured["max_tokens"] == 2048
 

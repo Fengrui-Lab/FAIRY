@@ -69,6 +69,69 @@
 
 ## LLM Runtime Observability
 
+- Correction on 2026-10-18: the output-token default remains **2048**.
+  A temporary, unrequested increase to 16384 was reverted. The shared
+  `DEFAULT_MAX_OUTPUT_TOKENS=2048` feeds the direct client, CLI and validation
+  runner. Explicit caps take precedence; historical configs have not been
+  rewritten. An observed historical maximum is not authorization to change
+  an experiment's generation budget.
+  `agent_run_start` and `run_report` include the resolved `llm_config` and
+  `response_policy`; `llm_call_start` also records the client configuration.
+  These fields use an allowlist, not client `params` or credentials.
+  Changing FAIRY does not impose this cap on the separate ARE runtime.
+- VLLM thinking overrides are tri-state and constructor-only: omitted/blank
+  means no override; recognized true/false values are parsed strictly;
+  invalid values fail configuration instead of silently disabling thinking.
+  The thinking environment-variable entry point was removed on 2026-10-18.
+  An unset `enable_thinking_override` means the client sends no override;
+  it does not establish the server's thinking mode. QwenClient retains its
+  request behavior without adding a
+  thinking parameter; the extra constructor rejection introduced during
+  cleanup was removed. Excluding independent reasoning from prompts and
+  logs does not require a thinking request parameter or a provider change.
+- `tests/test_llm_runtime.py` covers exclusion of SDK reasoning from logs
+  and subsequent requests, rejected-response
+  retries and failed CLI reports with fake responses, including unchanged
+  requests and billing of discarded attempts. These checks do not call a
+  model or establish generation quality.
+  Tests invoking workflow evaluation should change cwd to `tmp_path` because
+  evaluation writes `workflow_exports/` relative to cwd; CLI tests also need
+  that isolation because CLI cleanup removes its export directories.
+- As of 2026-10-18, replies with `finish_reason=length`, or no nonblank
+  content and no tool calls, are rejected and retried under the existing
+  `FAIRY_AGENT_LLM_CALL_RETRIES` budget (default 5 retries, at most 6
+  agent-level attempts). OpenAI-compatible SDKs may perform their own HTTP
+  retries within an agent attempt; inspect `llm_config.sdk_max_retries`
+  rather than treating agent attempts as HTTP request counts.
+  A reply with empty content and valid tool calls is accepted unless it is
+  marked truncated. Rejected replies never enter history or execute tools;
+  their finish reason, content/tool details and usage remain in
+  `llm_call_end` (`status=rejected`),
+  and their token/runtime costs are included in metrics. Successful retries
+  use the same messages/tools, token budget and thinking setting. Retry
+  exhaustion fails with `output_truncated` or `empty_response`, rather than
+  `agent_finished`. Retry loops check the run deadline before another
+  request and cap retry sleep to remaining time; an already-running HTTP
+  request still needs its own client request timeout.
+  `llm_turn_count`/controller telemetry count accepted turns; runtime metrics
+  count all completed response attempts, including rejected ones.
+- As of 2026-10-18, independent `reasoning` / `reasoning_content` text is
+  excluded from new logs. `llm_call_end` retains full `usage`, `finish_reason`
+  and content/tool summaries, but no complete SDK response dump that could
+  reintroduce reasoning. A2A message exports remove the two fields from a
+  serialized copy, preserving in-memory messages. `rationale` remains a
+  copy of content; content itself is not rewritten. Token counts (including
+  reasoning-token counts when supplied in usage) remain numeric diagnostics.
+  `_llm_compatible_messages` continues to exclude independent reasoning from
+  subsequent requests. Existing historical logs are not rewritten.
+  `llm_call_start.enable_thinking_override=null` means no client override;
+  it does not prove whether the server enabled thinking.
+- `management_regime.fertilizer_used_kg` is incremented when fertilizer
+  is loaded from farm inventory, so it can differ from actual field use.
+  For the 2026-10-17 false run, `load_fertilizer(2600)` loaded the 500 kg
+  spreader capacity; `base_fertilize` applied 200 kg and 300 kg remained.
+  Compare successful tool return values and equipment inventory before
+  describing this field as field application or extra fertilization.
 - `runtime_log.jsonl` is finalized only after a cell exits because it contains
   full per-turn contexts. During execution, use `<scenario>.progress.jsonl` or
   the batch runner heartbeat. The progress stream omits full `messages` to keep
@@ -85,12 +148,18 @@
   Use `FAIRY_LLM_REQUEST_TIMEOUT_S` or a client `timeout` config to bound a
   single OpenAI-compatible HTTP request so the failure is logged and retried or
   surfaced.
-- Qwen served through vLLM can return `reasoning` with empty `content` unless
-  the request passes `chat_template_kwargs.enable_thinking=false`. FAIRY's
-  `VLLMClient` does this by default for model names containing `qwen`. Tool
-  calling still requires the vLLM server itself to be started with both
-  `--enable-auto-tool-choice` and `--tool-call-parser`; otherwise every request
-  containing OpenAI `tools` fails before the agent loop can act.
+- As of 2026-10-17, `VLLMClient` leaves thinking to the server/template
+  default; it no longer automatically sends `enable_thinking=false` for Qwen
+  model names. Only an explicit `enable_thinking` constructor value adds
+  `chat_template_kwargs.enable_thinking` to the request; environment variables
+  do not control this setting. This changes model
+  generation behavior; record the setting when comparing old and new runs.
+  A short output budget can be exhausted in reasoning before content/tool
+  calls appear; inspect `finish_reason` and token usage.
+  Legacy runtime logs retain content/tool calls and four usage counters, but
+  omit separate reasoning and finish_reason; `rationale` duplicates content.
+  Tool calling still requires the vLLM server itself to be started with both
+  `--enable-auto-tool-choice` and `--tool-call-parser`.
 - Agent-facing tool descriptions come directly from app method docstrings via
   `AppTool.to_open_ai()`. Removing a docstring makes the corresponding OpenAI
   tool `description` empty, which changes model-visible behavior even though
@@ -149,6 +218,17 @@
 
 ## Rebatch Replay Time Contract
 
+- For an exact live/replay terminal-state check, use
+  `scripts/rebatch_fos_from_traces.py`; `Engine.replay_workflow()` (CLI
+  `--replay --evaluate`) does not restore recorded pre/post timestamps.
+  Start both processes with `PYTHONHASHSEED=0` as well as matching scenario
+  seed, because app seeds use Python `hash()`. Capture replay outcome before
+  FOS extrapolation; constructing a new Engine resets the scenario clock.
+- A tool can return an `{"error": ...}` business rejection while the outer
+  runtime status remains `ok`. Count these return values separately from
+  exceptions. The 2026-10-17 single-scene run had 9 recovered rejections,
+  `error_count=0`, and all 109 replay steps restored identical terminal state.
+  Artifacts: `validation_runs/qwen36_thinking_default_single_scene_20261017/`.
 - Agent workflow `time` is the human-readable **post-tool** timestamp. Never
   align a fresh scenario to that value before invoking the recorded tool;
   doing so applies every simulated tool duration twice, most severely for

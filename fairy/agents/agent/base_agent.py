@@ -13,6 +13,14 @@ from fairy.scenarios.workflow import Workflow, WorkflowStep
 # Beijing timezone (UTC+8)
 CST = timezone(timedelta(hours=8))
 
+
+class RetryableLLMResponseError(RuntimeError):
+    def __init__(self, reason: str, finish_reason: str | None):
+        self.reason = reason
+        self.finish_reason = finish_reason
+        super().__init__(f"LLM response rejected: {reason} (finish_reason={finish_reason!r})")
+
+
 class BaseAgent:
     def __init__(self, name, llm, system_message=None, messages=None):
         """
@@ -61,18 +69,24 @@ class BaseAgent:
                 )
         return event
 
+    def llm_config(self) -> dict[str, Any]:
+        # Allowlist effective client settings; never serialize credentials/params.
+        sdk_client = getattr(self.llm, "api_client", None)
+        return {
+            "provider": getattr(self.llm, "provider", None),
+            "model": getattr(self.llm, "model", None),
+            "temperature": getattr(self.llm, "temperature", None),
+            "base_url": str(self.llm.base_url) if getattr(self.llm, "base_url", None) else None,
+            "request_timeout_seconds": getattr(self.llm, "request_timeout", None),
+            "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
+            "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
+            "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            "sdk_max_retries": getattr(sdk_client, "max_retries", None),
+            "reasoning_history_policy": "exclude",
+        }
+
     def chat_completion(self, messages, tools=None):
-        """
-        Given a conversation history (messages) and an optional list of tools,
-        return a response from the language model.
-
-        Args:
-            messages (list): A list of message dictionaries representing the conversation history.
-            tools (list, optional): A list of tool specifications available for function calling.
-
-        Returns:
-            dict: A dictionary containing the model's response, input tokens, output tokens, etc.
-        """
+        """Log and account for a reply, accepting only usable, untruncated messages."""
         start_time = time.perf_counter()
         llm_messages = self._llm_compatible_messages(messages)
         normalized_tools = self._jsonable(tools or [])
@@ -87,6 +101,10 @@ class BaseAgent:
             model=getattr(self.llm, "model", None),
             provider=getattr(self.llm, "provider", None),
             max_output_tokens=getattr(self.llm, "max_output_tokens", None),
+            parallel_tool_calls=getattr(self.llm, "parallel_tool_calls", None),
+            enable_thinking_override=getattr(self.llm, "enable_thinking", None),
+            reasoning_history_policy="exclude",
+            llm_config=self.llm_config(),
             message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
             messages=self._jsonable(llm_messages),
@@ -105,22 +123,57 @@ class BaseAgent:
             )
             raise
         elapsed_time = round(time.perf_counter() - start_time, 6)
-        raw_message = response.choices[0].message
+        choice = response.choices[0] if response.choices else None
+        raw_message = getattr(choice, "message", None)
         raw_tool_calls = list(getattr(raw_message, "tool_calls", None) or [])
-        message = self._enforce_tool_call_policy(raw_message, raw_tool_calls)
-        self.messages.llm_response(response, elapsed_time, message=message)
+        finish_reason = getattr(choice, "finish_reason", None)
+        rejection_reason = self._response_rejection_reason(raw_message, finish_reason)
+        # Rejected replies are logged/accounted for but never become history
+        # or executable tool calls, including partially generated tool calls.
+        message = (
+            raw_message if rejection_reason
+            else self._enforce_tool_call_policy(raw_message, raw_tool_calls)
+        )
+        self.messages.llm_response(
+            response, elapsed_time, message=message,
+            add_to_history=rejection_reason is None,
+        )
+        self._record_llm_response(response, message, elapsed_time, rejection_reason)
+        if rejection_reason:
+            raise RetryableLLMResponseError(rejection_reason, finish_reason)
+        return message
+
+    @staticmethod
+    def _response_rejection_reason(message: Any, finish_reason: str | None) -> str | None:
+        if finish_reason == "length":
+            return "output_truncated"
+        has_content = bool(str(getattr(message, "content", None) or "").strip())
+        if not has_content and not getattr(message, "tool_calls", None):
+            return "empty_response"
+        return None
+
+    def _record_llm_response(
+        self, response: Any, message: Any, elapsed_time: float, rejection_reason: str | None
+    ) -> None:
+        choice = response.choices[0] if response.choices else None
+        raw_message = getattr(choice, "message", None)
+        finish_reason = getattr(choice, "finish_reason", None)
         assistant_content = getattr(message, "content", None)
         tool_calls = self._tool_call_details(getattr(message, "tool_calls", None) or [])
-        raw_tool_call_details = self._tool_call_details(raw_tool_calls)
+        raw_tool_call_details = self._tool_call_details(getattr(raw_message, "tool_calls", None) or [])
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         self.record_event(
             "llm_call_end",
-            status="ok",
+            status="rejected" if rejection_reason else "ok",
+            accepted=rejection_reason is None,
+            rejection_reason=rejection_reason,
             wall_time_seconds=elapsed_time,
+            finish_reason=finish_reason,
+            usage=self._jsonable(usage),
             assistant_content=assistant_content,
             assistant_content_is_empty=not bool(str(assistant_content or "").strip()),
-            rationale=assistant_content,
+            rationale=assistant_content,  # Legacy alias for content, not reasoning.
             rationale_source="assistant_content" if assistant_content else "empty_assistant_content",
             tool_call_count=len(tool_calls),
             tool_calls=tool_calls,
@@ -134,7 +187,6 @@ class BaseAgent:
                 "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
             },
         )
-        return message
 
     def _enforce_tool_call_policy(self, message: Any, tool_calls: list[Any]) -> Any:
         parallel_allowed = bool(getattr(self.llm, "parallel_tool_calls", True))

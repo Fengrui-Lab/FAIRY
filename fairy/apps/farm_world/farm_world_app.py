@@ -356,7 +356,7 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
-        """Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain)."""
+        """Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information."""
         return {
             **self._inventory.to_dict(),
             "management_regime": self._management_regime.to_dict(),

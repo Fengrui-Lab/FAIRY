@@ -18,26 +18,12 @@ class Messages:
     def system_notify(self, input,time=None):
         self.messages.append({"role": "system", "content": input,"time": time})
 
-    def llm_response(self, response, elapsed_time, message=None):
+    def llm_response(self, response, elapsed_time, message=None, *, add_to_history=True):
 
-        # if tools is not None and response.choices[0].message.tool_calls:
-        #     message_type = ToolCallRequestMessage
-        #     response_tool_calls = []
-        #     for tool in response.choices[0].message.tool_calls:
-        #         tool_call = ToolCall(
-        #             id=tool.id,
-        #             name=tool.function.name,
-        #             arguments=tool.function.arguments,
-        #             tool_type=tool.type
-        #         )
-        #         response_tool_calls.append(tool_call)
-        # else:
-        #     message_type = ChatResponseMessage
-        #     response_tool_calls = None
-
-        self.messages.append(
-            response.choices[0].message if message is None else message
-        )
+        if add_to_history:
+            self.messages.append(
+                response.choices[0].message if message is None else message
+            )
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         tokens = {
@@ -49,6 +35,7 @@ class Messages:
         self.runtime_metrics.append({
             "role": "assistant",
             "time": elapsed_time,
+            "accepted": add_to_history,
             "tokens": tokens
         })
         

@@ -11,7 +11,7 @@ from typing import Any
 
 CST = timezone(timedelta(hours=8))
 
-from fairy.agents.agent.base_agent import BaseAgent
+from fairy.agents.agent.base_agent import BaseAgent, RetryableLLMResponseError
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.scenarios.workflow import WorkflowStep
 
@@ -75,10 +75,21 @@ class Agent(BaseAgent):
         self.llm_turn_count = 0
         self.stop_reason: str | None = None
         self.max_llm_call_retries = int(os.getenv("FAIRY_AGENT_LLM_CALL_RETRIES", "5"))
+        if self.max_llm_call_retries < 0:
+            raise ValueError("FAIRY_AGENT_LLM_CALL_RETRIES must be nonnegative")
         self.llm_retry_sleep_seconds = float(os.getenv("FAIRY_AGENT_LLM_RETRY_SLEEP_S", "0"))
         self.rate_limit_retry_sleep_seconds = float(
             os.getenv("FAIRY_AGENT_RATE_LIMIT_SLEEP_S", "30")
         )
+
+    def response_policy(self) -> dict[str, Any]:
+        return {
+            "retry_rejection_reasons": ["output_truncated", "empty_response"],
+            "max_llm_call_retries": self.max_llm_call_retries,
+            "max_llm_call_attempts": self.max_llm_call_retries + 1,
+            # An agent attempt may include the SDK's own HTTP retries.
+            "retry_changes_request": False,
+        }
 
     def before_llm_turn(self, task: str) -> str:
         return ""
@@ -319,13 +330,24 @@ class Agent(BaseAgent):
     def _chat_completion_with_retries(self, messages, tools=None):
         attempt = 0
         while True:
+            self._check_limits(timeout_seconds=self.run_wall_timeout_seconds)
             try:
                 return self.chat_completion(messages, tools=tools)
+            except AgentRunLimitExceeded:
+                raise
             except Exception as exc:
+                self._check_limits(timeout_seconds=self.run_wall_timeout_seconds)
                 if attempt >= self.max_llm_call_retries:
+                    if isinstance(exc, RetryableLLMResponseError):
+                        self.stop_reason = exc.reason
                     raise
                 attempt += 1
                 sleep_seconds = self._llm_retry_sleep_for_error(exc)
+                if self.run_started_at_wall is not None and self.run_wall_timeout_seconds is not None:
+                    remaining = self.run_wall_timeout_seconds - (
+                        time.perf_counter() - self.run_started_at_wall
+                    )
+                    sleep_seconds = min(sleep_seconds, max(0.0, remaining))
                 self.record_event(
                     "llm_call_retry",
                     status="retrying",
@@ -334,6 +356,8 @@ class Agent(BaseAgent):
                     sleep_seconds=sleep_seconds,
                     error_type=type(exc).__name__,
                     error_message=str(exc),
+                    rejection_reason=getattr(exc, "reason", None),
+                    finish_reason=getattr(exc, "finish_reason", None),
                 )
                 if sleep_seconds > 0:
                     time.sleep(sleep_seconds)
@@ -360,6 +384,8 @@ class Agent(BaseAgent):
         self.record_event(
             "agent_run_start",
             status="running",
+            llm_config=self.llm_config(),
+            response_policy=self.response_policy(),
             max_tool_calls=max_tool_calls,
             timeout_seconds=timeout_seconds,
         )

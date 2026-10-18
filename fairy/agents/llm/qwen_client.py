@@ -18,6 +18,7 @@ class QwenClient(BaseLLM):
     def __init__(self, model, temperature=0.1, api_key=None, **kwargs):
         super().__init__(model, temperature, **kwargs)
         self.provider = "qwen"
+        self.enable_thinking = None
         self.api_key = api_key or os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
         self.base_url = kwargs.get("base_url") or QWEN_API_BASE
         self.api_client = OpenAI(
