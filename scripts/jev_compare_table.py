@@ -12,6 +12,14 @@ Cost: LLM gpt-4o-mini $0.15 / $0.60 per million input / output tokens (price
 table in scripts/iclr_validation_runner.py); Jev $0.042 per million input
 tokens, output free (docs.typesafe.ai/models).
 
+"Stuck" run: the same action with the same arguments 3 or more times in a row
+(the oracle never repeats an identical action even twice in these scenarios).
+
+Rows: one per scenario, then AVERAGE (all 15), AVERAGE_JEV_WON (scenarios where
+Jev's mean step match is higher) and AVERAGE_LLM_WON (the rest). Aggregate rows
+pool the runs of their scenarios (3 per scenario, so equal weight); counts are
+totals.
+
 Usage:
     PYTHONPATH=. python scripts/jev_compare_table.py \
         --scoring validation_runs/jev_mvp/step4_final_scoring/summary_v2.csv \
@@ -40,6 +48,21 @@ PRICE = {
 ARE_COLUMNS = [
     "are_step_match", "are_coverage", "are_actions", "are_cost_per_run_usd", "are_time_per_run_s",
 ]
+STUCK_REPEATS = 3
+
+
+def _longest_identical_repeat(workflow_path: Path) -> int:
+    workflow = json.load(open(workflow_path, encoding="utf-8"))
+    best = current = 0
+    previous = None
+    for step in workflow.values():
+        if step["op_type"] not in ("TOOL", "TOOL_ERROR"):
+            continue
+        key = step["tool_name"] + json.dumps(step["tool_args"] or {}, sort_keys=True)
+        current = current + 1 if key == previous else 1
+        previous = key
+        best = max(best, current)
+    return best
 
 
 def _mean(values: list[float]) -> float:
@@ -76,6 +99,10 @@ def load_runs(scoring_csv: Path) -> dict[tuple[str, str], list[dict]]:
                 "confidence": (report.get("controller_telemetry") or {}).get(
                     "avg_action_confidence"
                 ),
+                "stuck": _longest_identical_repeat(
+                    Path(cell_dir) / f"{scenario}.agent_workflow.json"
+                )
+                >= STUCK_REPEATS,
             }
         )
     return runs
@@ -91,12 +118,29 @@ def agent_columns(prefix: str, runs: list[dict]) -> dict[str, object]:
         f"{prefix}_order": round(_mean([r["order"] for r in runs]), 1),
         f"{prefix}_actions": round(_mean([r["actions"] for r in runs]), 1),
         f"{prefix}_runs_hit_limit": sum(r["hit_limit"] for r in runs),
+        f"{prefix}_runs_stuck": sum(r["stuck"] for r in runs),
         f"{prefix}_cost_per_run_usd": round(_mean([r["cost"] for r in runs]), 4),
         f"{prefix}_time_per_run_s": round(_mean([r["time"] for r in runs]), 1),
     }
     if prefix == "jev":
+        stuck = [r["confidence"] for r in runs if r["stuck"]]
+        other = [r["confidence"] for r in runs if not r["stuck"]]
         cols["jev_avg_confidence"] = round(_mean([r["confidence"] for r in runs]), 2)
+        cols["jev_confidence_stuck_runs"] = round(_mean(stuck), 2) if stuck else ""
+        cols["jev_confidence_other_runs"] = round(_mean(other), 2) if other else ""
     return cols
+
+
+def build_row(name: str, scenarios: list[str], runs, oracle_actions: dict[str, int]) -> dict:
+    row: dict[str, object] = {
+        "scenario": name,
+        "scenarios": len(scenarios),
+        "oracle_actions": round(_mean([oracle_actions[s] for s in scenarios]), 1),
+    }
+    for prefix in ("llm", "jev"):
+        row.update(agent_columns(prefix, [r for s in scenarios for r in runs[(s, prefix)]]))
+    row.update({c: "" for c in ARE_COLUMNS})
+    return row
 
 
 def main() -> None:
@@ -107,34 +151,20 @@ def main() -> None:
 
     runs = load_runs(args.scoring)
     scenarios = sorted({scenario for scenario, _ in runs})
-    rows = []
-    for scenario in scenarios:
-        row: dict[str, object] = {
-            "scenario": scenario,
-            "oracle_actions": _oracle_actions(scenario),
-        }
-        row.update(agent_columns("llm", runs[(scenario, "llm")]))
-        row.update(agent_columns("jev", runs[(scenario, "jev")]))
-        row.update({c: "" for c in ARE_COLUMNS})
-        rows.append(row)
-
-    average: dict[str, object] = {"scenario": "AVERAGE"}
-    for key in rows[0]:
-        if key == "scenario" or key in ARE_COLUMNS:
-            continue
-        values = [float(r[key]) for r in rows]
-        total = key.endswith("_runs_hit_limit") or key.endswith("_runs")
-        digits = 4 if key.endswith("_usd") else 2 if key == "jev_avg_confidence" else 1
-        average[key] = int(sum(values)) if total else round(_mean(values), digits)
-    average.update({c: "" for c in ARE_COLUMNS})
-    rows.append(average)
+    oracle_actions = {s: _oracle_actions(s) for s in scenarios}
+    rows = [build_row(s, [s], runs, oracle_actions) for s in scenarios]
+    jev_won = [r["scenario"] for r in rows if r["jev_step_match"] > r["llm_step_match"]]
+    llm_won = [s for s in scenarios if s not in jev_won]
+    rows.append(build_row("AVERAGE", scenarios, runs, oracle_actions))
+    rows.append(build_row("AVERAGE_JEV_WON", jev_won, runs, oracle_actions))
+    rows.append(build_row("AVERAGE_LLM_WON", llm_won, runs, oracle_actions))
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"wrote {args.out} ({len(rows) - 1} scenarios + average)")
+    print(f"wrote {args.out} ({len(scenarios)} scenarios + 3 aggregate rows)")
 
 
 if __name__ == "__main__":

@@ -49,6 +49,27 @@ Other averages (LLM / Jev):
 - time per run 23.6 s / 24.2 s;
 - runs that hit the 60-action limit 4 / 16 (of 45).
 
+### Cost, split by which agent had the higher step match
+
+| Scenarios | Count | LLM step match | Jev step match | LLM cost/run | Jev cost/run |
+|---|---|---|---|---|---|
+| Jev higher (field_prep, field_prep_planting, fertilizer, harvest, pesticide, planting) | 6 | 55.9 | 84.7 | $0.022 | $0.016 |
+| LLM higher (the other 9) | 9 | 51.9 | 22.1 | $0.023 | $0.025 |
+| All | 15 | 53.5 | 47.1 | $0.023 | $0.022 |
+
+### Jev's confidence in runs where it got stuck
+
+"Stuck" = the same action with the same arguments 3 or more times in a row. The oracle never repeats an identical action even twice in these scenarios.
+
+| | Runs | Jev average confidence |
+|---|---|---|
+| Stuck runs | 27 of 45 | 0.54 |
+| Other runs | 18 of 45 | 0.81 |
+
+- In the 3 scenarios that had both kinds of run, the stuck runs had lower confidence: harvest 0.75 vs 0.78, pesticide_outbreak 0.67 vs 0.73, planting 0.71 vs 0.78.
+- The LLM had 3 stuck runs of 45 (all in drone_survey).
+- Confidence here is the average over all of a run's actions, not only the repeated ones.
+
 Per-scenario counts (which agent had the better mean):
 
 | Measure | Jev better | LLM better | Equal |

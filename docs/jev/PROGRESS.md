@@ -446,3 +446,15 @@ Jev's runs vary much less than the LLM's (narrower lowest–highest ranges).
 - `docs/jev/results/summary.md`: short factual summary (setup, how measured, results, per-scenario counts, log observations, setup facts).
   - The log observations were checked the same way for both agents (run 1 of each agent's 5 lowest-scoring scenarios).
 - Rebuild the CSV: `python scripts/jev_compare_table.py --scoring validation_runs/jev_mvp/step4_final_scoring/summary_v2.csv --out docs/jev/results/comparison.csv`
+
+## Step 5 – additions requested by the user
+
+1. **Confidence in stuck runs.**
+   - "Stuck" = the same action with the same arguments 3+ times in a row. Checked first: no oracle repeats an identical action even twice.
+   - New columns: `llm_runs_stuck`, `jev_runs_stuck`, `jev_confidence_stuck_runs`, `jev_confidence_other_runs`.
+   - Result: 27 of 45 Jev runs stuck, average confidence 0.54; other runs 0.81. LLM: 3 of 45 stuck.
+2. **Cost on the scenarios Jev won, separately.**
+   - New aggregate rows `AVERAGE_JEV_WON` (6 scenarios) and `AVERAGE_LLM_WON` (9).
+   - Cost per run: Jev-won scenarios LLM $0.022 / Jev $0.016; LLM-won scenarios LLM $0.023 / Jev $0.025.
+
+Both are added to `comparison.csv` and `summary.md`. Script: `scripts/jev_compare_table.py`.
