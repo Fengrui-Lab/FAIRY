@@ -458,3 +458,22 @@ Jev's runs vary much less than the LLM's (narrower lowest–highest ranges).
    - Cost per run: Jev-won scenarios LLM $0.022 / Jev $0.016; LLM-won scenarios LLM $0.023 / Jev $0.025.
 
 Both are added to `comparison.csv` and `summary.md`. Script: `scripts/jev_compare_table.py`.
+
+## Checks before pushing (from run files)
+
+**LLM model**
+- All 45 Step 4 LLM runs record `provider: openai`, `model: gpt-4o-mini` and `llm_config.model: gpt-4o-mini` in `run_report.json`.
+- The exact dated model version returned by OpenAI is not logged.
+
+**Why Jev gets stuck** (run 1, longest repeat; from `jev_request_end` in `runtime_log.jsonl`)
+- The repeated action leaves the situation unchanged, so the next state looks the same and Jev picks the same action again.
+- In those picks its confidence is low and split across options.
+
+| Scenario | Repeated action | Result | Confidence during the repeat |
+|---|---|---|---|
+| drone_survey | `check_status` ×54 | "charging: true, about 30 min to full" | 0.47–0.57; next best `wait_for_notification` / `advance_time` at about 0.17 |
+| irrigation | `wait_for_notification(timeout=22)` ×20 | nothing | 0.89 at first, falling to 0.55 |
+| field_prep_plus | `wait_for_notification(timeout=0)` ×35 | nothing | 0.37–0.52 |
+| planting_plus | `advance_time(4h 10m)` ×5 | time moved, nothing else changed | 0.22 |
+
+- The wait length is in seconds (`fairy/apps/system.py`). `timeout=22` comes from the task number "22 days after sowing" (agreed menu rule) and waits 22 s for a notification that is about 2 h away.
