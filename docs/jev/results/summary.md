@@ -1,30 +1,32 @@
-# Jev vs LLM agent – 15 small farm scenarios
+# Results summary: Jev vs LLM agent on 15 small farm scenarios
 
-Data: `comparison.csv` (same folder). It has empty `are_*` columns for ARE results.
+Facts only. The full numbers are in `comparison.csv` (same folder), which also has empty `are_*` columns for the ARE results.
+
+## How to read this
+
+- **Scenario**: one farm task in the FAIRY simulator, for example "prepare the field" or "harvest".
+- **Oracle**: the reference solution written into each scenario. Scores compare an agent's actions with it.
+- **Step match** (0–100): how close the agent's list of actions is to the oracle's. 100 means identical.
+- **Coverage** (0–100): share of the oracle's actions the agent also did.
+- **Order** (0–100): whether the actions both did came in the same order. It counts only those shared actions.
+- **Confidence** (0–1): how sure Jev said it was about each choice. The LLM gives no such number.
+- All numbers are the mean of 3 runs per agent per scenario.
 
 ## What was compared
 
 | | LLM agent | Jev agent |
 |---|---|---|
-| Decision maker | gpt-4o-mini (OpenAI), temperature 0.1 | jev-latest (= jev-1.13.0, TypeSafe) |
-| How it acts | Writes its own tool calls and arguments | Picks the tool, then each argument, from fixed lists of options |
-| Input | English task text + FAIRY system prompt | Same English task text, no system prompt |
-| Limits | 60 actions, 600 s per run | Same |
-| Runs | 3 per scenario (45 total) | Same |
+| Decision maker | gpt-4o-mini (OpenAI) | jev-latest = jev-1.13.0 (TypeSafe) |
+| How it chooses an action | Writes the action and its values itself | Picks the action, then each value, from lists of options |
+| What it is told | English task text + FAIRY's standard instructions | Same English task text, no extra instructions |
+| Limits per run | 60 actions, 600 seconds | Same |
+| Runs | 3 per scenario, 45 in total | Same |
 
-Jev's argument options come only from the tool code and the farm state (all ridges, named items, numbers from the task text, evenly spaced values up to a maximum in the code). The reference solution (oracle) was not used to build them.
+Jev's options come only from the simulator's code and the farm's state. The oracle was not used to build them.
 
-## How it was measured
+## Results
 
-All scores come from FAIRY's existing comparison with the oracle, matching tool **and** exact arguments:
-- **Step match**: how close the agent's action sequence is to the oracle's (100 = identical).
-- **Coverage**: share of the oracle's distinct actions the agent performed.
-- **Order**: whether the shared actions come in the oracle's order. It counts only actions both did.
-- **Cost**: LLM $0.15 / $0.60 per million input / output tokens; Jev $0.042 per million input tokens, output free.
-
-## Results (mean of 3 runs)
-
-| Scenario | Oracle actions | LLM step match | Jev step match | LLM actions | Jev actions | LLM cost/run | Jev cost/run | Jev confidence |
+| Scenario | Oracle actions | LLM step match | Jev step match | LLM actions | Jev actions | LLM cost per run | Jev cost per run | Jev confidence |
 |---|---|---|---|---|---|---|---|---|
 | drone_survey | 9 | 36.7 | 5.0 | 35.3 | 60.0 | $0.053 | $0.018 | 0.58 |
 | drone_survey_plus | 12 | 27.8 | 7.0 | 44.3 | 60.0 | $0.029 | $0.022 | 0.42 |
@@ -44,33 +46,15 @@ All scores come from FAIRY's existing comparison with the oracle, matching tool 
 | **Average** | 18.5 | **53.5** | **47.1** | 27.0 | 39.7 | $0.023 | $0.022 | 0.65 |
 
 Other averages (LLM / Jev):
-- coverage 84.6 / 68.9;
-- order 98.4 / 100;
-- time per run 23.6 s / 24.2 s;
-- runs that hit the 60-action limit 4 / 16 (of 45).
 
-### Cost, split by which agent had the higher step match
-
-| Scenarios | Count | LLM step match | Jev step match | LLM cost/run | Jev cost/run |
-|---|---|---|---|---|---|
-| Jev higher (field_prep, field_prep_planting, fertilizer, harvest, pesticide, planting) | 6 | 55.9 | 84.7 | $0.022 | $0.016 |
-| LLM higher (the other 9) | 9 | 51.9 | 22.1 | $0.023 | $0.025 |
-| All | 15 | 53.5 | 47.1 | $0.023 | $0.022 |
-
-### Jev's confidence in runs where it got stuck
-
-"Stuck" = the same action with the same arguments 3 or more times in a row. The oracle never repeats an identical action even twice in these scenarios.
-
-| | Runs | Jev average confidence |
+| Measure | LLM | Jev |
 |---|---|---|
-| Stuck runs | 27 of 45 | 0.54 |
-| Other runs | 18 of 45 | 0.81 |
+| Coverage | 84.6 | 68.9 |
+| Order | 98.4 | 100 |
+| Time per run | 23.6 s | 24.2 s |
+| Runs stopped by the 60-action limit | 4 of 45 | 16 of 45 |
 
-- In the 3 scenarios that had both kinds of run, the stuck runs had lower confidence: harvest 0.75 vs 0.78, pesticide_outbreak 0.67 vs 0.73, planting 0.71 vs 0.78.
-- The LLM had 3 stuck runs of 45 (all in drone_survey).
-- Confidence here is the average over all of a run's actions, not only the repeated ones.
-
-Per-scenario counts (which agent had the better mean):
+Which agent had the better mean, scenario by scenario:
 
 | Measure | Jev better | LLM better | Equal |
 |---|---|---|---|
@@ -80,27 +64,62 @@ Per-scenario counts (which agent had the better mean):
 | Lower cost | 8 | 7 | 0 |
 | Shorter time | 6 | 9 | 0 |
 
-## Observations from the run logs
+### Cost, split by which agent scored higher
 
-Checked the same way for both agents: run 1 of each agent's 5 lowest-scoring scenarios.
+| Scenarios | Count | LLM step match | Jev step match | LLM cost per run | Jev cost per run |
+|---|---|---|---|---|---|
+| Jev higher (field_prep, field_prep_planting, fertilizer, harvest, pesticide, planting) | 6 | 55.9 | 84.7 | $0.022 | $0.016 |
+| LLM higher (the other 9) | 9 | 51.9 | 22.1 | $0.023 | $0.025 |
+| All | 15 | 53.5 | 47.1 | $0.023 | $0.022 |
+
+Waiting steps: 8 of the 9 scenarios where the LLM scored higher include a waiting step in the oracle (charging a drone or waiting for a notification). None of the 6 scenarios where Jev scored higher do.
+
+Cost uses public prices per million "tokens" (a token is roughly ¾ of a word): LLM $0.15 for text sent in and $0.60 for text sent back; Jev $0.042 for text sent in, nothing for answers.
+
+## Runs where an agent got stuck
+
+"Stuck" means doing the same action with the same values 3 or more times in a row. The oracle never repeats an identical action, even twice.
+
+| | LLM | Jev |
+|---|---|---|
+| Stuck runs | 3 of 45 (all in drone_survey) | 27 of 45 |
+| Jev confidence in stuck runs | – | 0.54 |
+| Jev confidence in other runs | – | 0.81 |
+
+In the 3 scenarios that had both stuck and normal Jev runs, the stuck runs had lower confidence: harvest 0.75 vs 0.78, pesticide_outbreak 0.67 vs 0.73, planting 0.71 vs 0.78.
+
+### Why Jev gets stuck: what is known and what is not
+
+> **Flag for readers:** part of the cause lies in how the options were built (our design), and part lies in Jev itself.
+
+| Cause | Status | Evidence | Scenarios |
+|---|---|---|---|
+| The right waiting time is not among Jev's options. The task gives waits in minutes and hours; the tool counts in seconds. Jev's waiting options are only numbers from the task text (for example 0–10, 22, 30), while the oracle waits 1800, 7200 or 21600 seconds. So each wait ends with nothing happening, the situation looks the same, and Jev waits again. | **Known, from our design** | Option lists and oracle values in the run files | irrigation, field_prep_plus, planting_plus |
+| A usable option was there, but Jev did not pick it. In drone_survey it kept checking the drone (about 0.5) instead of moving the clock forward while the drone charged (about 0.17). The farm clock moved only 6 minutes in 60 actions. | **Known, from Jev's choices** | Jev's recorded choices and the farm clock | drone_survey |
+| Why seeing its own repeats does not make Jev change course. All earlier actions are in what Jev receives, yet it picks the same one again. | **Not known** | Jev gives no explanation for its choices. TypeSafe's own docs list related weak spots (counting, reasoning over several steps, units). | all stuck runs |
+
+The LLM does not have the first problem, because it converts minutes to seconds itself.
+
+## What the run logs show
+
+The same check was done for both agents: run 1 of each agent's 5 lowest-scoring scenarios.
 
 | | LLM (5 lowest) | Jev (5 lowest) |
 |---|---|---|
 | Longest run of the same action in a row | 2, 10, 7, 3, 16 | 54, 14, 20, 35, 7 |
 | Actions that returned an error | 17/33, 44/60, 4/25, 0/18, 40/60 | 0/60, 4/60, 1/51, 0/53, 1/46 |
-| Used a tool the oracle does not use | 5 of 5 | 3 of 5 |
-| Skipped a tool the oracle uses | 5 of 5 | 4 of 5 |
+| Used an action the oracle does not use | 5 of 5 | 3 of 5 |
+| Skipped an action the oracle uses | 5 of 5 | 4 of 5 |
 
-LLM's 5 lowest: drone_survey_plus, drone_survey, field_prep_plus, pesticide_outbreak_plus, harvest.
-Jev's 5 lowest: drone_survey, drone_survey_plus, irrigation, field_prep_plus, pesticide_outbreak_plus.
+- LLM's 5 lowest: drone_survey_plus, drone_survey, field_prep_plus, pesticide_outbreak_plus, harvest.
+- Jev's 5 lowest: drone_survey, drone_survey_plus, irrigation, field_prep_plus, pesticide_outbreak_plus.
+- Jev's confidence was 0.70 or higher in exactly the 8 scenarios where it scored highest. Across all 15, confidence and score rose and fell together.
+- Jev's 3 runs per scenario were usually closer to each other than the LLM's.
 
-- Jev's average confidence was 0.70 or higher in the 8 scenarios where its step match was highest. Across the 15 scenarios, confidence and step match moved together (correlation 0.9).
-- The spread between Jev's 3 runs was usually smaller than the LLM's (see the min/max columns in the CSV).
-
-## Setup facts that affect the comparison
+## Things that affect the comparison
 
 - One LLM (gpt-4o-mini) and one Jev version were tested.
-- The original task texts are in Chinese. Both agents received English translations; the LLM also received FAIRY's system prompt.
-- Jev's results depend on how its options are built. One change was made during testing: the end ridge is asked after the start ridge. Before that change, Jev's average step match was 30.0 (1 run per scenario).
-- These 15 scenarios have no built-in success check; the scores measure similarity to the oracle, not farm outcome.
+- The original tasks are in Chinese. Both agents got the same English translation. Only the LLM also got FAIRY's standard instructions.
+- Jev's results depend on how its option lists are built. One change was made during testing: the end ridge is now chosen after the start ridge. Before that change, Jev's average step match was 30.0 (1 run per scenario).
+- These 15 scenarios have no built-in pass/fail check. The scores measure how close the actions are to the oracle, not how well the farm ends up.
 - 3 runs per agent per scenario.
