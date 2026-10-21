@@ -1,0 +1,1174 @@
+{
+  "schema_version": 1,
+  "evidence_package_id": "heinong84_public_evidence_v1",
+  "created_date": "2026-10-20",
+  "cultivar": "HEINONG84",
+  "status": "public_observation_evidence_with_quality_flags_not_calibration_results",
+  "record_count": 16,
+  "policy": {
+    "default_use_for_fit": false,
+    "aggregate_variety_descriptions_are_not_station_year_observations": true,
+    "do_not_substitute_harvest_dates_for_maturity": true,
+    "do_not_assign_unknown_moisture_basis": true,
+    "do_not_silently_repair_source_coordinates_or_dates": true,
+    "no_parameter_fitting_or_profile_change_in_this_package": true
+  },
+  "sources": [
+    {
+      "source_id": "qiao2023",
+      "title": "Effects of Sowing by Stages on Agronomic Characters and Timeliness Loss of Heinong 84",
+      "authors": "Qiao Jinyou et al.",
+      "year": 2023,
+      "journal": "Soybean Science 42(1):83-90",
+      "doi": "10.11861/j.issn.1000-9841.2023.01.0083",
+      "url": "https://www.aeeisp.com/ddkx/cn/article/pdf/preview/55667413-2ed0-4fff-87ec-a7b452087ab4.pdf",
+      "access": "public publisher PDF, downloaded successfully without login",
+      "pdf": {
+        "path": "validation_runs/wofost_calibration_20261020/sources/hn84_qiao_2023.pdf",
+        "sha256": "17338681cf047a83441590f854c9207cf006859345780c3f24e08d9668bb3575",
+        "bytes": 718372
+      },
+      "extracted_text": {
+        "path": "validation_runs/wofost_calibration_20261020/sources/hn84_qiao_2023.txt",
+        "sha256": "a8ef02d1c11e083daea8579c66edc8da8a14cd0a2365e39d65c5f259df8239ac",
+        "bytes": 56174
+      },
+      "table3_location": "Printed p.88, PDF page 6",
+      "table4_role": "regression coefficients, not additional observations",
+      "table5_exists": false,
+      "note": "Records transcribe factual measurements; no long narrative excerpts reproduced."
+    },
+    {
+      "source_id": "yan2024",
+      "title": "Positive Correlation of Lodging Resistance and Soybean Yield under the Influence of Uniconazole",
+      "authors": "Yan Chao et al.",
+      "year": 2024,
+      "journal": "Agronomy 14(4):754",
+      "doi": "10.3390/agronomy14040754",
+      "url": "https://www.mdpi.com/2073-4395/14/4/754",
+      "download_url": "https://mdpi-res.com/d_attachment/agronomy/agronomy-14-00754/article_deploy/agronomy-14-00754.pdf",
+      "access": "Public publisher open-access PDF; main HTML returned 403 but official PDF downloaded with HTTP 200",
+      "license": "CC BY 4.0",
+      "pdf": {
+        "path": "validation_runs/wofost_calibration_20261020/sources/hn84_agronomy_2024_754.pdf",
+        "sha256": "745d74a43e6b15dde357919f8ae24c709d61551b8ffcd814262f66d5159e2528",
+        "bytes": 11069485
+      },
+      "extracted_text": {
+        "path": "validation_runs/wofost_calibration_20261020/sources/hn84_agronomy_2024_754.txt",
+        "sha256": "dddc10e97f12fa76cdbfd24dcbcd35ccbbb9223c9aa5a8601ed573750e885106",
+        "bytes": 143042
+      },
+      "table3_and4_location": "PDF page 11 of 16",
+      "supplement_url": "https://www.mdpi.com/article/10.3390/agronomy14040754/s1",
+      "supplement_scope": "reported biomass/fiber and lodging correlations, not a full station-year calendar"
+    }
+  ],
+  "contexts": {
+    "qiao2023_harbin_xiangyang": {
+      "location_name_reported": "Northeast Agricultural University Xiangyang Base, Xiangfang District, Harbin",
+      "location_coordinates_reported": {
+        "longitude": "125°42′ E",
+        "latitude": "44°04′ N",
+        "elevation_m": 184
+      },
+      "coordinates_verified": false,
+      "experimental_design": {
+        "randomized_block": true,
+        "plot_replicates_per_sowing_date": 3,
+        "plot_length_m": 5,
+        "plot_width_m": 1.3,
+        "ridges_per_plot": 2,
+        "ridge_width_m_inferred": 0.65,
+        "rows_per_ridge": 2,
+        "sowing_method": "manual double-row ridge sowing",
+        "harvest_sample_area_per_plot_m2": 2,
+        "stand_subsample_repeats_reported": 5
+      },
+      "management": {
+        "fertilizer_product": "Compound fertilizer 12-18-15",
+        "fertilizer_product_kg_ha": 300,
+        "application": "below seed at sowing",
+        "irrigation_details": null,
+        "other_management": "reported as identical across sowing treatments, quantities unavailable"
+      },
+      "source_conflicts": {
+        "sowing_interval_text_days": 3,
+        "sowing_interval_in_tables_days": 4,
+        "named_site_vs_printed_coordinates": "conflict; no automatic correction",
+        "soil_particle_percent_sum": 102.7
+      },
+      "phenology_information": "No observed DOE, DOA or DOM. October 5 is harvest sampling only. Discussion states that the May 24 sowing was not fully mature.",
+      "weather_availability": "No daily machine-readable series in source; must resolve site before selecting station or gridded forcing"
+    },
+    "yan2024_harbin_neau": {
+      "location_name_reported": "Northeast Agricultural University Experimental Station, Harbin",
+      "location_coordinates_reported": "126°45′ E, 45°42′ E",
+      "coordinates_verified": false,
+      "soil_reported": {
+        "soil_type": "Black soil",
+        "organic_matter_g_kg": 32.46,
+        "available_N_mg_kg": 82.51,
+        "available_P_mg_kg": 58.2,
+        "available_K_mg_kg": 172.2
+      },
+      "experimental_design": {
+        "plot_ridges": 6,
+        "ridge_length_m": 10,
+        "ridge_spacing_m": 0.65,
+        "field_replicates": 3,
+        "yield_harvest_sample_area_m2": 2,
+        "table_uncertainty": "Mean ± standard error, n=5; relation to the three field replicates requires clarification"
+      },
+      "management": {
+        "control": "water spray",
+        "R1_spray_day_reported": "07-13",
+        "spray_year_resolution": "Not separately identified for 2021 and 2023",
+        "spray_volume_L_ha": 225,
+        "uniconazole_treatment_not_included_in_records_mg_L": 50,
+        "fertilizer_details": null,
+        "irrigation_details": null,
+        "other_management": "Standard agronomic measures including necessary fertilizers, herbicides and irrigation; rates and dates not reported"
+      },
+      "phenology_information": "July 13 is a reported R1 spray event, but year-specific onset dates and other calendar dates are not provided; not used as a phenology target",
+      "grain_moisture_information": "No grain drying or water-content standard identified in the full PDF; absolute dry-matter and 13% conversions deliberately absent"
+    }
+  },
+  "records": [
+    {
+      "record_id": "qiao2023_hn84_2021_sow_04_18",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 1,
+        "reported_sowing_date": "2021-04-18"
+      },
+      "dates": {
+        "sowing": "2021-04-18",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 1781.67,
+        "plus_minus": 389.07,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.86,
+        "plus_minus": 0.43,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 17.67,
+        "plus_minus": 2.08,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 1567.8696,
+        "grain_dry_matter_plus_minus_kg_ha": 342.3816,
+        "equivalent_13pct_moisture_kg_mu": 120.14326436781609,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 26.23613793103448,
+        "harvest_stand_plants_m2": 27.184615384615388,
+        "harvest_stand_plus_minus_plants_m2": 3.2,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_04_22",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 2,
+        "reported_sowing_date": "2021-04-22"
+      },
+      "dates": {
+        "sowing": "2021-04-22",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2423.24,
+        "plus_minus": 107.51,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.44,
+        "plus_minus": 0.53,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 18.22,
+        "plus_minus": 1.71,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2132.4512,
+        "grain_dry_matter_plus_minus_kg_ha": 94.6088,
+        "equivalent_13pct_moisture_kg_mu": 163.40622222222223,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 7.249716475095785,
+        "harvest_stand_plants_m2": 28.030769230769227,
+        "harvest_stand_plus_minus_plants_m2": 2.6307692307692307,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_04_26",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 3,
+        "reported_sowing_date": "2021-04-26"
+      },
+      "dates": {
+        "sowing": "2021-04-26",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2510.45,
+        "plus_minus": 269.51,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.55,
+        "plus_minus": 0.21,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 19.0,
+        "plus_minus": 2.6,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2209.196,
+        "grain_dry_matter_plus_minus_kg_ha": 237.1688,
+        "equivalent_13pct_moisture_kg_mu": 169.2870498084291,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 18.173854406130268,
+        "harvest_stand_plants_m2": 29.23076923076923,
+        "harvest_stand_plus_minus_plants_m2": 4.0,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_04_30",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 4,
+        "reported_sowing_date": "2021-04-30"
+      },
+      "dates": {
+        "sowing": "2021-04-30",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2490.44,
+        "plus_minus": 566.27,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.51,
+        "plus_minus": 0.61,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 15.22,
+        "plus_minus": 0.19,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2191.5872,
+        "grain_dry_matter_plus_minus_kg_ha": 498.31759999999997,
+        "equivalent_13pct_moisture_kg_mu": 167.93771647509578,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 38.18525670498084,
+        "harvest_stand_plants_m2": 23.415384615384614,
+        "harvest_stand_plus_minus_plants_m2": 0.2923076923076923,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_04",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 5,
+        "reported_sowing_date": "2021-05-04"
+      },
+      "dates": {
+        "sowing": "2021-05-04",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2633.96,
+        "plus_minus": 153.87,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.25,
+        "plus_minus": 0.26,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 19.67,
+        "plus_minus": 2.33,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2317.8848000000003,
+        "grain_dry_matter_plus_minus_kg_ha": 135.4056,
+        "equivalent_13pct_moisture_kg_mu": 177.61569348659006,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 10.375908045977011,
+        "harvest_stand_plants_m2": 30.261538461538464,
+        "harvest_stand_plus_minus_plants_m2": 3.5846153846153848,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_08",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 6,
+        "reported_sowing_date": "2021-05-08"
+      },
+      "dates": {
+        "sowing": "2021-05-08",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2659.91,
+        "plus_minus": 360.15,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.4,
+        "plus_minus": 0.6,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 19.22,
+        "plus_minus": 2.04,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2340.7208,
+        "grain_dry_matter_plus_minus_kg_ha": 316.93199999999996,
+        "equivalent_13pct_moisture_kg_mu": 179.36557854406132,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 24.28597701149425,
+        "harvest_stand_plants_m2": 29.569230769230767,
+        "harvest_stand_plus_minus_plants_m2": 3.1384615384615384,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_12",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 7,
+        "reported_sowing_date": "2021-05-12"
+      },
+      "dates": {
+        "sowing": "2021-05-12",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2791.69,
+        "plus_minus": 77.63,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.84,
+        "plus_minus": 0.51,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 21.0,
+        "plus_minus": 1.2,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2456.6872,
+        "grain_dry_matter_plus_minus_kg_ha": 68.31439999999999,
+        "equivalent_13pct_moisture_kg_mu": 188.2518927203065,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 5.234819923371647,
+        "harvest_stand_plants_m2": 32.30769230769231,
+        "harvest_stand_plus_minus_plants_m2": 1.846153846153846,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_16",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 8,
+        "reported_sowing_date": "2021-05-16"
+      },
+      "dates": {
+        "sowing": "2021-05-16",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2822.27,
+        "plus_minus": 322.52,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 11.8,
+        "plus_minus": 0.09,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 25.56,
+        "plus_minus": 5.01,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2483.5976,
+        "grain_dry_matter_plus_minus_kg_ha": 283.81759999999997,
+        "equivalent_13pct_moisture_kg_mu": 190.31399233716473,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 21.74847509578544,
+        "harvest_stand_plants_m2": 39.32307692307692,
+        "harvest_stand_plus_minus_plants_m2": 7.707692307692307,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_20",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 9,
+        "reported_sowing_date": "2021-05-20"
+      },
+      "dates": {
+        "sowing": "2021-05-20",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2855.72,
+        "plus_minus": 252.27,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 12.43,
+        "plus_minus": 0.85,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 22.78,
+        "plus_minus": 1.02,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2513.0335999999998,
+        "grain_dry_matter_plus_minus_kg_ha": 221.9976,
+        "equivalent_13pct_moisture_kg_mu": 192.5696245210728,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 17.011310344827585,
+        "harvest_stand_plants_m2": 35.04615384615385,
+        "harvest_stand_plus_minus_plants_m2": 1.5692307692307692,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "qiao2023_hn84_2021_sow_05_24",
+      "source_id": "qiao2023",
+      "source_locator": "p.88 Table3; p.85 Section1.4.2; p.87 Section2.2.1; p.89 Discussion",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "qiao2023_harbin_xiangyang",
+      "treatment": {
+        "factor": "sowing_date",
+        "sequence": 10,
+        "reported_sowing_date": "2021-05-24"
+      },
+      "dates": {
+        "sowing": "2021-05-24",
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": "2021-10-05"
+      },
+      "observed_yield": {
+        "mean": 2454.19,
+        "plus_minus": 372.73,
+        "uncertainty_type": "unknown",
+        "unit": "kg/ha",
+        "grain_moisture_fraction": 0.12,
+        "measurement": "hand-harvested and fully hand-threshed 2m2 sample per plot; adjusted by measured grain moisture to 12pct",
+        "biological_or_recovered_basis": "grain mass from sampled harvest, not whole-field machine-recovered yield"
+      },
+      "observed_grain_moisture_at_harvest": {
+        "mean": 14.98,
+        "plus_minus": 1.59,
+        "uncertainty_type": "unknown",
+        "unit": "percent_wet_basis",
+        "method": "weighed sample and oven-dried sample mass"
+      },
+      "observed_harvest_stand": {
+        "mean": 23.56,
+        "plus_minus": 0.38,
+        "uncertainty_type": "unknown",
+        "unit": "plants_per_ridge_meter",
+        "definition": "surviving plants in one metre of ridge length at harvest, summed over the two rows on that ridge",
+        "is_sowing_density": false
+      },
+      "derived": {
+        "grain_dry_matter_kg_ha": 2159.6872,
+        "grain_dry_matter_plus_minus_kg_ha": 328.0024,
+        "equivalent_13pct_moisture_kg_mu": 165.49327203065135,
+        "equivalent_13pct_moisture_plus_minus_kg_mu": 25.134283524904216,
+        "harvest_stand_plants_m2": 36.246153846153845,
+        "harvest_stand_plus_minus_plants_m2": 0.5846153846153846,
+        "formulas": {
+          "dry": "reported_12pct_yield * (1-0.12)",
+          "equivalent_13pct_kg_mu": "reported_12pct_yield * 0.88 / 0.87 / 15",
+          "harvest_stand_m2": "plants_per_ridge_meter / 0.65; ridge width inferred from two ridges spanning1.3m; do not multiply by2"
+        }
+      },
+      "quality_flags": [
+        "site_coordinates_conflict_with_named_harbin_xiangyang_location",
+        "text_says_3day_spacing_but_tables_are_4days",
+        "no_observed_emergence_anthesis_or_maturity_dates",
+        "harvest_date_is_not_maturity_date",
+        "target_sowing_density_not_reported",
+        "plus_minus_uncertainty_definition_not_identified",
+        "weather_not_published_as_machine_readable_timeseries",
+        "authors_state_late_sown_crop_not_fully_mature_at_harvest"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "candidate_only_after_location_weather_and_native_vs_sample_harvest_basis_resolved",
+        "density": "harvest_survival_check_only; not a sowing-density treatment"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2021_D20_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table3; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D20_CK",
+        "planting_density_plants_ha": 200000,
+        "planting_density_plants_m2": 20,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 2906.0,
+        "plus_minus": 65.65,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2021_D30_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table3; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D30_CK",
+        "planting_density_plants_ha": 300000,
+        "planting_density_plants_m2": 30,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 3076.94,
+        "plus_minus": 63.85,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2021_D40_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table3; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2021,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D40_CK",
+        "planting_density_plants_ha": 400000,
+        "planting_density_plants_m2": 40,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 2735.06,
+        "plus_minus": 60.44,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2023_D20_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table4; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2023,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D20_CK",
+        "planting_density_plants_ha": 200000,
+        "planting_density_plants_m2": 20,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 2539.0,
+        "plus_minus": 77.96,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2023_D30_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table4; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2023,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D30_CK",
+        "planting_density_plants_ha": 300000,
+        "planting_density_plants_m2": 30,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 2805.26,
+        "plus_minus": 36.26,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    },
+    {
+      "record_id": "yan2024_hn84_2023_D40_CK",
+      "source_id": "yan2024",
+      "source_locator": "p.11 Table4; pp.2-3 Sections2.1-2.2; p.5 Section2.3.3",
+      "cultivar": "HEINONG84",
+      "trial_year": 2023,
+      "context_id": "yan2024_harbin_neau",
+      "treatment": {
+        "factor": "planting_density",
+        "label": "D40_CK",
+        "planting_density_plants_ha": 400000,
+        "planting_density_plants_m2": 40,
+        "foliar_treatment": "water control; no uniconazole"
+      },
+      "dates": {
+        "sowing": null,
+        "emergence": null,
+        "anthesis": null,
+        "physiological_maturity": null,
+        "harvest": null
+      },
+      "observed_yield": {
+        "mean": 2475.44,
+        "plus_minus": 25.04,
+        "uncertainty_type": "SE",
+        "reported_table_n": 5,
+        "unit": "kg/ha",
+        "grain_moisture_fraction": null,
+        "measurement": "2m2 uniformly dense area manually harvested per plot",
+        "biological_or_recovered_basis": "sample grain yield; moisture and drying basis unreported"
+      },
+      "derived": null,
+      "quality_flags": [
+        "second_coordinate_direction_printed_E_instead_of_latitude_direction",
+        "sowing_emergence_anthesis_maturity_and_harvest_dates_missing",
+        "grain_moisture_basis_unknown",
+        "fertilizer_and_irrigation_rates_and_dates_missing",
+        "july13_R1_spray_day_not_disaggregated_by_year",
+        "table_n5_and_field3replicate_sampling_units_need_confirmation"
+      ],
+      "fit_eligibility": {
+        "enabled_by_default": false,
+        "phenology": false,
+        "yield": "not_ready; moisture, calendar and management metadata missing",
+        "density": "independent qualitative response candidate; two control years peak at30plantsm2"
+      }
+    }
+  ],
+  "additional_data_leads_not_observations": [
+    {
+      "name": "CNERNA AA065: Soybean phenology",
+      "url": "https://www.cnern.org.cn/data/meta?id=16968",
+      "scope": "1998–2024, includes Hailun; 235 records across stations",
+      "fields_reported_in_metadata": [
+        "sowing",
+        "emergence",
+        "flowering",
+        "podding",
+        "seed filling",
+        "maturity",
+        "harvest"
+      ],
+      "access": "Agreement sharing; apply through the resource cart; not anonymously downloaded in this work",
+      "HN84_presence": "unknown"
+    },
+    {
+      "name": "Hailun 2004–2023 biological monitoring dataset",
+      "url": "https://www.nesdc.org.cn/sdo/detail?id=67e0c1997e28172b56983c28",
+      "doi": "10.12199/nesdc.ecodb.2021YFF0703900.hla.2025.2",
+      "fields_reported_in_metadata": [
+        "soybean phenology",
+        "yield",
+        "LAI and biomass",
+        "fertilizer",
+        "irrigation"
+      ],
+      "access": "Agreement sharing; online application or contact the producer; not downloaded",
+      "HN84_presence": "unknown"
+    }
+  ]
+}

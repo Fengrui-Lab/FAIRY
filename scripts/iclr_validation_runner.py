@@ -94,6 +94,8 @@ RUNNER_DEFAULTS = {
     "parallel_tool_calls": True,
     "system_prompt_mode": "fairy",
     "scenario_kwargs": None,
+    "crop_backend": None,
+    "wofost_config": None,
     "init_kwargs": None,
     "detail": None,
     "a2a": False,
@@ -466,8 +468,9 @@ def _load_runner_config(config_path: Path | None) -> dict:
     unknown = sorted(set(config) - set(RUNNER_DEFAULTS))
     if unknown:
         raise ValueError(f"Unknown runner config field(s): {', '.join(unknown)}")
-    if "output_root" in config and config["output_root"] is not None:
-        config["output_root"] = Path(str(config["output_root"]))
+    for field_name in ("output_root", "wofost_config"):
+        if field_name in config and config[field_name] is not None:
+            config[field_name] = Path(str(config[field_name]))
     for field_name in (
         "repeats",
         "max_concurrent",
@@ -532,6 +535,36 @@ def _merge_detail_into_creation_kwargs(
         raise ValueError("--scenario-kwargs must decode to a JSON object")
     payload["detailed_briefing"] = detail
     return json.dumps(payload, separators=(",", ":")), detail
+
+
+def _merge_crop_backend_into_creation_kwargs(
+    scenario_kwargs: str | None,
+    crop_backend: str | None,
+    wofost_config: Path | None,
+) -> str | None:
+    """Resolve backend options once, before starting any sweep subprocesses."""
+    if crop_backend is None and wofost_config is None:
+        return scenario_kwargs
+    try:
+        payload = json.loads(scenario_kwargs or "{}")
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--scenario-kwargs must be valid JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("--scenario-kwargs must decode to a JSON object")
+    if crop_backend is not None:
+        payload["crop_backend"] = crop_backend
+    if wofost_config is not None:
+        if payload.get("crop_backend", "wofost") != "wofost":
+            raise ValueError("--wofost-config requires --crop-backend wofost")
+        try:
+            config = json.loads(wofost_config.expanduser().read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"Cannot read --wofost-config: {exc}") from exc
+        if not isinstance(config, dict):
+            raise ValueError("--wofost-config must contain a JSON object")
+        payload["crop_backend"] = "wofost"
+        payload["crop_backend_options"] = config
+    return json.dumps(payload, separators=(",", ":"))
 
 
 def _parse_combined(rationale: str) -> float | None:
@@ -754,6 +787,18 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--crop-backend",
+        choices=("legacy", "wofost"),
+        default=defaults.get("crop_backend"),
+        help="Crop backend for every cell (default: scenario setting).",
+    )
+    parser.add_argument(
+        "--wofost-config",
+        type=Path,
+        default=defaults.get("wofost_config"),
+        help="JSON object of WOFOST backend options; implies --crop-backend wofost.",
+    )
+    parser.add_argument(
         "--init-kwargs",
         default=defaults.get("init_kwargs"),
         help=(
@@ -813,6 +858,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--max-output-tokens must be a positive integer")
     if args.system_prompt_mode not in {"fairy", "are"}:
         parser.error("--system-prompt-mode must be one of: fairy, are")
+    if args.crop_backend not in {None, "legacy", "wofost"}:
+        parser.error("--crop-backend must be one of: legacy, wofost")
+    try:
+        args.scenario_kwargs = _merge_crop_backend_into_creation_kwargs(
+            args.scenario_kwargs, args.crop_backend, args.wofost_config
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     return args
 
 

@@ -154,6 +154,7 @@ class TractorApp(App):
         self._operation_log: list[dict[str, Any]] = []
         self._completed_prep_ops: list[str] = []
         self._attached_implement: str | None = None  # currently mounted attachment
+        self._harvest_moisture_limit_pct: float = 18.0
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -164,6 +165,7 @@ class TractorApp(App):
             "seed_hopper": self._seed_hopper,
             "grain_bin_kg": round(self._grain_bin_kg, 1),
             "grain_bin_max_kg": _GRAIN_BIN_MAX_KG,
+            "harvest_moisture_limit_pct": self._harvest_moisture_limit_pct,
             "available_implements": ATTACHMENTS,
             "attached_implement": self._attached_implement,
             # Without this, soft_reset loses scenario-init prep state
@@ -175,6 +177,9 @@ class TractorApp(App):
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        self.configure_harvest(
+            max_grain_moisture_pct=state_dict.get("harvest_moisture_limit_pct", 18.0)
+        )
         self._fuel_tank_l = state_dict.get("fuel_tank_l", _FUEL_TANK_MAX_L)
         self._pesticide_tank_l = state_dict.get("pesticide_tank_l", 0.0)
         self._fertilizer_spreader_kg = state_dict.get("fertilizer_spreader_kg", 0.0)
@@ -196,6 +201,21 @@ class TractorApp(App):
         self._operation_log = []
         self._completed_prep_ops = []
         self._attached_implement = None
+        self._harvest_moisture_limit_pct = 18.0
+
+    def configure_harvest(self, *, max_grain_moisture_pct: float = 18.0) -> None:
+        """Configure scenario equipment capability; keep legacy's 18% default.
+
+        A wet-harvest machine can accept grain up to 25%, with the existing
+        wet-harvest loss and dry-before-storage rules still applied. This is
+        scenario configuration, not an agent tool to bypass operating gates.
+        """
+        import math
+
+        limit = float(max_grain_moisture_pct)
+        if not math.isfinite(limit) or not 15.0 <= limit <= 25.0:
+            raise ValueError("Harvest grain moisture capability must be in [15, 25] percent")
+        self._harvest_moisture_limit_pct = limit
 
     # ------------------------------------------------------------------
     # Loading tools — transfer from warehouse to onboard tanks/hoppers
@@ -366,6 +386,7 @@ class TractorApp(App):
             "seed_hopper": self._seed_hopper,
             "grain_bin_kg": round(self._grain_bin_kg, 1),
             "grain_bin_max_kg": _GRAIN_BIN_MAX_KG,
+            "harvest_moisture_limit_pct": self._harvest_moisture_limit_pct,
             "available_implements": ATTACHMENTS,
             "attached_implement": self._attached_implement,
         }
@@ -1481,11 +1502,12 @@ class TractorApp(App):
             return {
                 "error": f"Ridges are not mature enough for harvest: {immature_ridges}"
             }
-        bad_moisture = [r.ridge_id for r in ridges if r.grain_moisture_pct > 18.0]
+        limit = self._harvest_moisture_limit_pct
+        bad_moisture = [r.ridge_id for r in ridges if r.grain_moisture_pct > limit]
         if bad_moisture:
             return {
                 "error": (
-                    "Grain moisture too high for harvest (>18%) on ridges "
+                    f"Grain moisture too high for harvest (>{limit:g}%) on ridges "
                     f"{bad_moisture}"
                 )
             }

@@ -44,12 +44,14 @@ import json
 import logging
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
+
+from fairy.scenarios.fos.provenance import crop_backend_provenance
 
 logging.basicConfig(
     level=logging.INFO,
@@ -213,11 +215,39 @@ class BaselineResult:
     duration_s: float
     donothing: dict[str, Any] | None = None
     tool_errors: list[dict[str, str]] | None = None
+    crop_backend_provenance: dict[str, Any] = field(
+        default_factory=lambda: {"backend": "legacy"}
+    )
+
+
+def _require_wofost_maturity(
+    physics: Any, extrapolation: dict[str, Any], scenario_id: str
+) -> None:
+    """A failed native season must not be published as a usable baseline."""
+    if getattr(physics, "crop_backend_name", "legacy") != "wofost":
+        return
+    immature = [
+        rid for rid, phen in physics.phenology.states.items()
+        if getattr(phen, "planted", False)
+        and not getattr(physics.yield_recovery.states.get(rid), "r8_reached", False)
+    ]
+    if extrapolation.get("status") != "error" and not immature:
+        return
+    reason = extrapolation.get("error") or (
+        f"{len(immature)} planted ridge(s) have not reached maturity at the --max-days cap"
+    )
+    raise RuntimeError(
+        f"Cannot build WOFOST baseline for {scenario_id}: {reason}. "
+        "Correct the scenario's daily forcing/management and/or increase --max-days, "
+        "then rerun with --force. No WOFOST baseline was written."
+    )
 
 
 def _build_donothing_biological_kg(
     scenario_id: str,
     extrapolation_max_days: int,
+    crop_backend: str = "legacy",
+    crop_backend_options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Initialize scenario without any oracle events and extrapolate to R8.
 
@@ -246,7 +276,10 @@ def _build_donothing_biological_kg(
 
     _ensure_selected_l2_l1_scenario_imported(scenario_id)
     cls = registry.get_scenario(scenario_id)
-    scenario = cls()
+    scenario = cls(
+        crop_backend=crop_backend,
+        crop_backend_options=crop_backend_options or {},
+    )
     scenario.initialize()  # apps + physics init, NO oracle events run
     Engine(agent=None, scenario=scenario)
 
@@ -260,6 +293,7 @@ def _build_donothing_biological_kg(
     )
 
     physics = getattr(farm_world, "_physics", None)
+    _require_wofost_maturity(physics, extrap, f"{scenario_id}:donothing")
     if physics is None or not getattr(physics, "engines_active", False):
         # Physics not active: bare-field scenario with no initial ticking.
         return {
@@ -272,6 +306,7 @@ def _build_donothing_biological_kg(
             "ridges_harvested": 0,
             "extrapolation": extrap,
             "duration_s": round(time.time() - t0, 2),
+            "crop_backend_provenance": crop_backend_provenance(physics),
         }
 
     ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
@@ -304,6 +339,7 @@ def _build_donothing_biological_kg(
         "ridges_harvested": n_harv,
         "extrapolation": extrap,
         "duration_s": round(time.time() - t0, 2),
+        "crop_backend_provenance": crop_backend_provenance(physics),
     }
 
 
@@ -311,6 +347,8 @@ def _build_one_baseline(
     scenario_id: str,
     extrapolation_max_days: int,
     include_donothing: bool = False,
+    crop_backend: str = "legacy",
+    crop_backend_options: dict[str, Any] | None = None,
 ) -> BaselineResult:
     """Run scenario in oracle mode + extrapolation, return per-ridge yields."""
     from fairy.controllers.engine import Engine
@@ -322,7 +360,10 @@ def _build_one_baseline(
 
     _ensure_selected_l2_l1_scenario_imported(scenario_id)
     cls = registry.get_scenario(scenario_id)
-    scenario = cls()
+    scenario = cls(
+        crop_backend=crop_backend,
+        crop_backend_options=crop_backend_options or {},
+    )
 
     t0 = time.time()
     engine = Engine(agent=None, scenario=scenario)
@@ -356,6 +397,7 @@ def _build_one_baseline(
         raise RuntimeError(
             f"Scenario {scenario_id} has no active physics engine post-run"
         )
+    _require_wofost_maturity(physics, extrap, scenario_id)
 
     ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
 
@@ -387,9 +429,16 @@ def _build_one_baseline(
     if include_donothing:
         try:
             donothing = _build_donothing_biological_kg(
-                scenario_id, extrapolation_max_days
+                scenario_id,
+                extrapolation_max_days,
+                crop_backend=crop_backend,
+                crop_backend_options=crop_backend_options,
             )
         except Exception as exc:
+            if getattr(physics, "crop_backend_name", "legacy") == "wofost":
+                raise RuntimeError(
+                    f"Cannot build matching WOFOST do-nothing baseline for {scenario_id}: {exc}"
+                ) from exc
             donothing = {"error": str(exc)}
 
     return BaselineResult(
@@ -405,6 +454,7 @@ def _build_one_baseline(
         duration_s=round(duration, 2),
         donothing=donothing,
         tool_errors=tool_errors,
+        crop_backend_provenance=crop_backend_provenance(physics),
     )
 
 
@@ -435,7 +485,8 @@ def _baseline_to_dict(b: BaselineResult) -> dict[str, Any]:
 
     d: dict[str, Any] = {
         "scenario_id": b.scenario_id,
-        "schema_version": 2,
+        "schema_version": 3,
+        "crop_backend_provenance": b.crop_backend_provenance,
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "ridge_area_m2": round(FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M, 4),
         "ridges_total": len(b.biological_yield_g_m2_per_ridge),
@@ -476,6 +527,17 @@ def _resolve_scenarios(spec: str) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--crop-backend",
+        choices=("legacy", "wofost"),
+        default=None,
+        help="Crop model for both baselines (default: legacy; a WOFOST config selects wofost).",
+    )
+    parser.add_argument(
+        "--wofost-config",
+        type=Path,
+        help="Path to a JSON object of WOFOST backend options; selects wofost unless explicitly legacy.",
     )
     parser.add_argument(
         "--scenarios",
@@ -525,6 +587,22 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    crop_backend_options: dict[str, Any] = {}
+    if args.wofost_config is not None:
+        if args.crop_backend == "legacy":
+            parser.error("--wofost-config cannot be combined with --crop-backend legacy")
+        try:
+            crop_backend_options = json.loads(
+                args.wofost_config.expanduser().read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError) as exc:
+            parser.error(f"Cannot read --wofost-config: {exc}")
+        if not isinstance(crop_backend_options, dict):
+            parser.error("--wofost-config must contain a JSON object")
+    crop_backend = args.crop_backend or (
+        "wofost" if args.wofost_config is not None else "legacy"
+    )
+
     output_dir = Path(args.output_dir).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -556,6 +634,8 @@ def main() -> int:
                 sid,
                 extrapolation_max_days=args.max_days,
                 include_donothing=args.include_donothing,
+                crop_backend=crop_backend,
+                crop_backend_options=crop_backend_options,
             )
             payload = _baseline_to_dict(baseline)
             out_path.write_text(
@@ -587,6 +667,10 @@ def main() -> int:
             n_ok += 1
         except Exception as exc:
             logger.exception("[FAIL] %s: %s", sid, exc)
+            if crop_backend == "wofost":
+                # PCSE may install its own logging configuration on import.
+                # Keep a rejected native baseline actionable on the console.
+                print(f"[FAIL] {sid}: {exc}", file=sys.stderr)
             n_fail += 1
             if not args.continue_on_error:
                 return 1

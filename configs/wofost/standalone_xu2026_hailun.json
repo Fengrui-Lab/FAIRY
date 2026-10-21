@@ -1,0 +1,97 @@
+{
+  "model": "Wofost72_WLP_CWB",
+  "year": 2017,
+  "sowing_date": "2017-05-10",
+  "max_duration": 170,
+  "crop_name": "soybean",
+  "variety_name": "Xu2026_medium_early_reconstruction",
+  "crop_parameter_file": "../../fairy/physics/data/wofost/standalone/xu2026_medium_early_crop.json",
+  "soil_parameters": {
+    "SMW": 0.11,
+    "SMFCF": 0.28,
+    "SM0": 0.34,
+    "K0": 18.1,
+    "CRAIRC": 0.06,
+    "SOPE": 10,
+    "KSUB": 1,
+    "RDMSOL": 120
+  },
+  "site_parameters": {
+    "WAV": 20.4,
+    "SMLIM": 0.28,
+    "CO2": 400,
+    "SSI": 0,
+    "SSMAX": 0,
+    "IFUNRN": 0,
+    "NOTINF": 0
+  },
+  "location": {
+    "latitude": 47.65,
+    "longitude": 126.83,
+    "elevation": 219.04
+  },
+  "reference_et": {
+    "angsta": 0.25,
+    "angstb": 0.5,
+    "et_model": "PM"
+  },
+  "provenance": {
+    "method": "Xu2026 same-source TableA1+Table2 mediumloam, unspecified settings explicit; not strictpaperreproduction",
+    "research_provenance_file": "../../fairy/physics/data/wofost/standalone/xu2026_reconstruction_provenance.json",
+    "weather_label": "NASA POWER LST2017griddeddata (MERRA2/SYN1DEG/POWER),notgroundstationobservations",
+    "assumptions": {
+      "DTSMTB": {
+        "value": [
+          0.0,
+          0.0,
+          7.0,
+          0.0,
+          30.0,
+          23.0,
+          45.0,
+          38.0
+        ],
+        "status": "inherited upstream 7.2, not provided by Xu; a separate inferred 8/37C sensitivity is required"
+      },
+      "IDSL": {
+        "value": 0,
+        "status": "inherited upstream; no photoperiod calibration is claimed"
+      },
+      "RDMSOL": {
+        "value": 120,
+        "unit": "cm",
+        "status": "assumed soil depth; paper supplies crop RDMCR120, not soil RDMSOL"
+      },
+      "SOPE": {
+        "value": 10,
+        "unit": "cm/day",
+        "status": "diagnostic assumption, not reported by Xu"
+      },
+      "KSUB": {
+        "value": 1,
+        "unit": "cm/day",
+        "status": "diagnostic assumption, not reported by Xu"
+      },
+      "WAV": {
+        "value": 20.4,
+        "unit": "cm",
+        "status": "assumed field capacity in medium loam: (SMFCF-SMW)*RDMSOL"
+      },
+      "SMLIM": {
+        "value": 0.28,
+        "status": "assumed field-capacity initialization"
+      },
+      "CO2": {
+        "value": 400,
+        "unit": "ppm",
+        "status": "fixed diagnostic assumption, not source-year CO2 observation"
+      },
+      "reference_et": {
+        "angsta": 0.25,
+        "angstb": 0.5,
+        "et_model": "PM",
+        "status": "explicit meteorology assumption; no original station ET setup available"
+      }
+    }
+  }
+}

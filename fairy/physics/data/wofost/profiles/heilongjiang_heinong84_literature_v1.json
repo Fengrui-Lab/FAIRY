@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "profile_id": "heilongjiang_heinong84_literature_v1",
+  "profile_version": "1.0.0",
+  "title": "Heilongjiang spring soybean / Heinong 84 literature candidate",
+  "crop_name": "soybean",
+  "supported_seed_types": ["HEINONG84"],
+  "base_variety": "Soybean_901",
+  "transfer_status": "literature_transfer",
+  "validation_status": "unvalidated",
+  "parameter_overrides": {
+    "TBASEM": 8.0,
+    "TEFFMX": 22.0,
+    "TSUMEM": 70.0,
+    "TSUM1": 480.0,
+    "TSUM2": 1150.0,
+    "IDSL": 0,
+    "DTSMTB": [0.0, 0.0, 7.0, 0.0, 30.0, 23.0, 45.0, 38.0]
+  },
+  "parameter_evidence": {
+    "TBASEM": {"source": "xu2026", "location": "Table A1", "unit": "degC"},
+    "TEFFMX": {"source": "xu2026", "location": "Table A1", "unit": "degC"},
+    "TSUMEM": {"source": "xu2026", "location": "Table A1", "unit": "degC day", "note": "The paper prints degC; PCSE requires a temperature sum in degC day."},
+    "TSUM1": {"source": "xu2026", "location": "Table A1, medium-early maturity", "unit": "degC day", "note": "Medium-early is a regional prior selected from the official Heinong 84 classification, not a measured Heinong 84 parameter."},
+    "TSUM2": {"source": "sun2022", "location": "Table 2", "unit": "degC day", "note": "The table prints TMUS2=1150 and describes anthesis-to-maturity thermal time. This is mapped by meaning to native TSUM2. It is a Hailun regional prior; the study does not establish a Heinong 84 calibration."},
+    "IDSL": {"source": "bundled_wofost81", "location": "soybean.yaml / EcoTypes / soybean", "note": "Temperature-only development is retained. No local photoperiod fit is claimed."},
+    "DTSMTB": {"source": "bundled_wofost81", "location": "soybean.yaml / EcoTypes / soybean", "unit": "degC, degC day per day", "note": "Explicitly retain the bundled native response (approximately mean temperature minus 7 degC at common growing temperatures). Neither research table specifies native DTSMTB. Xu2026 Eq. 1 instead uses 8/37 degC for separately generated phenology maps; this candidate is not a reproduction of that complete setup."}
+  },
+  "scope": {
+    "region": "Heilongjiang spring-soybean systems; initial use in the existing Harbin HEINONG84 scenes",
+    "cultivar_identity": "HEINONG84 is the requested target, not the cultivar identity of every source experiment",
+    "official_reference": "The HAAS description reports 119 days from emergence to maturity; the 2025 MOA catalogue reports a mean 123 days and classifies Heinong 84 as northern spring soybean, medium-early maturity. These are external checks, not enforced engine dates.",
+    "density": "Existing realized-density to TDWI scaling remains unchanged; no density optimum is calibrated.",
+    "soil": "Scenario soil and root-zone depth remain unchanged; no Hailun soil values are substituted.",
+    "management": "Existing tools and maturity/harvest/storage gates remain authoritative. Fixed-date legacy harvest workflows may fail before native maturity."
+  },
+  "model_transfer": {
+    "target_model": "Wofost81_NWLP_CWB_CNB",
+    "source_model_xu2026": "PCSE 5.5 / Wofost72_WLP_CWB",
+    "method": "Cross-study phenology prior only, combined before final-yield inspection. Not a published single cultivar parameterization or an independently calibrated local model.",
+    "retained": "Native WOFOST 8.1 assimilation, N fixation and uptake, canopy, respiration, partitioning and rooting parameters from the pinned bundled soybean base.",
+    "excluded": [
+      "No direct import of the WOFOST 7.2 AMAXTB table into the WOFOST 8.1 nitrogen-dependent assimilation module.",
+      "No import or silent correction of Sun2022 SLATB1=0.014; Xu2026 lists 0.00140 at DVS=0.00 and the conventions are not established as equivalent.",
+      "No conversion of 2400/2800/3500 degC active-temperature sums into TSUM1 or TSUM2 by direct assignment.",
+      "No multiplication of TWSO, forced maturity, yield-target fitting or harvest-gate bypass."
+    ]
+  },
+  "sources": [
+    {
+      "id": "xu2026",
+      "title": "Xu et al. (2026), NortheastChinaSoybeanYield20m: an annual soybean yield dataset at 20 m in Northeast China from 2019 to 2023",
+      "url": "https://essd.copernicus.org/articles/18/2413/2026/",
+      "doi": "10.5194/essd-18-2413-2026",
+      "license": "CC BY 4.0",
+      "source_xml_url": "https://essd.copernicus.org/articles/18/2413/2026/essd-18-2413-2026.xml",
+      "source_xml_sha256": "91c8ecdb48e470c0a7a0f8d5f37eed143f3898f2c10f8cb1caa2be6f6969a2b2",
+      "accessed": "2026-10-20"
+    },
+    {
+      "id": "sun2022",
+      "title": "Sun et al. (2022), Warming and Drought in Hailun of Heilongjiang: Effects on Growth and Development of Soybean",
+      "url": "https://www.casb.org.cn/CN/10.11924/j.issn.1000-6850.casb2021-0788",
+      "doi": "10.11924/j.issn.1000-6850.casb2021-0788",
+      "location": "Table 2: TMUS2, flowering-to-maturity temperature sum, 1150 degC day",
+      "accessed": "2026-10-20"
+    },
+    {
+      "id": "haas_heinong84",
+      "title": "Heilongjiang Academy of Agricultural Sciences: Heinong 84 cultivar description",
+      "url": "https://www.haas.cn/cgcyc/info/1231/2141.htm",
+      "location": "119-day emergence-to-maturity reference and recommended stand of 220000-240000 plants per hectare",
+      "accessed": "2026-10-20"
+    },
+    {
+      "id": "moa2025",
+      "title": "Ministry of Agriculture and Rural Affairs: 2025 national crop cultivar promotion catalogue",
+      "url": "https://zys.moa.gov.cn/gzdt/202507/P020251016602773218443.pdf",
+      "location": "Printed page 185: Heinong 84, medium-early northern spring soybean, mean duration 123 days",
+      "accessed": "2026-10-20"
+    },
+    {
+      "id": "bundled_wofost81",
+      "title": "Pinned upstream WOFOST 8.1 soybean parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml",
+      "sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+      "license": "EUPL as declared by upstream; version unspecified"
+    }
+  ],
+  "limitations": [
+    "Cross-study transfer and simulation smoke tests do not establish predictive accuracy for Heinong 84.",
+    "Native temperature response and photoperiod remain assumptions needing local multi-year, multi-sowing-date observations.",
+    "Source studies do not supply a complete compatible WOFOST 8.1 nitrogen parameterization.",
+    "The original L3 weather is scenario-generated; agreement with a published average duration is a plausibility check, not independent field validation.",
+    "Normal and drought L3 scenes differ in weather and soil; their yield ordering alone is not a controlled drought-effect estimate."
+  ]
+}

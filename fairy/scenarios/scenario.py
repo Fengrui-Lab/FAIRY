@@ -26,6 +26,8 @@ class Scenario:
     detailed_briefing: bool = True
     expects_agent_harvest: bool = True
     additional_system_prompt: str | None = None
+    crop_backend: str = "legacy"
+    crop_backend_options: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self._apply_migrated_class_defaults()
@@ -58,6 +60,13 @@ class Scenario:
             self.initiate_scenario(*args, **kwargs)
         else:
             self.init_and_populate_apps(*args, **kwargs)
+        if self.crop_backend != "legacy" or self.crop_backend_options:
+            from fairy.apps.farm_world.farm_world_app import FarmWorldApp
+
+            farm_world = self.get_typed_app(FarmWorldApp)
+            farm_world.configure_crop_backend(
+                self.crop_backend, **self.crop_backend_options
+            )
         if hasattr(self, "build_events_flow") and not self.events:
             result = self.build_events_flow()
             if result is not None and not self.events:

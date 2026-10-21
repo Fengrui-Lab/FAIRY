@@ -95,6 +95,7 @@ def advance_physics_time(
     physics = farm_world_app._physics
     if physics is None or not physics.engines_active:
         return {"status": "skipped", "reason": "physics_inactive"}
+    physics.ridge_width_m = float(farm_world_app.ridge_width_m)
 
     weather_app = _find_weather_app(farm_world_app)
 
@@ -488,92 +489,113 @@ def _run_daily_tick(
         crop_by_ridge=crop_inputs_for_management,
     )
 
-    # 3. Soil engine consumes today's irrigation as water input.
-    irrigation_mm = physics.management.irrigation_mm_by_ridge(pending_actions)
-    canopy_cover_by_ridge = {
-        rid: state.canopy_cover for rid, state in physics.canopy.states.items()
-    }
-    physics.soil.update_day(
-        weather=weather["soil"],
-        irrigation_mm_by_ridge=irrigation_mm,
-        canopy_cover_by_ridge=canopy_cover_by_ridge,
-    )
+    if physics.crop_backend is not None:
+        from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M
 
-    # 4. Phenology consumes weather + soil.
-    phenology_soil_inputs = {
-        rid: PhenologySoilInput(
-            top_temp_c=physics.soil.states[rid].top_temp_c,
-            top_vwc=physics.soil.states[rid].top_vwc,
-            water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
+        humidity = weather.get("humidity_pct", 55.0)
+        if "humidity_pct" not in weather and weather_app is not None:
+            humidity = float(
+                weather_app.get_current_weather_snapshot().get("humidity_pct", 55.0)
+            )
+        physics.crop_backend.advance_day(
+            physics=physics,
+            day=day,
+            weather=weather["soil"],
+            actions_by_ridge=pending_actions,
+            density_by_ridge={
+                rid: _ridge_planting_density_plants_m2(farm_world_app, rid)
+                for rid in physics.phenology.states
+            },
+            ridge_area_m2=FIELD_LENGTH_M * float(farm_world_app.ridge_width_m),
+            humidity_pct=humidity,
         )
-        for rid in physics.soil.states
-    }
-    phenology_results = physics.phenology.update_day(
-        weather=weather["phenology"],
-        soil_by_ridge=phenology_soil_inputs,
-    )
+    else:
+        # 3. Soil engine consumes today's irrigation as water input.
+        irrigation_mm = physics.management.irrigation_mm_by_ridge(pending_actions)
+        canopy_cover_by_ridge = {
+            rid: state.canopy_cover for rid, state in physics.canopy.states.items()
+        }
+        physics.soil.update_day(
+            weather=weather["soil"],
+            irrigation_mm_by_ridge=irrigation_mm,
+            canopy_cover_by_ridge=canopy_cover_by_ridge,
+        )
 
-    _apply_post_planting_cold_stand_penalty(physics, weather)
+        # 4. Phenology consumes weather + soil.
+        phenology_soil_inputs = {
+            rid: PhenologySoilInput(
+                top_temp_c=physics.soil.states[rid].top_temp_c,
+                top_vwc=physics.soil.states[rid].top_vwc,
+                water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
+            )
+            for rid in physics.soil.states
+        }
+        phenology_results = physics.phenology.update_day(
+            weather=weather["phenology"],
+            soil_by_ridge=phenology_soil_inputs,
+        )
 
-    # 5. Initialize canopy state for ridges that just emerged.
-    for result in phenology_results:
-        if result.emerged:
-            canopy_state = physics.canopy.states[result.ridge_id]
-            if not canopy_state.initialized:
-                phen_state = physics.phenology.states[result.ridge_id]
-                seed_type_value = (
-                    phen_state.seed_type.value
-                    if phen_state.seed_type is not None
-                    else SeedType.STANDARD.value
-                )
-                stand_fraction = (
-                    physics.management.states[result.ridge_id].stand_fraction or 1.0
-                )
-                physics.canopy.initialize_ridges(
-                    [result.ridge_id],
-                    seed_type=CanopySeedType(seed_type_value),
-                    initial_stand_fraction=stand_fraction,
-                )
+        _apply_post_planting_cold_stand_penalty(physics, weather)
 
-    # 6. Canopy / biomass.
-    canopy_phenology_inputs = {
-        rid: CanopyPhenologyInput(
-            stage=CanopyGrowthStage(physics.phenology.states[rid].stage.value),
-            development_fraction=_phenology_development_fraction(
-                physics.phenology.states[rid],
-                getattr(physics.phenology, "seed_type_params", None),
-            ),
+        # 5. Initialize canopy state for ridges that just emerged.
+        for result in phenology_results:
+            if result.emerged:
+                canopy_state = physics.canopy.states[result.ridge_id]
+                if not canopy_state.initialized:
+                    phen_state = physics.phenology.states[result.ridge_id]
+                    seed_type_value = (
+                        phen_state.seed_type.value
+                        if phen_state.seed_type is not None
+                        else SeedType.STANDARD.value
+                    )
+                    stand_fraction = (
+                        physics.management.states[result.ridge_id].stand_fraction or 1.0
+                    )
+                    physics.canopy.initialize_ridges(
+                        [result.ridge_id],
+                        seed_type=CanopySeedType(seed_type_value),
+                        initial_stand_fraction=stand_fraction,
+                    )
+
+        # 6. Canopy / biomass.
+        canopy_phenology_inputs = {
+            rid: CanopyPhenologyInput(
+                stage=CanopyGrowthStage(physics.phenology.states[rid].stage.value),
+                development_fraction=_phenology_development_fraction(
+                    physics.phenology.states[rid],
+                    getattr(physics.phenology, "seed_type_params", None),
+                ),
+            )
+            for rid in physics.phenology.states
+        }
+        canopy_soil_inputs = {
+            rid: GrowthSoilInput(
+                water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
+                root_vwc=physics.soil.states[rid].root_vwc,
+            )
+            for rid in physics.soil.states
+        }
+        canopy_management_inputs = {
+            rid: ManagementStressInput(
+                nutrient_stress=physics.management.states[rid].nutrient_stress,
+                biotic_stress=_compute_biotic_stress(physics.biotic.states[rid]),
+                stand_fraction=physics.management.states[rid].stand_fraction or 1.0,
+                planting_density_plants_m2=_ridge_planting_density_plants_m2(
+                    farm_world_app,
+                    rid,
+                ),
+                weed_pressure=physics.biotic.states[rid].weed_pressure,
+                insect_pressure=physics.biotic.states[rid].insect_pressure,
+                disease_pressure=physics.biotic.states[rid].disease_pressure,
+            )
+            for rid in physics.management.states
+        }
+        physics.canopy.update_day(
+            weather=weather["canopy"],
+            phenology_by_ridge=canopy_phenology_inputs,
+            soil_by_ridge=canopy_soil_inputs,
+            management_by_ridge=canopy_management_inputs,
         )
-        for rid in physics.phenology.states
-    }
-    canopy_soil_inputs = {
-        rid: GrowthSoilInput(
-            water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
-            root_vwc=physics.soil.states[rid].root_vwc,
-        )
-        for rid in physics.soil.states
-    }
-    canopy_management_inputs = {
-        rid: ManagementStressInput(
-            nutrient_stress=physics.management.states[rid].nutrient_stress,
-            biotic_stress=_compute_biotic_stress(physics.biotic.states[rid]),
-            stand_fraction=physics.management.states[rid].stand_fraction or 1.0,
-            planting_density_plants_m2=_ridge_planting_density_plants_m2(
-                farm_world_app,
-                rid,
-            ),
-            weed_pressure=physics.biotic.states[rid].weed_pressure,
-            insect_pressure=physics.biotic.states[rid].insect_pressure,
-            disease_pressure=physics.biotic.states[rid].disease_pressure,
-        )
-        for rid in physics.management.states
-    }
-    physics.canopy.update_day(
-        weather=weather["canopy"],
-        phenology_by_ridge=canopy_phenology_inputs,
-        soil_by_ridge=canopy_soil_inputs,
-        management_by_ridge=canopy_management_inputs,
-    )
 
     # 7. Biotic pressure.
     biotic_crop_inputs = {
@@ -740,7 +762,9 @@ def _build_weather_inputs(
             weather_app.set_weather(
                 date=day.isoformat(),
                 temp_c=temp_mean,
-                humidity_pct=55.0,  # weather generator doesn't model RH; static default
+                humidity_pct=(getattr(generated_day, "relative_humidity_pct", None)
+                              if getattr(generated_day, "relative_humidity_pct", None) is not None
+                              else 55.0),
                 wind_speed_ms=wind_ms,
                 rainfall_mm=rain_mm,
                 solar_radiation=solar_w,
@@ -837,7 +861,15 @@ def _build_weather_inputs(
         temp_max = temp_mean + _DEFAULT_DIURNAL_RANGE_C
         solar_mj = solar_w * _W_PER_M2_TO_MJ_PER_M2_PER_DAY
 
+    # Native forcing must retain source precision, independently of the
+    # WeatherApp's rounded agent-facing display snapshot.
+    source_humidity = (getattr(generated_day, "relative_humidity_pct", None)
+                       if generated_day is not None else None)
+    humidity = (float(source_humidity) if source_humidity is not None else
+                float(weather_app.get_current_weather_snapshot().get("humidity_pct", 55.0))
+                if weather_app is not None else 55.0)
     return {
+        "humidity_pct": humidity,
         "soil": SoilWeatherInput(
             day=day,
             air_temp_mean_c=temp_mean,
@@ -1057,7 +1089,9 @@ def _build_generated_forecast(
             {
                 "date": weather_day.day.isoformat(),
                 "temp_c": float(weather_day.air_temp_mean_c),
-                "humidity_pct": 55.0,
+                "humidity_pct": (getattr(weather_day, "relative_humidity_pct", None)
+                                 if getattr(weather_day, "relative_humidity_pct", None) is not None
+                                 else 55.0),
                 "wind_speed_ms": float(weather_day.wind_ms),
                 "rainfall_mm": float(weather_day.rain_mm),
                 "solar_radiation": float(
@@ -1137,6 +1171,22 @@ def _run_subdaily_injection(
             },
             treatments_by_ridge=treatments,
         )
+
+    if physics.crop_backend is not None:
+        # Native PCSE integrates daily. Retain these actions until its next
+        # tick; the legacy immediate injection would count the water twice.
+        from fairy.apps.farm_world.farm_world_app import (
+            DEFAULT_RIDGE_WIDTH_M,
+            FIELD_LENGTH_M,
+        )
+
+        physics.crop_backend.queue_actions(
+            actions,
+            ridge_area_m2=FIELD_LENGTH_M * getattr(
+                physics, "ridge_width_m", DEFAULT_RIDGE_WIDTH_M
+            ),
+        )
+        return False
 
     irrigation_mm = physics.management.irrigation_mm_by_ridge(actions)
     if irrigation_mm:

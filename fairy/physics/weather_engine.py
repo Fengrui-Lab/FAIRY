@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, timedelta
+from math import isfinite
 from typing import Literal
 
 import numpy as np
@@ -88,6 +89,8 @@ class WeatherDay:
     solar_rad_mj_m2: float
     is_raining: bool
     weather_tags: list[str] = field(default_factory=list)
+    # Optional observed RH; stochastic scenarios retain their historic 55% default.
+    relative_humidity_pct: float | None = None
 
 
 @dataclass
@@ -220,6 +223,58 @@ class WeatherGenerator:
     def __init__(self, config: WeatherGeneratorConfig, seed: int = 0) -> None:
         self.config = config
         self.rng = np.random.default_rng(seed)
+        self._day_overrides: dict[date, WeatherDay] = {}
+
+    def set_day_override(
+        self,
+        day: date,
+        air_temp_mean_c: float,
+        rain_mm: float,
+        wind_ms: float,
+        solar_rad_mj_m2: float,
+        air_temp_min_c: float | None = None,
+        air_temp_max_c: float | None = None,
+        weather_tags: list[str] | None = None,
+        relative_humidity_pct: float | None = None,
+    ) -> None:
+        """Pin exact daily forcing after stochastic generation and events.
+
+        Missing temperature extremes use the configured mean diurnal range,
+        rather than a random draw, so re-generating a pinned date cannot drift.
+        The farm's existing daily cache also stores the pinned day; checkpoint
+        export therefore retains overrides for future dates without a new schema.
+        """
+        half_range = max(0.0, float(self.config.diurnal_range_mean_c)) / 2.0
+        mean = float(air_temp_mean_c)
+        minimum = mean - half_range if air_temp_min_c is None else float(air_temp_min_c)
+        maximum = mean + half_range if air_temp_max_c is None else float(air_temp_max_c)
+        rain, wind, solar = float(rain_mm), float(wind_ms), float(solar_rad_mj_m2)
+        if not all(isfinite(value) for value in (mean, minimum, maximum, rain, wind, solar)):
+            raise ValueError("Daily weather override values must be finite")
+        if not minimum <= mean <= maximum:
+            raise ValueError("Daily weather override requires Tmin <= Tmean <= Tmax")
+        if min(rain, wind, solar) < 0:
+            raise ValueError("Daily weather override rain, wind and radiation must be nonnegative")
+        humidity = None if relative_humidity_pct is None else float(relative_humidity_pct)
+        if humidity is not None and (not isfinite(humidity) or not 0 < humidity <= 100):
+            raise ValueError("Daily weather override relative humidity must be in (0, 100]")
+        override = WeatherDay(
+            day=day,
+            air_temp_mean_c=mean,
+            air_temp_min_c=minimum,
+            air_temp_max_c=maximum,
+            rain_mm=rain,
+            wind_ms=wind,
+            solar_rad_mj_m2=solar,
+            is_raining=rain > 0.1,
+            weather_tags=list(weather_tags or []),
+            relative_humidity_pct=humidity,
+        )
+        self._day_overrides[day] = override
+        # Replace any forecast already cached before this explicit correction.
+        if not hasattr(self, "_day_cache"):
+            self._day_cache: dict[date, WeatherDay] = {}
+        self._day_cache[day] = replace(override, weather_tags=list(override.weather_tags))
 
     def generate(
         self,
@@ -236,7 +291,8 @@ class WeatherGenerator:
 
         Generation order:
             1. generate stochastic background weather;
-            2. apply deterministic scenario weather events.
+            2. apply deterministic scenario weather events;
+            3. apply exact pinned daily forcing.
         """
         if end_date < start_date:
             raise ValueError("end_date must be >= start_date")
@@ -248,6 +304,10 @@ class WeatherGenerator:
         was_wet_yesterday = False
 
         for d in days:
+            if d in self._day_overrides:
+                override = self._day_overrides[d]
+                trace.append(replace(override, weather_tags=list(override.weather_tags)))
+                continue
             clim = self._monthly_climate(d)
 
             # Temperature: monthly mean + AR(1) daily anomaly.
@@ -357,6 +417,10 @@ class WeatherGenerator:
             trace.append(weather_day)
 
         self._apply_events(trace, events)
+        for index, weather_day in enumerate(trace):
+            override = self._day_overrides.get(weather_day.day)
+            if override is not None:
+                trace[index] = replace(override, weather_tags=list(override.weather_tags))
         return trace
 
     def _apply_events(

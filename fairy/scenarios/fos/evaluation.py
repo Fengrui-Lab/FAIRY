@@ -43,6 +43,10 @@ from pathlib import Path
 from typing import Any
 
 from fairy.scenarios.fos.gates import GateResult, GateSpec
+from fairy.scenarios.fos.provenance import (
+    crop_backend_provenance,
+    validate_baseline_provenance,
+)
 from fairy.scenarios.fos.metrics import (
     EfficiencyBreakdown,
     FOSComponents,
@@ -74,6 +78,21 @@ def _is_system_advance_time_action(action: Any) -> bool:
 def _oct30_timestamp_for_year(reference_ts: float) -> float:
     reference_date = datetime.fromtimestamp(reference_ts, tz=timezone.utc)
     return datetime(reference_date.year, 10, 30, tzinfo=timezone.utc).timestamp()
+
+
+def _biological_to_recovery_mass_factor(physics: Any) -> float:
+    """Put biological potential on the same mass basis as recovered grain.
+
+    WOFOST reports dry matter, while recovered grain is measured at the
+    configured market moisture. Legacy biological proxies retain their
+    historical basis. Agent/oracle biological attribution never uses this
+    conversion because both sides already share a biological mass basis.
+    """
+    recovery = getattr(physics, "yield_recovery", None)
+    params = getattr(recovery, "params", None)
+    if not getattr(params, "biological_yield_is_dry_matter", False):
+        return 1.0
+    return 1.0 / (1.0 - float(params.market_moisture_frac))
 
 
 def _compute_recovered_yield_floor_kg(
@@ -108,6 +127,7 @@ def _compute_recovered_yield_floor_kg(
             target_physics = physics
 
     recovered_kg = 0.0
+    recovery_mass_factor = _biological_to_recovery_mass_factor(target_physics)
     for rid, yld_state in target_physics.yield_recovery.states.items():
         phen_state = target_physics.phenology.states.get(rid)
         ever_planted = phen_state is not None and phen_state.planted
@@ -123,7 +143,10 @@ def _compute_recovered_yield_floor_kg(
         if not bool(getattr(yld_state, "r8_reached", False)):
             continue
         field_loss = float(getattr(yld_state, "field_loss_fraction", 0.0))
-        recovered_kg += biological * max(0.0, 1.0 - field_loss) * ridge_area_m2 / 1000.0
+        recovered_kg += (
+            biological * recovery_mass_factor * max(0.0, 1.0 - field_loss)
+            * ridge_area_m2 / 1000.0
+        )
     return recovered_kg
 
 # Default location for cached per-scenario oracle baselines. A baseline
@@ -152,6 +175,7 @@ def evaluate_fos(
     focus_ridge_ids: list[int] | None = None,
     donothing_biological_kg: float | None = None,
     donothing_per_ridge_g_m2: list[float] | None = None,
+    donothing_provenance: dict[str, Any] | None = None,
 ) -> FOSReport:
     """Compute the full FOS report for a finished scenario run.
 
@@ -222,13 +246,26 @@ def evaluate_fos(
     # extrapolation (apples-to-apples). Without extrapolation, fall back
     # to the legacy yield_ratio so existing oracle audits stay green.
     scenario_id = getattr(scenario, "scenario_id", None)
+    provenance = crop_backend_provenance(_try_get_farm_world(scenario))
+    if (
+        donothing_biological_kg is not None or donothing_per_ridge_g_m2 is not None
+    ) and (provenance["backend"] != "legacy" or donothing_provenance is not None):
+        validate_baseline_provenance(
+            {"crop_backend_provenance": donothing_provenance},
+            provenance,
+            "inline do-nothing baseline",
+        )
     oracle_biological_kg = (
-        _load_oracle_baseline_biological_kg(scenario_id, oracle_baseline_dir)
+        _load_oracle_baseline_biological_kg(
+            scenario_id, oracle_baseline_dir, provenance=provenance
+        )
         if extrapolate_to_maturity
         else None
     )
     oracle_recovered_yield_kg = (
-        _load_oracle_baseline_recovered_yield_kg(scenario_id, oracle_baseline_dir)
+        _load_oracle_baseline_recovered_yield_kg(
+            scenario_id, oracle_baseline_dir, provenance=provenance
+        )
         if extrapolate_to_maturity
         else None
     )
@@ -237,7 +274,9 @@ def evaluate_fos(
     # loading from the JSON file only when the caller hasn't supplied a value.
     if donothing_biological_kg is None:
         donothing_biological_kg = (
-            _load_donothing_baseline_biological_kg(scenario_id, oracle_baseline_dir)
+            _load_donothing_baseline_biological_kg(
+                scenario_id, oracle_baseline_dir, provenance=provenance
+            )
             if extrapolate_to_maturity
             else None
         )
@@ -297,6 +336,7 @@ def evaluate_fos(
         decision_breakdown=decision_results,
         efficiency_breakdown=efficiency_breakdown,
         weights=dict(weights),
+        crop_backend_provenance=provenance,
     )
 
 
@@ -417,16 +457,12 @@ def _resolve_oracle_baseline_dir(
     return None
 
 
-def _load_donothing_baseline_biological_kg(
+def _load_oracle_baseline_data(
     scenario_id: str | None,
     explicit_dir: str | Path | None,
-) -> float | None:
-    """Load the do-nothing biological yield from the oracle baseline JSON.
-
-    The ``donothing`` sub-object is written by ``build_oracle_baselines.py
-    --include-donothing``. Returns None if not present so callers can fall
-    back gracefully.
-    """
+    provenance: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    """Read one cache and validate its stable backend/configuration identity."""
     if not scenario_id:
         return None
     baseline_dir = _resolve_oracle_baseline_dir(explicit_dir)
@@ -439,9 +475,32 @@ def _load_donothing_baseline_biological_kg(
         data = json.loads(fp.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+    if not isinstance(data, dict):
+        return None
+    validate_baseline_provenance(data, provenance, fp)
+    return data
+
+
+def _load_donothing_baseline_biological_kg(
+    scenario_id: str | None,
+    explicit_dir: str | Path | None,
+    *,
+    provenance: dict[str, Any] | None = None,
+) -> float | None:
+    """Load the do-nothing biological yield from the oracle baseline JSON.
+
+    The ``donothing`` sub-object is written by ``build_oracle_baselines.py
+    --include-donothing``. Returns None if not present so callers can fall
+    back gracefully.
+    """
+    data = _load_oracle_baseline_data(scenario_id, explicit_dir, provenance)
+    if data is None:
+        return None
     dn = data.get("donothing")
     if not isinstance(dn, dict):
         return None
+    if "biological_yield_kg_total" in dn:
+        validate_baseline_provenance(dn, provenance, f"{scenario_id}.json:donothing")
     total = dn.get("biological_yield_kg_total")
     if isinstance(total, (int, float)) and total >= 0.0:
         return float(total)
@@ -453,21 +512,16 @@ def _load_focus_ridge_baselines(
     explicit_dir: str | Path | None,
     focus_ridge_ids: list[int],
     ridge_area_m2: float,
+    *,
+    provenance: dict[str, Any] | None = None,
 ) -> tuple[float | None, float | None]:
     """Load per-ridge oracle and do-nothing biological yields summed over
     the focus ridge subset.  Returns (oracle_focus_kg, donothing_focus_kg).
     """
     if not scenario_id or not focus_ridge_ids:
         return None, None
-    baseline_dir = _resolve_oracle_baseline_dir(explicit_dir)
-    if baseline_dir is None:
-        return None, None
-    fp = baseline_dir / f"{scenario_id}.json"
-    if not fp.is_file():
-        return None, None
-    try:
-        data = json.loads(fp.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    data = _load_oracle_baseline_data(scenario_id, explicit_dir, provenance)
+    if data is None:
         return None, None
 
     oracle_focus_kg: float | None = None
@@ -487,6 +541,9 @@ def _load_focus_ridge_baselines(
     if isinstance(dn, dict):
         dn_per_ridge = dn.get("biological_yield_g_m2_per_ridge")
         if isinstance(dn_per_ridge, list) and ridge_area_m2 > 0:
+            validate_baseline_provenance(
+                dn, provenance, f"{scenario_id}.json:donothing"
+            )
             focus_set = set(focus_ridge_ids)
             dn_sum = sum(
                 float(dn_per_ridge[i])
@@ -498,11 +555,69 @@ def _load_focus_ridge_baselines(
     return oracle_focus_kg, donothing_focus_kg
 
 
+def _initialize_donothing_scenario(
+    scenario_id: str,
+    start_time: float | None,
+    seed: int,
+    crop_backend: str,
+    crop_backend_options: dict[str, Any] | None,
+    scenario_kwargs: dict[str, Any] | None,
+    init_kwargs: dict[str, Any] | None,
+    expected_provenance: dict[str, Any] | None,
+) -> tuple[Any, Any]:
+    """Create an independent baseline using the evaluated run's configuration."""
+    from fairy.controllers.engine import Engine
+    from fairy.scenarios.registry import registry
+
+    kwargs = dict(scenario_kwargs or {})
+    kwargs.update(crop_backend=crop_backend, crop_backend_options=dict(crop_backend_options or {}))
+    dn_scenario = registry.get_scenario(scenario_id)(**kwargs)
+    if start_time is not None:
+        dn_scenario.start_time = float(start_time)
+    dn_scenario.seed = int(seed)
+    dn_scenario.initialize(**dict(init_kwargs or {}))
+    Engine(agent=None, scenario=dn_scenario)
+    farm_world = _try_get_farm_world(dn_scenario)
+    actual = crop_backend_provenance(farm_world)
+    if actual["backend"] != crop_backend:
+        raise ValueError(f"Do-nothing scenario did not initialize requested backend {crop_backend!r}")
+    if expected_provenance is not None:
+        validate_baseline_provenance(
+            {"crop_backend_provenance": actual}, expected_provenance,
+            f"{scenario_id}:inline do-nothing configuration",
+        )
+    physics = getattr(farm_world, "_physics", None) if farm_world is not None else None
+    return farm_world, physics
+
+
+def _advance_donothing_to_maturity(
+    farm_world: Any, physics: Any, max_days: int, crop_backend: str
+) -> None:
+    extrapolation = _extrapolate_physics_to_maturity(farm_world, max_days=max_days)
+    if crop_backend == "legacy":
+        return
+    immature = any(
+        phen.planted and not getattr(physics.yield_recovery.states.get(rid), "r8_reached", False)
+        for rid, phen in physics.phenology.states.items()
+    )
+    if extrapolation.get("status") == "error" or immature:
+        raise RuntimeError(
+            "Native do-nothing extrapolation did not reach maturity: "
+            f"{extrapolation.get('error') or 'check daily forcing or increase extrapolation_max_days'}"
+        )
+
+
 def compute_donothing_per_ridge_yields(
     scenario_id: str,
     start_time: float | None = None,
     seed: int = 0,
     extrapolation_max_days: int = 180,
+    *,
+    crop_backend: str = "legacy",
+    crop_backend_options: dict[str, Any] | None = None,
+    scenario_kwargs: dict[str, Any] | None = None,
+    init_kwargs: dict[str, Any] | None = None,
+    expected_provenance: dict[str, Any] | None = None,
 ) -> tuple[float | None, list[float] | None]:
     """Replay-friendly do-nothing baseline that ALSO returns per-ridge yields.
 
@@ -530,23 +645,14 @@ def compute_donothing_per_ridge_yields(
             DEFAULT_RIDGE_WIDTH_M,
             FIELD_LENGTH_M,
         )
-        from fairy.scenarios.registry import registry
-
-        cls = registry.get_scenario(scenario_id)
-        dn_scenario = cls()
-        if start_time is not None:
-            dn_scenario.start_time = float(start_time)
-        dn_scenario.seed = int(seed)
-        dn_scenario.initialize()
-
-        farm_world = _try_get_farm_world(dn_scenario)
-        physics = (
-            getattr(farm_world, "_physics", None) if farm_world is not None else None
+        farm_world, physics = _initialize_donothing_scenario(
+            scenario_id, start_time, seed, crop_backend, crop_backend_options,
+            scenario_kwargs, init_kwargs, expected_provenance,
         )
         if physics is None or not getattr(physics, "engines_active", False):
             return None, None
 
-        _extrapolate_physics_to_maturity(farm_world, max_days=extrapolation_max_days)
+        _advance_donothing_to_maturity(farm_world, physics, extrapolation_max_days, crop_backend)
 
         ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
 
@@ -574,6 +680,8 @@ def compute_donothing_per_ridge_yields(
             total_kg += biological * ridge_area_m2 / 1000.0
         return total_kg, per_ridge_g_m2
     except Exception:
+        if crop_backend != "legacy":
+            raise
         return None, None
 
 
@@ -582,6 +690,12 @@ def compute_donothing_biological_kg(
     start_time: float | None = None,
     seed: int = 0,
     extrapolation_max_days: int = 180,
+    *,
+    crop_backend: str = "legacy",
+    crop_backend_options: dict[str, Any] | None = None,
+    scenario_kwargs: dict[str, Any] | None = None,
+    init_kwargs: dict[str, Any] | None = None,
+    expected_provenance: dict[str, Any] | None = None,
 ) -> float | None:
     """Compute the "do-nothing" biological yield inline — no pre-built JSON needed.
 
@@ -609,23 +723,14 @@ def compute_donothing_biological_kg(
             DEFAULT_RIDGE_WIDTH_M,
             FIELD_LENGTH_M,
         )
-        from fairy.scenarios.registry import registry
-
-        cls = registry.get_scenario(scenario_id)
-        dn_scenario = cls()
-        if start_time is not None:
-            dn_scenario.start_time = float(start_time)
-        dn_scenario.seed = int(seed)
-        dn_scenario.initialize()
-
-        farm_world = _try_get_farm_world(dn_scenario)
-        physics = (
-            getattr(farm_world, "_physics", None) if farm_world is not None else None
+        farm_world, physics = _initialize_donothing_scenario(
+            scenario_id, start_time, seed, crop_backend, crop_backend_options,
+            scenario_kwargs, init_kwargs, expected_provenance,
         )
         if physics is None or not getattr(physics, "engines_active", False):
             return None
 
-        _extrapolate_physics_to_maturity(farm_world, max_days=extrapolation_max_days)
+        _advance_donothing_to_maturity(farm_world, physics, extrapolation_max_days, crop_backend)
 
         ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
         total_kg = 0.0
@@ -641,12 +746,16 @@ def compute_donothing_biological_kg(
             total_kg += biological * ridge_area_m2 / 1000.0
         return total_kg
     except Exception:
+        if crop_backend != "legacy":
+            raise
         return None
 
 
 def _load_oracle_baseline_biological_kg(
     scenario_id: str | None,
     explicit_dir: str | Path | None,
+    *,
+    provenance: dict[str, Any] | None = None,
 ) -> float | None:
     """Load the cached oracle biological-yield baseline for ``scenario_id``.
 
@@ -664,17 +773,8 @@ def _load_oracle_baseline_biological_kg(
     available (treat as "no attribution metric available — fall back to
     legacy yield_ratio").
     """
-    if not scenario_id:
-        return None
-    baseline_dir = _resolve_oracle_baseline_dir(explicit_dir)
-    if baseline_dir is None:
-        return None
-    fp = baseline_dir / f"{scenario_id}.json"
-    if not fp.is_file():
-        return None
-    try:
-        data = json.loads(fp.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    data = _load_oracle_baseline_data(scenario_id, explicit_dir, provenance)
+    if data is None:
         return None
     total = data.get("biological_yield_kg_total")
     if isinstance(total, (int, float)) and total > 0.0:
@@ -691,19 +791,12 @@ def _load_oracle_baseline_biological_kg(
 def _load_oracle_baseline_recovered_yield_kg(
     scenario_id: str | None,
     explicit_dir: str | Path | None,
+    *,
+    provenance: dict[str, Any] | None = None,
 ) -> float | None:
     """Load oracle recovered yield in kg from the cached baseline JSON."""
-    if not scenario_id:
-        return None
-    baseline_dir = _resolve_oracle_baseline_dir(explicit_dir)
-    if baseline_dir is None:
-        return None
-    fp = baseline_dir / f"{scenario_id}.json"
-    if not fp.is_file():
-        return None
-    try:
-        data = json.loads(fp.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    data = _load_oracle_baseline_data(scenario_id, explicit_dir, provenance)
+    if data is None:
         return None
     total = data.get("recovered_yield_kg_total")
     if isinstance(total, (int, float)) and total >= 0.0:
@@ -849,6 +942,7 @@ def _compute_outcome(
         )
 
         ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        recovery_mass_factor = _biological_to_recovery_mass_factor(physics)
         planted_count = 0
 
         # Field-median biological yield, used as the relative reference for
@@ -869,6 +963,7 @@ def _compute_outcome(
             recovered = yld_state.recovered_yield_g_m2_at_market_moisture
             harvested = bool(getattr(yld_state, "harvested", False))
             r8_reached = bool(getattr(yld_state, "r8_reached", False))
+            biological_for_recovery = biological * recovery_mass_factor
             if not (ever_planted or biological > 0.0):
                 continue
             planted_count += 1
@@ -878,12 +973,12 @@ def _compute_outcome(
             if harvested:
                 recovered_kg += recovered * ridge_area_m2 / 1000.0
                 harvested_count += 1
-                harvested_potential_kg += biological * ridge_area_m2 / 1000.0
-                if biological > 0.0 and recovered / biological < crop_loss_threshold:
+                harvested_potential_kg += biological_for_recovery * ridge_area_m2 / 1000.0
+                if biological_for_recovery > 0.0 and recovered / biological_for_recovery < crop_loss_threshold:
                     harvest_loss_count += 1
             elif r8_reached:
                 unharvested_mature_count += 1
-                unharvested_mature_potential_kg += biological * ridge_area_m2 / 1000.0
+                unharvested_mature_potential_kg += biological_for_recovery * ridge_area_m2 / 1000.0
             elif ridge_potential_g_m2 > 0.0:
                 if biological < crop_loss_threshold * ridge_potential_g_m2:
                     growing_loss_count += 1
@@ -1006,6 +1101,7 @@ def _compute_outcome(
             oracle_baseline_dir,
             focus_ridge_ids,
             ridge_area_m2,
+            provenance=crop_backend_provenance(physics),
         )
         # Inline per-ridge donothing OVERRIDES the JSON-loaded value when
         # provided — replay-friendly path that doesn't need a pre-built

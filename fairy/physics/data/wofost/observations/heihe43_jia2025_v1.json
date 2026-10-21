@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "evidence_package_id": "heihe43_jia2025_v1",
+  "cultivar": "HEIHE43",
+  "not_heinong84": true,
+  "source": {
+    "doi": "10.3390/ijms26073362",
+    "url": "https://www.mdpi.com/1422-0067/26/7/3362",
+    "supplement_url": "https://mdpi-res.com/d_attachment/ijms/ijms-26-03362/article_deploy/ijms-26-03362-s001.zip",
+    "xlsx_sha256": "61a148811571b5fdfc50ee51592b9b52b05b615fcc97c2c450125959d6c8c2e0",
+    "locator": "Supplementary Tables.xlsx / Table S2 row306 / cultivar ID303"
+  },
+  "trial_method": {
+    "sowing_month_day": "05-09",
+    "sowing_applies_to_years": [
+      2020,
+      2021
+    ],
+    "sites": {
+      "BJC": {
+        "latitude": 53.46666666666667,
+        "longitude": 122.35,
+        "elevation": 295
+      },
+      "HH": {
+        "latitude": 50.25,
+        "longitude": 127.46666666666667,
+        "elevation": 154
+      },
+      "LBDL": {
+        "latitude": 50.25,
+        "longitude": 120.31666666666666,
+        "elevation": 577
+      }
+    },
+    "stage_definitions": {
+      "VE": "emergence; finer emergence criterion not supplied",
+      "R1": "at least one open flower at any node on main stem",
+      "R7": "at least one normal pod on main stem reaches mature pod colour"
+    },
+    "uncertainty": "Decimal durations preserved. Table does not state their replication/SE basis. No actual calendar emergence/flowering/maturity dates inferred."
+  },
+  "records": [
+    {
+      "id": "jia2025_heihe43_BJC_2020",
+      "year": 2020,
+      "site": "BJC",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 44.4,
+        "R1_R7": null,
+        "VE_R7": null
+      },
+      "source_cells": {
+        "VE_R1": "C306",
+        "R1_R7": "D306",
+        "VE_R7": "E306"
+      },
+      "source_values_raw": [
+        "44.4",
+        "NA",
+        "NA"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    },
+    {
+      "id": "jia2025_heihe43_HH_2020",
+      "year": 2020,
+      "site": "HH",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 41.3,
+        "R1_R7": 75.7,
+        "VE_R7": 117.1
+      },
+      "source_cells": {
+        "VE_R1": "F306",
+        "R1_R7": "G306",
+        "VE_R7": "H306"
+      },
+      "source_values_raw": [
+        "41.3",
+        "75.7",
+        "117.1"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    },
+    {
+      "id": "jia2025_heihe43_LBDL_2020",
+      "year": 2020,
+      "site": "LBDL",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 44.1,
+        "R1_R7": null,
+        "VE_R7": null
+      },
+      "source_cells": {
+        "VE_R1": "I306",
+        "R1_R7": "J306",
+        "VE_R7": "K306"
+      },
+      "source_values_raw": [
+        "44.1",
+        "NA",
+        "NA"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    },
+    {
+      "id": "jia2025_heihe43_BJC_2021",
+      "year": 2021,
+      "site": "BJC",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 42.5,
+        "R1_R7": null,
+        "VE_R7": null
+      },
+      "source_cells": {
+        "VE_R1": "N306",
+        "R1_R7": "O306",
+        "VE_R7": "P306"
+      },
+      "source_values_raw": [
+        "42.5",
+        "NA",
+        "NA"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    },
+    {
+      "id": "jia2025_heihe43_HH_2021",
+      "year": 2021,
+      "site": "HH",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 30.7,
+        "R1_R7": 81.1,
+        "VE_R7": 111.8
+      },
+      "source_cells": {
+        "VE_R1": "Q306",
+        "R1_R7": "R306",
+        "VE_R7": "S306"
+      },
+      "source_values_raw": [
+        "30.7",
+        "81.1",
+        "111.8"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    },
+    {
+      "id": "jia2025_heihe43_LBDL_2021",
+      "year": 2021,
+      "site": "LBDL",
+      "cultivar": "HEIHE43",
+      "observed_duration_days": {
+        "VE_R1": 46.5,
+        "R1_R7": null,
+        "VE_R7": null
+      },
+      "source_cells": {
+        "VE_R1": "T306",
+        "R1_R7": "U306",
+        "VE_R7": "V306"
+      },
+      "source_values_raw": [
+        "46.5",
+        "NA",
+        "NA"
+      ],
+      "missing_value_interpretation": "NA is missing; not automatically a frost-censoring observation"
+    }
+  ],
+  "limitations": [
+    "Only HH has complete phases for this cultivar in both years.",
+    "R7 is one-pod physiological maturity, not harvest readiness or FAIRY R8.",
+    "Phase sums differ from published total by 0.1d due to tabulated rounding; total not duplicated in objective.",
+    "No HEINONG84, yield, soil, density or nitrogen calibration implied."
+  ]
+}

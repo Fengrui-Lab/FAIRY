@@ -1,0 +1,70 @@
+{
+  "path": "/Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_complete_20261021/weather/fairy_nasa_power_harbin_20190501_20191031.json",
+  "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=ALLSKY_SFC_SW_DWN%2CT2M_MIN%2CT2M_MAX%2CT2M%2CRH2M%2CWS2M%2CPRECTOTCORR&community=AG&latitude=45.7&longitude=126.6&start=20190501&end=20191031&format=JSON&time-standard=LST",
+  "sha256": "d3390fc7f5209d4b908e3c0b0bbb8ed2e702a824dcf8c5c1c523957448a30137",
+  "status": 200,
+  "retrieved_at_utc": "2026-10-21T09:31:12.288926+00:00",
+  "header": {
+    "title": "NASA/POWER Source Native Resolution Daily Data",
+    "api": {
+      "version": "v2.10.0",
+      "name": "POWER Daily API"
+    },
+    "sources": [
+      "SYN1DEG",
+      "MERRA2",
+      "POWER"
+    ],
+    "fill_value": -999.0,
+    "time_standard": "LST",
+    "start": "20190501",
+    "end": "20191031"
+  },
+  "parameters": {
+    "ALLSKY_SFC_SW_DWN": {
+      "units": "MJ/m^2/day",
+      "longname": "All Sky Surface Shortwave Downward Irradiance"
+    },
+    "T2M_MIN": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Minimum"
+    },
+    "T2M_MAX": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Maximum"
+    },
+    "T2M": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters"
+    },
+    "RH2M": {
+      "units": "%",
+      "longname": "Relative Humidity at 2 Meters"
+    },
+    "WS2M": {
+      "units": "m/s",
+      "longname": "Wind Speed at 2 Meters"
+    },
+    "PRECTOTCORR": {
+      "units": "mm/day",
+      "longname": "Precipitation Corrected"
+    }
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      126.6,
+      45.7,
+      201.66
+    ]
+  },
+  "quality_checks": {
+    "dates_consecutive": true,
+    "days": 184,
+    "all_requested_units_match": true,
+    "missing_values": 0,
+    "temperature_order_valid": true,
+    "physical_ranges_valid": true
+  },
+  "interpretation": "NASA POWER gridded reanalysis and satellite-derived solar radiation; not field station observations. Raw bytes retained exactly as downloaded."
+}

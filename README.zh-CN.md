@@ -1,8 +1,10 @@
 # FAIRY
 
-[English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md)
+[English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md) | [WOFOST 接入与无 LLM 演示](docs/wofost-integration.md)
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
+
+已支持可选的 WOFOST 作物内核：安装 `uv sync --extra wofost` 后，可在主入口添加 `--crop-backend wofost`。运行 `uv run --extra wofost python scripts/run_wofost_demo.py` 可通过实际农事工具完成播种、灌溉、施氮和收获，无需 LLM。当前接入大豆，使用未本地标定的品种参数；密度通过初始生物量进入群体生长和水氮反馈，尚未经过本地密度试验验证。配置、模型边界和完整示例见 [WOFOST 接入说明](docs/wofost-integration.md)，当前进展与后续工作见 [交接文档](docs/wofost-handoff-20261021.md)。
 
 ## 系统定位
 

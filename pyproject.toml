@@ -14,6 +14,9 @@ dependencies = [
   "numpy>=1.24",
 ]
 
+[project.optional-dependencies]
+wofost = ["pcse>=6.0,<6.1"]
+
 [project.scripts]
 fairy-run = "fairy.cli:main"
 

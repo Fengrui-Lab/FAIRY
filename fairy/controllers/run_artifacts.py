@@ -104,6 +104,7 @@ def build_run_report(
     init_kwargs: dict[str, Any] | None = None,
     llm_config: dict[str, Any] | None = None,
     response_policy: dict[str, Any] | None = None,
+    crop_backend_provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     totals = metric_totals(runtime_metrics)
     status = "completed" if stopped_reason in {"agent_finished", "completed"} and error is None else "stopped"
@@ -126,6 +127,12 @@ def build_run_report(
         "system_prompt_mode": system_prompt_mode,
         "llm_config": llm_config or {},
         "response_policy": response_policy or {},
+        "crop_backend_provenance": (
+            crop_backend_provenance
+            or (outcome or {}).get("crop_backend_provenance")
+            or (evaluation or {}).get("crop_backend_provenance")
+            or {"backend": "legacy"}
+        ),
         "status": status,
         "stopped_reason": stopped_reason,
         "stop_reason": stopped_reason,

@@ -64,6 +64,12 @@ class FarmPhysicsState:
     latitude_deg: float = 45.7  # Harbin/Heilongjiang default
     random_seed: int = 0
 
+    # Optional native crop/soil backend; legacy engine views stay available to
+    # observation tools and harvest accounting in either mode.
+    crop_backend_name: str = "legacy"
+    crop_backend: Any = field(default=None, repr=False)
+    ridge_width_m: float = 1.1
+
     # Engines. Constructed in __post_init__ so they exist for type-checking but
     # remain unused until the first physics-aware activity flips engines_active.
     soil: SoilEngine = field(init=False)
@@ -173,6 +179,7 @@ class FarmPhysicsState:
         air_temp_min_c: float | None = None,
         air_temp_max_c: float | None = None,
         weather_tags: list[str] | None = None,
+        relative_humidity_pct: float | None = None,
     ) -> None:
         """Pin WeatherGenerator output for one day to scenario-authored values."""
         if self.weather_generator is None:
@@ -189,6 +196,7 @@ class FarmPhysicsState:
             wind_ms=wind_ms,
             solar_rad_mj_m2=solar_rad_mj_m2,
             weather_tags=weather_tags,
+            relative_humidity_pct=relative_humidity_pct,
         )
         self.engines_active = True
 
@@ -215,6 +223,10 @@ class FarmPhysicsState:
         """Lightweight read-only view; used in tests and GUI debug overlays."""
         return {
             "engines_active": self.engines_active,
+            "crop_backend_name": self.crop_backend_name,
+            "crop_backend": (
+                self.crop_backend.snapshot() if self.crop_backend is not None else None
+            ),
             "last_physics_sim_time": self.last_physics_sim_time,
             "profile_name": self.profile_name,
             "location": self.location,

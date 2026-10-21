@@ -10,6 +10,7 @@ __pycache__/
 .idea/
 .DS_Store
 validation_runs/
+rebatch_outputs/
 runs/
 fos_exports/
 workflow_exports/

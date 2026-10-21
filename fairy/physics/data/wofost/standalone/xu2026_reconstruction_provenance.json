@@ -1,0 +1,226 @@
+{
+  "status": "published_parameter_reconstruction_not_strict_reproduction",
+  "paper": {
+    "title": "Xu et al. 2026 NortheastChinaSoybeanYield20m",
+    "url": "https://essd.copernicus.org/articles/18/2413/2026/",
+    "doi": "10.5194/essd-18-2413-2026",
+    "license": "CC BY 4.0",
+    "xml_sha256": "91c8ecdb48e470c0a7a0f8d5f37eed143f3898f2c10f8cb1caa2be6f6969a2b2"
+  },
+  "published_crop_overrides": {
+    "TDWI": 120,
+    "RGRLAI": 0.01,
+    "TBASEM": 8,
+    "TEFFMX": 22,
+    "TSUMEM": 70,
+    "TSUM1": 480,
+    "TSUM2": 770,
+    "DLO": -99,
+    "DLC": -99,
+    "TBASE": 7,
+    "SPAN": 23,
+    "SLATB": [
+      0,
+      0.0014,
+      0.45,
+      0.0025,
+      0.9,
+      0.0025,
+      2,
+      0.0007
+    ],
+    "KDIFTB": [
+      0,
+      0.8,
+      2,
+      0.8
+    ],
+    "EFFTB": [
+      0,
+      0.4,
+      40,
+      0.4
+    ],
+    "AMAXTB": [
+      0,
+      29,
+      1.7,
+      25.31,
+      2,
+      0
+    ],
+    "TMPFTB": [
+      0,
+      0,
+      10,
+      0.3,
+      20,
+      0.6,
+      25,
+      0.8,
+      30,
+      1,
+      35,
+      1
+    ],
+    "CVL": 0.72,
+    "CVO": 0.48,
+    "CVR": 0.72,
+    "CVS": 0.69,
+    "Q10": 2,
+    "RML": 0.03,
+    "RMO": 0.017,
+    "RMR": 0.01,
+    "RMS": 0.015,
+    "FRTB": [
+      0,
+      0.62,
+      0.75,
+      0.35,
+      1,
+      0.15,
+      1.5,
+      0,
+      2,
+      0
+    ],
+    "FLTB": [
+      0,
+      0.7,
+      1,
+      0.7,
+      1.15,
+      0.6,
+      1.3,
+      0.43,
+      1.5,
+      0.15,
+      2,
+      0
+    ],
+    "FSTB": [
+      0,
+      0.3,
+      1,
+      0.3,
+      1.15,
+      0.25,
+      1.3,
+      0.1,
+      1.5,
+      0.1,
+      2,
+      0
+    ],
+    "FOTB": [
+      0,
+      0,
+      1,
+      0,
+      1.15,
+      0.15,
+      1.3,
+      0.47,
+      1.5,
+      0.75,
+      2,
+      1
+    ],
+    "PERDL": 0.03,
+    "RDRRTB": [
+      0,
+      0,
+      1.5,
+      0,
+      1.51,
+      0.02,
+      2,
+      0.02
+    ],
+    "RDRSTB": [
+      0,
+      0,
+      1.5,
+      0,
+      1.51,
+      0.02,
+      2,
+      0.02
+    ],
+    "CFET": 1,
+    "DEPNR": 5,
+    "IAIRDU": 0,
+    "IOX": 0,
+    "RDI": 10,
+    "RRI": 1.2,
+    "RDMCR": 120
+  },
+  "completion_source": {
+    "branch": "wofost72",
+    "commit": "fc6eda46ea0081eb0ad31fa92ea49fea60e11075",
+    "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/fc6eda46ea0081eb0ad31fa92ea49fea60e11075/soybean.yaml",
+    "sha256": "16e41781666021d093faafac179babfa6618aae83417dbbeced3e2fe479b0111",
+    "license": "EUPL as declared by upstream; version unspecified",
+    "note": "Unmodified upstream WOFOST 7.2 crop file, used only as explicit completion of unpublished research settings."
+  },
+  "explicit_missing_settings": {
+    "DTSMTB": {
+      "value": [
+        0.0,
+        0.0,
+        7.0,
+        0.0,
+        30.0,
+        23.0,
+        45.0,
+        38.0
+      ],
+      "status": "inherited upstream 7.2, not provided by Xu; a separate inferred 8/37C sensitivity is required"
+    },
+    "IDSL": {
+      "value": 0,
+      "status": "inherited upstream; no photoperiod calibration is claimed"
+    },
+    "RDMSOL": {
+      "value": 120,
+      "unit": "cm",
+      "status": "assumed soil depth; paper supplies crop RDMCR120, not soil RDMSOL"
+    },
+    "SOPE": {
+      "value": 10,
+      "unit": "cm/day",
+      "status": "diagnostic assumption, not reported by Xu"
+    },
+    "KSUB": {
+      "value": 1,
+      "unit": "cm/day",
+      "status": "diagnostic assumption, not reported by Xu"
+    },
+    "WAV": {
+      "value": 20.4,
+      "unit": "cm",
+      "status": "assumed field capacity in medium loam: (SMFCF-SMW)*RDMSOL"
+    },
+    "SMLIM": {
+      "value": 0.28,
+      "status": "assumed field-capacity initialization"
+    },
+    "CO2": {
+      "value": 400,
+      "unit": "ppm",
+      "status": "fixed diagnostic assumption, not source-year CO2 observation"
+    },
+    "reference_et": {
+      "angsta": 0.25,
+      "angstb": 0.5,
+      "et_model": "PM",
+      "status": "explicit meteorology assumption; no original station ET setup available"
+    }
+  },
+  "limitations": [
+    "No original51stationweather/inputbundle or matched fieldphenology/yield is publicly supplied withthepaper.",
+    "NASA POWER is gridded reanalysis and satellite radiation, not CMA station observations.",
+    "Native CWB uses SOPE/KSUB for drainage/percolation; Table2 K0 alone does not complete that configuration.",
+    "No yield-target fit, no nitrogen limitation, no FAIRY mappings or harvest/storage losses."
+  ]
+}

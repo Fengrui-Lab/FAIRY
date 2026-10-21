@@ -113,6 +113,10 @@ class YieldRecoveryParameters:
     # 1 bushel soybean = 60 lb at 13% moisture.
     kg_per_bushel_soybean: float = 27.2155
 
+    # Native crop models output dry matter. Legacy scenarios historically
+    # supplied an empirical as-harvested yield proxy, so keep their old basis.
+    biological_yield_is_dry_matter: bool = False
+
 
 @dataclass
 class YieldWeatherInput:
@@ -508,12 +512,14 @@ class YieldRecoveryEngine:
 
         recovered_as_harvested = harvestable_g_m2 * (1.0 - machine_loss)
 
-        # Convert recovered mass to the scenario's effective market yield basis.
-        # Wet grain is discounted to market moisture. Grain already drier than
-        # market moisture is not "rewetted" for a bonus; the model keeps the
-        # in-field dry-down as effective weight loss.
+        # Native biological mass is already dry matter; convert it directly
+        # to grain at market moisture. Legacy proxies retain their historical
+        # wet-grain discount and below-market dry-down behavior.
         field_moisture = state.grain_moisture_frac
-        if field_moisture > p.market_moisture_frac:
+        if p.biological_yield_is_dry_matter:
+            market_mass = recovered_as_harvested / (1.0 - p.market_moisture_frac)
+            tags.append("dry_matter_to_standard_market_moisture")
+        elif field_moisture > p.market_moisture_frac:
             market_mass = recovered_as_harvested * (
                     (1.0 - field_moisture) / (1.0 - p.market_moisture_frac)
             )

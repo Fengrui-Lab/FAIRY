@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/ajwdewit/WOFOST_crop_parameters",
+  "commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+  "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml",
+  "sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+  "license": "European Union Public License (EUPL)",
+  "license_note": "Upstream soybean.yaml metadata declares EUPL without a version. Copyright/attribution and metadata are preserved in the bundled file.",
+  "calibration": "Uncalibrated transfer of European soybean parameter sets; Chinese FAIRY seed labels use an explicitly reported fallback unless configured."
+}

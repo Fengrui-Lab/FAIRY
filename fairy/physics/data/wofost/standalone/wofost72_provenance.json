@@ -1,0 +1,8 @@
+{
+  "branch": "wofost72",
+  "commit": "fc6eda46ea0081eb0ad31fa92ea49fea60e11075",
+  "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/fc6eda46ea0081eb0ad31fa92ea49fea60e11075/soybean.yaml",
+  "sha256": "16e41781666021d093faafac179babfa6618aae83417dbbeced3e2fe479b0111",
+  "license": "EUPL as declared by upstream; version unspecified",
+  "note": "Unmodified upstream WOFOST 7.2 crop file, used only as explicit completion of unpublished research settings."
+}

@@ -16,7 +16,10 @@ from typing import Any, Mapping
 from fairy.apps.farm_world.farm_action_record import FarmActionRecord
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.weather_app import WeatherApp
-from fairy.physics.biotic_pressure_engine import BioticPressureState
+from fairy.physics.biotic_pressure_engine import (
+    BioticPressureState, TreatmentApplication, TreatmentType,
+)
+from fairy.physics.management_effect_engine import ManagementAction, ManagementActionType
 from fairy.physics.canopy_biomass_engine import (
     CanopyBiomassState,
     SeedType as CanopySeedType,
@@ -27,9 +30,9 @@ from fairy.physics.phenology_engine import (
     SeedType as PhenologySeedType,
     SoybeanStage,
 )
-from fairy.physics.soil_engine import RidgeSoilState, SoilHydraulicModifier
+from fairy.physics.soil_engine import RidgeSoilState, SoilHydraulicModifier, SoilParameters
 from fairy.physics.weather_engine import WeatherDay
-from fairy.physics.yield_recovery_engine import YieldRecoveryState
+from fairy.physics.yield_recovery_engine import HarvestAction, YieldRecoveryState
 
 
 def export_farm_checkpoint_state(
@@ -66,7 +69,13 @@ def export_farm_checkpoint_state(
         "random_seed": physics.random_seed,
         "engines_active": physics.engines_active,
         "last_physics_sim_time": physics.last_physics_sim_time,
+        "crop_backend_name": physics.crop_backend_name,
+        "crop_backend_state": (
+            physics.crop_backend.export_state()
+            if physics.crop_backend is not None else None
+        ),
         "scenario_metadata": _to_jsonable(getattr(physics, "scenario_metadata", {})),
+        "soil_parameters": _to_jsonable(physics.soil.params),
         "soil_states": _to_jsonable(physics.soil.get_state()),
         "soil_hydraulic_modifiers": _to_jsonable(
             getattr(physics.soil, "hydraulic_modifiers", {})
@@ -77,6 +86,11 @@ def export_farm_checkpoint_state(
         "management_states": _to_jsonable(physics.management.get_state()),
         "yield_recovery_states": _to_jsonable(physics.yield_recovery.get_state()),
         "action_log": _to_jsonable(physics.action_log),
+        "pending_management_actions_by_ridge": _to_jsonable(
+            physics.pending_management_actions_by_ridge
+        ),
+        "pending_treatments_by_ridge": _to_jsonable(physics.pending_treatments_by_ridge),
+        "pending_harvest_actions_by_ridge": _to_jsonable(physics.pending_harvest_actions_by_ridge),
         "weather_generator": _export_weather_generator(weather_generator),
     }
     return payload
@@ -117,6 +131,10 @@ def restore_farm_checkpoint_state(
         if physics_state.get("scenario_metadata"):
             physics.scenario_metadata = dict(physics_state["scenario_metadata"])  # type: ignore[attr-defined]
 
+        if isinstance(physics_state.get("soil_parameters"), Mapping):
+            physics.soil.params = SoilParameters(**_dataclass_init_data(
+                SoilParameters, dict(physics_state["soil_parameters"])
+            ))
         physics.soil.set_state(
             _state_map(physics_state.get("soil_states", {}), RidgeSoilState)
         )
@@ -153,6 +171,37 @@ def restore_farm_checkpoint_state(
             FarmActionRecord(**dict(record))
             for record in physics_state.get("action_log", [])
         ]
+        physics.pending_management_actions_by_ridge = {
+            int(rid): [ManagementAction(**{
+                **action, "action_type": ManagementActionType(action["action_type"])
+            }) for action in actions]
+            for rid, actions in physics_state.get("pending_management_actions_by_ridge", {}).items()
+        }
+        physics.pending_treatments_by_ridge = {
+            int(rid): [TreatmentApplication(**{
+                **treatment, "treatment_type": TreatmentType(treatment["treatment_type"])
+            }) for treatment in treatments]
+            for rid, treatments in physics_state.get("pending_treatments_by_ridge", {}).items()
+        }
+        physics.pending_harvest_actions_by_ridge = {
+            int(rid): HarvestAction(**action)
+            for rid, action in physics_state.get("pending_harvest_actions_by_ridge", {}).items()
+        }
+        backend_name = physics_state.get("crop_backend_name", "legacy")
+        if backend_name == "wofost":
+            from fairy.physics.wofost_backend import WofostBackend
+
+            backend_state = physics_state.get("crop_backend_state")
+            if not backend_state:
+                raise ValueError("WOFOST checkpoint is missing native model history")
+            physics.crop_backend = WofostBackend.from_state(backend_state)
+            physics.crop_backend_name = "wofost"
+        elif backend_name == "legacy":
+            physics.crop_backend = None
+            physics.crop_backend_name = "legacy"
+        else:
+            raise ValueError(f"Unsupported checkpoint crop backend: {backend_name!r}")
+        physics.yield_recovery.params.biological_yield_is_dry_matter = backend_name == "wofost"
         _restore_weather_generator(
             getattr(physics, "weather_generator", None),
             physics_state.get("weather_generator") or {},

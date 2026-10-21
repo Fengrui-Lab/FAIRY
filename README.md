@@ -1,6 +1,6 @@
 # FAIRY
 
-[中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md)
+[中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md) | [WOFOST integration and no-LLM demo](docs/wofost-integration.md)
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 

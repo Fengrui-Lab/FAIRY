@@ -190,6 +190,7 @@ class FOSReport:
     ]  # list[GateResult]; type loosened to avoid circular import
     efficiency_breakdown: EfficiencyBreakdown
     weights: dict[str, float]
+    crop_backend_provenance: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -204,4 +205,5 @@ class FOSReport:
             ],
             "efficiency_breakdown": self.efficiency_breakdown.to_dict(),
             "weights": {k: round(v, 4) for k, v in self.weights.items()},
+            "crop_backend_provenance": self.crop_backend_provenance,
         }

@@ -1,0 +1,340 @@
+{
+  "schema_version": 1,
+  "profile_id": "heilongjiang_heinong84_complete_v1",
+  "profile_version": "1.0.0",
+  "title": "黑农84公开资料约束工程参考品种 v1",
+  "crop_name": "soybean",
+  "supported_seed_types": [
+    "HEINONG84"
+  ],
+  "base_variety": "Soybean_901",
+  "native_variety_name": "Heinong84_PublicReference_v1",
+  "parameter_set_kind": "complete_native_parameters",
+  "parameter_overrides": {
+    "CO2EFFTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.11,
+      1000.0,
+      1.11,
+      2000.0,
+      1.11
+    ],
+    "CO2TRATB": [
+      40.0,
+      1.0,
+      360.0,
+      1.0,
+      720.0,
+      0.9,
+      1000.0,
+      0.9,
+      2000.0,
+      0.9
+    ],
+    "CO2AMAXTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.6,
+      1000.0,
+      1.9,
+      2000.0,
+      1.9
+    ],
+    "AMAX_SLP": 3.24,
+    "AMAX_LNB": 0.0,
+    "TBASEM": 8.0,
+    "TEFFMX": 22.0,
+    "TSUMEM": 70.0,
+    "IDSL": 0,
+    "DLO": -99.0,
+    "DLC": -99.0,
+    "TSUM1": 500.0,
+    "TSUM2": 1100.0,
+    "DTSMTB": [
+      0.0,
+      0.0,
+      7.0,
+      0.0,
+      30.0,
+      23.0,
+      45.0,
+      38.0
+    ],
+    "DVSI": 0.0,
+    "DVSEND": 2.0,
+    "VERNBASE": 14.0,
+    "VERNSAT": 70.0,
+    "VERNDVS": 0.3,
+    "VERNRTB": [
+      -8.0,
+      0.0,
+      -4.0,
+      0.0,
+      3.0,
+      1.0,
+      10.0,
+      1.0,
+      17.0,
+      0.0,
+      20.0,
+      0.0
+    ],
+    "TDWI": 120.0,
+    "RGRLAI": 0.01,
+    "SLATB": [
+      0.0,
+      0.0014,
+      0.45,
+      0.0025,
+      0.9,
+      0.0025,
+      2.0,
+      0.0007
+    ],
+    "SPA": 0.0,
+    "SSATB": [
+      0.0,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "SPAN": 23.0,
+    "TBASE": 7.0,
+    "KDIFTB": [
+      0.0,
+      0.8,
+      2.0,
+      0.8
+    ],
+    "EFFTB": [
+      0.0,
+      0.4,
+      40.0,
+      0.4
+    ],
+    "AMAX_REF": 29.0,
+    "KN": 0.4,
+    "REFCO2L": 360,
+    "TMPFTB": [
+      0.0,
+      0.0,
+      10.0,
+      0.3,
+      20.0,
+      0.6,
+      25.0,
+      0.8,
+      30.0,
+      1.0,
+      35.0,
+      1.0
+    ],
+    "TMNFTB": [
+      0.0,
+      0.0,
+      3.0,
+      1.0
+    ],
+    "CVL": 0.72,
+    "CVO": 0.48,
+    "CVR": 0.72,
+    "CVS": 0.69,
+    "Q10": 2.0,
+    "RML": 0.03,
+    "RMO": 0.017,
+    "RMR": 0.01,
+    "RMS": 0.015,
+    "RFSETB": [
+      0.0,
+      1.0,
+      2.0,
+      1.0
+    ],
+    "FRTB": [
+      0.0,
+      0.65,
+      0.75,
+      0.35,
+      1.0,
+      0.15,
+      1.5,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "FLTB": [
+      0.0,
+      0.7,
+      1.0,
+      0.7,
+      1.15,
+      0.6,
+      1.3,
+      0.43,
+      1.5,
+      0.15,
+      2.0,
+      0.0
+    ],
+    "FSTB": [
+      0.0,
+      0.3,
+      1.0,
+      0.3,
+      1.15,
+      0.25,
+      1.3,
+      0.1,
+      1.5,
+      0.1,
+      2.0,
+      0.0
+    ],
+    "FOTB": [
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.15,
+      0.15,
+      1.3,
+      0.47,
+      1.5,
+      0.75,
+      2.0,
+      1.0
+    ],
+    "PERDL": 0.03,
+    "RDRRTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "RDRSTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "CFET": 1.0,
+    "DEPNR": 5.0,
+    "IAIRDU": 0,
+    "IOX": 0,
+    "RDI": 10.0,
+    "RRI": 1.2,
+    "RDMCR": 120.0,
+    "NMAXLV_TB": [
+      0.0,
+      0.06,
+      0.4,
+      0.04,
+      0.7,
+      0.035,
+      1.0,
+      0.03,
+      2.0,
+      0.0293,
+      2.1,
+      0.0293
+    ],
+    "NMAXRT_FR": 0.5,
+    "NMAXST_FR": 0.5,
+    "NMAXSO": 0.056,
+    "NCRIT_FR": 1.0,
+    "NRESIDLV": 0.00933,
+    "NRESIDST": 0.00467,
+    "NRESIDRT": 0.00467,
+    "TCNT": 10,
+    "NFIX_FR": 0.8,
+    "RNUPTAKEMAX": 7.2,
+    "DVS_N_TRANSL": 0.8,
+    "NSLLV_TB": [
+      0.0,
+      1.0,
+      1.1,
+      1.0,
+      1.5,
+      1.4,
+      2.0,
+      1.5,
+      2.5,
+      1.5
+    ],
+    "RGRLAI_MIN": 0.004,
+    "REALLOC_DVS": 3.0,
+    "REALLOC_STEM_FRACTION": 0.2,
+    "REALLOC_LEAF_FRACTION": 0.0,
+    "REALLOC_STEM_RATE": 0.0415,
+    "REALLOC_LEAF_RATE": 0.0,
+    "REALLOC_EFFICIENCY": 0.95
+  },
+  "transfer_status": "literature_transfer",
+  "validation_status": "unvalidated",
+  "engineering_status": "complete_reference_scenario_phenology_constrained_not_site_year_validated",
+  "calibration": {
+    "status": "public_reference_constrained",
+    "method": "15-case two-parameter thermal-time screen; select solely by official aggregate emergence-to-maturity duration, then lock parameters before external forcing years",
+    "training_forcing_year": 2017,
+    "target": "official aggregate119–123days, not site-year observation",
+    "yield_used_in_selection": false,
+    "canopy_parameters_fitted": false,
+    "cross_year_forcing_diagnostics": [
+      2018,
+      2019
+    ],
+    "field_observation_validation": false,
+    "source_evidence": "validation_runs/wofost_complete_20261021/parameterization/frozen_screen.json"
+  },
+  "density": {
+    "reference_plants_m2": 23.0,
+    "TDWI_kg_ha_at_reference": 120,
+    "method": "Initial crop dry matter scales linearly around explicitly defined23plants/m2 engineering reference. No density optimum or compensatory branching calibration."
+  },
+  "sources": [
+    {
+      "title": "HAAS Heinong84 cultivar description:119days,22–24plants/m2,regional yields",
+      "url": "https://www.haas.cn/cgcyc/info/1231/2141.htm"
+    },
+    {
+      "title": "Xu2026 TableA1:emergence thresholds,TDWI120 and general soybean physiology",
+      "url": "https://essd.copernicus.org/articles/18/2413/2026/essd-18-2413-2026.html"
+    },
+    {
+      "title": "Pinned native WOFOST8.1 soybean physiological parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml"
+    }
+  ],
+  "parameter_groups": {
+    "changed": [
+      "TBASEM",
+      "TEFFMX",
+      "TSUMEM",
+      "TSUM1",
+      "TSUM2"
+    ],
+    "retained": "All other native8.1 values, including assimilation,N fixation,partitioning,SLA,rooting,respiration and photoperiod-disabled IDSL0; complete numeric copy stored here."
+  },
+  "limitations": [
+    "Reference variety has complete executable parameters, not independently validated local cultivar estimates.",
+    "119–123d is aggregate public weak constraint, not fixed forced maturity or an annual observation.",
+    "No target-yield multiplier or posthoc crop yield scaling; native carbon,N and water equations remain authoritative.",
+    "Temperature-only phenology retained; no local photoperiod fit.",
+    "Soil is declared homogeneous120cm assumption, not measured black-soil profile."
+  ]
+}

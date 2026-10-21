@@ -1119,36 +1119,9 @@ def replay_one_cell(
         or _detailed_briefing_from_detail_status(row.get("detail_status"))
     )
 
-    # ---- Inline do-nothing baseline (optional, no pre-built JSON needed) ----
-    # Computed BEFORE the agent replay from a fresh scenario instance that
-    # shares the same (scenario_id, start_time, seed) so the physics seed
-    # is identical.
     inline_donothing_kg: float | None = None
     inline_donothing_per_ridge: list[float] | None = None
-    if donothing_inline and extrapolate:
-        try:
-            _dn_scenario_id = bundle.get("scenario_id")
-            _dn_start_time = bundle.get("start_time")
-            _dn_seed = int(bundle.get("seed") or 0)
-            if _dn_scenario_id:
-                # Use the per-ridge variant so we get both the total kg AND
-                # the per-ridge yield array — needed to score focus subsets
-                # without a pre-built baseline JSON.
-                from fairy.scenarios.fos.evaluation import (
-                    compute_donothing_per_ridge_yields,
-                )
-
-                total, per_ridge = compute_donothing_per_ridge_yields(
-                    _dn_scenario_id,
-                    start_time=_dn_start_time,
-                    seed=_dn_seed,
-                    extrapolation_max_days=extrapolation_max_days,
-                )
-                inline_donothing_kg = total
-                inline_donothing_per_ridge = per_ridge
-        except Exception:
-            inline_donothing_kg = None
-            inline_donothing_per_ridge = None
+    inline_donothing_provenance: dict[str, Any] | None = None
 
     try:
         scenario, env, info = _replay_fairy_run_bundle(bundle)
@@ -1161,6 +1134,38 @@ def replay_one_cell(
         row["error"] = f"{type(exc).__name__}: {exc}"
         row["traceback"] = traceback.format_exc(limit=3)
         return row
+
+    # Construct an independent do-nothing world using the actual replayed
+    # backend/configuration, rather than silently constructing a legacy crop.
+    if donothing_inline and extrapolate:
+        try:
+            from fairy.scenarios.fos.evaluation import (
+                _try_get_farm_world,
+                compute_donothing_per_ridge_yields,
+            )
+            from fairy.scenarios.fos.provenance import crop_backend_provenance
+
+            inline_donothing_provenance = crop_backend_provenance(
+                _try_get_farm_world(scenario)
+            )
+            inline_donothing_kg, inline_donothing_per_ridge = compute_donothing_per_ridge_yields(
+                info["scenario_id"],
+                start_time=bundle.get("start_time"),
+                seed=int(bundle.get("seed") or 0),
+                extrapolation_max_days=extrapolation_max_days,
+                crop_backend=inline_donothing_provenance["backend"],
+                crop_backend_options=inline_donothing_provenance.get("config", {}),
+                scenario_kwargs=bundle.get("scenario_kwargs"),
+                init_kwargs=bundle.get("init_kwargs"),
+                expected_provenance=inline_donothing_provenance,
+            )
+        except Exception as exc:
+            if (inline_donothing_provenance or {}).get("backend") == "wofost":
+                row["status"] = "donothing_failed"
+                row["error"] = f"{type(exc).__name__}: {exc}"
+                return row
+            inline_donothing_kg = None
+            inline_donothing_per_ridge = None
 
     row["scenario"] = info["scenario_id"]
     row["l3_pool"] = _l3_pool_for_scenario(info["scenario_id"])
@@ -1207,6 +1212,7 @@ def replay_one_cell(
             oracle_baseline_dir=oracle_baseline_dir,
             donothing_biological_kg=inline_donothing_kg,
             donothing_per_ridge_g_m2=inline_donothing_per_ridge,
+            donothing_provenance=inline_donothing_provenance,
             focus_ridge_ids=cell_focus_ridge_ids,
         )
     except Exception as exc:

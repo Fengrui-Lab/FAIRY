@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "scenario_id": "wofost_complete_harbin_heinong84_v1",
+  "title": "哈尔滨黑农84完整工程参考农季v1",
+  "status": "complete_executable_engineering_reference_not_local_field_validation",
+  "random_seed": 1729,
+  "start_date": "2017-05-01",
+  "sowing_window": {
+    "start": "2017-05-05",
+    "end": "2017-05-12"
+  },
+  "deadline": "2017-10-31",
+  "field": {
+    "ridges": 64,
+    "ridge_width_m": 1.1,
+    "seed_type": "HEINONG84",
+    "seed_spacing_cm": 7.9,
+    "sowing_depth_cm": 4.0,
+    "assumed_establishment_fraction": 1.0
+  },
+  "initial_soil": {
+    "vwc": 0.28,
+    "temp_c": 12.0,
+    "root_depth_m": 1.2,
+    "status": "assumed_homogeneous_loam_not_field_measurement"
+  },
+  "crop_backend_options": {
+    "cultivar_profile": "heilongjiang_heinong84_complete_v1",
+    "reference_density_plants_m2": 23.0,
+    "fertilizer_n_fraction": 0.19230769230769232,
+    "fertilizer_n_recovery": 0.7,
+    "co2_ppm": 400.0,
+    "initial_available_n_kg_ha": 50,
+    "base_soil_n_kg_ha": 50,
+    "soil_n_mineralization_fraction": 0.025,
+    "soil_overrides": {
+      "SMW": 0.14,
+      "SMFCF": 0.36,
+      "SM0": 0.48,
+      "RDMSOL": 120.0,
+      "SOPE": 3.5,
+      "KSUB": 3.5,
+      "K0": 3.5
+    },
+    "site_overrides": {
+      "NOTINF": 0.15
+    },
+    "external_biotic_coupling": true
+  },
+  "fertilizer": {
+    "total_product_kg_ha": 260.0,
+    "n_fraction": 0.19230769230769232,
+    "n_recovery": 0.7,
+    "nutrients_kg_ha": {
+      "N": 50,
+      "P2O5": 69,
+      "K2O": 36
+    },
+    "products": [
+      {
+        "name": "DAP18-46-0",
+        "kg_ha": 150,
+        "N_fraction": 0.18,
+        "P2O5_fraction": 0.46,
+        "K2O_fraction": 0
+      },
+      {
+        "name": "Urea46-0-0",
+        "kg_ha": 50,
+        "N_fraction": 0.46,
+        "P2O5_fraction": 0,
+        "K2O_fraction": 0
+      },
+      {
+        "name": "KCl0-0-60",
+        "kg_ha": 60,
+        "N_fraction": 0,
+        "P2O5_fraction": 0,
+        "K2O_fraction": 0.6
+      }
+    ],
+    "mapping": "Physical product blend:200kg basal plus remaining290.5472kg through real apply_fertilizer before sowing; only N affects native8.1, P/K accounting only"
+  },
+  "management": {
+    "irrigation_trigger_rftra": 0.9,
+    "irrigation_mm_per_event": 20.0,
+    "irrigation_season_max_mm": 120.0,
+    "high_quota_max_mm": 1000.0,
+    "minimum_gap_days": 5,
+    "rain_today_max_mm": 1.0,
+    "stress_consecutive_days": 2,
+    "harvest_moisture_max_pct": 25.0,
+    "weekly_scouting": true,
+    "irrigation_dvs_min": 1.0,
+    "irrigation_dvs_max": 1.9,
+    "next3day_rain_max_mm": 10.0,
+    "topdress_enabled": false
+  },
+  "postharvest": {
+    "drying_capacity_kg_per_day": 10000.0,
+    "storage_capacity_kg": 20000.0,
+    "market_moisture_pct": 13.0
+  },
+  "weather": {
+    "humidity": "source",
+    "source": "NASA POWER daily gridded reanalysis/satellite radiation; not station observations",
+    "normal_weather_years": [
+      2017,
+      2018,
+      2019
+    ],
+    "stress_test": "Explicit rainfall multiplier .25 in separately named diagnostic cases; all other forcing,soil,crop,actions-policy unchanged"
+  },
+  "reference_expectations": {
+    "status": "context_only_not_hardcoded_yield",
+    "cultivar_official_duration_days": [
+      119,
+      123
+    ],
+    "public_yield_kg_mu": [
+      192.72,
+      209.0133333
+    ],
+    "moisture_note": "official yield moisture not supplied; do not treat as exact13pct site-year calibration target"
+  },
+  "sources": [
+    {
+      "title": "HAAS Heinong84 cultivar description:119days,22–24plants/m2,regional yields",
+      "url": "https://www.haas.cn/cgcyc/info/1231/2141.htm"
+    },
+    {
+      "title": "Xu2026 TableA1:emergence thresholds,TDWI120 and general soybean physiology",
+      "url": "https://essd.copernicus.org/articles/18/2413/2026/essd-18-2413-2026.html"
+    },
+    {
+      "title": "Pinned native WOFOST8.1 soybean physiological parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml"
+    },
+    {
+      "title": "MOA Northeast soybean fertilizer guide",
+      "url": "https://zzys.moa.gov.cn/gdxw/202303/t20230314_6423040.htm"
+    },
+    {
+      "title": "MOA soybean mechanical harvesting guidance15–25pct",
+      "url": "https://njhs.moa.gov.cn/tzggjzcjd/202109/t20210923_6377124.htm"
+    }
+  ],
+  "weather_file": "../../fairy/physics/data/wofost/weather/harbin_2017_nasa_power.json"
+}

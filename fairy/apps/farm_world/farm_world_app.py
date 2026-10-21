@@ -197,6 +197,9 @@ class FarmWorldApp(App):
             "app_name": self.name,
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
+            **({"crop_backend": self._physics.crop_backend.snapshot()["provenance"]}
+               if self._physics is not None and self._physics.crop_backend is not None
+               else {}),
             "ridges": [r.to_dict() for r in self._ridges],
             "inventory": self._inventory.to_dict(),
             "management_regime": self._management_regime.to_dict(),
@@ -250,6 +253,11 @@ class FarmWorldApp(App):
         ]
 
     def reset(self) -> None:
+        backend_options = (
+            self._physics.crop_backend.snapshot()["config"]
+            if self._physics is not None and self._physics.crop_backend is not None
+            else None
+        )
         super().reset()
         self._ridges = [RidgeState.default(i) for i in range(self.num_ridges)]
         self._inventory = InventoryState.default()
@@ -263,6 +271,9 @@ class FarmWorldApp(App):
         self._pending_bin_grain_moistures_pct = []
         self._trailer_grain_ridge_ids = []
         self._trailer_grain_moistures_pct = []
+        if backend_options is not None:
+            self._physics = None
+            self.configure_crop_backend("wofost", **backend_options)
 
     # ------------------------------------------------------------------
     # Agent tools (@app_tool) — read-only
@@ -303,6 +314,9 @@ class FarmWorldApp(App):
             "season_phase": self._season_phase,
             "inventory": self._inventory.to_dict(),
             "ridges_overview": overview,
+            **({"model_assumptions": self._physics.crop_backend.snapshot().get("assumptions", [])}
+               if self._physics is not None and self._physics.crop_backend is not None
+               else {}),
         }
 
     @type_check
@@ -723,6 +737,55 @@ class FarmWorldApp(App):
         """
         return self._physics is not None and self._physics.engines_active
 
+    def configure_crop_backend(
+        self, backend: str = "legacy", **options: Any
+    ) -> dict[str, Any]:
+        """Select the crop backend before planting or advancing the season.
+
+        This is scenario configuration, rather than an agent-visible tool.
+        Switching a live crop would mix state from different models; resume
+        WOFOST crops through the full farm checkpoint API instead.
+        """
+        if backend not in {"legacy", "wofost"}:
+            raise ValueError("crop backend must be 'legacy' or 'wofost'")
+        if backend == "legacy" and options:
+            raise ValueError("WOFOST options require the 'wofost' crop backend")
+        physics = self.physics
+        config = None
+        if backend == "wofost":
+            from fairy.physics.wofost_backend import WofostConfig
+
+            config = WofostConfig(**{"latitude_deg": physics.latitude_deg, **options})
+        current = physics.crop_backend
+        if physics.crop_backend_name == backend and (
+            current is None or current.config == config
+        ):
+            return {"status": "unchanged", "crop_backend": backend}
+        if physics.action_log or any(
+            state.emerged or state.accumulated_gdd > 0.0
+            for state in physics.phenology.states.values()
+        ):
+            raise ValueError(
+                "Choose the crop backend before planting/advancing the season. "
+                "A mid-season WOFOST start requires a WOFOST checkpoint."
+            )
+        if backend == "wofost":
+            from fairy.physics.wofost_backend import WofostBackend
+
+            current = WofostBackend(config)
+            current.bind_physics(physics)
+        else:
+            current = None
+        physics.crop_backend = current
+        physics.crop_backend_name = backend
+        physics.yield_recovery.params.biological_yield_is_dry_matter = backend == "wofost"
+        physics.engines_active = True
+        return {
+            "status": "ok",
+            "crop_backend": backend,
+            "details": current.snapshot() if current is not None else None,
+        }
+
     def configure_physics_profile(
         self,
         profile_name: str,
@@ -780,6 +843,8 @@ class FarmWorldApp(App):
             # events and biotic outbreaks during the daily tick.
             physics.profile = registered  # type: ignore[attr-defined]
         physics.engines_active = True
+        if physics.crop_backend is not None:
+            physics.crop_backend.bind_physics(physics)
         return {
             "status": "ok",
             "profile_name": profile_name,

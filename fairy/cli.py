@@ -28,6 +28,7 @@ from fairy.controllers.run_artifacts import (
     write_jsonl,
 )
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
+from fairy.scenarios.fos.provenance import crop_backend_provenance
 from fairy.scenarios.workflow import Workflow
 
 _LEGACY_ARTIFACT_SUFFIXES = (
@@ -39,6 +40,14 @@ _LEGACY_ARTIFACT_SUFFIXES = (
     ".run_log.jsonl",
     ".a2a_traces.json",
 )
+
+
+def _scenario_crop_backend_provenance(scenario: Any) -> dict[str, Any]:
+    for app in scenario.apps or []:
+        candidate = getattr(app, "wrapped_app", app)
+        if hasattr(candidate, "_physics"):
+            return crop_backend_provenance(candidate)
+    return crop_backend_provenance(None)
 
 
 def _cleanup_legacy_artifacts(output_dir: Path, scenario_id: str) -> None:
@@ -165,6 +174,14 @@ def main() -> None:
     parser.add_argument("--workflow", help="Workflow JSON path for build output or replay input")
     parser.add_argument("--output-dir", default="runs", help="Directory for generated workflow/evaluation files")
     parser.add_argument("--scenario-kwargs", default=None, help="JSON object passed to the scenario constructor")
+    parser.add_argument(
+        "--crop-backend", choices=["legacy", "wofost"], default=None,
+        help="Crop growth backend (default: scenario setting, otherwise legacy)",
+    )
+    parser.add_argument(
+        "--wofost-config", default=None,
+        help="Path to a JSON object with WofostConfig options; implies --crop-backend wofost",
+    )
     parser.add_argument("--init-kwargs", default=None, help="JSON object passed to scenario setup/initialize")
     parser.add_argument("--list", action="store_true", help="List scenarios")
     parser.add_argument("--list-controllers", action="store_true", help="List controller families")
@@ -183,6 +200,18 @@ def main() -> None:
         parser.error("--scenario is required unless --list is used")
     scenario_class = get_scenario_class(args.scenario)
     scenario_kwargs = _json_object_arg(args.scenario_kwargs, "--scenario-kwargs")
+    if args.crop_backend is not None:
+        scenario_kwargs["crop_backend"] = args.crop_backend
+    if args.wofost_config:
+        if scenario_kwargs.get("crop_backend", "wofost") != "wofost":
+            parser.error("--wofost-config requires --crop-backend wofost")
+        try:
+            raw_config = Path(args.wofost_config).read_text(encoding="utf-8")
+            config = _json_object_arg(raw_config, "--wofost-config")
+        except (OSError, ValueError) as exc:
+            parser.error(str(exc))
+        scenario_kwargs["crop_backend"] = "wofost"
+        scenario_kwargs["crop_backend_options"] = config
     init_kwargs = _json_object_arg(args.init_kwargs, "--init-kwargs")
     output_dir = Path(args.output_dir)
     workflow_path = Path(args.workflow) if args.workflow else output_dir / f"{args.scenario}.oracle.json"
@@ -258,6 +287,7 @@ def main() -> None:
             seed=getattr(log_engine.scenario, "seed", None),
             scenario_kwargs=scenario_kwargs,
             init_kwargs=init_kwargs,
+            crop_backend_provenance=_scenario_crop_backend_provenance(log_engine.scenario),
         )
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
@@ -426,6 +456,7 @@ def main() -> None:
             seed=getattr(scenario, "seed", None),
             scenario_kwargs=scenario_kwargs,
             init_kwargs=init_kwargs,
+            crop_backend_provenance=_scenario_crop_backend_provenance(scenario),
         )
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
