@@ -345,3 +345,15 @@ Spent so far in Part 2: about $0.66.
   - 255 of 300 decisions went to the LLM; **the LLM fallback wasted the actions**: 140 farm-overview reads, 51 soil reads, 22 ridge reads. Jev's own decisions were plantings (17) and day advances (17).
 
 Spent so far in Part 2: about $1.1.
+
+## Step 9 – L3 reruns (2026-10-21)
+
+**Change:** the fallback prompt says the snapshot already shows crop, inventory and machines; read tools only for values it does not show.
+
+**Hybrid (0.4), hn58:** overview reads dropped (140 → 5), but the fallback now re-reads sensors (115 soil, 88 canopy reads). The season got to 29 July (before: 29 May) when the 300 actions ran out; no harvest. 264 of ~300 decisions by the LLM; Jev's own: plantings and charging. Biological yield loss 1.8%, recovered 100%. $0.41, 26 min.
+
+**gpt-6-luna, hn58 (second run):** prepared the field and planted all 64 ridges (38 actions), then stopped on 5 May: "R5/R6, maturity, grain moisture and harvest conditions have not occurred… I cannot truthfully…". It never advanced time. Biological yield loss 1.8%, recovered 100%. ~$0.03.
+
+**Finding:** neither agent completes an L3 season yet. gpt-6-luna (reasoning off) stops instead of advancing the clock; the hybrid advances but its LLM fallback, which has no memory between calls, spends the action budget re-reading.
+
+Spent so far in Part 2: about $1.6.

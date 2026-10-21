@@ -69,6 +69,9 @@ MAX_DONE_REFUSALS = 2
 FALLBACK_INSTRUCTIONS = (
     "Decide the next single step of a farm agent. Below are the task, a snapshot of the farm "
     "built from the farm's own tools, the last actions with their results, and notes. "
+    "The snapshot is current: it already shows the crop stage of every ridge, the inventory "
+    "and the machines, so do not call a tool only to read those again; read tools are for "
+    "values the snapshot does not show (weather, sensors, ridge details, inspections). "
     "Call exactly one tool for the next action. If the whole task is complete, reply "
     '"done" without calling a tool.'
 )
