@@ -46,7 +46,12 @@ from fairy.agents.jev.menu import (
 from fairy.agents.jev.snapshot import build_snapshot, ridge_ranges
 
 TOOL_QUESTION_ID = "next_action"
-TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
+PART1_TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
+TOOL_INSTRUCTIONS = (
+    "Which action should the farm agent take next? Take the next step of the task that is not "
+    "done yet; steps_so_far lists every action already taken. Do not repeat an action whose "
+    "result is already shown unless the farm has changed since."
+)
 
 # End-of-range argument -> its start argument. The end is asked after the start.
 RANGE_END_TO_START = {"end_ridge": "start_ridge", "end": "start"}
@@ -91,9 +96,13 @@ class JevAgent(Agent):
         hidden_tool_names: set[str] | frozenset[str] | None = None,
         fallback_llm: Any = None,
         fallback_confidence: float = 0.6,
+        state_mode: str = "snapshot",
     ) -> None:
+        if state_mode not in ("snapshot", "history"):
+            raise ValueError(f"Unknown Jev state mode: {state_mode}")
         self.fallback_llm = fallback_llm
         self.fallback_confidence = fallback_confidence
+        self.state_mode = state_mode
         super().__init__(
             name=name,
             llm=llm,
@@ -126,7 +135,7 @@ class JevAgent(Agent):
         self._llm_decisions = 0
         self.telemetry: dict[str, Any] = {
             "family_id": self.name,
-            "planning_mode": "jev_menu_choice_snapshot",
+            "planning_mode": f"jev_menu_choice_{self.state_mode}",
             "fallback_model": getattr(self.fallback_llm, "model", None),
             "fallback_confidence": self.fallback_confidence if self.fallback_llm else None,
         }
@@ -264,7 +273,7 @@ class JevAgent(Agent):
     def _decide(self, state: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, float]]:
         tool_question = {
             "type": "choice",
-            "instructions": TOOL_INSTRUCTIONS,
+            "instructions": TOOL_INSTRUCTIONS if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
             "criteria": {
                 **{name: menu.description for name, menu in self.tool_menus.items()},
                 DONE_OPTION: DONE_DESCRIPTION,
@@ -478,9 +487,8 @@ class JevAgent(Agent):
         ]
         return "\n".join(lines)
 
-    @staticmethod
     def _arg_instructions(
-        menu: ToolMenu, arg: Any, picked_keys: dict[str, str] | None = None
+        self, menu: ToolMenu, arg: Any, picked_keys: dict[str, str] | None = None
     ) -> str:
         text = (
             f"The farm agent has decided to call `{menu.tool_name}`: {menu.description} "
@@ -491,7 +499,26 @@ class JevAgent(Agent):
         start = RANGE_END_TO_START.get(arg.name)
         if start and picked_keys and start in picked_keys:
             text += f" The agent has already chosen `{start}` = {picked_keys[start]}."
+        if self.state_mode == "snapshot":
+            # Without this, Jev repeated the task's first values for this action
+            # (e.g. ridges 44-55 again instead of 24-35): single-question test, Part 2 Step 5.
+            earlier = self._earlier_calls(menu.tool_name)
+            if earlier:
+                text += f" Earlier calls of this action in this run: {earlier}."
+            text += " Choose the value for the next step of the task that is not done yet."
         return text
+
+    def _earlier_calls(self, tool_name: str, limit: int = 5) -> str:
+        seen: list[str] = []
+        for s in self._facts.get("steps", []):
+            if s.tool_name != tool_name:
+                continue
+            args = ", ".join(f"{k}={v}" for k, v in (s.tool_args or {}).items() if k != "content")
+            call = f"({args})"
+            if call in seen:
+                seen.remove(call)
+            seen.append(call)
+        return "; ".join(seen[-limit:])
 
     def _state(self) -> dict[str, Any]:
         """Task, farm snapshot and last few actions (Jev has no memory)."""
@@ -501,7 +528,18 @@ class JevAgent(Agent):
         self._snapshot, self._facts = build_snapshot(
             self._toolsets, self.workflow, self.time_manager.time()
         )
-        state = {"task": task, **self._snapshot}
+        if self.state_mode == "history":
+            # Part 1 input (diagnostic): every action with its full result, no snapshot.
+            # The snapshot is still built for the menus and the done check.
+            state = {
+                "task": task,
+                "actions_so_far": [
+                    {"action": s.tool_name, "arguments": s.tool_args or {}, "result": s.content}
+                    for s in self._facts["steps"]
+                ],
+            }
+        else:
+            state = {"task": task, **self._snapshot}
         if self._notes:
             state["notes"] = list(self._notes)
         self._state_chars.append(len(json.dumps(state, default=str, ensure_ascii=False)))

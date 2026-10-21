@@ -21,6 +21,12 @@ class OpenAILLM(BaseLLM):
         "o3",
     }
 
+    # Chat completions accept function tools for these models only with this
+    # reasoning effort (OpenAI 400 error otherwise; docs/jev/PROGRESS.md, Part 2 Step 5).
+    REASONING_EFFORT = {
+        "gpt-6-luna": "none",
+    }
+
     def __init__(self, model, temperature=0.1, api_key=None, **kwargs):
         """
         Initialize the OpenAI client.
@@ -76,6 +82,11 @@ class OpenAILLM(BaseLLM):
                 tools=tools,
                 **self.output_token_options(parameter="max_completion_tokens"),
                 **self.tool_call_options(tools),
+                **(
+                    {"reasoning_effort": self.REASONING_EFFORT[self.model]}
+                    if self.model in self.REASONING_EFFORT
+                    else {}
+                ),
             )
         else:
             raise RuntimeError(f"Invalid API mode: {self.api_mode}")

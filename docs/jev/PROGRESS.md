@@ -230,3 +230,57 @@ The herbicide L1 and replant L2 differ from do-nothing by only 2.7% and 0.9%, so
 **Also fixed:** the "report not sent" done-rule now applies only when the scenario has a report tool (otherwise it could never be met).
 
 **Tests:** 10 Jev tests pass (3 new: low confidence, repeat, done refused twice — with a fake LLM).
+
+## Step 5 – First paid runs, L1 herbicide (2026-10-21)
+
+**Run A – Jev only (no fallback):** stopped at the 60-action limit after 48 s. Jev called "read ridges 44–55" 60 times in a row, with confidence 0.7–0.9 every time, also after the snapshot's repeat warning. It skipped task steps 1–2 (weather and soil are already in the snapshot). 180 Jev requests, 652k input tokens (2.1–3.8k per request), about $0.027.
+- Confidence did not flag this loop, so a confidence threshold alone would not have handed it to the LLM; the "repeat without change" trigger would have.
+
+**Run B – gpt-6-luna LLM agent:** failed on its first call (no charge): OpenAI rejects tools on `/v1/chat/completions` for gpt-6-luna unless reasoning is set to "none". FAIRY's client uses that route and sets no reasoning level.
+
+**Fix (your choice):** gpt-6-luna runs with reasoning "none" (the only way it accepts tools on FAIRY's route). The paper must state this.
+
+**Run A2 – Jev only, with a one-line history of all steps and an instruction not to repeat:** the same loop (60 × "read ridges 44–55"). Confidence fell to 0.38–0.6 after the first step, so a 0.6 threshold would now trigger the fallback. 661k tokens, about $0.028. History adds about 28% to request size (L3: ~1.9M Jev tokens per run instead of 1.5M).
+
+**Run B – gpt-6-luna LLM agent:** followed the task step by step, 13 actions, 30 s. 124k tokens, 111k of them cached: about $0.003.
+
+| Run | Yield loss | Coverage | Tokens | Cost |
+|---|---|---|---|---|
+| A Jev | 2.61% (= do nothing) | 0% | 652k | $0.027 |
+| A2 Jev + history | 2.61% | 0% | 661k | $0.028 |
+| B gpt-6-luna | 0.00% | 90% | 124k | $0.003 |
+
+**Cost finding:** even a perfect Jev run on this task (fake Jev following the oracle: ~56k tokens, ~$0.0024) costs about the same as the LLM run, because the LLM's repeated input is cached at $0.01 per million. Jev uses fewer tokens, but not fewer dollars.
+
+**Run C – Jev, Part 1 input (full history with full results, no snapshot; `--jev-state history`), same new menus:** did task steps 1–10 in order (same as gpt-6-luna), then looped: spray ridges 44–53 → tank empty → refill → spray 44–53 again, never ridges 54–55. Yield loss −1.12% (repeated spraying of 44–53 beat the oracle), coverage 80%. 1.95M tokens (max 19k per request), about $0.082 — above my estimate of $0.03, because full history grows each step.
+- **So the snapshot input caused the first loop.** Jev tracks progress through the task from full action results. Likely cause to test: the snapshot cuts each recent result to 300 characters, so a "read ridges" result looks incomplete.
+
+Spent so far in Part 2: about $0.14.
+
+**Run D – snapshot input with the last 5 results in full (not cut to 300 characters):** the same loop as A (60 × "read ridges 44–55"); confidence 0.46–0.86. 2.23M tokens, about $0.094 — above my estimate of $0.06 (full ridge results made requests ~12k tokens, not 7k).
+- Cutting the results was not the cause. In C and D the first choice already differs: with the snapshot, Jev skips the weather/soil steps and starts at "read ridges 44–55", then repeats it; with the full history it follows the steps in order.
+
+Spent so far in Part 2: about $0.23.
+
+**Single-question tests** (frozen states from the runs, input variants, 2 repeats each; $0.007 in all; `validation_runs/jev_l3/probe/`):
+1. After the first ridge read in D: with weather and soil readings in the snapshot, Jev re-read ridges 44–55 (0.48–0.91); without them, or without the snapshot, it went back to step 1 "weather" (0.98–0.99).
+2. After the ridge read in E (weather/soil removed): the action "read ridge state" was right (task step 4 = reference ridges 24–35), but the **ridge question** picked 44 again (0.69–0.94), with any input — also Part 1's. Adding "earlier calls of this action in this run: (start=44, end=55). Choose the value for the next step of the task that is not done yet." to the question → ridge 24 (0.86, both repeats).
+
+**Decisions:**
+
+| Choice | Why |
+|---|---|
+| No weather, forecast or sensor readings in the snapshot | Test 1; Jev takes them with its own actions, like the LLM agent (also fairer) |
+| Each value question lists this action's earlier calls in the run (last 5) and asks for the value of the next undone task step | Test 2 |
+| Recent results cut at 1,500 characters (not 300, not full) | Cutting was not the cause (run D); full results cost 3× |
+| `--jev-state history` kept as an option (Part 1 input, for comparison only) | Used in run C |
+
+**Run E – weather/soil removed:** steps 1–3 right, then 57 × "read ridges 44–55" (the ridge question, test 2). $0.040.
+**Run E2 – plus earlier calls in value questions:** the whole task in order, 11 actions in 9 s (gpt-6-luna: 12; Jev skipped "check inventory"). 102k tokens, $0.004 (gpt-6-luna $0.003).
+
+| Run | Yield loss | Coverage | Actions | Cost |
+|---|---|---|---|---|
+| B gpt-6-luna | 0.00% | 90% | 12 | $0.003 |
+| E2 Jev (current) | 0.00% | 80% | 11 | $0.004 |
+
+Spent so far in Part 2: about $0.28.

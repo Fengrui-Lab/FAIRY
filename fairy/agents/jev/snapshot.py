@@ -3,16 +3,18 @@
 Replaces the full action history (see docs/jev/PROGRESS.md, Part 2). Rules:
 
 - Only values that the agent's own read tools report (farm overview, inventory,
-  weather, sensor zones, machine status), plus Jev's own past action results.
-  Never other hidden simulator fields, the oracle or the evaluator.
-- Nothing is written to the simulation. The farm-overview and sensor tools
-  advance the physics to the current time, and the physics depends on how
-  often that happens, so calling them would change the season. Instead their
-  values are read as stored after the last physics update (normally the end of
-  Jev's last action): ridge fields as the overview shows them, and zone soil
-  moisture/temperature and canopy NDVI averaged exactly as the sensors average
-  them, without sensor noise. Weather, inventory and machine status come from
-  their pure read tools. Checked with scripts/jev_offline_check.py --no-snapshot.
+  machine status), plus Jev's own past action results. Never other hidden
+  simulator fields, the oracle or the evaluator.
+- No weather and no sensor readings: with them in the snapshot, Jev skipped the
+  task's "check the weather / read the sensors" steps and then repeated a later
+  read (single-question test, Part 2 Step 5). Jev takes those readings with its
+  own actions, as the LLM agent does.
+- Nothing is written to the simulation. The farm-overview tool advances the
+  physics to the current time, and the physics depends on how often that
+  happens, so calling it would change the season. Instead the ridge fields are
+  read as stored after the last physics update (normally the end of Jev's last
+  action). Inventory and machine status come from their pure read tools.
+  Checked with scripts/jev_offline_check.py --no-snapshot.
 - Reads are not recorded as agent actions and are not scored.
 
 `build_snapshot` returns (snapshot for Jev, raw facts for menus and checks).
@@ -26,7 +28,7 @@ from typing import Any
 
 CST = timezone(timedelta(hours=8))
 RECENT_ACTIONS = 5
-RESULT_CHARS = 300
+RESULT_CHARS = 1500
 NOTIFICATIONS = 3
 REPEAT_WARNING_AT = 3
 
@@ -82,33 +84,6 @@ def _ridges(farm: Any) -> list[dict[str, Any]]:
         }
         for r in farm._ridges
     ]
-
-
-def _zones(sensor_app: Any, farm: Any) -> tuple[list[str], list[str]]:
-    """Soil and canopy readings per sensor zone, averaged as SensorApp._sync_sensors does."""
-    physics = farm._physics  # never the `physics` property: first access switches physics on
-    live = physics is not None and physics.engines_active and physics.last_physics_sim_time is not None
-    soil, canopy = [], []
-    for s in sensor_app._soil_sensors:
-        ids = range(s["ridge_start"], s["ridge_end"] + 1)
-        if live:
-            vwc = sum(physics.soil.states[r].top_vwc for r in ids) / len(ids)
-            temp = sum(physics.soil.states[r].top_temp_c for r in ids) / len(ids)
-        else:
-            vwc = sum(farm._ridges[r].soil_vwc for r in ids) / len(ids)
-            temp = sum(farm._ridges[r].soil_temp_c for r in ids) / len(ids)
-        soil.append(f"{s['sensor_id']} ridges {ids.start}-{ids.stop - 1}: vwc {vwc:.3f}, temp {temp:.1f} C")
-    for s in sensor_app._canopy_sensors:
-        ids = range(s["ridge_start"], s["ridge_end"] + 1)
-        if live:
-            states = [physics.canopy.states[r] for r in ids]
-            ndvi = None if any(not st.initialized for st in states) else sum(st.ndvi_proxy for st in states) / len(states)
-        else:
-            planted = [farm._ridges[r] for r in ids if farm._ridges[r].planted]
-            ndvi = sum(r.ndvi for r in planted) / len(planted) if planted else None
-        if ndvi is not None:
-            canopy.append(f"{s['sensor_id']} ridges {ids.start}-{ids.stop - 1}: ndvi {ndvi:.2f}")
-    return soil, canopy
 
 
 def _crop(ridges: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -212,6 +187,26 @@ def pending_effects(steps: list[Any], now: float) -> list[dict[str, Any]]:
     return out
 
 
+def step_history(steps: list[Any]) -> list[str]:
+    """Every action so far, one short line each; identical neighbours merged.
+
+    '1. get_ridge_range_state(start=44, end=55): ok' or
+    '5-24. advance_time(days=1): ok (x20)'. No results: the last few actions
+    carry those in recent_actions.
+    """
+    lines: list[list[Any]] = []  # [first, last, text]
+    for i, step in enumerate(steps, 1):
+        args = ", ".join(f"{k}={v}" for k, v in (step.tool_args or {}).items() if k != "content")
+        text = f"{step.tool_name.split('__', 1)[-1]}({args}): {'failed' if _failed(step) else 'ok'}"
+        if lines and lines[-1][2] == text:
+            lines[-1][1] = i
+        else:
+            lines.append([i, i, text])
+    return [
+        f"{a}. {t}" if a == b else f"{a}-{b}. {t} (x{b - a + 1})" for a, b, t in lines
+    ]
+
+
 def repeat_count(steps: list[Any]) -> int:
     """How many times the last action (same arguments) was repeated in a row."""
     if not steps:
@@ -235,15 +230,6 @@ def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict
         "crop": _crop(ridges),
         "inventory": _inventory(farm.get_inventory()),
     }
-    if "WeatherApp" in apps:
-        weather = apps["WeatherApp"][0]
-        snap["weather_today"] = weather.get_current_weather()
-        snap["forecast_3_days"] = weather.get_forecast(3).get("forecast", [])
-    if "SensorApp" in apps:
-        soil, canopy = _zones(apps["SensorApp"][0], farm)
-        snap["soil_by_sensor_zone"] = soil
-        if canopy:
-            snap["canopy_ndvi_by_sensor_zone"] = canopy
     machines: dict[str, Any] = {}
     for tractor in apps.get("TractorApp", []):
         status = tractor.get_status()
@@ -287,4 +273,4 @@ def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict
         "pending": snap["pending_effects"],
         "steps": steps,
     }
-    return {"farm_now": snap, "recent_actions": recent}, facts
+    return {"farm_now": snap, "steps_so_far": step_history(steps), "recent_actions": recent}, facts
