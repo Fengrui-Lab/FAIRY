@@ -16,6 +16,7 @@ class OpenAILLM(BaseLLM):
         "gpt-5-nano",
         "gpt-5-mini",
         "gpt-5",
+        "gpt-6-luna",
         "o1",
         "o3",
     }

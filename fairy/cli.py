@@ -158,6 +158,9 @@ def main() -> None:
     parser.add_argument("--a2a-provider", default=None, help="A2A app-agent provider; defaults to main provider")
     parser.add_argument("--a2a-endpoint", default=None, help="A2A app-agent endpoint; defaults to main endpoint")
     parser.add_argument("--a2a-max-tool-calls", type=int, default=None, help="Maximum tool calls per A2A expert agent; defaults to --max-tool-calls")
+    parser.add_argument("--fallback-provider", default=None, help="farm_jev: LLM provider that decides when Jev is unsure")
+    parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
+    parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
     parser.add_argument("--replay", action="store_true", help="Replay a workflow against fresh scenario state")
@@ -324,6 +327,17 @@ def main() -> None:
                 "provider": app_provider,
                 "endpoint": app_endpoint,
             }
+        fallback_llm = None
+        if args.fallback_model:
+            fallback_llm = BaseLLM.llm_builder(
+                {
+                    "provider": args.fallback_provider or "openai",
+                    "model": args.fallback_model,
+                    "temperature": args.temperature,
+                    "max_output_tokens": args.max_output_tokens,
+                    "parallel_tool_calls": False,
+                }
+            )
         agent = build_controller_agent(
             args.controller,
             llm=llm,
@@ -332,6 +346,8 @@ def main() -> None:
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
             ),
+            fallback_llm=fallback_llm,
+            fallback_confidence=args.fallback_confidence,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event

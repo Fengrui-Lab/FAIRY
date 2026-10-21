@@ -17,6 +17,11 @@ Part 2 (docs/jev/PROGRESS.md): Jev sees the task, a short farm snapshot built
 by code (snapshot.py) and the last few actions, not the full history. Ridge and
 waiting options are narrowed per turn from the snapshot, and "done" is checked
 against simple rules before it is accepted.
+
+Optional LLM fallback: when Jev's action confidence is below a threshold, when
+Jev repeats an action that changed nothing, or when "done" was refused twice,
+an LLM gets the same state and FAIRY's normal tool schemas and calls one action
+itself (it can write values that are not on Jev's menu).
 """
 
 from __future__ import annotations
@@ -56,6 +61,13 @@ RIDGE_FILTERS = {
 REPORT_TOOL = "AgentUserInterface__send_message_to_user"
 MAX_DONE_REFUSALS = 2
 
+FALLBACK_INSTRUCTIONS = (
+    "Decide the next single step of a farm agent. Below are the task, a snapshot of the farm "
+    "built from the farm's own tools, the last actions with their results, and notes. "
+    "Call exactly one tool for the next action. If the whole task is complete, reply "
+    '"done" without calling a tool.'
+)
+
 
 def _arg_question_id(arg_name: str) -> str:
     return f"arg__{arg_name}"
@@ -77,7 +89,11 @@ class JevAgent(Agent):
         system_message: str = "",
         toolsets: list[Any] | None = None,
         hidden_tool_names: set[str] | frozenset[str] | None = None,
+        fallback_llm: Any = None,
+        fallback_confidence: float = 0.6,
     ) -> None:
+        self.fallback_llm = fallback_llm
+        self.fallback_confidence = fallback_confidence
         super().__init__(
             name=name,
             llm=llm,
@@ -104,9 +120,15 @@ class JevAgent(Agent):
         self._facts: dict[str, Any] = {}
         self._snapshot: dict[str, Any] = {}
         self._state_chars: list[int] = []
+        self._jev_tokens = 0
+        self._llm_tokens = {"prompt_tokens": 0, "cached_tokens": 0, "completion_tokens": 0}
+        self._fallbacks: dict[str, int] = {}
+        self._llm_decisions = 0
         self.telemetry: dict[str, Any] = {
             "family_id": self.name,
             "planning_mode": "jev_menu_choice_snapshot",
+            "fallback_model": getattr(self.fallback_llm, "model", None),
+            "fallback_confidence": self.fallback_confidence if self.fallback_llm else None,
         }
 
     # ------------------------------------------------------------------
@@ -156,6 +178,10 @@ class JevAgent(Agent):
                 ),
                 "min_action_confidence": min(confidences) if confidences else None,
                 "done_refusals": self._done_refusals,
+                "jev_input_tokens": self._jev_tokens,
+                "llm_fallback_triggers": dict(self._fallbacks),
+                "llm_decisions": self._llm_decisions,
+                "llm_tokens": dict(self._llm_tokens),
                 "max_state_chars": max(chars) if chars else None,
                 "avg_state_chars": round(sum(chars) / len(chars)) if chars else None,
             }
@@ -170,19 +196,34 @@ class JevAgent(Agent):
         while True:
             state = self._state()
             pick, arguments, confidences = self._decide(state)
-            if pick != DONE_OPTION:
-                break
-            problems = self._done_problems(state["task"])
-            if not problems or self._done_refusals >= MAX_DONE_REFUSALS:
-                break
-            # "done" refused: the reasons go into the next state, and Jev is asked again.
-            self._done_refusals += 1
-            self._notes = [f'"done" was not accepted: {p}' for p in problems]
-            self.record_event("jev_done_refused", status="ok", reasons=problems)
+            action_confidence = min(confidences.values())
+            reason = None
+            if pick == DONE_OPTION:
+                problems = self._done_problems(state["task"])
+                if problems and self._done_refusals < MAX_DONE_REFUSALS:
+                    # "done" refused: the reasons go into the next state, and Jev is asked again.
+                    self._done_refusals += 1
+                    self._notes = [f'"done" was not accepted: {p}' for p in problems]
+                    self.record_event("jev_done_refused", status="ok", reasons=problems)
+                    continue
+                if problems:
+                    reason = "done_refused_twice"
+            elif action_confidence < self.fallback_confidence:
+                reason = "low_confidence"
+            elif self._is_stuck(pick, arguments):
+                reason = "repeat_without_change"
+            break
 
-        action_confidence = min(confidences.values())
         self._action_confidences.append(action_confidence)
         self._action_count += 1
+        source = "jev"
+        if reason and self.fallback_llm is not None:
+            self._fallbacks[reason] = self._fallbacks.get(reason, 0) + 1
+            decided = self._llm_decide(state, reason)
+            if decided is not None:
+                pick, arguments = decided
+                source = "llm"
+                self._llm_decisions += 1
         self.record_event(
             "jev_action",
             status="ok",
@@ -190,6 +231,8 @@ class JevAgent(Agent):
             arguments=arguments,
             action_confidence=action_confidence,
             question_confidences=confidences,
+            source=source,
+            fallback_reason=reason,
         )
 
         if pick == DONE_OPTION:
@@ -270,6 +313,94 @@ class JevAgent(Agent):
     # Per-turn options, done check, report
     # ------------------------------------------------------------------
 
+    # ------------------------------------------------------------------
+    # LLM fallback
+    # ------------------------------------------------------------------
+
+    def _is_stuck(self, pick: str, arguments: dict[str, Any]) -> bool:
+        """The same call twice in a row already, with the same result or two failures."""
+        steps = self._facts.get("steps", [])[-2:]
+        if len(steps) < 2:
+            return False
+        key = json.dumps(arguments, sort_keys=True, default=str)
+        if any(
+            s.tool_name != pick or json.dumps(s.tool_args or {}, sort_keys=True, default=str) != key
+            for s in steps
+        ):
+            return False
+        failed = [s.op_type == "TOOL_ERROR" or (isinstance(s.content, dict) and "error" in s.content) for s in steps]
+        return all(failed) or steps[0].content == steps[1].content
+
+    def _llm_decide(self, state: dict[str, Any], reason: str) -> tuple[str, dict[str, Any]] | None:
+        """One decision by the fallback LLM; None keeps Jev's choice (LLM error or unknown tool)."""
+        system = next(
+            (m["content"] for m in self.messages.messages if isinstance(m, dict) and m.get("role") == "system"),
+            "",
+        )
+        messages = [
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": FALLBACK_INSTRUCTIONS
+                + "\n\n"
+                + json.dumps(state, ensure_ascii=False, default=str),
+            },
+        ]
+        self.record_event(
+            "llm_fallback_start",
+            status="running",
+            reason=reason,
+            model=getattr(self.fallback_llm, "model", None),
+            messages=messages,
+        )
+        started = time.perf_counter()
+        try:
+            response = self.fallback_llm.chat_completion(messages, tools=self.tool_schemas)
+        except Exception as exc:
+            self.record_event(
+                "llm_fallback_error",
+                status="error",
+                reason=reason,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+            )
+            return None
+        latency = round(time.perf_counter() - started, 6)
+        usage = getattr(response, "usage", None)
+        details = getattr(usage, "prompt_tokens_details", None)
+        tokens = {
+            "prompt_tokens": int(getattr(usage, "prompt_tokens", 0) or 0),
+            "cached_tokens": int(getattr(details, "cached_tokens", 0) or 0),
+            "completion_tokens": int(getattr(usage, "completion_tokens", 0) or 0),
+        }
+        tokens["total_tokens"] = tokens["prompt_tokens"] + tokens["completion_tokens"]
+        for k in self._llm_tokens:
+            self._llm_tokens[k] += tokens[k]
+        self.messages.runtime_metrics.append(
+            {"role": "assistant", "time": latency, "accepted": True, "tokens": tokens, "source": "llm_fallback"}
+        )
+        message = response.choices[0].message if response.choices else None
+        calls = list(getattr(message, "tool_calls", None) or [])
+        if not calls:
+            decided: tuple[str, dict[str, Any]] | None = (DONE_OPTION, {})
+        else:
+            name = calls[0].function.name
+            try:
+                args = json.loads(calls[0].function.arguments or "{}")
+            except json.JSONDecodeError:
+                args = None
+            decided = (name, args) if name in self.tools_map and isinstance(args, dict) else None
+        self.record_event(
+            "llm_fallback_end",
+            status="ok" if decided else "rejected",
+            reason=reason,
+            wall_time_seconds=latency,
+            tokens=tokens,
+            decision=list(decided) if decided else None,
+            content=getattr(message, "content", None),
+        )
+        return decided
+
     def _allowed_ridges(self, tool_name: str) -> set[int] | None:
         keep = RIDGE_FILTERS.get(tool_name)
         if keep is None:
@@ -328,7 +459,7 @@ class JevAgent(Agent):
         unstored = (self._facts.get("inventory") or {}).get("harvest_grain_kg") or 0
         if unstored > 0 and re.search(r"\bstor", text):
             problems.append(f"{unstored} kg of harvested grain is not stored yet.")
-        if re.search(r"\breport\b", text):
+        if re.search(r"\breport\b", text) and REPORT_TOOL in self.tools_map:
             sent = any(
                 s.tool_name == REPORT_TOOL and s.op_type == "TOOL"
                 for s in self._facts.get("steps", [])
@@ -415,6 +546,7 @@ class JevAgent(Agent):
             }
         input_tokens = int(getattr(response.usage, "input_tokens", 0) or 0)
         output_tokens = int(getattr(response.usage, "output_tokens", 0) or 0)
+        self._jev_tokens += input_tokens
         tokens = {
             "prompt_tokens": input_tokens,
             "cached_tokens": 0,
@@ -423,7 +555,7 @@ class JevAgent(Agent):
         }
         # Same metric shape as Messages.llm_response, so run_report token totals work.
         self.messages.runtime_metrics.append(
-            {"role": "assistant", "time": latency, "accepted": True, "tokens": tokens}
+            {"role": "assistant", "time": latency, "accepted": True, "tokens": tokens, "source": "jev"}
         )
         self.record_event(
             "jev_request_end",

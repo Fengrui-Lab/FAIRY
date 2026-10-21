@@ -329,6 +329,8 @@ def build_controller_agent(
     llm: Any,
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
+    fallback_llm: Any = None,
+    fallback_confidence: float = 0.6,
 ) -> ResearchARESimulationAgent:
     if family_id == "farm_jev":
         # Jev picks actions from a menu instead of generating tool calls.
@@ -342,7 +344,11 @@ def build_controller_agent(
             system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
             toolsets=toolsets,
             hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            fallback_llm=fallback_llm,
+            fallback_confidence=fallback_confidence,
         )
+    if fallback_llm is not None:
+        raise ValueError("--fallback-model is only used by the farm_jev controller")
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)

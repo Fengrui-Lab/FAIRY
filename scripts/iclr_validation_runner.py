@@ -65,6 +65,7 @@ PYTHON_BIN = (
 MODEL_COSTS = {
     "gpt-4o-mini": {"input_per_mtok": 0.15, "output_per_mtok": 0.60},
     "o4-mini": {"input_per_mtok": 1.10, "output_per_mtok": 4.40},
+    "gpt-6-luna": {"input_per_mtok": 0.10, "output_per_mtok": 0.50},  # cached input 0.01 (OpenAI pricing page, 2026-10-21)
     "gpt-4o": {"input_per_mtok": 2.50, "output_per_mtok": 10.00},
     "deepseek-chat": {"input_per_mtok": 0.27, "output_per_mtok": 1.10},
     "deepseek-reasoner": {"input_per_mtok": 0.55, "output_per_mtok": 2.19},

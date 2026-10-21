@@ -210,3 +210,23 @@ The herbicide L1 and replant L2 differ from do-nothing by only 2.7% and 0.9%, so
 - **Yield loss vs oracle baseline** (oracle steps through our menus): 0.00% on 7 scenarios, 0.15% on L3 hn58.
 - **Request size:** 8–12k characters on average, max 17k (well under Jev's limit). Fake-Jev totals, estimated as characters ÷ 4: L1/L2 0.06–0.2M tokens, L3 1.2–1.5M tokens per run, i.e. about $0.05–0.06 per L3 run at Jev's $0.042 per million.
 - Jev tests updated to the new behaviour; all 7 pass. FAIRY smoke test: 70 pass, 1 fails as before (missing search tool).
+
+## Step 4 – LLM fallback (2026-10-21, no AI, free)
+
+**Built:** `--fallback-model` (and `--fallback-provider`, `--fallback-confidence`) for `farm_jev`. Without them the agent behaves as in Step 3 (checked: same actions on L1 herbicide and L3 hn58). gpt-6-luna added to FAIRY's OpenAI client (same mode as gpt-5: no temperature; confirmed on the first paid run).
+
+**Decisions:**
+
+| Choice | Why |
+|---|---|
+| The LLM gets Jev's state (task, snapshot, last 5 actions, notes) plus FAIRY's normal tool list, and calls one action itself | It can write values Jev's menu lacks (exact loads, 8-day waits); it never writes the farm state (Ouyang's hybrid problem) |
+| Triggers: Jev's action confidence below the threshold; Jev repeats a call whose last two results were identical or both failed; "done" refused twice | Repeated daily waits change the result, so they do not trigger |
+| If the LLM call fails or names an unknown tool, Jev's choice stands | A run never stops because of the fallback |
+| Jev and LLM tokens counted separately in the run report (`jev_input_tokens`, `llm_tokens` with cached tokens) | Needed for the cost comparison |
+| Threshold set from runs of the new agent, not Part 1 | Part 1 data (old inputs): threshold 0.6 would send 58% of actions to the LLM (0.5: 45%) |
+
+**Prices:** Jev $0.042 per million input tokens (output free). gpt-6-luna $0.10 input, $0.01 cached input, $0.50 output per million (OpenAI pricing page, 2026-10-21). The LLM agent's repeated history is mostly cached, so fewer tokens do not automatically mean lower cost; both are reported.
+
+**Also fixed:** the "report not sent" done-rule now applies only when the scenario has a report tool (otherwise it could never be met).
+
+**Tests:** 10 Jev tests pass (3 new: low confidence, repeat, done refused twice — with a fake LLM).
