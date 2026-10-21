@@ -284,3 +284,46 @@ Spent so far in Part 2: about $0.23.
 | E2 Jev (current) | 0.00% | 80% | 11 | $0.004 |
 
 Spent so far in Part 2: about $0.28.
+
+## Step 6 – Dev set: Jev only vs gpt-6-luna (2026-10-21)
+
+One run each, 60 actions / 10 min, English tasks, `PYTHONHASHSEED=0`. Yield loss = biological (recovered for harvest tasks).
+
+| Scenario | Jev yield loss | LLM yield loss | Jev coverage | LLM coverage | Jev cost | LLM cost |
+|---|---|---|---|---|---|---|
+| L1 herbicide (E2) | 0.00% | 0.00% | 80% | 90% | $0.004 | $0.003 |
+| L1 harvest + store | 0.00% | 0.00% | 100% | 100% | $0.011 | $0.010 |
+| L1 planting | **82.2%** | 0.00% | 76% | 96% | $0.034 | $0.004 |
+| L2 harvest drydown (waits) | 18.7% | 62.5% | 76% | 48% | $0.024 | $0.014 |
+| L2 replant (waits) | 0.85% | −0.15% | 47% | 71% | $0.030 | $0.006 |
+
+**What went wrong for Jev:**
+- **Report spam** (planting, replant): after a few steps Jev sends the report, then alternates one useful step with up to 5 reports, until the action limit. The code-written report changes slightly each time (timestamp), so the repeat trigger does not fire.
+- **Value not on the menu** (replant): spacing 7.9 cm is not in that task's text, so Jev replanted with 15 cm, and only ridges 0–3.
+- **Repeated "load seeds" when the hopper is already full** (replant), between reports.
+- **Both agents ran out of actions** on L2 harvest drydown (oracle: 50 actions; both waited 1 day at a time and re-checked each day). Jev got further (ridges 0–51 vs 0–23).
+- **Waiting worked:** Jev used "until <effect> is ready" (3,598 s for robot charging) and day steps.
+
+**Cost:** Jev cost more than gpt-6-luna in dollars on all 5 ($0.103 vs $0.037), although it used fewer tokens on 3. The LLM's input is ~97% cached ($0.01 per million); Jev's is not. 58–78% of each Jev request is the state, sent again with every question (2–3 per action).
+
+Spent so far in Part 2: about $0.42.
+
+## Step 7 – Hybrid on the dev set (2026-10-21)
+
+**Fix first:** the report is not offered again straight after a report. **Limit:** L2 raised to 100 actions for both agents (oracle needs 50; both agents check daily while waiting).
+
+Hybrid = Jev + gpt-6-luna fallback at confidence 0.6. One run each.
+
+| Scenario | Hybrid yield loss | LLM yield loss | Hybrid coverage | LLM coverage | LLM share of hybrid decisions | Hybrid cost | LLM cost |
+|---|---|---|---|---|---|---|---|
+| L1 herbicide | 0.00% | 0.00% | 100% | 90% | 3 / 12 | $0.007 | $0.003 |
+| L1 harvest + store | 0.00% | 0.00% | 100% | 100% | 4 / 37 | $0.011 | $0.010 |
+| L1 planting | −2.8% | 0.00% | 92% | 96% | 26 / 50 | $0.034 | $0.004 |
+| L2 harvest drydown | 4.7% | 0.00% (100 actions) | 92% | 92% | 55 / 97 | $0.058 | $0.012 |
+| L2 replant | 0.60% | −0.15% | 59% | 71% | 89 / 99 (hit limit) | $0.103 | $0.006 |
+
+- The hybrid fixes Jev's failures on the L1s (planting from 82% loss to −2.8%).
+- On the L2s Jev's confidence is mostly below 0.6, so the LLM takes 57–90% of decisions.
+- Cost: hybrid $0.21 vs LLM-only $0.035 on the 5 tasks. Fallback calls are only partly cached (~60%), and Jev requests are never cached.
+
+Spent so far in Part 2: about $0.66.

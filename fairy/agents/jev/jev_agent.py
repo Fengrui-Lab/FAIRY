@@ -275,7 +275,11 @@ class JevAgent(Agent):
             "type": "choice",
             "instructions": TOOL_INSTRUCTIONS if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
             "criteria": {
-                **{name: menu.description for name, menu in self.tool_menus.items()},
+                **{
+                    name: menu.description
+                    for name, menu in self.tool_menus.items()
+                    if not (name == REPORT_TOOL and self._last_was_report())
+                },
                 DONE_OPTION: DONE_DESCRIPTION,
             },
         }
@@ -409,6 +413,11 @@ class JevAgent(Agent):
             content=getattr(message, "content", None),
         )
         return decided
+
+    def _last_was_report(self) -> bool:
+        """No report straight after a report: Jev sent up to 5 in a row (Part 2, Step 6)."""
+        steps = self._facts.get("steps", [])
+        return bool(steps) and steps[-1].tool_name == REPORT_TOOL
 
     def _allowed_ridges(self, tool_name: str) -> set[int] | None:
         keep = RIDGE_FILTERS.get(tool_name)
