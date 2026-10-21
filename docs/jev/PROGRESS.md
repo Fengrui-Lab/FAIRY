@@ -327,3 +327,21 @@ Hybrid = Jev + gpt-6-luna fallback at confidence 0.6. One run each.
 - Cost: hybrid $0.21 vs LLM-only $0.035 on the 5 tasks. Fallback calls are only partly cached (~60%), and Jev requests are never cached.
 
 Spent so far in Part 2: about $0.66.
+
+## Step 8 – Threshold 0.4 on L2, first L3 run (2026-10-21)
+
+**Hybrid at threshold 0.4 (L2, 100 actions):**
+
+| Scenario | Yield loss 0.6 → 0.4 | LLM decisions 0.6 → 0.4 | Cost 0.6 → 0.4 |
+|---|---|---|---|
+| L2 harvest drydown | 4.7% → 0.00% | 55 → 4 | $0.058 → $0.028 |
+| L2 replant | 0.60% → 1.69% | 89 → 25 | $0.103 → $0.028 |
+
+**Decision:** threshold 0.4 from now on (much cheaper, yield loss similar).
+
+**L3-mini hn58 (300 actions / 60 min):**
+- **gpt-6-luna:** stopped after 2 actions. It read the overview, saw "all ridges unplanted, phase full_season", judged the setup invalid and sent a report saying it cannot do the season. Yield loss 100%. Cost ~$0.01.
+- **Hybrid (0.4):** planted the whole field, then used up the 300 actions by 29 May (25 days into the season). Biological yield loss 1.8% (FAIRY extrapolates the crop to maturity), recovered 100% (no harvest). Cost $0.37 (Jev $0.20, LLM $0.17), 15 min.
+  - 255 of 300 decisions went to the LLM; **the LLM fallback wasted the actions**: 140 farm-overview reads, 51 soil reads, 22 ridge reads. Jev's own decisions were plantings (17) and day advances (17).
+
+Spent so far in Part 2: about $1.1.
