@@ -1,0 +1,10 @@
+Prepare to handle Heihe 50 after R8, waiting for the grain to dry down before harvest. The whole field is now mature, but grain moisture is still high; the goal is to wait until the safe direct-storage window and then complete the recovery of ridges 0-63.
+Follow these steps:
+1. Check the current weather, the 3-day forecast and soil trafficability.
+2. Read the state of ridges 0-63, focusing on R8, harvest_allowed and grain_moisture.
+3. If moisture or trafficability after rain is not suitable, wait for natural drying; check again after every wait.
+4. When moisture has fallen to <=13.5% and weather/trafficability allow it, check the storage capacity.
+5. Harvest ridges 0-63 in passes of 4 ridges; unload the grain promptly after each pass.
+6. Store directly; no drying is needed, and do not wait too long until moisture reaches 8%-10%.
+7. After storing, check the inventory again.
+8. Report to me the harvest window, the moisture judgment, the recovered yield and the closing of the storage loop.

@@ -14,6 +14,8 @@ class Scenario:
     scenario_class: str = "base_scenario"
     scenario_id: str = ""
     scenario_input: str = ""
+    # Replaces the briefing event as the agent's task (e.g. an English translation).
+    agent_task_override: str = ""
     dynamic_events: list[Any] | None = field(default_factory=list)
     start_time: float | None = None
     duration: float | None = None

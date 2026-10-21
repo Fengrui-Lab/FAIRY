@@ -1,0 +1,9 @@
+Prepare to plant Heinong 84 in a wet, cold, high-residue field. Land preparation, base fertilizer and ridging are done; this is an action-ready planting task.
+Follow these steps:
+1. Check today's weather and the 3-day forecast to confirm the planting window avoids wet-cold risk.
+2. Read the soil sensors to confirm seedbed soil temperature/moisture and trafficability.
+3. Check the seed inventory and the planter/tractor status.
+4. Load HEINONG84 seed.
+5. Plant ridges 0-63 at a depth of 4.0 cm and a plant spacing of 7.9 cm; if seed runs out midway, reload first.
+6. After planting, commit the day's physics state and check the whole-field overview.
+7. Report to me the planting range, the window judgment and whether the whole field has entered stand establishment.

@@ -47,8 +47,8 @@ class _ScriptedJev:
         )
 
 
-def _run(script, max_tool_calls=20):
-    scenario = ScenarioFarmWorldFieldPrep(scenario_input=TASK)
+def _run(script, max_tool_calls=20, task=TASK):
+    scenario = ScenarioFarmWorldFieldPrep(scenario_input=task)
     scenario.setup()
     llm = _ScriptedJev(script)
     agent = build_controller_agent("farm_jev", llm=llm, toolsets=scenario.apps)
@@ -82,8 +82,9 @@ def test_jev_agent_runs_tools_with_typed_menu_arguments() -> None:
         ("TractorApp__load_fertilizer", {"kg": 200.0}),
     ]
     assert agent.stop_reason == "agent_finished"
-    # The second state carries the first action and its result.
-    assert llm.requests[2][0]["actions_so_far"][0]["action"] == "WeatherApp__get_forecast"
+    # The second state carries the first action and its result, and a farm snapshot.
+    assert llm.requests[2][0]["recent_actions"][0]["action"] == "WeatherApp__get_forecast"
+    assert "crop" in llm.requests[2][0]["farm_now"]
     totals = metric_totals(agent.messages.runtime_metrics)
     assert totals["llm_call_count"] == 5
     assert totals["token_usage"]["prompt_tokens"] == 500
@@ -98,18 +99,44 @@ def test_jev_agent_stops_at_max_tool_calls() -> None:
     assert agent.tool_call_count == 3
 
 
-def test_invalid_ridge_range_is_executed_not_filtered() -> None:
-    agent, workflow, _ = _run(
+def test_end_ridge_options_start_at_the_chosen_start() -> None:
+    agent, workflow, llm = _run(
         [
             {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
             {"arg__start": "ridge 20"},
-            {"arg__end": "ridge 5"},
+            {"arg__end": "ridge 25"},
             {TOOL_QUESTION_ID: "done"},
         ]
     )
+    end_options = list(llm.requests[2][1]["arg__end"]["criteria"])
+    assert end_options[0] == "ridge 20" and len(end_options) == 44  # 20-63, no pass limit
     step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
-    assert step.tool_args == {"start": 20, "end": 5}
-    assert "error" in str(step.content).lower()
+    assert step.tool_args == {"start": 20, "end": 25}
+
+
+def test_wait_is_one_question_in_plain_units() -> None:
+    agent, workflow, llm = _run(
+        [
+            {TOOL_QUESTION_ID: "SystemApp__advance_time"},
+            {"arg__duration": "1 day"},
+            {TOOL_QUESTION_ID: "done"},
+        ]
+    )
+    assert set(llm.requests[1][1]) == {"arg__duration"}
+    step = [s for s in workflow.dag.values() if s.op_type == "TOOL"][0]
+    assert step.tool_args == {"days": 1}
+    assert step.content["advanced_seconds"] == 86400
+
+
+def test_done_is_refused_twice_when_the_report_is_missing() -> None:
+    agent, workflow, llm = _run(
+        [{TOOL_QUESTION_ID: "done"}] * 3,
+        task="Check the weather and report to me.",
+    )
+    assert agent.stop_reason == "agent_finished"
+    assert agent.telemetry["done_refusals"] == 2
+    assert "report" in llm.requests[1][0]["notes"][0]
+    assert len(llm.requests) == 3
 
 
 def test_end_ridge_is_asked_after_start_ridge() -> None:
@@ -125,6 +152,7 @@ def test_end_ridge_is_asked_after_start_ridge() -> None:
     assert set(first_args) == {"arg__start_ridge", "arg__kg_per_ridge"}
     assert set(end_only) == {"arg__end_ridge"}
     assert "`start_ridge` = ridge 10" in end_only["arg__end_ridge"]["instructions"]
-    assert len(end_only["arg__end_ridge"]["criteria"]) == 64  # nothing filtered
+    # apply_fertilizer covers at most 10 ridges per pass: ridges 10-19.
+    assert list(end_only["arg__end_ridge"]["criteria"]) == [f"ridge {r}" for r in range(10, 20)]
     step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
     assert step.tool_args == {"start_ridge": 10, "kg_per_ridge": 3.0, "end_ridge": 19}

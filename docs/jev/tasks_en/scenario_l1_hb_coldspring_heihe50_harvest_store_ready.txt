@@ -1,0 +1,10 @@
+Prepare to harvest Heihe 50 across the whole field with direct storage. This is the pre-harvest direct-storage window; the goal is to confirm that moisture is safe and then complete the harvest -> unload -> store loop for ridges 0-63.
+Follow these steps:
+1. Check today's weather and the 3-day forecast to confirm there is no rain risk that would affect harvesting and transport.
+2. Read the soil sensors to confirm field trafficability.
+3. Read the state of ridges 0-63, focusing on R8, harvest_allowed and grain_moisture.
+4. Check the inventory/storage capacity to confirm there is enough space for direct storage.
+5. If grain moisture is confirmed <=13.5%, harvest ridges 0-63 in passes of 4 ridges; unload the grain promptly after each pass.
+6. Store the unloaded grain directly; do not dry it, and do not keep waiting until moisture reaches 8%-10%.
+7. After storing, check the inventory and the stored grain status again.
+8. Report to me the recovered yield, the storage status and whether the whole-field direct-storage loop is complete.

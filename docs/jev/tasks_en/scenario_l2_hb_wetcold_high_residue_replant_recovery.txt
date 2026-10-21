@@ -1,0 +1,10 @@
+Prepare to diagnose the slow-emergence recovery of a wet, cold, high-residue field. Focus on ridges 0-15 and use ridges 32-47 as the reference; the goal is to confirm whether there is a real stand problem.
+Follow these steps:
+1. Check the current weather and the 3-day forecast to judge whether to wait until the replanting window.
+2. After waiting for the window, read the soil sensors and canopy sensors.
+3. Read the state of the target area to judge whether the slow emergence has already created a stand gap.
+4. Survey the target area with the drone, and confirm emergence with the ground robot.
+5. Rule out mistaking a low canopy for a fertility, weed or disease problem.
+6. If the evidence supports it, replant HEINONG84 only in the target area.
+7. After replanting, check the state of the target area again.
+8. Report to me how the replanting protects stand establishment and yield potential, and that the reference area was not treated by mistake.

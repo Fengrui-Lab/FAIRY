@@ -14,6 +14,13 @@ oracle:
 
 Task-text numbers are every number found in the task text by a plain text search,
 applied to every numeric argument (whole numbers only for integer arguments).
+
+Part 2 additions (docs/jev/PROGRESS.md, Part 2):
+- waiting (advance_time, wait_for_notification): one question in plain units,
+  see WAIT_STEPS;
+- the report to the user: one option, filled with a report written by code;
+- per turn, the agent narrows ridge options (end >= start, PASS_WIDTH, and no
+  harvesting/planting of ridges the farm overview shows as already done).
 """
 
 from __future__ import annotations
@@ -52,9 +59,49 @@ CODE_RANGES: dict[tuple[str, str, str], tuple[float, float]] = {
     ("TractorApp", "plant_seeds", "depth_cm"): (3.0, 5.0),
     ("TractorApp", "replant_seeds", "depth_cm"): (3.0, 5.0),
     ("FieldOpsApp", "apply_pesticide_manual", "ridge_count"): (1, 2),
+    # Stated in the tool description ("typical 0.5-1.5"), not enforced by the code.
+    ("FarmWorldApp", "apply_fertigation", "nutrient_amount"): (0.5, 1.5),
 }
 
 EVENLY_SPACED_COUNT = 10
+
+# Most ridges one pass may cover: max_width in TractorApp._validate_ridge_window calls.
+PASS_WIDTH: dict[tuple[str, str], int] = {
+    ("TractorApp", "plant_seeds"): 4,
+    ("TractorApp", "replant_seeds"): 4,
+    ("TractorApp", "harvest"): 4,
+    ("TractorApp", "apply_fertilizer"): 10,
+    ("TractorApp", "apply_pesticide"): 10,
+    ("TractorApp", "spray_pesticide"): 10,
+    ("TractorApp", "apply_fungicide"): 10,
+    ("TractorApp", "apply_herbicide"): 10,
+    ("TractorApp", "mechanical_weed_control"): 10,
+    ("TractorApp", "incorporate_residue"): 10,
+}
+
+# Waiting is one question in plain units (Part 1 offered seconds/minutes/hours/days
+# separately, filled only with task numbers). Common intervals, not taken from any
+# oracle; durations written in the task and time left until a pending effect
+# (added per turn by the agent) are offered as well.
+WAIT_STEPS: list[tuple[str, int]] = [
+    ("minutes", 30), ("hours", 1), ("hours", 2), ("hours", 6), ("hours", 12),
+    *[("days", d) for d in range(1, 8)], ("days", 10), ("days", 14),
+]
+UNIT_SECONDS = {"seconds": 1, "minutes": 60, "hours": 3600, "days": 86400}
+_DURATION_RE = re.compile(
+    r"(\d+(?:\.\d+)?)\s*(days?|hours?|h|minutes?|min|seconds?)\b", re.IGNORECASE
+)
+_UNIT_ALIASES = {"day": "days", "hour": "hours", "h": "hours", "minute": "minutes",
+                 "min": "minutes", "second": "seconds"}
+DURATION_ARG = "duration"
+
+# The report to the user is free text, which Jev cannot write. It gets one option;
+# the agent replaces it with a factual report built by code from the snapshot.
+REPORT_OPTION = "send the factual report of this run (written by code from the farm snapshot)"
+
+
+class EmptyMenuError(ValueError):
+    """An argument has no value to offer."""
 
 
 @dataclass
@@ -181,13 +228,48 @@ def build_arg_menu(
     for value in ordered:
         seen.setdefault(_option_key(value, ridge=arg.name in RIDGE_ARGS), value)
     if not seen:
-        raise ValueError(f"Empty menu for {key}")
+        raise EmptyMenuError(f"Empty menu for {key}")
     if len(seen) > MAX_CHOICE_OPTIONS:
         raise ValueError(f"Menu for {key} has {len(seen)} options (> {MAX_CHOICE_OPTIONS})")
     return ArgMenu(arg.name, arg.arg_type, description, source, seen)
 
 
+def duration_key(unit: str, amount: int) -> str:
+    """('days', 1) -> '1 day'; ('hours', 6) -> '6 hours'."""
+    return f"{amount} {unit[:-1] if amount == 1 else unit}"
+
+
+def task_durations(task_text: str) -> list[tuple[str, int]]:
+    """Durations written in the task, as whole numbers of their unit (or of seconds)."""
+    out: list[tuple[str, int]] = []
+    for value, unit in _DURATION_RE.findall(task_text or ""):
+        unit = _UNIT_ALIASES.get(unit.lower(), unit.lower())
+        amount = float(value)
+        if amount <= 0:
+            continue
+        if amount.is_integer():
+            out.append((unit, int(amount)))
+        else:
+            out.append(("seconds", int(round(amount * UNIT_SECONDS[unit]))))
+    return out
+
+
+def wait_menu(tool: Any, task_text: str) -> ArgMenu:
+    """One choice for advance_time (argument dict) or wait_for_notification (seconds)."""
+    steps = list(dict.fromkeys(WAIT_STEPS + task_durations(task_text)))
+    steps.sort(key=lambda s: s[1] * UNIT_SECONDS[s[0]])
+    if tool.name == "advance_time":
+        options = {duration_key(u, n): {u: n} for u, n in steps}
+        return ArgMenu(DURATION_ARG, "duration", "How long to advance the clock.",
+                       "common intervals + task durations + time left to pending effects", options)
+    options = {duration_key(u, n): n * UNIT_SECONDS[u] for u, n in steps}
+    return ArgMenu("timeout", "int", "Longest time to wait for a notification.",
+                   "common intervals + task durations + time left to pending effects", options)
+
+
 def _text_values(tool: Any, arg: Any) -> tuple[list[Any], str]:
+    if arg.name == "content" and tool.name == "send_message_to_user":
+        return [REPORT_OPTION], "one report written by code from the farm snapshot"
     if arg.name == "implement":
         return list(_tractor._ATTACH_WIDTH_M), "implements in tractor code"
     if arg.name == "seed_type":
@@ -211,15 +293,24 @@ def build_tool_menus(
     menus: dict[str, ToolMenu] = {}
     for tool_name, tool in tools_map.items():
         docs = arg_descriptions(tool.function_description)
+        if tool.class_name == "SystemApp" and tool.name in ("advance_time", "wait_for_notification"):
+            args = [wait_menu(tool, task_text)]
+        else:
+            try:
+                args = [
+                    build_arg_menu(
+                        tool, arg, descriptions=docs, numbers=numbers, num_ridges=num_ridges
+                    )
+                    for arg in tool.args
+                ]
+            except EmptyMenuError:
+                # e.g. an amount with no maximum in the code and no number in the task:
+                # Jev cannot call this tool (the jev_menu event lists the tools offered).
+                continue
         menus[tool_name] = ToolMenu(
             tool_name=tool_name,
             description=first_paragraph(tool.function_description),
-            args=[
-                build_arg_menu(
-                    tool, arg, descriptions=docs, numbers=numbers, num_ridges=num_ridges
-                )
-                for arg in tool.args
-            ],
+            args=args,
         )
     if len(menus) + 1 > MAX_CHOICE_OPTIONS:
         raise ValueError(f"Tool menu has {len(menus) + 1} options (> {MAX_CHOICE_OPTIONS})")

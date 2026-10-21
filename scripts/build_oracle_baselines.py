@@ -187,7 +187,7 @@ def _ensure_selected_l2_l1_scenario_imported(scenario_id: str) -> None:
     for _, _, selected_id, source_path in _selected_l2_l1_manifest_rows():
         if selected_id != scenario_id:
             continue
-        module_name = str(Path(source_path).with_suffix("")).replace("/", ".")
+        module_name = Path(source_path).with_suffix("").as_posix().replace("/", ".")
         importlib.import_module(module_name)
         return
 

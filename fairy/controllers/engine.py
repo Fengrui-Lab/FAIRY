@@ -177,6 +177,17 @@ class Engine:
         first_message["content"] = f"{content}\n\n{additional_system_prompt}"
 
     def _resolve_agent_task(self) -> str:
+        # A translated task given via --scenario-kwargs replaces the briefing for every agent.
+        override = str(getattr(self.scenario, "agent_task_override", "") or "").strip()
+        if override:
+            if self.agent is not None and hasattr(self.agent, "record_event"):
+                self.agent.record_event(
+                    "agent_task_source",
+                    status="ok",
+                    source="agent_task_override",
+                    content_preview=override[:1000],
+                )
+            return override
         event_task = self._agent_briefing_from_events()
         if event_task:
             if self.agent is not None and hasattr(self.agent, "record_event"):
