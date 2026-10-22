@@ -432,3 +432,25 @@ Drydown: Jev chose to start the harvest about a day earlier than in the old run;
 - The LLM chose the same action as Jev in 31 of 96 hand-offs.
 
 Spent in this step: about $0.25. Part 2 total: about $2.05.
+
+## Step 12 – Repeats on hn58 and two more L3-mini scenarios (2026-10-22)
+
+Same settings as Steps 10–11 (baseline: gpt-6-luna reasoning "medium"; hybrid: Jev + gpt-6-luna fallback with memory, threshold 0.4), 300 actions / 60 min, seed 0 (same farm and weather each run; repeats differ only through the models). Scenarios: hn58 (3 runs each, including Steps 10–11), staggered wetjune canopy disease, dryer capacity batch harvest storage (1 run each).
+
+| Scenario | Agent | Season | Yield loss (crop) | Recovered-grain loss | Actions | Decisions Jev / LLM | Tokens | Cost | Time |
+|---|---|---|---|---|---|---|---|---|---|
+| hn58 | Baseline run 1 / 2 / 3 | finished ×3 | 1.7 / 1.8 / 1.8% | 4.2 / 1.9 / 6.7% | 134 / 179 / 157 | – | 6.2 / 9.6 / 5.4M (99% cached) | $0.07 / $0.11 / $0.06 | 5.5 / 7.6 / 5.8 min |
+| hn58 | Hybrid run 1 / 2 / 3 | finished ×3 | 1.8 / 1.8 / 1.5% | 6.3 / 8.1 / 3.3% | 189 / 108 / 141 | 94/96, 62/47, 85/57 | 7.0 / 2.8 / 4.0M | $0.20 / $0.09 / $0.12 | 5.0 / 2.6 / 3.2 min |
+| hn58 | **Baseline, mean** | | 1.8% | **4.3%** | 157 | – | 7.1M | **$0.08** | 6.3 min |
+| hn58 | **Hybrid, mean** | | 1.7% | **5.9%** | 146 | 55% / 45% | 4.6M | **$0.14** | 3.6 min |
+| wetjune disease | Baseline | finished | 7.4% | 7.5% | 144 | – | 5.2M (99% cached) | $0.06 | 6.3 min |
+| wetjune disease | Hybrid | finished | 5.4% | 6.8% | 279 | 106 / 174 | 15.2M | $0.41 | 8.5 min |
+| dryer capacity | Baseline | finished | 0.1% | 0.5% | 155 | – | 6.1M (99% cached) | $0.07 | 6.7 min |
+| dryer capacity | Hybrid | finished (7 Nov) | 0.0% | **21.5%** | 126 | 86 / 41 | 2.6M | $0.08 | 2.3 min |
+
+**Notes:**
+- **hn58:** over 3 runs each, the hybrid loses a little more grain (5.9% vs 4.3%) and costs more ($0.14 vs $0.08), with the spread between runs (1.9–6.7% baseline, 3.3–8.1% hybrid) as large as the gap. Jev made 55% of the hybrid's decisions.
+- **wetjune disease:** slightly more grain than the baseline (6.8% vs 7.5% loss), but the hybrid used 279 of 300 actions, the LLM made 62% of decisions, and it cost 7× more.
+- **dryer capacity, hybrid:** tried to harvest from 8 August (not mature, then rain, then grain too wet), waiting 7 days between tries; harvested 10 Oct – 7 Nov, with grain per 4 ridges falling from 440 to 361 kg (baseline: 510 kg, all harvested on 7 Sept). It also stored each batch before drying it (dry_grain then found nothing to dry). Most of these steps were Jev's own (17 of 23 harvests, 7 of 13 week-long waits, 15 of 16 stores); Jev also tried "done" early 15 times.
+
+Spent in this step: about $1.00. Part 2 total: about $3.05.
