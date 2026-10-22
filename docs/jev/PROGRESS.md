@@ -511,7 +511,7 @@ Hybrid (Jev + gpt-6-luna fallback with memory, 0.4), one run each, seed 0, same 
 
 **Requests:** down from 2.0–2.35 to 1.03–1.40 per action on every scenario. The likely-tools guess was right 92% of the time on hn58, 88% on wetjune, 74% on dryer capacity.
 
-**Jev tokens per action:** down 4–33% (L3: hn58 −27%, wetjune −28%, dryer −2%).
+**Jev tokens per action:** down 2–33% (L3: hn58 −27%, wetjune −28%, dryer −2%).
 
 **But total cost did not fall on L3**, because the LLM took more decisions (hn58 45% → 55%, wetjune 62% → 84%, dryer 32% → 48%). The new "how many ridges" question is the main cause: hand-offs with that question as the least certain one went from 0–5 to 39 (hn58), 13 → 71 (wetjune), 1 → 23 (dryer). Examples from the hn58 and wetjune logs:
 - Jev seems to read the count as an end ridge: drone survey from ridge 12, "63 ridges" 0.21 (it meant "up to ridge 63"; the count would be 52).

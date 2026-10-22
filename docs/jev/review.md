@@ -197,7 +197,7 @@ Jev bills the farm text once per request; we sent 2.0–2.35 requests per action
 
 ### 11.3 Findings
 
-1. **Requests per action halved** (≈2.2 → 1.03–1.40) and **Jev's tokens per action fell** on every scenario (by 4–33%).
+1. **Requests per action halved** (≈2.2 → 1.03–1.40) and **Jev's tokens per action fell** on every scenario (by 2–33%).
 2. **Total cost on L3 did not fall** (hn58 $0.144 vs $0.135, wetjune $0.47 vs $0.41, dryer $0.15 vs $0.08), because the LLM took more decisions.
 3. **The cause is the "how many ridges" question.** Jev is less sure about a count than about an end ridge, and seems to read the count as an end ridge (from ridge 12 it picked "63 ridges", meaning up to ridge 63). Hand-offs caused by this question: hn58 39 (before 0–5), wetjune 71 (13), dryer 23 (1).
 4. **Yield sanity check:** same or better on L1/L2, hn58 and dryer. Wetjune failed: it used all 300 actions by 3 August and never harvested.
