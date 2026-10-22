@@ -81,6 +81,8 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
+            "api_mode": getattr(self.llm, "api_mode", None),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
             "reasoning_history_policy": "exclude",
         }

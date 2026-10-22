@@ -357,3 +357,30 @@ Spent so far in Part 2: about $1.1.
 **Finding:** neither agent completes an L3 season yet. gpt-6-luna (reasoning off) stops instead of advancing the clock; the hybrid advances but its LLM fallback, which has no memory between calls, spends the action budget re-reading.
 
 Spent so far in Part 2: about $1.6.
+
+## Step 10 – gpt-6-luna with reasoning on (Responses API) (2026-10-22)
+
+**Built:** OpenAI's Responses API route in `fairy/agents/llm/openai_llm.py`, chosen by the new `--reasoning-effort` option. For gpt-6-luna any value other than "none" uses `/v1/responses`; without the option every model runs as before. Replies are turned into the same object as on the chat route, so the agents are unchanged. 3 free tests in `tests/test_openai_responses.py`.
+
+**Decisions:**
+
+| Choice | Why |
+|---|---|
+| Reasoning "medium" | OpenAI's default; accepted values are none, minimal, low, medium, high, xhigh, max |
+| Same agent (`farm_baseline_react`), tools, English task and action/time limits; only the model setting changes | Your rule |
+| Output limit per call 8,192 tokens (was 2,048) | Reasoning tokens count toward it; a cut reply would be retried |
+| Stateless calls; reasoning text not sent back in later calls | Same as FAIRY's chat route ("exclude" policy) |
+| Hybrid fallback stays on reasoning "none" | Not asked to change; item 2 changes only its memory |
+
+**Runs (one each):**
+
+| Scenario | Yield loss (crop / recovered) | Coverage | Actions | Tokens (cached) | Cost | Reasoning off |
+|---|---|---|---|---|---|---|
+| L1 herbicide | 0.0% / – | 90% | 13, finished | 125k (89%) | $0.003 | 0.0%, $0.003 |
+| L2 harvest drydown | 0.0% / 12.5% | 80% | 100, hit limit | 11.0M (98%) | $0.13 | 0.0%, $0.012 |
+| **L3 hn58** | **1.7% / 4.2%** | 76% | 134, finished | 6.2M (99%) | **$0.07** | stopped after planting, 100% recovered loss |
+
+- **L3 completed the season:** planted 5 May, waited in large steps (14, 35, 40, 35 days), irrigated once, harvested all 64 ridges, dried and stored 8,022 kg (oracle 8,374 kg). 5.5 min. 1,337 reasoning tokens in total (it thinks briefly).
+- **L2 cost 10× more than reasoning off:** while waiting it advanced one day at a time and re-read all 64 ridges every day (~6k tokens per read), and ran out of actions with 8 ridges unharvested.
+
+Spent in this step: about $0.20. Part 2 total: about $1.8.
