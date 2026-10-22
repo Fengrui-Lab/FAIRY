@@ -5,13 +5,16 @@ still executes the tool, enforces max_tool_calls / timeout, and records the
 workflow and runtime log, so run_report.json and agent_workflow.json have the
 same format as for the LLM agents.
 
-Each action takes up to three Jev requests:
-  1. one Choice over the scenario's tools plus "done";
-  2. if the tool takes arguments, one Choice per argument, sent together;
-  3. if the tool takes a ridge range, the end ridge is asked last, in its own
-     request that states the start ridge already chosen (questions in one
-     request cannot see each other's answers).
-The action's confidence is the lowest confidence among its questions.
+Each action takes one Jev request, sometimes two (fan-out; Jev bills the
+state once per request, so questions that do not depend on each other share one):
+  1. one Choice over the scenario's tools plus "done", together with the
+     argument questions of the likely tools (Jev's top tools in the previous
+     request and the last few actions); answers for tools not picked are ignored;
+  2. only if the picked tool takes arguments and was not among the likely
+     tools, one Choice per argument, sent together.
+A ridge range is asked as start + "how many ridges" (independent questions);
+the code turns the count into the end ridge within the allowed ridges.
+The action's confidence is the lowest confidence among the picked tool's questions.
 
 Part 2 (docs/jev/PROGRESS.md): Jev sees the task, a short farm snapshot built
 by code (snapshot.py) and the last few actions, not the full history. Ridge and
@@ -92,8 +95,19 @@ FALLBACK_SINCE_LINES = 30
 FALLBACK_SINCE_RESULT_CHARS = 300
 
 
-def _arg_question_id(arg_name: str) -> str:
-    return f"arg__{arg_name}"
+# Fan-out: argument questions of these tools ride along with the tool question.
+# Jev's next tool was in this set 91% of the time in the Step 11-12 L3 logs.
+LIKELY_TOP_TOOLS = 5
+LIKELY_MIN_PROBABILITY = 0.05
+LIKELY_RECENT_ACTIONS = 3
+
+
+def _arg_question_id(arg_name: str, tool_name: str | None = None) -> str:
+    return f"arg__{tool_name}__{arg_name}" if tool_name else f"arg__{arg_name}"
+
+
+def _count_key(n: int) -> str:
+    return f"{n} ridge" if n == 1 else f"{n} ridges"
 
 
 def _readable_seconds(seconds: int) -> str:
@@ -153,6 +167,8 @@ class JevAgent(Agent):
         self._llm_decisions = 0
         self._llm_turns: list[dict[str, Any]] = []
         self._llm_seen_steps = 0
+        self._last_tool_probabilities: dict[str, float] = {}
+        self._fanout = {"hits": 0, "misses": 0}
         self.telemetry: dict[str, Any] = {
             "family_id": self.name,
             "planning_mode": f"jev_menu_choice_{self.state_mode}",
@@ -202,6 +218,11 @@ class JevAgent(Agent):
                 "llm_calls": self._jev_request_count,
                 "jev_requests": self._jev_request_count,
                 "jev_decisions": self._action_count,
+                "jev_requests_per_action": (
+                    round(self._jev_request_count / self._action_count, 3) if self._action_count else None
+                ),
+                "fanout_hits": self._fanout["hits"],
+                "fanout_misses": self._fanout["misses"],
                 "avg_action_confidence": (
                     round(sum(confidences) / len(confidences), 4) if confidences else None
                 ),
@@ -303,44 +324,99 @@ class JevAgent(Agent):
                 DONE_OPTION: DONE_DESCRIPTION,
             },
         }
-        tool_answer = self._ask("tool", state, {TOOL_QUESTION_ID: tool_question})[TOOL_QUESTION_ID]
+        questions: dict[str, dict[str, Any]] = {TOOL_QUESTION_ID: tool_question}
+        prepared: dict[str, dict[str, tuple[str, dict[str, Any]]]] = {}
+        for name in self._likely_tools(tool_question["criteria"]):
+            arg_questions, prepared[name] = self._value_questions(self.tool_menus[name], name)
+            questions.update(arg_questions)
+        answers = self._ask("tool", state, questions)
+        tool_answer = answers[TOOL_QUESTION_ID]
+        self._last_tool_probabilities = tool_answer["probabilities"]
         pick = tool_answer["choice"]
         confidences = {TOOL_QUESTION_ID: tool_answer["confidence"]}
-        arguments: dict[str, Any] = {}
-        if pick == DONE_OPTION:
-            return pick, arguments, confidences
+        if pick == DONE_OPTION or not self.tool_menus[pick].args:
+            return pick, {}, confidences
 
         menu = self.tool_menus[pick]
-        names = {a.name for a in menu.args}
-        later = [
-            a for a in menu.args
-            if a.name in RANGE_END_TO_START and RANGE_END_TO_START[a.name] in names
-        ]
-        first = [a for a in menu.args if a not in later]
-        picked_keys: dict[str, str] = {}
-        for kind, group in (("arguments", first), ("end_ridge", later)):
-            if not group:
-                continue
-            options = {a.name: self._arg_options(menu, a, arguments) for a in group}
-            questions = {
-                _arg_question_id(a.name): {
-                    "type": "choice",
-                    "instructions": self._arg_instructions(menu, a, picked_keys),
-                    "criteria": {key: None for key in options[a.name]},
-                }
-                for a in group
-            }
-            answers = self._ask(kind, state, questions)
-            for a in group:
-                answer = answers[_arg_question_id(a.name)]
-                value = options[a.name][answer["choice"]]
-                picked_keys[a.name] = answer["choice"]
-                if a.name == DURATION_ARG:
-                    arguments.update(value)
-                else:
-                    arguments[a.name] = value
-                confidences[_arg_question_id(a.name)] = answer["confidence"]
+        if pick in prepared:
+            self._fanout["hits"] += 1
+            options = prepared[pick]
+        else:
+            self._fanout["misses"] += 1
+            arg_questions, options = self._value_questions(menu)
+            answers = self._ask("arguments", state, arg_questions)
+        arguments, arg_confidences = self._read_values(menu, options, answers)
+        confidences.update(arg_confidences)
         return pick, arguments, confidences
+
+    def _likely_tools(self, offered: dict[str, Any]) -> list[str]:
+        """Tools with arguments that Jev ranked high last time or used in the last few actions."""
+        ranked = sorted(self._last_tool_probabilities.items(), key=lambda kv: -kv[1])
+        likely = [n for n, p in ranked[:LIKELY_TOP_TOOLS] if p >= LIKELY_MIN_PROBABILITY]
+        recent = [s.tool_name for s in self._facts.get("steps", [])[-LIKELY_RECENT_ACTIONS:]]
+        out: list[str] = []
+        for name in likely + recent[::-1]:
+            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out:
+                out.append(name)
+        return out
+
+    def _value_questions(
+        self, menu: ToolMenu, tool_key: str | None = None
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, tuple[str, dict[str, Any]]]]:
+        """One question per argument, none depending on another's answer.
+
+        A range end is asked as "how many ridges" from the start; _read_values turns
+        it into the end ridge. Returns the questions and, per argument, its
+        question id and options.
+        """
+        names = {a.name for a in menu.args}
+        questions: dict[str, dict[str, Any]] = {}
+        options: dict[str, tuple[str, dict[str, Any]]] = {}
+        for a in menu.args:
+            qid = _arg_question_id(a.name, tool_key)
+            count_from = RANGE_END_TO_START.get(a.name) if RANGE_END_TO_START.get(a.name) in names else None
+            if count_from:
+                width = PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
+                opts: dict[str, Any] = {_count_key(n): n for n in range(1, width + 1)}
+            else:
+                opts = self._arg_options(menu, a, {})
+            questions[qid] = {
+                "type": "choice",
+                "instructions": self._arg_instructions(
+                    menu, a, speculative=tool_key is not None, count_from=count_from
+                ),
+                "criteria": {key: None for key in opts},
+            }
+            options[a.name] = (qid, opts)
+        return questions, options
+
+    def _read_values(
+        self,
+        menu: ToolMenu,
+        options: dict[str, tuple[str, dict[str, Any]]],
+        answers: dict[str, dict[str, Any]],
+    ) -> tuple[dict[str, Any], dict[str, float]]:
+        names = {a.name for a in menu.args}
+        ends = [a for a in menu.args if RANGE_END_TO_START.get(a.name) in names]
+        arguments: dict[str, Any] = {}
+        confidences: dict[str, float] = {}
+        for a in [a for a in menu.args if a not in ends] + ends:
+            qid, opts = options[a.name]
+            answer = answers[qid]
+            value = opts[answer["choice"]]
+            confidences[qid] = answer["confidence"]
+            if a in ends:
+                # Count -> end ridge: the farthest allowed end within start + count - 1
+                # (same end rules as before: pass width, allowed ridges).
+                start = arguments[RANGE_END_TO_START[a.name]]
+                valid = sorted(self._arg_options(menu, a, arguments).values())
+                within = [e for e in valid if e <= start + value - 1]
+                arguments[a.name] = max(within) if within else valid[0]
+            elif a.name == DURATION_ARG:
+                arguments.update(value)
+            else:
+                arguments[a.name] = value
+        return arguments, confidences
 
     # ------------------------------------------------------------------
     # Per-turn options, done check, report
@@ -589,17 +665,22 @@ class JevAgent(Agent):
         return "\n".join(lines)
 
     def _arg_instructions(
-        self, menu: ToolMenu, arg: Any, picked_keys: dict[str, str] | None = None
+        self, menu: ToolMenu, arg: Any, *, speculative: bool = False, count_from: str | None = None
     ) -> str:
-        text = (
-            f"The farm agent has decided to call `{menu.tool_name}`: {menu.description} "
-            f"Which value should its argument `{arg.name}` take?"
+        lead = (
+            f"If the farm agent calls `{menu.tool_name}` next: {menu.description} "
+            if speculative
+            else f"The farm agent has decided to call `{menu.tool_name}`: {menu.description} "
         )
+        if count_from:
+            text = lead + (
+                f"How many ridges should the call cover, counting from the ridge chosen for "
+                f"`{count_from}`? (This sets `{arg.name}`.)"
+            )
+        else:
+            text = lead + f"Which value should its argument `{arg.name}` take?"
         if arg.description:
             text += f" `{arg.name}`: {arg.description}"
-        start = RANGE_END_TO_START.get(arg.name)
-        if start and picked_keys and start in picked_keys:
-            text += f" The agent has already chosen `{start}` = {picked_keys[start]}."
         if self.state_mode == "snapshot":
             # Without this, Jev repeated the task's first values for this action
             # (e.g. ridges 44-55 again instead of 24-35): single-question test, Part 2 Step 5.

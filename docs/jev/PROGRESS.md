@@ -454,3 +454,36 @@ Same settings as Steps 10–11 (baseline: gpt-6-luna reasoning "medium"; hybrid:
 - **dryer capacity, hybrid:** tried to harvest from 8 August (not mature, then rain, then grain too wet), waiting 7 days between tries; harvested 10 Oct – 7 Nov, with grain per 4 ridges falling from 440 to 361 kg (baseline: 510 kg, all harvested on 7 Sept). It also stored 7 batches at 13.7% moisture without drying them first (task: above 13.5% must be dried before storing); the late batches were at 8%. Most of these steps were Jev's own (17 of 23 harvests, 7 of 13 week-long waits, 15 of 16 stores); Jev also tried "done" early 15 times.
 
 Spent in this step: about $1.00. Part 2 total: about $3.05.
+
+## Step 13 – Fewer Jev requests per action (branch `jev-fewer-requests`, 2026-10-23, no AI, free)
+
+**Why:** Jev bills the state (task + snapshot) once per request, and we sent 2.0–2.35 requests per action (which action → its values → end ridge). Logs show the questions are billed too (tokens grow with question length), so asking every tool's values at once would cost more.
+
+**Built** (`fairy/agents/jev/jev_agent.py`, fan-out pattern, docs.typesafe.ai/patterns/fan-out):
+
+| Choice | Why |
+|---|---|
+| A ridge range is asked as start + "how many ridges" (1 to the pass width, or 1–64), in the same request; code turns the count into the end ridge within the same end rules as before | The end question depended on the start, so it needed its own request |
+| The "which action" request also carries the value questions of the likely tools: Jev's top 5 tools (≥ 5%) in its previous request plus the last 3 actions' tools; answers for tools not picked are ignored | In the Step 11–12 L3 logs, Jev's next tool was in this set 91% of the time |
+| If the picked tool was not in the set, its values are asked in a second request, as before | |
+| Confidence = lowest among the picked tool's questions; speculative questions say "If the farm agent calls …" | Fallback rule unchanged |
+| Everything else unchanged (menus, options, earlier-calls hint, done check, fallback, memory, limits) | Your rule |
+
+New telemetry: `jev_requests_per_action`, `fanout_hits`, `fanout_misses`. Tests updated (11 pass; full suite 94 pass, 1 known failure). `scripts/jev_offline_check.py` answers the new questions.
+
+**Free check, both branches** (fake Jev follows the oracle; tokens estimated as characters ÷ 4):
+
+| Scenario | Requests old → new | Est. tokens old → new | Change |
+|---|---|---|---|
+| L1 herbicide | 26 → 19 | 66k → 62k | −5% |
+| L1 harvest + store | 77 → 45 | 163k → 136k | −16% |
+| L1 planting | 63 → 32 | 134k → 104k | −23% |
+| L2 harvest drydown | 97 → 58 | 220k → 185k | −16% |
+| L2 replant | 43 → 32 | 98k → 98k | 0% |
+| L3 hn58 | 511 → 298 | 1.82M → 1.34M | −26% |
+| L3 wetjune disease | 498 → 306 | 1.73M → 1.32M | −24% |
+| L3 dryer capacity | 463 → 274 | 1.48M → 1.11M | −25% |
+
+- Same actions on both branches in all 8 (so same yield), same values missing from the menu, no new "done" refusals.
+- Requests are larger (avg +25–45% characters), because of the extra questions; the saving comes from sending the state fewer times.
+- The fake Jev always picks one tool with certainty, so it predicts the likely tools better than the real Jev will; paid runs will show the real hit rate.

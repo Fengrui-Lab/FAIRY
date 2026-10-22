@@ -32,7 +32,8 @@ class _ScriptedJev:
         picks = self.script.pop(0)
         choices = {}
         for qid, question in questions.items():
-            pick = picks[qid]
+            # Fan-out questions the script does not name get their first option.
+            pick = picks.get(qid, next(iter(question["criteria"])))
             assert pick in question["criteria"]
             assert len(question["criteria"]) <= MAX_CHOICE_OPTIONS
             choices[qid] = SimpleNamespace(
@@ -127,19 +128,27 @@ def test_jev_agent_stops_at_max_tool_calls() -> None:
     assert agent.tool_call_count == 3
 
 
-def test_end_ridge_options_start_at_the_chosen_start() -> None:
+def test_ridge_count_becomes_an_end_within_the_field() -> None:
     agent, workflow, llm = _run(
         [
             {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
-            {"arg__start": "ridge 20"},
-            {"arg__end": "ridge 25"},
+            {"arg__start": "ridge 20", "arg__end": "6 ridges"},
+            # Fan-out: the last action's arguments ride along with the tool question.
+            {
+                TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state",
+                "arg__FarmWorldApp__get_ridge_range_state__start": "ridge 60",
+                "arg__FarmWorldApp__get_ridge_range_state__end": "10 ridges",
+            },
             {TOOL_QUESTION_ID: "done"},
         ]
     )
-    end_options = list(llm.requests[2][1]["arg__end"]["criteria"])
-    assert end_options[0] == "ridge 20" and len(end_options) == 44  # 20-63, no pass limit
-    step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
-    assert step.tool_args == {"start": 20, "end": 25}
+    counts = list(llm.requests[1][1]["arg__end"]["criteria"])
+    assert counts[0] == "1 ridge" and len(counts) == 64  # no pass limit
+    steps = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
+    assert steps[0].tool_args == {"start": 20, "end": 25}
+    assert steps[1].tool_args == {"start": 60, "end": 63}  # cut at the last ridge
+    assert len(llm.requests) == 4  # 2 + 1 + 1
+    assert agent.telemetry["fanout_hits"] == 1 and agent.telemetry["fanout_misses"] == 1
 
 
 def test_wait_is_one_question_in_plain_units() -> None:
@@ -167,21 +176,19 @@ def test_done_is_refused_twice_while_ridges_are_unplanted() -> None:
     assert len(llm.requests) == 3
 
 
-def test_end_ridge_is_asked_after_start_ridge() -> None:
+def test_ridge_range_is_start_plus_count_in_one_request() -> None:
     agent, workflow, llm = _run(
         [
             {TOOL_QUESTION_ID: "TractorApp__apply_fertilizer"},
-            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3"},
-            {"arg__end_ridge": "ridge 19"},
+            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3", "arg__end_ridge": "10 ridges"},
             {TOOL_QUESTION_ID: "done"},
         ]
     )
-    first_args, end_only = llm.requests[1][1], llm.requests[2][1]
-    assert set(first_args) == {"arg__start_ridge", "arg__kg_per_ridge"}
-    assert set(end_only) == {"arg__end_ridge"}
-    assert "`start_ridge` = ridge 10" in end_only["arg__end_ridge"]["instructions"]
-    # apply_fertilizer covers at most 10 ridges per pass: ridges 10-19.
-    assert list(end_only["arg__end_ridge"]["criteria"]) == [f"ridge {r}" for r in range(10, 20)]
+    args = llm.requests[1][1]
+    assert set(args) == {"arg__start_ridge", "arg__kg_per_ridge", "arg__end_ridge"}
+    assert "How many ridges" in args["arg__end_ridge"]["instructions"]
+    # apply_fertilizer covers at most 10 ridges per pass.
+    assert list(args["arg__end_ridge"]["criteria"]) == ["1 ridge"] + [f"{n} ridges" for n in range(2, 11)]
     step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
     assert step.tool_args == {"start_ridge": 10, "kg_per_ridge": 3.0, "end_ridge": 19}
 

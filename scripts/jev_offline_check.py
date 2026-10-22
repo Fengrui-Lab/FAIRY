@@ -32,6 +32,7 @@ from fairy.agents.llm.base_llm import BaseLLM
 
 HIDDEN = {"AgentUserInterface__send_message_to_agent"}
 _DURATION_KEY = re.compile(r"^(\d+) (second|minute|hour|day)s?$")
+_COUNT_KEY = re.compile(r"^\d+ ridges?$")
 
 
 def oracle_actions(path: Path) -> list[dict]:
@@ -77,7 +78,20 @@ class OracleFollower(BaseLLM):
             self.log["done_asked"] += 1
             return jev_menu.DONE_OPTION
         name = qid.removeprefix("arg__")
+        if name.count("__") >= 2:
+            # Fan-out question for a likely tool (arg__<App>__<tool>__<arg>): only the picked tool's count.
+            tool, name = name.rsplit("__", 1)
+            if self.current is None or tool != self.current["tool"]:
+                return keys[0]
         args = self.current["args"]
+        start = {"end": "start", "end_ridge": "start_ridge"}.get(name)
+        if start in args and name in args and all(_COUNT_KEY.match(k) for k in keys):
+            want = int(args[name]) - int(args[start]) + 1
+            key = f"{want} ridge" if want == 1 else f"{want} ridges"
+            if key in criteria:
+                return key
+            self.log["missing_values"].append({"tool": self.current["tool"], "arg": name, "want": args[name]})
+            return keys[-1]
         if name == jev_menu.DURATION_ARG or (name == "timeout" and "timeout" in args):
             want = _seconds(args) if name == jev_menu.DURATION_ARG else int(args["timeout"])
             exact = [k for k in keys if _key_seconds(k) == want]
