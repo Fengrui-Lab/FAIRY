@@ -213,3 +213,18 @@ We changed this so that most actions take one ask:
 3. Run the free check, then L1/L2, then the 3 L3 scenarios again, to see whether the saving reaches total cost.
 
 Spent in Part 2 so far: about $3.9.
+
+### 11.5 After the fixes (2026-10-23)
+
+Fixes: Jev's ridge answer is now sent unchanged (the farm refuses it if it does not fit). "How many ridges?" kept, with clearer wording; earlier calls shown as "ridges 12-15 (4 ridges)".
+
+| | hn58 before (3 runs) | hn58 now | wetjune before | wetjune now |
+|---|---|---|---|---|
+| Season | finished ×3 | finished | finished | finished |
+| Recovered-grain loss | 3.3–8.1% | 5.4% | 6.8% | 7.3% |
+| Asks per action | 2.16–2.29 | **1.05** | 2.35 | **1.15** |
+| Jev tokens per action | 11.6–14.1k | **9.1k** | 17.1k | **8.9k** |
+| Jev's share of decisions | 49–60% | **47%** | 38% | **56%** |
+| Total cost | $0.09–0.20 | $0.12 | $0.41 | $0.08 |
+
+Merge test: (1) fewer asks and Jev tokens per action: yes on both. (2) Jev's share not lower: yes on wetjune, **no on hn58** (47% vs 49–60%). (3) season finishes, hn58 loss within 3–8%, wetjune harvests: yes.

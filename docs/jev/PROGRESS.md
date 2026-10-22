@@ -527,3 +527,27 @@ Spent in this step: about $0.83 (estimate $0.65; wetjune ran to the action limit
 - Result: asks per action roughly halved and Jev's cost per action fell, but total cost on L3 did not fall, because Jev was unsure about "how many ridges?" and handed more decisions to the LLM.
 - Fairness problem: when Jev's ridge answer did not fit the field, the code replaced it with one that fits (e.g. "start at 12, cover 63 ridges" was sent as "ridges 12 to 63"). The LLM agent never gets this help. It happened in 8 of 151 ridge choices (wetjune 6, L1 herbicide 2). This code is still in the branch.
 - Proposed (not done): stop replacing Jev's answers; ask "up to which ridge?" again, in the same ask as the start ridge; then rerun.
+
+## Step 15 – Fixes and reruns (2026-10-23)
+
+**Fixes (your choice):**
+1. Jev's ridge answer is sent as it is. If it does not fit, the farm refuses it, the same as for the LLM.
+2. Kept "how many ridges?". Removed "(This sets end_ridge)" from the question. Earlier calls now read "ridges 12-15 (4 ridges)" instead of "start_ridge=12, end_ridge=15".
+
+Free check on hn58 and wetjune: same actions as jev-agent. 11 Jev tests pass.
+
+**Reruns (one each) vs jev-agent:**
+
+| | hn58 jev-agent (3 runs) | hn58 now | wetjune jev-agent | wetjune now |
+|---|---|---|---|---|
+| Season | finished ×3 | finished | finished | finished (6,246 kg stored) |
+| Recovered-grain loss | 6.3 / 8.1 / 3.3% | 5.4% | 6.8% | 7.3% |
+| Asks per action | 2.16–2.29 | **1.05** | 2.35 | **1.15** |
+| Jev tokens per action | 11.6–14.1k | **9.1k** | 17.1k | **8.9k** |
+| Jev's share of decisions | 49 / 57 / 60% | **47%** | 38% | **56%** |
+| Total cost | $0.20 / $0.09 / $0.12 | $0.12 | $0.41 | $0.08 |
+
+- Hand-offs to the LLM because of "how many ridges?": hn58 39 → 8, wetjune 71 → 3. The farm refused none of Jev's ridge choices.
+- hn58: Jev's share is lower than in all 3 jev-agent runs. Most hand-offs were "which action?" (44) and other settings (27; jev-agent runs: 4–14).
+
+Spent in this step: about $0.20. Part 2 total: about $4.1.

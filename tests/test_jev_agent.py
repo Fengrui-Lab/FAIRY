@@ -146,7 +146,8 @@ def test_ridge_count_becomes_an_end_within_the_field() -> None:
     assert counts[0] == "1 ridge" and len(counts) == 64  # no pass limit
     steps = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
     assert steps[0].tool_args == {"start": 20, "end": 25}
-    assert steps[1].tool_args == {"start": 60, "end": 63}  # cut at the last ridge
+    assert steps[1].tool_args == {"start": 60, "end": 69}  # sent as Jev chose it, not changed to fit
+    assert "ridges 20-25 (6 ridges)" in llm.requests[2][1]["arg__FarmWorldApp__get_ridge_range_state__end"]["instructions"]
     assert len(llm.requests) == 4  # 2 + 1 + 1
     assert agent.telemetry["fanout_hits"] == 1 and agent.telemetry["fanout_misses"] == 1
 

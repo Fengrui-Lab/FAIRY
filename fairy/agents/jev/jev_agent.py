@@ -406,12 +406,9 @@ class JevAgent(Agent):
             value = opts[answer["choice"]]
             confidences[qid] = answer["confidence"]
             if a in ends:
-                # Count -> end ridge: the farthest allowed end within start + count - 1
-                # (same end rules as before: pass width, allowed ridges).
-                start = arguments[RANGE_END_TO_START[a.name]]
-                valid = sorted(self._arg_options(menu, a, arguments).values())
-                within = [e for e in valid if e <= start + value - 1]
-                arguments[a.name] = max(within) if within else valid[0]
+                # Count -> end ridge, unchanged even if it does not fit: the farm
+                # refuses it, as for the LLM agent (Part 2, Step 15).
+                arguments[a.name] = arguments[RANGE_END_TO_START[a.name]] + value - 1
             elif a.name == DURATION_ARG:
                 arguments.update(value)
             else:
@@ -675,7 +672,7 @@ class JevAgent(Agent):
         if count_from:
             text = lead + (
                 f"How many ridges should the call cover, counting from the ridge chosen for "
-                f"`{count_from}`? (This sets `{arg.name}`.)"
+                f"`{count_from}`?"
             )
         else:
             text = lead + f"Which value should its argument `{arg.name}` take?"
@@ -695,8 +692,15 @@ class JevAgent(Agent):
         for s in self._facts.get("steps", []):
             if s.tool_name != tool_name:
                 continue
-            args = ", ".join(f"{k}={v}" for k, v in (s.tool_args or {}).items() if k != "content")
-            call = f"({args})"
+            tool_args = {k: v for k, v in (s.tool_args or {}).items() if k != "content"}
+            parts = []
+            for end_name, start_name in RANGE_END_TO_START.items():
+                if end_name in tool_args and start_name in tool_args:
+                    # Same terms as the "how many ridges" question: "ridges 12-15 (4 ridges)".
+                    start, end = tool_args.pop(start_name), tool_args.pop(end_name)
+                    parts.append(f"ridges {start}-{end} ({_count_key(end - start + 1)})")
+            parts += [f"{k}={v}" for k, v in tool_args.items()]
+            call = f"({', '.join(parts)})"
             if call in seen:
                 seen.remove(call)
             seen.append(call)
