@@ -228,3 +228,5 @@ Fixes: Jev's ridge answer is now sent unchanged (the farm refuses it if it does 
 | Total cost | $0.09–0.20 | $0.12 | $0.41 | $0.08 |
 
 Merge test: (1) fewer asks and Jev tokens per action: yes on both. (2) Jev's share not lower: yes on wetjune, **no on hn58** (47% vs 49–60%). (3) season finishes, hn58 loss within 3–8%, wetjune harvests: yes.
+
+Extra hn58 run: finished, recovered-grain loss 1.9% (better than the 3–8% range), 1.08 asks per action, 9.1k Jev tokens per action, Jev's share 53%, $0.086. hn58 now: Jev's share 47% and 53% (before: 49–60%). Waiting for your decision on the merge.

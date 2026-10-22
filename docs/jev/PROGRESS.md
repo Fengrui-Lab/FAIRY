@@ -551,3 +551,5 @@ Free check on hn58 and wetjune: same actions as jev-agent. 11 Jev tests pass.
 - hn58: Jev's share is lower than in all 3 jev-agent runs. Most hand-offs were "which action?" (44) and other settings (27; jev-agent runs: 4–14).
 
 Spent in this step: about $0.20. Part 2 total: about $4.1.
+
+**Extra hn58 run (same code):** finished, 8,212 kg stored, recovered-grain loss 1.9%, 1.08 asks per action, 9.1k Jev tokens per action, Jev's share 53% (62 / 118), $0.086. With the two runs, Jev's share is 47% and 53% (jev-agent: 49 / 57 / 60%). Stopped here for your decision on the merge. Part 2 total: about $4.2.
