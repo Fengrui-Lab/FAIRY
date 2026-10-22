@@ -521,3 +521,5 @@ Hybrid (Jev + gpt-6-luna fallback with memory, 0.4), one run each, seed 0, same 
 **Yield (sanity check):** L1/L2 and hn58 same or slightly better. Wetjune got worse: the hybrid used all 300 actions by 3 August and never harvested (84% LLM decisions, 34 "done refused twice"). Dryer capacity did well this time (0.1% loss vs 21.5%), probably by chance: single runs.
 
 Spent in this step: about $0.83 (estimate $0.65; wetjune ran to the action limit). Part 2 total: about $3.9.
+
+**Correction (2026-10-23):** when Jev's ridge count did not fit (past the last ridge, the machine's per-pass limit, or ridges already done), the code cut the range to fit. That changes Jev's answer, which the LLM agent never gets, so it is not fair. It happened in 8 of 151 ridge ranges in Step 14 (wetjune 6, L1 herbicide 2, others 0). To do: send Jev's answer unchanged and let the farm refuse it.

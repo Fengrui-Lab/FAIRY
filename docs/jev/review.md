@@ -207,3 +207,5 @@ Jev bills the farm text once per request; we sent 2.0–2.35 requests per action
 - **Keep the fan-out, change the ridge question back** (suggestion, not done): ask the end ridge with all ridges as options in the same request, and let code enforce end ≥ start and the pass width. This keeps one request per action but asks Jev in the form it handled well before.
 - Then repeat the 3 L3 runs to see whether the saving reaches total cost.
 - Spent in Part 2 so far: about $3.9.
+
+**Correction:** the code cut Jev's ridge range when it did not fit, which changes Jev's answer (not fair; the LLM agent gets no such help). This happened in 8 of 151 ranges in 11.2 (wetjune 6, L1 herbicide 2). To do: send Jev's answer unchanged and let the farm refuse it.
