@@ -198,11 +198,38 @@ def test_low_confidence_hands_the_decision_to_the_llm() -> None:
     )
     step = [s for s in workflow.dag.values() if s.op_type == "TOOL"][0]
     assert step.tool_args == {"days": 2}  # the LLM's call, not Jev's
-    assert "farm_now" in fallback.calls[0][1]["content"]
+    assert "farm_now" in fallback.calls[0][-1]["content"]
     assert agent.telemetry["llm_fallback_triggers"] == {"low_confidence": 1}
     assert agent.telemetry["llm_decisions"] == 1
     assert agent.telemetry["llm_tokens"]["prompt_tokens"] == 1000
     assert metric_totals(agent.messages.runtime_metrics)["token_usage"]["prompt_tokens"] == 1300
+
+
+def test_fallback_llm_sees_its_earlier_calls_in_a_fixed_order() -> None:
+    fallback = _ScriptedLLM([
+        ("WeatherApp__get_forecast", {"days": 2}),
+        ("TractorApp__load_fertilizer", {"kg": 200}),
+    ])
+    agent, workflow, _ = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_forecast", "_confidence": 0.3},
+            {"arg__days": "3", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "WeatherApp__get_current_weather"},
+            {TOOL_QUESTION_ID: "TractorApp__load_fertilizer", "_confidence": 0.3},
+            {"arg__kg": "200", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "done"},
+        ],
+        fallback=fallback,
+    )
+    first, second = fallback.calls
+    # The second request starts with the whole first one (so it can be cached),
+    # then the LLM's own call, its result, and Jev's action since.
+    assert second[:len(first)] == first
+    assert second[3]["tool_calls"][0]["function"]["name"] == "WeatherApp__get_forecast"
+    assert second[4]["role"] == "tool" and second[4]["tool_call_id"] == second[3]["tool_calls"][0]["id"]
+    assert "WeatherApp__get_current_weather" in second[5]["content"]
+    assert "farm_now" in second[5]["content"]
+    assert agent.telemetry["llm_decisions"] == 2
 
 
 def test_repeat_without_change_goes_to_the_llm() -> None:

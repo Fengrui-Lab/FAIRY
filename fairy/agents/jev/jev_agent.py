@@ -43,7 +43,7 @@ from fairy.agents.jev.menu import (
     build_tool_menus,
     task_numbers,
 )
-from fairy.agents.jev.snapshot import build_snapshot, ridge_ranges
+from fairy.agents.jev.snapshot import RESULT_CHARS, _failed, _short, build_snapshot, ridge_ranges
 
 TOOL_QUESTION_ID = "next_action"
 PART1_TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
@@ -75,6 +75,21 @@ FALLBACK_INSTRUCTIONS = (
     "Call exactly one tool for the next action. If the whole task is complete, reply "
     '"done" without calling a tool.'
 )
+FALLBACK_MEMORY_INSTRUCTIONS = (
+    "You are asked only for some steps; Jev, another agent, takes the others. Your earlier "
+    "decisions in this run and their results are in this conversation, with the actions Jev "
+    "took in between. Do not repeat a read whose result above is still current."
+)
+
+# Fallback memory (Part 2, Step 11): earlier fallback requests and the LLM's calls
+# stay in its input, append-only, so each request is the previous one plus new
+# messages. gpt-6-luna's cache only hits on a whole earlier request; a request
+# that shares just its start gets nothing cached (tested). Past MAX turns the
+# oldest are cut back to KEEP, so the cache restarts once every MAX - KEEP calls.
+FALLBACK_MEMORY_MAX_TURNS = 20
+FALLBACK_MEMORY_KEEP_TURNS = 10
+FALLBACK_SINCE_LINES = 30
+FALLBACK_SINCE_RESULT_CHARS = 300
 
 
 def _arg_question_id(arg_name: str) -> str:
@@ -136,6 +151,8 @@ class JevAgent(Agent):
         self._llm_tokens = {"prompt_tokens": 0, "cached_tokens": 0, "completion_tokens": 0}
         self._fallbacks: dict[str, int] = {}
         self._llm_decisions = 0
+        self._llm_turns: list[dict[str, Any]] = []
+        self._llm_seen_steps = 0
         self.telemetry: dict[str, Any] = {
             "family_id": self.name,
             "planning_mode": f"jev_menu_choice_{self.state_mode}",
@@ -349,19 +366,7 @@ class JevAgent(Agent):
 
     def _llm_decide(self, state: dict[str, Any], reason: str) -> tuple[str, dict[str, Any]] | None:
         """One decision by the fallback LLM; None keeps Jev's choice (LLM error or unknown tool)."""
-        system = next(
-            (m["content"] for m in self.messages.messages if isinstance(m, dict) and m.get("role") == "system"),
-            "",
-        )
-        messages = [
-            {"role": "system", "content": system},
-            {
-                "role": "user",
-                "content": FALLBACK_INSTRUCTIONS
-                + "\n\n"
-                + json.dumps(state, ensure_ascii=False, default=str),
-            },
-        ]
+        messages = self._fallback_messages(state, reason)
         self.record_event(
             "llm_fallback_start",
             status="running",
@@ -406,6 +411,8 @@ class JevAgent(Agent):
             except json.JSONDecodeError:
                 args = None
             decided = (name, args) if name in self.tools_map and isinstance(args, dict) else None
+        if decided is not None and self.state_mode == "snapshot":
+            self._remember_llm_turn(messages[-1]["content"], decided)
         self.record_event(
             "llm_fallback_end",
             status="ok" if decided else "rejected",
@@ -416,6 +423,88 @@ class JevAgent(Agent):
             content=getattr(message, "content", None),
         )
         return decided
+
+    def _fallback_messages(self, state: dict[str, Any], reason: str) -> list[dict[str, Any]]:
+        """Fixed rules and task, then the LLM's earlier turns, then the current state."""
+        system = next(
+            (m["content"] for m in self.messages.messages if isinstance(m, dict) and m.get("role") == "system"),
+            "",
+        )
+        if self.state_mode != "snapshot":
+            # Part 1 input: no memory (the full history is already in the state).
+            return [
+                {"role": "system", "content": system},
+                {"role": "user", "content": FALLBACK_INSTRUCTIONS + "\n\n" + json.dumps(state, ensure_ascii=False, default=str)},
+            ]
+        messages = [
+            {"role": "system", "content": system},
+            {
+                "role": "user",
+                "content": FALLBACK_INSTRUCTIONS + " " + FALLBACK_MEMORY_INSTRUCTIONS + "\n\nTask:\n" + state["task"],
+            },
+        ]
+        steps = self._facts.get("steps", [])
+        for turn in self._llm_turns:
+            messages.append({"role": "user", "content": turn["asked"]})
+            if turn["call"] is None:
+                messages.append({"role": "assistant", "content": DONE_OPTION})
+                continue
+            name, args = turn["call"]
+            messages.append({
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [{
+                    "id": turn["id"],
+                    "type": "function",
+                    "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)},
+                }],
+            })
+            step = steps[turn["step"]] if turn["step"] < len(steps) else None
+            result = (
+                f"[{step.time}] " + ("failed: " if _failed(step) else "") + _short(step.content)
+                if step is not None and step.tool_name == name
+                else "(no result recorded)"
+            )
+            messages.append({"role": "tool", "tool_call_id": turn["id"], "content": result})
+        # recent_actions left out: the LLM's own results and the actions since cover them.
+        current = {k: v for k, v in state.items() if k not in ("task", "recent_actions")}
+        messages.append({
+            "role": "user",
+            "content": self._since_last_llm_turn(steps)
+            + f"\nYou are asked now because: {reason.replace('_', ' ')}."
+            + "\n\nCurrent state:\n"
+            + json.dumps(current, ensure_ascii=False, default=str),
+        })
+        return messages
+
+    def _since_last_llm_turn(self, steps: list[Any]) -> str:
+        """Jev's actions since the LLM's last call, with time and a short result."""
+        since = steps[self._llm_seen_steps:]
+        if not since:
+            return "No actions since your last decision."
+        lines = [
+            f"[{st.time}] {st.tool_name}({', '.join(f'{k}={v}' for k, v in (st.tool_args or {}).items() if k != 'content')})"
+            f" -> {'failed: ' if _failed(st) else ''}{_short(st.content, FALLBACK_SINCE_RESULT_CHARS)}"
+            for st in since[-FALLBACK_SINCE_LINES:]
+        ]
+        head = "Actions since your last decision" if self._llm_turns else "Actions so far"
+        if len(since) > len(lines):
+            head += f" ({len(since) - len(lines)} earlier ones not shown)"
+        return head + ":\n" + "\n".join(lines)
+
+    def _remember_llm_turn(self, current_message: str, decided: tuple[str, dict[str, Any]]) -> None:
+        """Keep the request's last message as sent, so the next request starts with this one."""
+        steps = self._facts.get("steps", [])
+        name, args = decided
+        self._llm_turns.append({
+            "asked": current_message,
+            "call": None if name == DONE_OPTION else (name, args),
+            "id": f"fallback_call_{self._action_count}",
+            "step": len(steps),
+        })
+        self._llm_seen_steps = len(steps) + (0 if name == DONE_OPTION else 1)
+        if len(self._llm_turns) > FALLBACK_MEMORY_MAX_TURNS:
+            self._llm_turns = self._llm_turns[-FALLBACK_MEMORY_KEEP_TURNS:]
 
     def _last_was_report(self) -> bool:
         """No report straight after a report: Jev sent up to 5 in a row (Part 2, Step 6)."""

@@ -384,3 +384,51 @@ Spent so far in Part 2: about $1.6.
 - **L2 cost 10× more than reasoning off:** while waiting it advanced one day at a time and re-read all 64 ridges every day (~6k tokens per read), and ran out of actions with 8 ridges unharvested.
 
 Spent in this step: about $0.20. Part 2 total: about $1.8.
+
+## Step 11 – Fallback LLM with memory (2026-10-22)
+
+**Built** (`fairy/agents/jev/jev_agent.py`): the fallback LLM now keeps one conversation per run: fixed rules and task first, then for each earlier fallback call the request it saw, its own tool call and the result (with time), then "Jev's actions since your last decision" (time + result cut at 300 characters) and the current state. Instruction added: Jev takes the other steps; do not repeat a read whose result above is still current. Test added (11 Jev tests pass).
+
+**Caching test (direct API calls, ~$0.01):** gpt-6-luna only caches a request that begins with a whole earlier request (repeat: 5,179 of 5,182 tokens cached; earlier request + new messages: 4,996 cached). A request that shares only part of an earlier one gets nothing cached, even when the shared part is 4,000+ tokens. My first version shortened old turns, so only the fixed start was cached.
+
+**Decisions:**
+
+| Choice | Why |
+|---|---|
+| Append-only history: each request = the previous request + the LLM's call, its result, and the new turn | Caching test above |
+| Window of 20 earlier turns, cut back to 10 when full | Cache restarts once every 10 calls; a bigger window costs more per call |
+| The fallback state leaves out "last 5 actions with results" | Its own results and "actions since" already cover them |
+| Hybrid settings as before: threshold 0.4, gpt-6-luna reasoning "none" | Only the memory changes |
+
+**L2 debug runs (hybrid, 0.4):**
+
+| Scenario | Yield loss before → now | LLM decisions before → now | LLM input cached | Cost before → now |
+|---|---|---|---|---|
+| L2 replant | 1.7% → 0.65% | 25/42 → 3/14 | 82% | $0.028 → $0.006 |
+| L2 harvest drydown | recovered 0.0% → 4.7% | 4/71 → 12/77 | 90% | $0.028 → $0.033 |
+
+Drydown: Jev chose to start the harvest about a day earlier than in the old run; not an LLM decision.
+
+**L3 hn58, one run:**
+
+| | gpt-6-luna reasoning on (Step 10) | Hybrid before (Step 9) | Hybrid with memory |
+|---|---|---|---|
+| Season | finished | ran out of actions on 29 July | **finished** (30 Sept) |
+| Yield loss crop / recovered | 1.7% / 4.2% | 1.8% / 100% | 1.8% / **6.3%** (7,847 kg stored) |
+| Coverage | 76% | – | 72% |
+| Actions | 134 | 300 | 189 |
+| Decisions Jev / LLM | – | 36 / 264 | **94 / 96** (49% / 51%) |
+| Tokens | 6.2M (99% cached) | Jev 6.1M + LLM 2.8M | Jev 2.7M + LLM 4.4M (89% cached) |
+| Cost | **$0.07** | $0.41 | $0.20 (Jev $0.11, LLM $0.09) |
+| Time | 5.5 min | 26 min | 5 min |
+
+**Why Jev's confidence is low on L3 (the 96 hand-offs):**
+- 77 of 96 were on "which action", not on a value. Jev's top choice had only 0.2–0.4; the rest was spread over 2–3 other reasonable actions.
+- **Mid-season is almost all LLM:** June–August 53 of 62 decisions. The task says "check growth, nutrition, pests, disease; at R5/R6 decide on water" with no fixed order, so several actions are equally good (inspect, fly survey, read sensors, wait). Planting (May: 15 of 54) and harvest (Sept: 28 of 74) are step by step and mostly Jev.
+- **Machine upkeep:** robot/drone battery steps compete (check status / charge / wait 65 min), e.g. 1 June 05:33: four hand-offs in a row.
+- **Two drones with the same action:** "fly_survey" appears twice (Mavic3M, Matrice4T); in 12 hand-offs Jev split its probability between the two (e.g. 0.26 vs 0.24).
+- **Wait length:** 7 hand-offs on how long to wait, spread over 1/7/10/14 days (e.g. 0.18 / 0.15 / 0.13 / 0.13); the task gives no number.
+- **Harvest window:** in September Jev's top pick was "harvest" (0.2–0.4) while weather check and waiting scored close; the LLM checked weather and waited a day.
+- The LLM chose the same action as Jev in 31 of 96 hand-offs.
+
+Spent in this step: about $0.25. Part 2 total: about $2.05.
