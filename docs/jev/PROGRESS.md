@@ -522,4 +522,8 @@ Hybrid (Jev + gpt-6-luna fallback with memory, 0.4), one run each, seed 0, same 
 
 Spent in this step: about $0.83 (estimate $0.65; wetjune ran to the action limit). Part 2 total: about $3.9.
 
-**Correction (2026-10-23):** when Jev's ridge count did not fit (past the last ridge, the machine's per-pass limit, or ridges already done), the code cut the range to fit. That changes Jev's answer, which the LLM agent never gets, so it is not fair. It happened in 8 of 151 ridge ranges in Step 14 (wetjune 6, L1 herbicide 2, others 0). To do: send Jev's answer unchanged and let the farm refuse it.
+**Plain summary (2026-10-23):**
+- What we changed: most actions now take one ask to Jev instead of 2–3. Settings are asked together with "which action?", and "up to which ridge?" was replaced by "how many ridges?".
+- Result: asks per action roughly halved and Jev's cost per action fell, but total cost on L3 did not fall, because Jev was unsure about "how many ridges?" and handed more decisions to the LLM.
+- Fairness problem: when Jev's ridge answer did not fit the field, the code replaced it with one that fits (e.g. "start at 12, cover 63 ridges" was sent as "ridges 12 to 63"). The LLM agent never gets this help. It happened in 8 of 151 ridge choices (wetjune 6, L1 herbicide 2). This code is still in the branch.
+- Proposed (not done): stop replacing Jev's answers; ask "up to which ridge?" again, in the same ask as the start ridge; then rerun.
