@@ -487,3 +487,37 @@ New telemetry: `jev_requests_per_action`, `fanout_hits`, `fanout_misses`. Tests 
 - Same actions on both branches in all 8 (so same yield), same values missing from the menu, no new "done" refusals.
 - Requests are larger (avg +25–45% characters), because of the extra questions; the saving comes from sending the state fewer times.
 - The fake Jev always picks one tool with certainty, so it predicts the likely tools better than the real Jev will; paid runs will show the real hit rate.
+
+## Step 14 – Paid runs: fewer requests vs jev-agent (2026-10-23)
+
+Hybrid (Jev + gpt-6-luna fallback with memory, 0.4), one run each, seed 0, same limits. jev-agent: new runs for the L1s (worktree of `jev-agent`), Step 11 runs for the L2s, Steps 11–12 runs for the L3s. Judged on requests, tokens and cost; yield as a sanity check only.
+
+| Scenario | Branch | Season | Yield loss crop / recovered | Jev requests per action | Jev tokens per action | Decisions Jev / LLM | Jev cost | Total cost | Time |
+|---|---|---|---|---|---|---|---|---|---|
+| L1 herbicide | jev-agent | finished | 0.0% / – | 2.08 | 7.8k | 13 / 0 | $0.004 | $0.004 | 0.2 min |
+| | fewer-requests | finished | 0.0% / – | **1.38** | **6.9k** | 12 / 1 | $0.004 | $0.004 | 0.2 min |
+| L1 planting | jev-agent | finished | −2.8% / – | 2.22 | 8.8k | 32 / 4 | $0.013 | $0.015 | 0.5 min |
+| | fewer-requests | finished | −2.8% / – | **1.16** | **7.5k** | 35 / 3 | $0.012 | $0.013 | 0.3 min |
+| L2 harvest drydown | jev-agent | finished | 0.0% / 4.7% | 2.21 | 9.2k | 65 / 12 | $0.030 | $0.033 | 1.0 min |
+| | fewer-requests | finished | 0.0% / 0.0% | **1.03** | **6.2k** | 41 / 19 | $0.016 | $0.020 | 0.8 min |
+| L2 replant | jev-agent | finished | 0.65% / – | 2.21 | 9.5k | 11 / 3 | $0.006 | $0.006 | 0.2 min |
+| | fewer-requests | finished | 0.46% / – | **1.40** | **9.1k** | 9 / 6 | $0.006 | $0.007 | 0.3 min |
+| L3 hn58 | jev-agent (mean of 3) | finished ×3 | 1.7% / 5.9% | 2.24 | 13.1k | 55% / 45% | $0.080 | $0.135 | 3.6 min |
+| | fewer-requests | finished | 1.4% / 5.1% | **1.06** | **9.5k** | 45% / 55% | $0.065 | $0.144 | 3.2 min |
+| L3 wetjune disease | jev-agent | finished | 5.4% / 6.8% | 2.35 | 17.1k | 38% / 62% | $0.201 | $0.411 | 8.5 min |
+| | fewer-requests | **not finished** (300 actions, 3 Aug) | 15.5% / 100% | **1.09** | **12.3k** | 16% / 84% | $0.155 | $0.472 | 8.5 min |
+| L3 dryer capacity | jev-agent | finished (7 Nov) | 0.0% / 21.5% | 1.98 | 10.1k | 68% / 32% | $0.054 | $0.079 | 2.3 min |
+| | fewer-requests | finished (6 Sept) | −1.9% / 0.1% | **1.19** | **9.9k** | 52% / 48% | $0.079 | $0.148 | 3.6 min |
+
+**Requests:** down from 2.0–2.35 to 1.03–1.40 per action on every scenario. The likely-tools guess was right 92% of the time on hn58, 88% on wetjune, 74% on dryer capacity.
+
+**Jev tokens per action:** down 4–33% (L3: hn58 −27%, wetjune −28%, dryer −2%).
+
+**But total cost did not fall on L3**, because the LLM took more decisions (hn58 45% → 55%, wetjune 62% → 84%, dryer 32% → 48%). The new "how many ridges" question is the main cause: hand-offs with that question as the least certain one went from 0–5 to 39 (hn58), 13 → 71 (wetjune), 1 → 23 (dryer). Examples from the hn58 and wetjune logs:
+- Jev seems to read the count as an end ridge: drone survey from ridge 12, "63 ridges" 0.21 (it meant "up to ridge 63"; the count would be 52).
+- Close calls: planting "3 ridges" 0.45 vs "4 ridges" 0.43; robot inspection "8 ridges" 0.31 vs "4 ridges" 0.25 (battery limits).
+- Most of these were on `inspect_crop_health` (22 on hn58, 43 on wetjune) and `fly_survey`.
+
+**Yield (sanity check):** L1/L2 and hn58 same or slightly better. Wetjune got worse: the hybrid used all 300 actions by 3 August and never harvested (84% LLM decisions, 34 "done refused twice"). Dryer capacity did well this time (0.1% loss vs 21.5%), probably by chance: single runs.
+
+Spent in this step: about $0.83 (estimate $0.65; wetjune ran to the action limit). Part 2 total: about $3.9.

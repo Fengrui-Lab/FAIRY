@@ -164,3 +164,46 @@ Commit `b540644` (not pushed). Details: `PROGRESS.md`, Step 12. Same settings as
 - **Possible fixes** (not started, need your OK): shorter waits once the crop is near maturity (the task gives no wait length; Jev waited 7 days between tries); a "done"-style check that grain above 13.5% moisture is dried before it is stored (the task states this rule).
 - **More repeats** are needed for wetjune and dryer capacity (1 run each so far).
 - Spent in Part 2 so far: about $3.05.
+
+## 11. Fewer Jev requests per action (branch `jev-fewer-requests`, 2026-10-23)
+
+Details: `PROGRESS.md`, Steps 13–14.
+
+### 11.1 What changed
+
+Jev bills the farm text once per request; we sent 2.0–2.35 requests per action. Now:
+- **"Which action?" carries the value questions of the likely actions** (Jev's top 5 last time + the last 3 actions). If Jev picks another action, its values are asked in a second request.
+- **Ridge ranges are "start" + "how many ridges"**, asked together, instead of "start" and then "end" in a separate request.
+- Nothing else changed. Free check (fake Jev following the oracle): identical actions on all 8 scenarios, 38–51% fewer requests, 0–26% fewer tokens.
+
+### 11.2 Results (hybrid, one run each)
+
+| Scenario | Branch | Season | Yield loss crop / recovered | Jev requests per action | Jev tokens per action | Decisions Jev / LLM | Jev cost | Total cost | Time |
+|---|---|---|---|---|---|---|---|---|---|
+| L1 herbicide | jev-agent | finished | 0.0% / – | 2.08 | 7.8k | 13 / 0 | $0.004 | $0.004 | 0.2 min |
+| | fewer-requests | finished | 0.0% / – | **1.38** | **6.9k** | 12 / 1 | $0.004 | $0.004 | 0.2 min |
+| L1 planting | jev-agent | finished | −2.8% / – | 2.22 | 8.8k | 32 / 4 | $0.013 | $0.015 | 0.5 min |
+| | fewer-requests | finished | −2.8% / – | **1.16** | **7.5k** | 35 / 3 | $0.012 | $0.013 | 0.3 min |
+| L2 harvest drydown | jev-agent | finished | 0.0% / 4.7% | 2.21 | 9.2k | 65 / 12 | $0.030 | $0.033 | 1.0 min |
+| | fewer-requests | finished | 0.0% / 0.0% | **1.03** | **6.2k** | 41 / 19 | $0.016 | $0.020 | 0.8 min |
+| L2 replant | jev-agent | finished | 0.65% / – | 2.21 | 9.5k | 11 / 3 | $0.006 | $0.006 | 0.2 min |
+| | fewer-requests | finished | 0.46% / – | **1.40** | **9.1k** | 9 / 6 | $0.006 | $0.007 | 0.3 min |
+| L3 hn58 | jev-agent (mean of 3) | finished ×3 | 1.7% / 5.9% | 2.24 | 13.1k | 55% / 45% | $0.080 | $0.135 | 3.6 min |
+| | fewer-requests | finished | 1.4% / 5.1% | **1.06** | **9.5k** | 45% / 55% | $0.065 | $0.144 | 3.2 min |
+| L3 wetjune disease | jev-agent | finished | 5.4% / 6.8% | 2.35 | 17.1k | 38% / 62% | $0.201 | $0.411 | 8.5 min |
+| | fewer-requests | **not finished** (300 actions, 3 Aug) | 15.5% / 100% | **1.09** | **12.3k** | 16% / 84% | $0.155 | $0.472 | 8.5 min |
+| L3 dryer capacity | jev-agent | finished (7 Nov) | 0.0% / 21.5% | 1.98 | 10.1k | 68% / 32% | $0.054 | $0.079 | 2.3 min |
+| | fewer-requests | finished (6 Sept) | −1.9% / 0.1% | **1.19** | **9.9k** | 52% / 48% | $0.079 | $0.148 | 3.6 min |
+
+### 11.3 Findings
+
+1. **Requests per action halved** (≈2.2 → 1.03–1.40) and **Jev's tokens per action fell** on every scenario (by 4–33%).
+2. **Total cost on L3 did not fall** (hn58 $0.144 vs $0.135, wetjune $0.47 vs $0.41, dryer $0.15 vs $0.08), because the LLM took more decisions.
+3. **The cause is the "how many ridges" question.** Jev is less sure about a count than about an end ridge, and seems to read the count as an end ridge (from ridge 12 it picked "63 ridges", meaning up to ridge 63). Hand-offs caused by this question: hn58 39 (before 0–5), wetjune 71 (13), dryer 23 (1).
+4. **Yield sanity check:** same or better on L1/L2, hn58 and dryer. Wetjune failed: it used all 300 actions by 3 August and never harvested.
+
+### 11.4 For review
+
+- **Keep the fan-out, change the ridge question back** (suggestion, not done): ask the end ridge with all ridges as options in the same request, and let code enforce end ≥ start and the pass width. This keeps one request per action but asks Jev in the form it handled well before.
+- Then repeat the 3 L3 runs to see whether the saving reaches total cost.
+- Spent in Part 2 so far: about $3.9.
