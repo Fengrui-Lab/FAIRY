@@ -580,3 +580,89 @@ How to read: each cell shows run 1 / run 2 / run 3 and the average. Recovered-gr
 5. **Variation between runs is large** (for example the baseline's grain loss on dryer: 0.5% / 14.6% / 0.5%), so differences of a few points between the agents are not reliable with 3 runs.
 
 Spent on this set: about $1.45. Part 2 total: about $5.65.
+
+## Step 17 – LLM helper "done" check (2026-10-23)
+
+**Fix:** the LLM helper could end the run with "done" while work was left (wetjune hybrid, Step 16). Its "done" now gets the same unfinished-work check as Jev's, with its own limit of 2 refusals per run (Jev's 2 had already been used up in June in that run, so a shared limit would not have helped). 1 test added, 1 updated; all Jev tests pass. Commit `ad4ceb0`.
+
+## Step 18 – All L3-mini scenarios (2026-10-23, code `c2f6229`)
+
+19 scenarios (L3-mini 20 without hn50_hn84_hn58_mixed_stress), 1 run per agent, same settings as Step 16. For the 16 scenarios without them: English task texts (Claude's draft translations, not reviewed, `docs/jev/tasks_en/`) and oracle baselines (built with `scripts/build_oracle_baselines.py`). The runs were paused once (laptop sleep); the two unfinished runs at that point were deleted and rerun.
+
+| Scenario | Agent | Season finished | Yield loss (crop) | Grain loss (recovered) | Actions | Tokens | Cost | Time | Jev's share |
+|---|---|---|---|---|---|---|---|---|---|
+| organic_residue_weed_establishment | LLM baseline | yes | 6.46% | 13.65% | 233 | 15.0M | $0.17 | 13.8 min | – |
+| organic_residue_weed_establishment | Hybrid | yes | -1.21% | -0.27% | 195 | 6.8M | $0.18 | 3.8 min | 51% |
+| organic_patch_weed_mechanical_capacity | LLM baseline | **no** (2026-07-18, 0 of 64 harvested) | 0.02% | 100.00% | 93 | 2.5M | $0.03 | 5.8 min | – |
+| organic_patch_weed_mechanical_capacity | Hybrid | yes | 4.18% | 4.18% | 118 | 3.6M | $0.10 | 2.8 min | 39% |
+| micronutrient_deficiency_flowering_patch | LLM baseline | **no** (2026-09-22, 16 of 64 harvested) | 0.72% | 80.88% | 73 | 1.4M | $0.02 | 7.1 min | – |
+| micronutrient_deficiency_flowering_patch | Hybrid | yes | 0.99% | 8.61% | 128 | 3.0M | $0.08 | 2.5 min | 55% |
+| local_soil_constraint_nutrition_patch | LLM baseline | **no** (2026-09-18, 6 of 64 harvested) | -0.45% | 90.39% | 84 | 1.5M | $0.02 | 6.9 min | – |
+| local_soil_constraint_nutrition_patch | Hybrid | yes | 0.08% | -9.11% | 167 | 6.7M | $0.17 | 4.1 min | 34% |
+| heinong84_edge_low_fertility | LLM baseline | yes | 3.93% | 5.06% | 144 | 6.2M | $0.07 | 6.4 min | – |
+| heinong84_edge_low_fertility | Hybrid | yes | 4.42% | 4.66% | 219 | 6.9M | $0.19 | 4.0 min | 57% |
+| cloudy_wet_low_radiation_biomass | LLM baseline | **no** (2026-05-05, 0 of 64 harvested) | 0.08% | 100.00% | 38 | 0.5M | $0.01 | 4.0 min | – |
+| cloudy_wet_low_radiation_biomass | Hybrid | yes | 0.00% | 0.86% | 91 | 1.9M | $0.05 | 2.3 min | 52% |
+| poordrainage_wetjune_disease_trafficability | LLM baseline | yes | 2.27% | 11.30% | 135 | 2.8M | $0.03 | 5.9 min | – |
+| poordrainage_wetjune_disease_trafficability | Hybrid | yes | 2.27% | 7.37% | 138 | 3.8M | $0.11 | 3.0 min | 49% |
+| staggered_wetjune_canopy_disease | LLM baseline | **no** (2026-05-25, 0 of 64 harvested) | 100.00% | 100.00% | 39 | 0.5M | $0.01 | 4.7 min | – |
+| staggered_wetjune_canopy_disease | Hybrid | yes | 1.46% | 9.53% | 124 | 3.8M | $0.10 | 3.0 min | 42% |
+| soy_after_soy_wetjune_disease | LLM baseline | yes | 5.60% | 13.19% | 137 | 5.4M | $0.06 | 5.3 min | – |
+| soy_after_soy_wetjune_disease | Hybrid | yes | 6.26% | 9.04% | 95 | 1.9M | $0.06 | 1.6 min | 58% |
+| dryr5r6_hn58_std_waterlimit | LLM baseline | yes | 1.83% | 1.78% | 154 | 4.6M | $0.05 | 13.7 min | – |
+| dryr5r6_hn58_std_waterlimit | Hybrid | yes | 1.77% | 5.23% | 120 | 2.9M | $0.08 | 2.4 min | 57% |
+| drought_recovery_false_disease_signal | LLM baseline | yes | 0.29% | 3.10% | 119 | 4.5M | $0.05 | 7.8 min | – |
+| drought_recovery_false_disease_signal | Hybrid | yes | 0.58% | 3.43% | 251 | 11.9M | $0.30 | 7.0 min | 28% |
+| heinong58_resistant_biotic_water_budget_priority | LLM baseline | yes | 1.04% | 8.41% | 124 | 3.9M | $0.05 | 5.3 min | – |
+| heinong58_resistant_biotic_water_budget_priority | Hybrid | yes | 3.42% | 11.53% | 140 | 3.3M | $0.10 | 2.4 min | 60% |
+| hn60_high_fastdrain_dryr5r6 | LLM baseline | yes | 0.31% | 0.54% | 120 | 4.6M | $0.05 | 5.4 min | – |
+| hn60_high_fastdrain_dryr5r6 | Hybrid | yes | -0.05% | 5.65% | 79 | 1.3M | $0.04 | 1.3 min | 61% |
+| dryr5r6_insect_threshold_waterstress | LLM baseline | yes | 0.93% | 7.49% | 116 | 4.0M | $0.05 | 5.4 min | – |
+| dryr5r6_insect_threshold_waterstress | Hybrid | yes | 0.84% | 1.22% | 118 | 3.4M | $0.09 | 2.8 min | 39% |
+| dryer_capacity_batch_harvest_storage | LLM baseline | yes | 0.10% | 0.10% | 147 | 4.2M | $0.05 | 7.4 min | – |
+| dryer_capacity_batch_harvest_storage | Hybrid | yes | -0.00% | 6.09% | 188 | 5.5M | $0.15 | 5.9 min | 51% |
+| grain_moisture_sensor_failure_harvest | LLM baseline | **no** (2026-09-06, 22 of 64 harvested) | 0.15% | 65.95% | 89 | 2.1M | $0.03 | 4.7 min | – |
+| grain_moisture_sensor_failure_harvest | Hybrid | yes | 0.00% | 0.00% | 91 | 1.5M | $0.05 | 1.8 min | 66% |
+| laterain_shattering_drying_tradeoff | LLM baseline | **no** (2026-09-23, 8 of 64 harvested) | 0.13% | 88.81% | 85 | 2.3M | $0.03 | 3.4 min | – |
+| laterain_shattering_drying_tradeoff | Hybrid | yes | 0.13% | 0.13% | 76 | 1.5M | $0.04 | 4.6 min | 56% |
+| cool_august_lategrain_laterain | LLM baseline | yes | 0.06% | 3.67% | 126 | 5.7M | $0.07 | 11.5 min | – |
+| cool_august_lategrain_laterain | Hybrid | yes | -0.00% | 8.35% | 88 | 1.3M | $0.04 | 1.4 min | 70% |
+| compacted_headland_stand_recovery | LLM baseline | yes | 0.25% | 8.70% | 166 | 7.1M | $0.08 | 8.3 min | – |
+| compacted_headland_stand_recovery | Hybrid | **no** (2026-09-03, 24 of 64 harvested) | 0.83% | 61.53% | 300 | 17.9M | $0.45 | 8.1 min | 26% |
+
+How to read: one run per agent and scenario. **Season finished** = the agent ended on its own with the whole field harvested and stored. Grain loss = grain not harvested and stored, compared with the oracle (100% = nothing harvested; below 0% = more than the oracle). Same farm and weather in every run (seed 0).
+
+**Summary:**
+
+| | LLM baseline | Hybrid |
+|---|---|---|
+| Seasons finished | 12 of 19 | **18 of 19** |
+| Average grain loss, all 19 | 37.0% | **7.3%** |
+| Average grain loss, the 11 scenarios both finished | 6.2% | 5.7% |
+| Total cost (19 runs) | **$0.94** | $2.37 |
+| Average cost per run, the 11 both finished | **$0.06** | $0.12 |
+| Average time per run | 7.0 min | **3.4 min** |
+| Average Jev share of decisions | – | 50% |
+
+**Runs that ended early, and why:**
+
+| Scenario | Agent | When | Harvested | Why (from the agent's last message) |
+|---|---|---|---|---|
+| organic patch weed mechanical capacity | LLM baseline | 18 July | 0 of 64 | Stopped at R3: "I did not harvest: the crop is still at R3, not mature". Never advanced time to maturity |
+| cloudy wet low radiation biomass | LLM baseline | 5 May | 0 of 64 | Stopped right after planting: "Harvest: none is appropriate now. The crop is newly planted" |
+| staggered wetjune canopy disease | LLM baseline | 25 May | 0 of 64 | Planting failed (seedbed too wet on some ridges); it stopped: "the staggered planting plan still needs to be established" |
+| micronutrient deficiency flowering patch | LLM baseline | 22 Sept | 16 of 64 | Harvested only the treated ridges 28–43 and stopped |
+| local soil constraint nutrition patch | LLM baseline | 18 Sept | 6 of 64 | Harvested only the treated ridges 48–53: "Other ridges were not harvested" |
+| grain moisture sensor failure harvest | LLM baseline | 6 Sept | 22 of 64 | Harvested ridges 0–21, then stopped: "Ridges 22–63 remain unharvested" |
+| laterain shattering drying tradeoff | LLM baseline | 23 Sept | 8 of 64 | Harvested ridges 0–7, then stopped: "The remaining ridges have not been harvested" |
+| compacted headland stand recovery | Hybrid | 3 Sept | 24 of 64 | Used all 300 actions. The LLM took 74% of decisions; many repeated checks, drone/robot charging and waits; 12 messages to the user |
+
+**Findings:**
+1. **The hybrid finishes far more seasons** (18 vs 12 of 19). The baseline often stops too early: 3 times before harvest, 4 times after harvesting only part of the field. In the hybrid, Jev and the "done" check keep the run going until the field is harvested.
+2. **When both finish, grain loss is about the same** (5.7% vs 6.2% on 11 scenarios).
+3. **The hybrid costs about 2× more** per run than the baseline, but is about 2× faster.
+4. **Jev makes about half the decisions** (26–70% depending on the scenario).
+5. The 16 new task texts are Claude's translations, not reviewed.
+6. One run per scenario: single results can vary a lot (section 12).
+
+Spent on this step: about $3.3. Part 2 total: about $9.
