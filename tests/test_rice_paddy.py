@@ -15,7 +15,9 @@ from fairy.controllers.engine import Engine
 from fairy.physics.rice_backend import RiceWofostBackend, load_rice_parameters
 from fairy.physics.simulation_unit import SimulationUnit
 from fairy.scenarios.registry import get_scenario_class
-from fairy.scenarios.rice.scenarios import RiceScenario, audit_world, configuration, reference_checkpoints
+from fairy.scenarios.rice.farm_checkpoint_state import load_checkpoint, load_oracle_plan
+from fairy.scenarios.rice.rice_scenario_catalog import configuration
+from fairy.scenarios.rice.validation import audit_world
 from fairy.scenarios.fos.provenance import validate_baseline_provenance
 
 WEATHER = dict(tmin_c=23., tmax_c=31., humidity_pct=75., rain_mm=0., radiation_mj_m2=18., wind_ms=2.)
@@ -28,7 +30,7 @@ def backend(**kwargs):
 def ready_world(label):
     field, weather = configuration("normal")
     world = PaddyWorldApp(field=field, weather=weather)
-    world.load_state(copy.deepcopy(reference_checkpoints("normal")[label]))
+    world.load_state(load_checkpoint("normal", label))
     return world, PaddyOpsApp(world)
 
 
@@ -195,12 +197,15 @@ def test_registered_oracles_replay_through_engine(scenario_id):
     cls = get_scenario_class(scenario_id)
     build = Engine(None, cls())
     workflow = build.build_oracle_workflow()
-    # Building a dynamic oracle executes only its isolated planning world.
+    # Capturing the oracle graph does not execute any physical operation.
     assert len(build.scenario.get_typed_app(PaddyWorldApp).actions) == build.scenario._initial_action_count
     replay = Engine(None, cls())
     replay.replay_workflow(workflow)
     assert replay.evaluate().success
     assert replay.outcome_summary()["crop_backend_provenance"]["model"] == "Wofost81_NWLP_PADDY"
+    assert replay.scenario.get_typed_app(PaddyWorldApp).get_state()["sha256"] == (
+        load_oracle_plan(scenario_id)["expected_final_state_sha256"]
+    )
 
 
 def test_model_and_parameter_fingerprints_prevent_mixed_baselines():
@@ -212,7 +217,7 @@ def test_model_and_parameter_fingerprints_prevent_mixed_baselines():
 
 def test_legacy_not_silently_used_for_rice():
     with pytest.raises(ValueError, match="require WOFOST"):
-        RiceScenario(crop_backend="legacy")
+        get_scenario_class("scenario_rice_l3_normal")(crop_backend="legacy")
 
 
 def test_rice_baseline_focus_projection_and_no_action(monkeypatch, tmp_path):

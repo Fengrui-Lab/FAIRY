@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_harvest",
+  "task": "harvest",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "before_harvest",
+  "initial_checkpoint_sha256": "a84d31f20ebd307f814a5226e2d104194510ed91fb596b01321d48a63d71d992",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "09f14d49e25661f0b66966d3190cf06cfe72ee335b2888a859a41caccdce44b3",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 1800.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

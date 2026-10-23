@@ -15,19 +15,21 @@ from fairy.apps.paddy.operations import PaddyOpsApp
 from fairy.apps.paddy.world import PaddyWorldApp
 from fairy.controllers.engine import Engine
 from fairy.scenarios.registry import get_scenario_class
-from fairy.scenarios.rice.scenarios import RiceScenario, configuration, reference_checkpoints, audit_world
+from fairy.scenarios.rice.farm_checkpoint_state import load_checkpoint, load_oracle_plan
+from fairy.scenarios.rice.rice_scenario_catalog import configuration
+from fairy.scenarios.rice.validation import audit_world
 from test_rice_paddy import backend, WEATHER
 
 
 def checkpoint(label, variant="normal"):
     field, weather = configuration(variant)
     w = PaddyWorldApp(field=field, weather=weather)
-    w.load_state(copy.deepcopy(reference_checkpoints(variant)[label]))
+    w.load_state(load_checkpoint(variant, label))
     return w
 
 
 def test_public_tool_contract_and_observations_are_not_native_truth():
-    s = RiceScenario()
+    s = get_scenario_class("scenario_rice_l3_normal")()
     s.setup()
     counts = {app.name: len(app.get_tools()) for app in s.apps}
     assert counts == {"PaddyWorldApp": 4, "PaddyOpsApp": 16, "PaddyObservationApp": 5,
@@ -312,3 +314,6 @@ def test_new_scenarios_replay_and_reject_no_action(scenario_id):
     replay.replay_workflow(workflow)
     assert replay.evaluate().success
     assert reference.scenario.get_typed_app(PaddyWorldApp).get_state() == replay.scenario.get_typed_app(PaddyWorldApp).get_state()
+    assert replay.scenario.get_typed_app(PaddyWorldApp).get_state()["sha256"] == (
+        load_oracle_plan(scenario_id)["expected_final_state_sha256"]
+    )

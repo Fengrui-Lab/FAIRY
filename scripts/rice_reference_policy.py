@@ -1,4 +1,8 @@
-"""Reference policies operate through public observations and physical tools."""
+"""Offline authoring policy for scripts/build_rice_scenario_artifacts.py.
+
+Registered scenarios never import this module: they execute captured event graphs
+from the reviewed plans and checkpoints produced by the generator.
+"""
 from __future__ import annotations
 
 import math
@@ -11,6 +15,7 @@ class ToolRecorder:
         self.observation, self.machinery, self.infrastructure, self.drone = observation, machinery, infrastructure, drone
         self.workflow = Workflow()
         self.checkpoints = {}
+        self.checkpoint_steps = {}
 
     def call(self, app, method, **kwargs):
         before = self.world.sim_time
@@ -30,6 +35,7 @@ class ToolRecorder:
     def save(self, label):
         if label not in self.checkpoints:
             self.checkpoints[label] = self.world.get_state()
+            self.checkpoint_steps[label] = len(self.workflow)
 
     def machine(self, mid, required_fuel=0., implement=None):
         m = self.call(self.machinery, "get_machine_status", machine_id=mid)["machines"][0]

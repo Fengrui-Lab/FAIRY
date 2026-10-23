@@ -27,6 +27,56 @@
   `scenario.validate(env)`. The environment exposes `scenario`, `workflow`,
   `apps`, `time_manager`, and `engine`.
 
+## Rice Scenario Runtime And Offline Artifacts
+
+- Rice uses the same event-graph execution protocol as full-season v2. Eight
+  explicit L3 modules and twenty source-season-grouped L1/L2 modules register
+  the existing 28 `scenario_rice_*` IDs. `rice_scenario_catalog.py` supplies
+  `RiceScenarioSpec` and `get_spec()`; each entry uses the shared
+  `rice_scenario.py` base and `rice_scenario_helpers.py` helpers.
+- `init_rice_apps()` builds the paddy applications and restores any required
+  `l2_l1_splits/rice_<variant>/checkpoints/<label>.json` checkpoint through
+  `farm_checkpoint_state.py`. `build_rice_events()` turns fixed
+  `oracle_plans/<scenario_id>.json` plans into `EventRegisterer`
+  nodes, marked with `.oracle()` and linked with `.depends_on()`, for the
+  scenario's `build_events_flow()` method. Neither `setup()` nor
+  `build_oracle_workflow(run_oracle=False)` executes a full reference season.
+- The former dynamically generated rice classes and runtime
+  `oracle_solution()` reference-policy override are removed together with
+  `rice/scenarios.py` and `rice/reference.py`. There is one runtime path,
+  using the normal Engine capture, execute, replay and evaluation loop.
+- `scripts/rice_reference_policy.py` holds the observation-driven policy;
+  `scripts/build_rice_scenario_artifacts.py` explicitly runs it to generate
+  28 fixed plans and 95 source-season checkpoints. Before publication,
+  `verify_event_plans(staging, specs)` executes and independently replays all
+  28 plans through registered scenarios and Engine, checking task acceptance
+  and expected final hashes using the staged artifacts rather than previously
+  published files. The generator replaces the `scenario_artifacts.json`
+  SHA-256/PCSE manifest last. Plans also record the
+  initial checkpoint hash, configuration fingerprint and
+  `expected_final_state_sha256`. The default output is `fairy/scenarios/rice/`;
+  `--output-dir` selects separate output. Missing files, invalid checksums,
+  incompatible versions or checkpoint/configuration mismatches raise explicit
+  rebuild errors. Runtime loading never regenerates artifacts or falls back
+  to the reference policy.
+  This separates expensive reference generation from scenario construction
+  and makes source checkpoints and tool plans reviewable on disk.
+- Packaged rice artifacts bind PCSE 6.0.13, which is pinned in `uv.lock`.
+  The optional dependency still supports the 6.0.x series; using another
+  version requires explicit artifact rebuilding in that environment.
+- `rice/validation.py` owns target completion, tool-error counting, and
+  water/nitrogen/resource/grain acceptance. `rice/evaluation.py` retains
+  `rice_outcome` metrics and baseline compatibility checks. Complete harvest
+  tasks still require every grain batch to be stored at at most 14% moisture,
+  no grain left in machinery or reception, and matching harvested/stored dry
+  mass; a resource-balanced partial result is not success.
+- Event-protocol reuse does not merge crop physics. Soybean uses the ridge
+  orchestrator and its legacy or WOFOST backend. `PaddyWorldApp` drives an
+  independent `RiceWofostBackend` per hydraulic plot, with continuous water
+  and nitrogen ledgers starting before transplanting. Rice outcome metrics
+  remain outside the soybean FOS aggregate and do not establish a common
+  cross-crop score.
+
 ## Run Observability Artifacts
 
 - FAIRY experiment layout follows the FARM validation-run convention:
@@ -75,12 +125,16 @@
   Do not confuse it with the 6 controller JSON skills. The L2 skill pool is
   `scripts/fullseason/l2_skill_scenario_ids.txt` (72 scenarios) and its source
   L3 pool is `scripts/fullseason/l3_skill_source_ids.txt` (20 scenarios).
-- Full-season detailed-context modes are documented in both READMEs and are
+- Soybean full-season detailed-context modes are documented in both READMEs and are
   implemented by `harbin_l3_context_briefings.py`: `false`, `true`, `kwoo`,
   `library`, `l2_human_same`, `l2_human_differ`, `l2_textsim_differ`,
   `l2_textsim_grouped_differ`, `l2_pathsim_differ`,
   `l2_pathsim_grouped_differ`, `l3_pathsim_same`, `l3_pathsim_differ`,
   `l3_textsim_differ`, and legacy alias `l3_textdiff_differ`.
+- Rice currently accepts only `detailed_briefing=false/true`. Kwoo context,
+  the scenario skill library, and retrieval modes have not been connected to
+  rice; unsupported values raise an explicit error instead of silently using
+  a different briefing mode.
 - `run_report.json` stores controller telemetry in both
   `controller_telemetry` and `metrics.controller_telemetry`; batch summaries
   should prefer this over legacy `output.jsonl.metadata.telemetry`.

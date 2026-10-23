@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -9,37 +10,37 @@ import pytest
 pytest.importorskip("pcse")
 
 from fairy.apps.paddy.world import PaddyWorldApp
+from fairy.apps.paddy.operations import PaddyOpsApp
 from fairy.controllers.agent_builder import build_controller_agent
 from fairy.controllers.engine import Engine
-from fairy.scenarios.rice.reference import run_reference
-from fairy.scenarios.rice.scenarios import RiceScenario
-from fairy.scenarios.workflow import WorkflowStep
+from fairy.scenarios.registry import get_scenario_class
+from fairy.scenarios.workflow import Workflow, WorkflowStep
 
 
 def test_storage_goals_reject_partial_batches_until_every_batch_is_stored():
-    scenario = RiceScenario(task="season", variant="equipment_limit")
-    scenario.setup()
-    engine = Engine(None, scenario)
-    recorder = scenario.recorder()
-    call = recorder.call
-    batch_plots = {}
+    cls = get_scenario_class("scenario_rice_l3_equipment_limit")
+    complete = Engine(None, cls())
+    complete_workflow = complete.run_scenario_oracle(run_oracle=True)
+    batch_plots = {batch.batch_id: batch.plot_id
+                   for batch in complete.scenario.get_typed_app(PaddyWorldApp).field.grain_batches}
     stored_plots = set()
     skipped_batches = []
-
-    def store_only_first_batch_per_plot(app, method, **kwargs):
-        if method == "store_grain":
-            plot_id = batch_plots[kwargs["batch_id"]]
+    partial_workflow = Workflow()
+    previous = None
+    for step in complete_workflow.dag.values():
+        if step.tool_name == "PaddyOpsApp__store_grain":
+            plot_id = batch_plots[step.tool_args["batch_id"]]
             if plot_id in stored_plots:
-                skipped_batches.append(kwargs["batch_id"])
-                return None
+                skipped_batches.append(step.tool_args["batch_id"])
+                continue
             stored_plots.add(plot_id)
-        result = call(app, method, **kwargs)
-        if method == "harvest":
-            batch_plots[result["batch_id"]] = kwargs["plot_id"]
-        return result
+        # Reconnect the sequential history when a storage operation is omitted.
+        partial_workflow.add_node(replace(step, depends_on=[previous] if previous else []))
+        previous = step.name
 
-    recorder.call = store_only_first_batch_per_plot
-    run_reference(recorder)
+    scenario = cls()
+    engine = Engine(None, scenario)
+    workflow = engine.replay_workflow(partial_workflow)
     world = scenario.get_typed_app(PaddyWorldApp)
     assert len(skipped_batches) > 0
     assert all(p.harvested and p.stored_dry_kg > 0 for p in world.field.plots)
@@ -49,19 +50,25 @@ def test_storage_goals_reject_partial_batches_until_every_batch_is_stored():
     # variants; changing the goal does not alter the physically executed history.
     for task in ("season", "harvest_storage", "harvest_batches"):
         scenario.task = task
-        result = engine.evaluate(recorder.workflow)
+        result = engine.evaluate(workflow)
         assert result.metadata["audit"]["success"], result.metadata["audit"]
         assert result.metadata["tool_errors"] == 0
         assert not result.metadata["goal_met"], task
         assert not result.success, task
 
+    ops = scenario.get_typed_app(PaddyOpsApp)
     for batch_id in skipped_batches:
-        call(recorder.ops, "store_grain", batch_id=batch_id)
+        result = ops.store_grain(batch_id)
+        step = WorkflowStep(name=f"complete_storage_{batch_id}", content=result, op_type="WRITE",
+                            tool_name="PaddyOpsApp__store_grain", tool_args={"batch_id": batch_id},
+                            depends_on=[previous] if previous else [])
+        workflow.add_node(step)
+        previous = step.name
 
     assert all(b.location == "stored" for b in world.field.grain_batches)
     for task in ("season", "harvest_storage", "harvest_batches"):
         scenario.task = task
-        result = engine.evaluate(recorder.workflow)
+        result = engine.evaluate(workflow)
         assert result.metadata["goal_met"], task
         assert result.success, result.metadata
 
@@ -92,7 +99,7 @@ class RefuelRecoveryLLM:
 
 
 def test_real_agent_error_is_counted_even_after_successful_correction():
-    scenario = RiceScenario(task="refuel", variant="equipment_limit")
+    scenario = get_scenario_class("scenario_rice_l1_refuel")()
     scenario.setup()
     agent = build_controller_agent("farm_baseline_react", llm=RefuelRecoveryLLM(), toolsets=scenario.apps)
     engine = Engine(agent, scenario)
@@ -111,16 +118,14 @@ def test_real_agent_error_is_counted_even_after_successful_correction():
 
 
 def test_error_count_accepts_legacy_dict_errors_without_double_counting():
-    scenario = RiceScenario(task="refuel", variant="equipment_limit")
-    scenario.setup()
+    scenario = get_scenario_class("scenario_rice_l1_refuel")()
     engine = Engine(None, scenario)
-    recorder = scenario.recorder()
-    recorder.call(recorder.machinery, "refuel", machine_id="tractor", liters=10)
-    recorder.workflow.add_node(WorkflowStep(op_type="TOOL_ERROR", content={"error": "both markers"}))
-    recorder.workflow.add_node(WorkflowStep(content={"error": "legacy result"}))
-    recorder.workflow.add_node(WorkflowStep(content={"error": ""}))
+    workflow = engine.run_scenario_oracle(run_oracle=True)
+    workflow.add_node(WorkflowStep(op_type="TOOL_ERROR", content={"error": "both markers"}))
+    workflow.add_node(WorkflowStep(content={"error": "legacy result"}))
+    workflow.add_node(WorkflowStep(content={"error": ""}))
 
-    result = engine.evaluate(recorder.workflow)
+    result = engine.evaluate(workflow)
     assert result.metadata["goal_met"]
     assert result.metadata["tool_errors"] == 2
     assert not result.success

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_puddle",
+  "task": "puddle",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "before_puddle",
+  "initial_checkpoint_sha256": "9239ac96c24384ca2729cf09501ad33d3bf806047dff153c66eb3676cc81265c",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "210c2b1b9a1c430e4f876ff087845f27d4ac0da2c531bdf7d7bc6f0fa6201e36",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__puddle_and_level",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 3600.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

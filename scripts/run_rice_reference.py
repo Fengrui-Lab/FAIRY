@@ -14,7 +14,8 @@ from fairy.controllers.engine import Engine
 from fairy.physics.rice_backend import RiceWofostBackend
 from fairy.physics.simulation_unit import SimulationUnit
 from fairy.scenarios.registry import get_scenario_class
-from fairy.scenarios.rice.scenarios import VARIANTS
+from fairy.scenarios.rice.rice_scenario_catalog import VARIANTS
+from fairy.scenarios.rice.farm_checkpoint_state import checkpoint_labels, load_checkpoint, load_oracle_plan
 from fairy.scenarios.rice.evaluation import build_baseline, compare_outcome
 
 
@@ -58,6 +59,8 @@ def run_variant(variant, output):
     actual = world.get_state()
     if expected != actual or not validation.success:
         raise RuntimeError(f"Rice {variant} reference/replay or task validation failed")
+    if actual["sha256"] != load_oracle_plan(scenario_id)["expected_final_state_sha256"]:
+        raise RuntimeError(f"Rice {variant} no longer matches its reviewed reference state; rebuild scenario artifacts")
     directory = output / variant
     baseline = build_baseline(scenario_id)
     outcome = world.outcome_summary()
@@ -69,8 +72,8 @@ def run_variant(variant, output):
     workflow.save_workflow(str(directory / "workflow.json"))
     write_json(directory / "initial_checkpoint.json", replay.scenario._initial_state)
     write_json(directory / "final_checkpoint.json", actual)
-    for label, state in reference.scenario._reference_checkpoints.items():
-        write_json(directory / "checkpoints" / f"{label}.json", state)
+    for label in checkpoint_labels(variant):
+        write_json(directory / "checkpoints" / f"{label}.json", load_checkpoint(variant, label))
     write_json(directory / "operations.json", world.actions)
     (directory / "daily.jsonl").write_text("".join(json.dumps(r) + "\n" for r in world.daily_records))
     return {"variant": variant, "success": validation.success, "exact_replay": True,

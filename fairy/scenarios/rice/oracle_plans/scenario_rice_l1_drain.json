@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_drain",
+  "task": "drain",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "before_drain",
+  "initial_checkpoint_sha256": "141e7aa83ad2ee69eb22a4980e21b558a77e910ef494adae714f112ec4d7ff04",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "10bbe61300193c688ef1e13f3e58d76398aec8f000f1c2f2897897ebdd25c3c0",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 20.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

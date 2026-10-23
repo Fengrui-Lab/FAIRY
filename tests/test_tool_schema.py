@@ -1,7 +1,6 @@
 """Public function schemas must describe the values accepted by real tools."""
 from __future__ import annotations
 
-import copy
 import json
 from typing import Any, Dict, List, Optional, Union
 
@@ -121,12 +120,13 @@ def test_schema_validated_rice_arguments_execute_actual_survey_and_partial_opera
     from fairy.apps.paddy.drone import PaddyDroneApp
     from fairy.apps.paddy.operations import PaddyOpsApp
     from fairy.apps.paddy.world import PaddyWorldApp
-    from fairy.scenarios.rice.scenarios import configuration, reference_checkpoints
+    from fairy.scenarios.rice.farm_checkpoint_state import load_checkpoint
+    from fairy.scenarios.rice.rice_scenario_catalog import configuration
 
     def world_at(label):
         field, weather = configuration("normal")
         world = PaddyWorldApp(field=field, weather=weather)
-        world.load_state(copy.deepcopy(reference_checkpoints("normal")[label]))
+        world.load_state(load_checkpoint("normal", label))
         return world
 
     def call(app, name, **kwargs):

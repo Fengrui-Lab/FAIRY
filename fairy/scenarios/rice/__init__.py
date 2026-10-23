@@ -1,1 +1,1 @@
-"""Rice scenarios: one verified season and checkpoint-derived L1/L2 tasks."""
+"""Explicit rice scenarios and checkpoint splits using the V2 event-graph format."""

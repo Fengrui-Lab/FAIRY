@@ -382,6 +382,19 @@ def main() -> None:
             )
             final_message = agent.messages.messages[-1] if agent.messages.messages else None
             stopped_reason = agent.stop_reason or "agent_finished"
+        except KeyboardInterrupt:
+            stopped_reason = agent.stop_reason = "interrupted"
+            workflow = agent.workflow
+            agent.after_agent_run()
+            agent.record_event(
+                "agent_run_end",
+                status="stopped",
+                stopped_reason=stopped_reason,
+                interruption="KeyboardInterrupt",
+                wall_time_seconds=round(time.perf_counter() - run_wall_start, 6),
+                tool_call_count=agent.tool_call_count,
+                llm_turn_count=agent.llm_turn_count,
+            )
         except Exception as exc:
             stopped_reason = agent.stop_reason or "error"
             if not (

@@ -2,7 +2,7 @@
 
 [中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md) | [WOFOST integration and no-LLM demo](docs/wofost-integration.md)
 
-Transplanted rice uses WOFOST 8.1 with hydraulic plots, finite water/nitrogen supplies, 35 rice tools and 28 L1/L2/L3 scenarios covering observations, machinery, crop protection and harvest batches. See the [rice guide](docs/rice-foundation.md) for a no-LLM replay demo, parameter provenance and model limits.
+Transplanted rice uses WOFOST 8.1 with hydraulic plots, finite water/nitrogen supplies, 35 rice tools and 28 L1/L2/L3 scenarios covering observations, machinery, crop protection and harvest batches. Explicit scenario modules use the standard event graph with fixed oracle plans and source-season checkpoints generated offline. See the [rice guide](docs/rice-foundation.md) for entry points, artifact generation, replay, parameter provenance and model limits.
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 

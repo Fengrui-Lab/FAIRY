@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_scout",
+  "task": "scout",
+  "variant": "biotic",
+  "source_l3_scenario_id": "scenario_rice_l3_biotic",
+  "source_checkpoint_label": "before_treat",
+  "initial_checkpoint_sha256": "70bc54c722c0c125ef981599cffe82bf866f4878f27b33c78464cf2bb527e6f4",
+  "config_fingerprint": "27aebba1992f09ac03e65c8edb4b6b83e96129f80a08028f07b75637e1c4c1db",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "118554b874b1de243764ecd04aebbc3ff8f39e4abd6c6a7de30ef15698e187bd",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyDroneApp__fly_survey",
+      "tool_args": {
+        "plot_ids": [
+          "p1",
+          "p2"
+        ]
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}
