@@ -16,6 +16,8 @@ from fairy.utils.type_utils import type_check
 class DroneApp(DroneOperations, App):
     """One physical drone permanently bound to a single legacy farm."""
 
+    validate_tool_arguments = True
+
     def __init__(
         self,
         farm_world_app: FarmWorldApp,
@@ -43,6 +45,9 @@ class DroneApp(DroneOperations, App):
         )
 
     def _bound_farm(self) -> FarmContext:
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            return environment.get_farm(self._farm_world_app.farm_id)
         return FarmContext(
             farm_id=self._farm_world_app.name,
             world=self._farm_world_app,

@@ -12,6 +12,7 @@ from fairy.apps.app import App
 from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.system import SystemApp
 from fairy.controllers.engine import Engine
 from fairy.scenarios.scenario import Scenario
@@ -68,10 +69,15 @@ class RebuildingScene(Scenario):
             clock_arguments = {"time_manager": clock}
         self.farm_environment = FarmEnvironment([
             FarmContext(world.farm_id, world, self.weather) for world in self.worlds
-        ], self.weather, timezone_name="Asia/Shanghai", **clock_arguments)
+        ], self.weather, timezone_name="Asia/Shanghai",
+           warehouse=WarehouseApp(stock=WarehouseStock(
+               seed_stock={"STANDARD": 2_000_000}, pesticide_liters=4000.0,
+               fertilizer_kg=4000.0, fuel_liters=2000.0,
+           )), **clock_arguments)
         self.system = SystemApp()
         self.probe = ClockProbe(self.wall)
-        self.apps = [self.weather, *self.worlds, self.system, self.probe]
+        self.apps = [self.weather, *self.worlds, self.farm_environment.warehouse,
+                     self.system, self.probe]
         with EventRegisterer.capture_mode() as events:
             self.probe.work(seconds=60).oracle().with_id("work")
         self.events = events
@@ -237,10 +243,11 @@ def test_rebuilt_scene_rebinds_real_agent_tools_without_reopening_hidden_or_cust
     scene = RebuildingScene(wall)
     scene.setup()
     original_world = scene.worlds[0]
-    original_stock = original_world._inventory.fertilizer_kg
+    original_warehouse = scene.farm_environment.warehouse
+    original_stock = original_warehouse.stock.fertilizer_kg
     external = ClockProbe(wall)
     external.name = "ExternalProbe"
-    hidden = "farm_a__get_inventory"
+    hidden = "farm_a__get_management_status"
     agent = Agent("offline-rebind", SimpleNamespace(provider="openai"),
                   toolsets=[*scene.apps, external], hidden_tool_names={hidden})
     engine = Engine(agent, scene)
@@ -259,8 +266,8 @@ def test_rebuilt_scene_rebinds_real_agent_tools_without_reopening_hidden_or_cust
     agent.run = run
     engine.run_scenario_agent()
     assert scene.worlds[0] is not original_world
-    assert scene.worlds[0]._inventory.fertilizer_kg == pytest.approx(original_stock - 7.2)
-    assert original_world._inventory.fertilizer_kg == original_stock
+    assert scene.farm_environment.warehouse.stock.fertilizer_kg == pytest.approx(original_stock - 7.2)
+    assert original_warehouse.stock.fertilizer_kg == original_stock
     assert agent.tools_map["farm_a__apply_fertigation"].class_instance is scene.worlds[0]
     assert agent.tools_map["ExternalProbe__observe"] is external_tool
     assert external_tool in agent.tools

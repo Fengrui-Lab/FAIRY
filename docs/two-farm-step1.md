@@ -1,89 +1,67 @@
-# 第一步：两个农场、固定设施独立、移动设备共用
+# 两农场、固定设施与一个共享仓库
 
-运行场景为 `scenario_two_farm_shared_equipment`。完整定义在
-[scenario_two_farm_shared_equipment.py](../fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py)，包含配置、初始化、参考策略、`build_events_flow()`、Oracle 和验收。
+场景文件为 `fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py`。这个场景从未整地、未播种开始，完成两个农场各64垄的准备、播种及巡查；不要求收获。配置、参考动作、`build_events_flow()` 和验收全部位于这个文件。
 
-本步沿用 main 的大豆和物理参数。A、B 各64垄，每垄268米长、1.1米宽，每场面积18,867.2平方米，约1.887公顷。场景任务为整地、播种和检查两个农场；全季管理与其他作物留给后续步骤。
+## 归属边界
 
-## 对象和状态归属
+| 对象 | 归属 | 保存什么 |
+|---|---|---|
+| FarmA / FarmB | 各自农场 | 本地0–63垄、土壤、作物、整地进度、用水与施药管理额度 |
+| FarmA_Sensor / FarmB_Sensor | 各自农场的固定探头 | 探头位置与本场观测 |
+| FarmA_Irrigation / FarmB_Irrigation | 各自农场的固定设施 | 灌溉任务、作业记录；扣本场水量额度 |
+| Warehouse | 整个场景唯一一个 | 种子、肥料、农药、燃油，以及带来源的粮食批次 |
+| Tractor / Mavic3M / Robot0 | 跨场共用 | 同一台机器的油箱、电池、挂具、载荷及作业日志 |
+| FarmEnvironment | 整个场景 | 农场目录、仓库绑定、公共时钟、共同天气和同步推进 |
 
-| 对象 | 实例 | 状态 |
-| --- | --- | --- |
-| `FarmWorldApp` | FarmA、FarmB | 各自的田垄、土壤、作物、库存、额度、整地进度和物理引擎 |
-| `SensorApp` | FarmA_Sensor、FarmB_Sensor | 各自6个土壤探头和6个冠层探头、覆盖区和观测随机流 |
-| `IrrigationApp` | FarmA_Irrigation、FarmB_Irrigation | 各自灌溉日志；待生效水分和额度保存在所属农场 |
-| `SharedTractorApp` | Tractor | 一份油箱、机具、种子肥药、粮箱及来源记录 |
-| `SharedDroneApp` | Mavic3M | 一份电池、充电会话、飞行配置和任务记录 |
-| `SharedRobotApp` | Robot0 | 一份电池、充电会话和检查记录 |
-| `ManualOpsApp` | ManualOps | 人工作业记录，指定农场提供化学品 |
-| `WeatherApp` | WeatherApp | 同地区公共天气输入，不保存某个农场的通行判断 |
-| `TimeManager` | 场景公共时钟 | 原实现保持原样 |
+`InventoryState` 保留给原单场兼容路径。多场景不再用每个 FarmWorld 的旧库存做业务账，也不把同一份库存复制成两个独立仓库。共享资源只声明在 `WarehouseStock`，通过一个 `WarehouseApp` 管理。
 
-`FarmContext` 明确关联一个农场的 world、weather、sensors、irrigation。
-`FarmEnvironment` 保存农场映射和公共时间／天气协调，不暴露为 Agent 工具，不保存第二份设备状态。
+本场景明确配置十种现有大豆种子各2,000,000粒、农药4,000L、肥料4,000kg、燃油2,000L；这是修改前两个场库存的总和。机器初始油箱及机上载荷是机器自己的状态，不再次计入仓库。
 
-## Agent 看到的工具
-
-固定设施通过 App 名绑定农场，局部探头ID或垄号可以在两场重复：
+## Agent 能看到什么
 
 ```python
-FarmA_Sensor__read_soil_sensor(sensor_id="S1")
-FarmB_Sensor__read_soil_sensor(sensor_id="S1")
-FarmA_Irrigation__irrigate(start=0, end=3, hours=0.2)
+Warehouse__get_inventory()             # 全场唯一的种、肥、药、油库存及粮食总量
+Warehouse__get_grain_batches()         # batch_id、来源场、作物、垄范围、水分与状态
+FarmA__get_management_status()         # A的用水额度、已用量及施药限制
+FarmB__get_management_status()         # B的用水额度、已用量及施药限制
+FarmA_Sensor__read_soil_sensors()       # 固定绑定A，不需要farm_id
 FarmB_Irrigation__irrigate(start=0, end=3, hours=0.2)
-```
-
-移动设备名称选择实际机器，每次田间操作显式指定农场：
-
-```python
+Tractor__load_seeds(seed_type="STANDARD", count=42880)
+Tractor__load_fertilizer(kg=200)
+Tractor__refuel(liters=100)
 Tractor__plant_seeds(farm_id="farm_a", start_ridge=0, end_ridge=3,
                     depth_cm=4, seed_spacing_cm=5)
+Tractor__return_supplies()              # 剩余种、肥、药退回唯一仓库
 Mavic3M__fly_survey(farm_id="farm_b", start_ridge=0, end_ridge=6)
-Robot0__inspect_crop_health(farm_id="farm_b", start_ridge=0, end_ridge=7)
-Tractor__get_status()
+Tractor__get_status()                   # 同一台机器的油量与载荷
 ```
 
-这些是普通 Python 方法的真实签名。Schema 读取签名、类型、默认值和 Args 说明；场景只收窄已经声明的 `farm_id` 枚举。新接口注册会检查参数说明、显式类型和签名覆盖，工具重名会报错。新接口的直接调用与 JSON 调用都拒绝非有限数及错类型；JSON 调用还提前拒绝未知枚举、缺失和多余参数。
+共享场景不向 Agent 注册 `FarmA/FarmB__get_inventory`、`dry_grain`、`store_grain`，避免把共享仓库伪装成各场库存。田间作业仍要求真实的 `farm_id` 枚举；装料、加油、退料没有这个参数，因为它们操作同一个仓库。工具 Schema 来自实际公开签名与参数说明，固定设施的说明包含实际绑定农场。
 
-固定设施说明包含实际绑定的农场。控制器通用提示词使用场景配置，场景另提供准确的两个农场、设备和任务范围说明，避免继续告诉 Agent 只有一个固定规模农场。
+## 装料、使用、退料
 
-## 一次共享设备作业如何执行
+从仓库装100kg肥料后，仓库减少100kg、机器增加100kg；在A用40kg、再到B用60kg是合法的。扣目标农场管理额度和记录应用效果发生在实际作业时，而不是装料时。相同仓库来源不再成为切场限制；不同种子品种仍不能混装，机器容量、燃油及田间作业门槛继续生效。
 
-以 `Mavic3M.fly_survey("farm_b", 0, 6)` 为例：公开方法查找 `farm_b`，同步两场当前状态，把明确的 `FarmContext` 传给普通 `DroneOperations`；它读取 B 的作物和公共天气，扣除这台无人机的电量，写入 B 的观测和带 `farm_id` 的任务日志。
+收获时，粮箱保留来源场和垄范围，不能把其他场的粮食混进尚未卸空的粮箱。`Tractor__unload_grain(batch_id="farm_a_0_3")` 将这一趟转入共享仓库，`batch_id` 必须唯一；来源来自真实粮箱，不允许参数伪造。随后通过 `Warehouse__dry_grain(batch_id=...)`、`Warehouse__store_grain(batch_id=...)` 处理该批。来源用于追踪和按场统计产量，不表示存在各场独立仓库。这个播种场景本身不执行收获。
 
-设备没有“当前农场”切换开关，也不通过改写 `_farm_world_app` 实现跨场。每个设备 Operations helper 都显式接收所需农场上下文。单场旧 App 保留原公开签名，并调用同一份业务算法；新场景只注册共享入口，不混入旧工具。
+## 物理、时间与场景
 
-`TractorOperations` 的整地进度写入目标农场的 `completed_prep_ops`。共享油箱、挂具和电量保持连续。种肥药按来源场扣库；机上有剩余物料时先通过 `return_supplies(farm_id=来源)` 退回原场，再切场。粮箱只允许一个来源，必须卸回该场。未引入混仓批次、设备转场路网或运输时间模型。
+设备 Operations 显式接收目标 FarmContext，读取该场土壤和作物，扣同一台机器的资源，把效果写回目标场。没有通过改写设备“当前农场”来转场。农场物理引擎继续只计算田块；仓库不参与作物生长，也不拥有灌溉水量额度。
 
-## 时间和天气
+`FarmEnvironment.advance_time()` 同步两场、公共时钟只推进一次，再把两场推进到同一时间戳。移动作业、固定灌溉和 System 等待均走这个入口。这个场景使用北京时间；每天的区域天气只生成一次，两场土壤和作物独立演化。
 
-`FarmEnvironment.advance_time()` 先同步两场，公共时钟只推进一次，再把两场物理推进到同一个时间戳。移动作业、灌溉、人工操作、System 时间推进、通知等待、动态循环和单场日推进都接入此入口。TimeManager 类没有修改。
-
-每天的公共天气输入只生成／推进一次并缓存供两场使用；土壤和作物继续独立计算。拖拉机按目标农场的土壤判断通行，不向共享天气写入该场的平均湿度。
-
-灌溉保留 main 的两种执行语义：激活物理后，在运行结束时向土壤引擎施加水分，回执生效时间为结束时；未激活物理的旧路径保留额外两小时延迟。回执按实际路径报告时间。没有根据旧文案虚构自动完成通知。
-
-## 运行和验证
-
-无需模型密钥，导出参考计划并在新初态中回放：
+## 运行与验收
 
 ```bash
-uv run python -m fairy.cli -s scenario_two_farm_shared_equipment \
-  --build-oracle --replay --evaluate \
-  --workflow /tmp/fairy-two-farm/oracle.json \
+PYTHONHASHSEED=0 python3 -m fairy.cli -s scenario_two_farm_shared_equipment \
+  --build-oracle --run-oracle-tools --replay --evaluate \
   --output-dir /tmp/fairy-two-farm
 ```
 
-只运行已有文件：
+当前Oracle共88个执行步骤（事件图另含一条briefing），先读共享库存，再读两场探头，分别固定灌溉0–3垄0.2小时，逐场完成平地、基肥、起垄和全部播种，再用共享无人机与机器人检查指定范围，最后核对共享库存。`_reference_actions()` 完整列出动作，构图不执行业务。
 
-```bash
-uv run python -m fairy.cli -s scenario_two_farm_shared_equipment \
-  --replay --evaluate --workflow /tmp/fairy-two-farm/oracle.json \
-  --output-dir /tmp/fairy-two-farm-replay
-```
+验收按场检查准备、覆盖范围、播深、株距、品种、探头与巡查证据，再用共享仓库的总种子消耗对照两场已播种总数和机上余种。少管B场、遗漏B探头、缩短灌溉或巡查、改错播深都不能通过。结果按农场列出田块任务，仓库和公共设备各列一次。
 
-Oracle 共86步：读取两场固定探头，各自固定灌溉0–3垄0.2小时，逐场完成整地／基肥／起垄和64垄播种，再用同一台无人机巡查0–6垄、同一机器人检查0–7垄。源码的参考管理步骤完整列在 `_reference_actions()`。`build_events_flow()` 捕获同一套公开调用，构图不执行经营动作。
+相关测试为 `tests/test_two_farm_scene.py`、`test_two_farm_fixed_systems.py`、`test_two_farm_tractor.py` 和全季两场/三场测试。真实模型规划能力不由离线 Oracle 或脚本式 LLM 测试证明。
 
-验收读取真实农场状态、资源账和实际作业日志，逐场检查覆盖范围、播深、株距、种类和任务完成情况。少管B场、缺B场探头证据、缩短灌溉／巡检范围或改错播深均不能通过。结果分别列两个农场，公共设备只列一次。
-
-测试入口为 `tests/test_two_farm_*.py`，包含固定设施隔离、设备连续性、载荷来源、天气单次推进、真实物理观测、Agent 实际请求 Schema、捕获执行、保存回放和验收反例。验证产物见 `validation_runs/two_farm_step1/`。Mock LLM 用于检查实际接口链路，未测真实模型任务成功率。
+本轮针对四个多农场场景的37项集成断言已通过，包含三个全季的真实工具运行/新初态回放、唯一批次的来源与覆盖、共享库存守恒及各场水量/应用记录。

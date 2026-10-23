@@ -39,13 +39,13 @@ def raw_initial_state(scenario):
         "farms": {
             farm.farm_id: {
                 "ridges": [ridge.to_dict() for ridge in farm._ridges],
-                "inventory": farm._inventory.to_dict(),
                 "regime": farm._management_regime.to_dict(),
                 "last_physics_time": farm.physics.last_physics_sim_time,
                 "prep": farm.completed_prep_ops,
             }
             for farm in (scenario.farm_a, scenario.farm_b)
         },
+        "warehouse": scenario.warehouse.get_state(),
         "devices": [app.get_state() for app in scenario.shared_equipment],
         "clock": scenario.farm_environment.time_manager.time(),
     })
@@ -79,6 +79,7 @@ def final_state(scenario):
             }
             for world in (scenario.farm_a, scenario.farm_b)
         },
+        "warehouse": scenario.warehouse.get_state(),
         "devices": {app.name: app.get_state() for app in scenario.shared_equipment},
         "fixed": {app.name: app.get_state() for app in (
             scenario.sensor_a, scenario.sensor_b, scenario.irrigation_a, scenario.irrigation_b,
@@ -138,7 +139,8 @@ def test_fixed_systems_are_per_farm_and_mobile_schema_targets_the_shared_directo
     scenario, engine = scene()
     assert set(scenario.farm_environment.farms) == FARMS
     assert isinstance(engine.time_manager, SimulationTimeManager)
-    assert scenario.farm_a._inventory is not scenario.farm_b._inventory
+    assert scenario.farm_environment.warehouse is scenario.warehouse
+    assert sum(app is scenario.warehouse for app in scenario.apps) == 1
     assert scenario.sensor_a is not scenario.sensor_b
     assert scenario.irrigation_a is not scenario.irrigation_b
     assert scenario.sensor_a._soil_sensors is not scenario.sensor_b._soil_sensors
@@ -152,6 +154,13 @@ def test_fixed_systems_are_per_farm_and_mobile_schema_targets_the_shared_directo
             assert tool in functions
             assert "farm_id" not in functions[tool]["parameters"]["properties"]
             assert f"Bound farm: {farm_id}" in functions[tool]["description"]
+        assert f"{prefix}__get_management_status" in functions
+        for method in ("get_inventory", "dry_grain", "store_grain"):
+            assert f"{prefix}__{method}" not in functions
+    assert {"Warehouse__get_inventory", "Warehouse__get_grain_batches",
+            "Warehouse__dry_grain", "Warehouse__store_grain"} <= functions.keys()
+    for method in ("load_fungicide", "load_seeds", "load_fertilizer", "refuel", "return_supplies", "unload_grain"):
+        assert "farm_id" not in functions[f"Tractor__{method}"]["parameters"]["properties"]
     for tool in ("Tractor__apply_fungicide", "Tractor__harvest", "Matrice4T__fly_survey", "Robot0__inspect_crop_health"):
         properties = functions[tool]["parameters"]["properties"]
         assert set(properties["farm_id"]["enum"]) == FARMS
@@ -238,15 +247,15 @@ def test_actual_oracle_and_saved_replay_have_the_same_physics_resources_and_time
         assert clean_ids(expected.content) == clean_ids(actual.content)
 
 
-def test_actual_management_consumption_belongs_to_the_target_farm_and_respects_caps(full_execution):
+def test_shared_material_consumption_and_local_application_and_water_caps(full_execution):
     initial, _, _, fresh, replay = full_execution
     a, b = fresh.farm_a, fresh.farm_b
     assert a._management_regime.fungicide_applications_used == 1
     assert b._management_regime.fungicide_applications_used == 0
     assert a._management_regime.active_ingredient_used_kg == pytest.approx(0.076)
     assert b._management_regime.active_ingredient_used_kg == 0
-    assert a._inventory.pesticide_liters == pytest.approx(initial["farms"]["farm_a"]["inventory"]["pesticide_liters"] - 76)
-    assert b._inventory.pesticide_liters == initial["farms"]["farm_b"]["inventory"]["pesticide_liters"]
+    assert fresh.warehouse.stock.pesticide_liters == pytest.approx(
+        initial["warehouse"]["stock"]["pesticide_liters"] - 76)
     for world in (a, b):
         expected_water = 0
         for step in replay.dag.values():
@@ -268,19 +277,28 @@ def test_every_field_is_safely_stored_and_shared_equipment_finishes_without_fore
     _, _, _, fresh, replay = full_execution
     for world in (fresh.farm_a, fresh.farm_b):
         assert sum(state.harvested for state in world.physics.yield_recovery.states.values()) == 64
-        assert world._inventory.warehouse_grain_kg > 0
-        assert world._inventory.harvest_grain_kg == 0
-        assert world._inventory.grain_dried
-        stores = [step.content for step in replay.dag.values() if step.tool_name == f"{world.name}__store_grain"]
-        assert stores
-        assert Counter(ridge for result in stores for ridge in result["batch_ridge_ids"]) == {
+        stores = [step.content["batch"] for step in replay.dag.values()
+                  if step.tool_name == "Warehouse__store_grain"
+                  and step.content["batch"]["origin_farm_id"] == world.farm_id]
+        assert len(stores) == 16
+        assert all(batch["crop_id"] == "soybean" and batch["cultivar_id"] == "HEINONG84"
+                   and batch["cultivar_ids"] == ["HEINONG84"] for batch in stores)
+        assert Counter(ridge for batch in stores for ridge in batch["ridge_ids"]) == {
             ridge: 1 for ridge in RIDGES
         }
-        assert sum(result["moved_kg"] for result in stores) == pytest.approx(world._inventory.warehouse_grain_kg)
-        assert all(result["storage_grain_moisture_pct"] <= result["max_storage_moisture_pct"]
-                   and "warning" not in result for result in stores)
+        assert all(batch["status"] == "stored" and batch["moisture_pct"] <= 13.5
+                   and batch["quantity_kg"] > 0 for batch in stores)
+        assert sum(batch["quantity_kg"] for batch in stores) == pytest.approx(sum(
+            batch.quantity_kg for batch in fresh.warehouse.grain_batches.values()
+            if batch.origin_farm_id == world.farm_id
+        ))
+    inventory = fresh.warehouse.get_inventory()
+    assert inventory["harvest_grain_kg"] == 0
+    assert inventory["warehouse_grain_kg"] == pytest.approx(sum(
+        batch.quantity_kg for batch in fresh.warehouse.grain_batches.values()
+    ))
     tractor = fresh.tractor.get_state()
-    assert fresh.tractor.source_farm_id is None and fresh.tractor.grain_origin_farm_id is None
+    assert "source_farm_id" not in tractor and fresh.tractor.grain_origin_farm_id is None
     assert all(tractor[key] == 0 for key in (
         "seed_hopper", "fertilizer_spreader_kg", "pesticide_tank_l", "fungicide_tank_l", "grain_bin_kg",
     ))

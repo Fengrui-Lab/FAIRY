@@ -24,6 +24,7 @@ class IrrigationApp(App):
     """One farm's stationary irrigation; no manual chemical operations."""
 
     require_explicit_tool_docs = True
+    validate_tool_arguments = True
 
     def __init__(self, farm_world_app: FarmWorldApp, weather_app: WeatherApp,
                  name: str | None = None) -> None:

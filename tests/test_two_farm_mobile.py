@@ -15,6 +15,7 @@ from fairy.apps.farm_world.robot_app import RobotApp
 from fairy.apps.farm_world.shared_drone_app import SharedDroneApp
 from fairy.apps.farm_world.shared_robot_app import SharedRobotApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.time_manager import TimeManager
 from fairy.types import EventRegisterer
 
@@ -32,6 +33,10 @@ def environment(monkeypatch):
         [FarmContext("farm_a", farm_a, weather), FarmContext("farm_b", farm_b, weather)],
         weather,
         time_manager=clock,
+        warehouse=WarehouseApp(stock=WarehouseStock(
+            seed_stock={"STANDARD": 2_000_000}, pesticide_liters=4000.0,
+            fertilizer_kg=4000.0, fuel_liters=2000.0,
+        )),
     )
 
 
@@ -62,8 +67,7 @@ def test_drone_uses_target_observations_and_one_battery(environment):
 def test_drone_missing_farm_or_invalid_range_spends_no_battery_or_time(environment):
     drone = SharedDroneApp(environment)
     initial = environment.time_manager.time()
-    with pytest.raises(ValueError, match="Unknown farm_id"):
-        drone.fly_survey("unknown", 0, 0)
+    assert "farm_id" in drone.fly_survey("unknown", 0, 0)["error"]
     assert "error" in drone.fly_survey("farm_a", 0, 1000)
     assert drone.check_status()["battery_pct"] == 100
     assert environment.time_manager.time() == initial
@@ -131,8 +135,7 @@ def test_robot_range_partial_and_legacy_unknown_weeds(environment, method):
 def test_robot_unknown_farm_and_bad_local_ridge_do_not_consume_battery(environment):
     robot = SharedRobotApp(environment)
     start = environment.time_manager.time()
-    with pytest.raises(ValueError, match="Unknown farm_id"):
-        robot.inspect_pests("other", 0, 2)
+    assert "farm_id" in robot.inspect_pests("other", 0, 2)["error"]
     assert "error" in robot.inspect_ridge("farm_a", 1000)
     assert "error" in robot.inspect_pests("farm_b", 3, 1)
     assert robot.check_status()["battery_pct"] == 100
@@ -183,10 +186,13 @@ def test_mobile_source_signature_matches_provider_schema(environment, device_typ
     assert schemas["charge"]["parameters"]["properties"] == {}
 
 
-def test_legacy_mobile_api_keeps_single_farm_signatures_and_clock(environment):
+def test_single_farm_wrapper_uses_its_world_bound_environment_clock(environment):
     farm = environment.get_farm("farm_a")
-    # Legacy Apps remain useful in existing single-farm scenes and do not need
-    # the new farm selector. Their own registered clock remains authoritative.
+    for context in environment.farms.values():
+        context.world.configure_physics_profile("bound_wrapper_clock_test")
+    environment.sync()
+    # A legacy-shaped wrapper does not acquire an independent scene clock when
+    # its target world already belongs to an explicitly configured environment.
     drone = DroneApp(farm.world, farm.weather)
     robot = RobotApp(farm.world, farm.weather)
     clock = TimeManager()
@@ -195,6 +201,26 @@ def test_legacy_mobile_api_keeps_single_farm_signatures_and_clock(environment):
     assert list(inspect.signature(drone.fly_survey).parameters) == ["start_ridge", "end_ridge"]
     assert list(inspect.signature(robot.inspect_ridge).parameters) == ["ridge_id"]
     before = clock.offset
+    environment_before = environment.time_manager.time()
+    assert drone.fly_survey(0, 0)["status"] == "ok"
+    assert robot.inspect_ridge(0)["status"] == "ok"
+    assert clock.offset == before
+    assert environment.time_manager.time() > environment_before
+    assert all(context.world.physics.last_physics_sim_time == environment.time_manager.time()
+               for context in environment.farms.values())
+
+
+def test_true_legacy_single_farm_wrapper_keeps_its_registered_clock():
+    world, weather = FarmWorldApp(), WeatherApp()
+    weather.set_weather("2026-05-12", 20, 50, 2, 0, 200)
+    drone, robot = DroneApp(world, weather), RobotApp(world, weather)
+    clock = TimeManager()
+    for app in (world, weather, drone, robot):
+        app.register_time_manager(clock)
+    before = clock.offset
+    assert world.farm_environment is None
+    assert list(inspect.signature(drone.fly_survey).parameters) == ["start_ridge", "end_ridge"]
+    assert list(inspect.signature(robot.inspect_ridge).parameters) == ["ridge_id"]
     assert drone.fly_survey(0, 0)["status"] == "ok"
     assert robot.inspect_ridge(0)["status"] == "ok"
     assert clock.offset > before

@@ -20,6 +20,7 @@ Weather station data is NOT managed here — use WeatherApp.get_current_weather(
 
 from __future__ import annotations
 
+import random
 from typing import Any
 
 from fairy.apps.app import App
@@ -42,6 +43,8 @@ _SENSOR_ZONES: list[tuple[str, int, int, int]] = [
 class SensorApp(App):
     """Six soil probes and six canopy sensors, each covering a ridge zone."""
 
+    validate_tool_arguments = True
+
     def __init__(self, farm_world_app: FarmWorldApp, name: str | None = None) -> None:
         super().__init__(name=name or "SensorApp")
         self._farm_world_app = farm_world_app
@@ -54,12 +57,16 @@ class SensorApp(App):
     # ------------------------------------------------------------------
 
     def get_state(self) -> dict[str, Any]:
-        return {
+        state = {
             "app_name": self.name,
             "farm_id": self.bound_farm_id,
             "soil_sensors": [dict(s) for s in self._soil_sensors],
             "canopy_sensors": [dict(s) for s in self._canopy_sensors],
         }
+        version, internal, gaussian = self.rng.getstate()
+        state.update(crop_id=self._farm_world_app.crop_id,
+                     random_state=[version, list(internal), gaussian])
+        return state
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
         """Restore readings without changing this installation's farm binding.
@@ -67,6 +74,13 @@ class SensorApp(App):
         Old snapshots without an identified farm, and unbound legacy instances,
         retain their original loading behavior.
         """
+        if state_dict.get("crop_id", "soybean") != self._farm_world_app.crop_id:
+            raise ValueError("Sensor snapshot crop does not match this installation")
+        restored_random_state = None
+        if "random_state" in state_dict:
+            version, internal, gaussian = state_dict["random_state"]
+            restored_random_state = (version, tuple(internal), gaussian)
+            random.Random().setstate(restored_random_state)
         saved_farm_id = state_dict.get("farm_id")
         if (self.bound_farm_id is not None and saved_farm_id is not None
                 and saved_farm_id != self.bound_farm_id):
@@ -75,6 +89,8 @@ class SensorApp(App):
             )
         self._soil_sensors = [dict(s) for s in state_dict["soil_sensors"]]
         self._canopy_sensors = [dict(s) for s in state_dict["canopy_sensors"]]
+        if restored_random_state is not None:
+            self.rng.setstate(restored_random_state)
 
     def reset(self) -> None:
         super().reset()
@@ -122,7 +138,8 @@ class SensorApp(App):
         Return the latest readings from the six fixed canopy sensors.
 
         Each sensor reports an ndvi_proxy value (0.0-1.0). A value of -1
-        means no valid reading yet (pre-emergence). The reading represents
+        means no valid living-canopy reading (bare ground, pre-emergence or
+        harvested ground). The reading represents
         the average canopy condition within the sensor's coverage zone.
 
         Sensor zones:
@@ -285,9 +302,14 @@ class SensorApp(App):
                     canopy_states = [
                         physics.canopy.states[r] for r in range(rs, re + 1)
                     ]
-                    # Pre-emergence canopy state has initialized=False; report -1
-                    # to match the legacy "no valid reading yet" semantic.
-                    if any(not st.initialized for st in canopy_states):
+                    crop_states = [
+                        physics.crop.project(r, physics.management.states[r])
+                        for r in range(rs, re + 1)
+                    ]
+                    # Historical canopy/establishment remains in season records.
+                    # Bare and pre-emergence ground has no living canopy reading.
+                    if any(not canopy.initialized or not crop.current_planted or not crop.emerged
+                           for canopy, crop in zip(canopy_states, crop_states)):
                         self.update_canopy_sensor(sid, -1.0)
                     else:
                         avg_ndvi = sum(st.ndvi_proxy for st in canopy_states) / len(

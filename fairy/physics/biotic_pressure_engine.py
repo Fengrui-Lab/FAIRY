@@ -189,9 +189,15 @@ class BioticSoilInput:
 
 @dataclass
 class BioticCropInput:
-    stage: GrowthStage
+    stage: GrowthStage | str
     canopy_cover: float = 0.0
     seed_type: str | None = None
+    # Explicit crop responses bypass soybean stage assumptions. None keeps
+    # the existing soybean response and its original diagnostic semantics.
+    weed_stage_multiplier: float | None = None
+    insect_stage_multiplier: float | None = None
+    disease_stage_multiplier: float | None = None
+    aphid_diagnostics_enabled: bool = True
 
 
 @dataclass
@@ -470,11 +476,12 @@ class BioticPressureEngine:
             tags.append("disease_pressure_high")
 
         biotic_stress = self._biotic_stress_multiplier(state)
-        aphid_equiv = self._aphid_equivalent(state.insect_pressure)
+        aphid_equiv = (self._aphid_equivalent(state.insect_pressure)
+                       if crop.aphid_diagnostics_enabled else 0.0)
 
         # Treatment threshold diagnostic. This is not an automatic treatment rule.
         # The agent/oracle should still verify scouting, stage, weather, and trend.
-        insect_treatment_recommended = aphid_equiv >= 250.0 and crop.stage in {
+        insect_treatment_recommended = crop.aphid_diagnostics_enabled and aphid_equiv >= 250.0 and crop.stage in {
             GrowthStage.V4_PLUS,
             GrowthStage.R1,
             GrowthStage.R3,
@@ -515,6 +522,10 @@ class BioticPressureEngine:
     def _weed_suitability(self, crop: BioticCropInput) -> float:
         p = self.params
 
+        if crop.weed_stage_multiplier is not None:
+            canopy_suppression = 1.0 - p.weed_canopy_suppression_strength * self._clip(crop.canopy_cover)
+            return self._clip(crop.weed_stage_multiplier * canopy_suppression, 0.0, 1.5)
+
         if crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
             return 0.6
 
@@ -542,7 +553,9 @@ class BioticPressureEngine:
     ) -> float:
         p = self.params
 
-        if crop.stage in {
+        if crop.insect_stage_multiplier is not None:
+            stage_factor = crop.insect_stage_multiplier
+        elif crop.stage in {
             GrowthStage.NOT_PLANTED,
             GrowthStage.PLANTED_PRE_EMERGENCE,
             GrowthStage.VE,
@@ -583,7 +596,9 @@ class BioticPressureEngine:
     ) -> float:
         p = self.params
 
-        if crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
+        if crop.disease_stage_multiplier is not None:
+            stage_factor = crop.disease_stage_multiplier
+        elif crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
             stage_factor = 0.45
         elif crop.stage in {
             GrowthStage.VE,

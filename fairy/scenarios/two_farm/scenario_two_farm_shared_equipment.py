@@ -6,7 +6,7 @@ Configuration, setup, reference actions, event graph and validation are here.
 """
 from __future__ import annotations
 
-from copy import deepcopy
+from dataclasses import asdict
 from datetime import datetime, timezone
 
 from fairy.apps.agent_user_interface import AgentUserInterface
@@ -19,12 +19,36 @@ from fairy.apps.farm_world.shared_drone_app import SharedDroneApp
 from fairy.apps.farm_world.shared_robot_app import SharedRobotApp
 from fairy.apps.farm_world.shared_tractor_app import SharedTractorApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.system import SystemApp
 from fairy.scenarios.registry import register_scenario
 from fairy.scenarios.scenario import Scenario
 from fairy.scenarios.validation_result import ScenarioValidationResult
 from fairy.scenarios.workflow import Workflow, WorkflowStep
 from fairy.types import EventRegisterer
+
+
+BASIC_BRIEFING = """
+管理farm_a/farm_b两个裸地大豆场：各64垄（0–63）、268m×1.1m/垄、双行，面积各1.88672ha。
+目标：两场平地、基肥、起垄、全田播种（STANDARD、播深4cm、株距5cm）；
+分别读土壤，各场固定灌溉0–3垄0.2小时，Mavic3M巡查0–6垄、Robot0检查0–7垄。
+完成后汇报，无需收获。FarmA/FarmB及各自Sensor/Irrigation分场固定，水额度独立；
+Tractor、Mavic3M、Robot0、Warehouse和时钟共用。田间移动工具传farm_id，装卸加油不传；
+跨场油电连续，任一场作业或等待都同时推进两场。
+""".strip()
+
+DETAILED_BRIEFING = (
+    "管理 farm_a 和 farm_b 两个大豆农场，各有64垄，沿用现有268米垄长和1.1米垄宽。"
+    "两个农场均未整地、未播种。FarmA_Sensor/FarmA_Irrigation只服务farm_a，"
+    "FarmB_Sensor/FarmB_Irrigation只服务farm_b；Tractor、Mavic3M、Robot0跨场共用。"
+    "先分别读取两场土壤。用各场固定灌溉系统对0–3垄各运行0.2小时，"
+    "按当地条件完成两场平地、基肥、起垄及全部64垄播种。"
+    "播种用STANDARD种子，播深4厘米、株距5厘米，机器每次最多4垄。"
+    "使用同一Mavic3M巡查两场0–6垄、同一Robot0检查两场0–7垄。"
+    "种子、肥料、农药和燃油只存于一个Warehouse；装卸物料不传farm_id，机上物料可以跨场使用。"
+    "各场独立管理固定灌溉设施和用水额度；共享设备的油量、电量连续。"
+    "任一场作业都会让两场一起经过时间。完成两场后汇报。"
+)
 
 
 @register_scenario("scenario_two_farm_shared_equipment")
@@ -38,24 +62,20 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
     expects_agent_harvest = False
     additional_system_prompt = (
         "This task manages exactly two farms: farm_a and farm_b, each with 64 local ridges. "
-        "FarmA/FarmB are separate field state and warehouses. FarmA_Sensor and FarmA_Irrigation "
+        "FarmA/FarmB provide separate field state. Warehouse holds all shared supplies and grain. FarmA_Sensor and FarmA_Irrigation "
         "are permanently bound to farm_a; FarmB_Sensor and FarmB_Irrigation to farm_b. "
         "Tractor, Mavic3M and Robot0 are the same physical machines across both farms. "
-        "Their field operations require farm_id. Material sources are independent: return "
-        "unused supplies to their recorded farm before switching fields. All tools use one clock. "
+        "Their field operations require farm_id. Loading and refuelling use the one Warehouse "
+        "without farm_id; loaded supplies remain usable on either farm. All tools use one clock. "
         "Finish this preparation and planting task after both farms meet the task; harvest is not required."
     )
-    scenario_input = (
-        "管理 farm_a 和 farm_b 两个大豆农场，各有64垄，沿用现有268米垄长和1.1米垄宽。"
-        "两个农场均未整地、未播种。FarmA_Sensor/FarmA_Irrigation只服务farm_a，"
-        "FarmB_Sensor/FarmB_Irrigation只服务farm_b；Tractor、Mavic3M、Robot0跨场共用。"
-        "先分别读取两场土壤。用各场固定灌溉系统对0–3垄各运行0.2小时，"
-        "按当地条件完成两场平地、基肥、起垄及全部64垄播种。"
-        "播种用STANDARD种子，播深4厘米、株距5厘米，机器每次最多4垄。"
-        "使用同一Mavic3M巡查两场0–6垄、同一Robot0检查两场0–7垄。"
-        "库存各场独立；共享设备的油量、电量和物料来源连续。"
-        "任一场作业都会让两场一起经过时间。完成两场后汇报。"
-    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        if not self.scenario_input:
+            self.scenario_input = DETAILED_BRIEFING if self.detailed_briefing else BASIC_BRIEFING
 
     def init_and_populate_apps(self) -> None:
         self.weather = WeatherApp()
@@ -70,10 +90,27 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
         self.sensor_b = SensorApp(self.farm_b, name="FarmB_Sensor")
         self.irrigation_a = IrrigationApp(self.farm_a, self.weather, name="FarmA_Irrigation")
         self.irrigation_b = IrrigationApp(self.farm_b, self.weather, name="FarmB_Irrigation")
+        # 场景只声明一个仓库；预算保留原先各场库存之和，不随工具调用复制。
+        self.warehouse = WarehouseApp(stock=WarehouseStock(
+            seed_stock={
+                "STANDARD": 2_000_000,
+                "EARLY_COLD": 2_000_000,
+                "HIGH_DENSITY": 2_000_000,
+                "STRESS_TOLERANT": 2_000_000,
+                "HEIHE43": 2_000_000,
+                "HEIHE50": 2_000_000,
+                "HEINONG58": 2_000_000,
+                "HEINONG60": 2_000_000,
+                "HEINONG84": 2_000_000,
+                "HEIKE71": 2_000_000,
+            },
+            pesticide_liters=4_000.0, fertilizer_kg=4_000.0, fuel_liters=2_000.0,
+        ), name="Warehouse", max_storage_moisture_pct=13.5)
         self.farm_environment = FarmEnvironment([
             FarmContext("farm_a", self.farm_a, self.weather, self.sensor_a, self.irrigation_a),
             FarmContext("farm_b", self.farm_b, self.weather, self.sensor_b, self.irrigation_b),
-        ], self.weather, start_time=self.start_time, timezone_name="Asia/Shanghai")
+        ], self.weather, warehouse=self.warehouse,
+           start_time=self.start_time, timezone_name="Asia/Shanghai")
         self.tractor = SharedTractorApp(self.farm_environment, name="Tractor")
         self.drone = SharedDroneApp(self.farm_environment, name="Mavic3M")
         self.robot = SharedRobotApp(self.farm_environment, name="Robot0")
@@ -81,7 +118,7 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
         self.system = SystemApp()
         self.aui = AgentUserInterface()
         self.shared_equipment = [self.tractor, self.drone, self.robot]
-        self.apps = [self.aui, self.weather, self.farm_a, self.farm_b,
+        self.apps = [self.aui, self.weather, self.warehouse, self.farm_a, self.farm_b,
                      self.sensor_a, self.sensor_b, self.irrigation_a, self.irrigation_b,
                      *self.shared_equipment, self.manual_ops, self.system]
         for index, farm in enumerate((self.farm_a, self.farm_b)):
@@ -95,14 +132,11 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
         for app in self.apps:
             app.register_time_manager(self.farm_environment.time_manager)
             app.set_seed(self.seed)
-        self._initial_inventories = {
-            farm.farm_id: deepcopy(farm._inventory.to_dict())
-            for farm in (self.farm_a, self.farm_b)
-        }
+        self._initial_warehouse_stock = asdict(self.warehouse.stock)
 
     def _reference_actions(self):
         """Complete, explicit reference strategy for this one scenario."""
-        actions = []
+        actions = [(self.warehouse, "get_inventory", {}, "Read the scene's one shared warehouse.")]
         for sensor, irrigation in ((self.sensor_a, self.irrigation_a),
                                    (self.sensor_b, self.irrigation_b)):
             actions.extend([
@@ -115,20 +149,20 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
                 (self.tractor, "attach_implement", {"implement": "grader"}, "Mount shared grader."),
                 (self.tractor, "level", {"farm_id": farm_id}, "Level this field; prep belongs here."),
                 (self.tractor, "detach_implement", {}, "Free the shared attachment."),
-                (self.tractor, "load_fertilizer", {"farm_id": farm_id, "kg": 200.0},
-                 "Load only this farm's required base fertilizer."),
+                (self.tractor, "load_fertilizer", {"kg": 200.0},
+                 "Load base fertilizer from the shared warehouse."),
                 (self.tractor, "base_fertilize", {"farm_id": farm_id}, "Fertilize this field."),
                 (self.tractor, "form_ridges", {"farm_id": farm_id, "ridge_width_m": 1.1},
                  "Form this field's declared ridges."),
-                (self.tractor, "refuel", {"farm_id": farm_id, "liters": 100.0},
-                 "Top up the same tractor from the selected farm's stock."),
+                (self.tractor, "refuel", {"liters": 100.0},
+                 "Top up the same tractor from shared fuel stock."),
             ])
             for start in range(0, 64, 4):
                 actions.extend([
                     (self.tractor, "load_seeds", {
-                        "farm_id": farm_id, "seed_type": "STANDARD",
+                        "seed_type": "STANDARD",
                         "count": plants_per_ridge_from_spacing(5.0) * 4},
-                     "Load the exact next pass so supplies need not cross farms."),
+                     "Load the next pass from the shared seed stock."),
                     (self.tractor, "plant_seeds", {
                         "farm_id": farm_id, "start_ridge": start, "end_ridge": start + 3,
                         "depth_cm": 4.0, "seed_spacing_cm": 5.0},
@@ -140,6 +174,7 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
                 (self.robot, "inspect_crop_health", {"farm_id": farm_id, "start_ridge": 0, "end_ridge": 7},
                  "Inspect this field using the same ground robot."),
             ])
+        actions.append((self.warehouse, "get_inventory", {}, "Reconcile shared stock after both farms."))
         return actions
 
     def build_events_flow(self):
@@ -189,10 +224,6 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
             if not any(step.tool_name == f"{context.sensors.name}__read_soil_sensors" for step in steps):
                 failures.append(f"{context.farm_id}: own fixed sensors were not read")
             expected_seed = sum(ridge.seeds_planted for ridge in farm._ridges)
-            used_seed = (self._initial_inventories[context.farm_id]["seed_stock"]["STANDARD"]
-                         - farm._inventory.seed_stock["STANDARD"])
-            if used_seed != expected_seed:
-                failures.append(f"{context.farm_id}: seed inventory does not match this farm's planting")
             if any(ridge.seed_type != "STANDARD" or ridge.seed_spacing_cm != 5.0 for ridge in farm._ridges):
                 failures.append(f"{context.farm_id}: planting must use STANDARD seed and 5 cm spacing")
             planting_log = [entry for entry in self.tractor.get_state()["operation_log"]
@@ -212,11 +243,17 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
             if not set(range(8)) <= inspected:
                 failures.append(f"{context.farm_id}: shared robot must actually inspect health on ridges 0–7")
             farms[context.farm_id] = {"planted_ridges": planted, "prep": sorted(prep),
-                                      "used_seed": used_seed, "sim_date": farm._sim_date}
+                                      "used_seed": expected_seed, "sim_date": farm._sim_date}
+        used_seed = (self._initial_warehouse_stock["seed_stock"]["STANDARD"]
+                     - self.warehouse.stock.seed_stock["STANDARD"])
+        expected_seed = sum(farm["used_seed"] for farm in farms.values())
+        if used_seed != expected_seed + self.tractor.get_state()["seed_hopper"]:
+            failures.append("Shared seed stock does not match total planting plus loaded seeds")
         if any(step.error_stage or (isinstance(step.content, dict) and "error" in step.content)
                for step in steps):
             failures.append("workflow contains failed tools")
         return ScenarioValidationResult(
             success=not failures, message="; ".join(failures) or "Both farms completed using two fixed installations and one shared fleet.",
-            metadata={"farms": farms, "shared_equipment": [app.name for app in self.shared_equipment]},
+            metadata={"farms": farms, "warehouse": self.warehouse.get_inventory(),
+                      "shared_equipment": [app.name for app in self.shared_equipment]},
         )

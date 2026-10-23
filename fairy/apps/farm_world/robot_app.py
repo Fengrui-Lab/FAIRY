@@ -7,14 +7,7 @@ from fairy.apps.app import App
 from fairy.apps.farm_world.farm_environment import FarmContext
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.weather_app import WeatherApp
-from fairy.apps.farm_world.robot_operations import (
-    RobotOperations,
-    _BATTERY_PER_INSPECTION,
-    _CHARGE_DURATION_S,
-    _ROBOT_SETUP_S,
-    _ROBOT_SPEED_MS,
-    _inspect_duration,
-)
+from fairy.apps.farm_world.robot_operations import RobotOperations
 from fairy.tool_utils import OperationType, app_tool, data_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
@@ -22,6 +15,8 @@ from fairy.utils.type_utils import type_check
 
 class RobotApp(RobotOperations, App):
     """One physical robot permanently bound to a single legacy farm."""
+
+    validate_tool_arguments = True
 
     def __init__(
         self,
@@ -38,6 +33,9 @@ class RobotApp(RobotOperations, App):
         self._initialize_robot(description=description)
 
     def _bound_farm(self) -> FarmContext:
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            return environment.get_farm(self._farm_world_app.farm_id)
         return FarmContext(
             farm_id=self._farm_world_app.name,
             world=self._farm_world_app,
@@ -54,6 +52,9 @@ class RobotApp(RobotOperations, App):
         pest and disease presence at ground level.
 
         Use this to ground-truth anomalies flagged by drone surveys.
+        Diagnostic species labels are returned only when the field's configured
+        observation capability supports them; otherwise detections are noisy
+        and do not identify pest species or disease identity.
 
         Args:
             ridge_id:  Local ridge ID, from 0 to this farm's num_ridges - 1.
@@ -69,8 +70,10 @@ class RobotApp(RobotOperations, App):
         Walk a contiguous ridge range, returning ground-level pest detections.
 
         Routes through the ObservationModel — results are noisy and may include
-        false positives/negatives. Coverage is capped (typically the first
-        few ridges in the range due to robot speed and battery). Use after
+        false positives/negatives. A mission visits up to eight ridges, limited
+        by battery. The observation model samples every visited ridge in batches
+        (four ridges per batch by default). Unvisited ridges are explicitly
+        returned as uncovered. Use after
         an aerial drone survey flagged an anomaly to confirm cause.
 
         Args:
@@ -91,6 +94,9 @@ class RobotApp(RobotOperations, App):
         Use this when you need to discriminate among nutrient stress, drought
         stress, and biotic causes of low NDVI. The robot can return both pest
         and disease confidence scores per ridge in one pass.
+        A mission visits up to eight ridges, limited by battery. Each visited
+        ridge receives an actual observation-model product in sensor-sized
+        batches (four ridges by default); unvisited ridges are uncovered.
 
         Args:
             start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.
@@ -111,6 +117,9 @@ class RobotApp(RobotOperations, App):
 
         Used in the early-season emergence-check loop. Stand fraction below
         0.7 typically indicates a replant decision.
+        A mission visits up to eight ridges, limited by battery, using actual
+        sensor-sized observation batches (four ridges per batch by default).
+        Unemerged crops and harvested ground have zero visible stand.
 
         Args:
             start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.

@@ -18,7 +18,13 @@ Resources must be loaded from the farm warehouse before use:
 from __future__ import annotations
 
 import uuid
+from math import isfinite
 from typing import Any, TYPE_CHECKING
+
+from fairy.apps.farm_world.equipment import TractorEquipment
+from fairy.apps.farm_world.operation_plans import PlantingPlan
+from fairy.crops.rules import PlantingRules
+from fairy.crops.runtime import PlantingEvent
 
 from fairy.apps.farm_world.farm_world_app import (
     FIELD_LENGTH_M,
@@ -131,8 +137,45 @@ if TYPE_CHECKING:
 class TractorOperations:
     """Device state and agricultural operations; callers supply the target farm."""
 
-    def _initialize_tractor_state(self) -> None:
+    def _tractor_available_implements(self) -> list[str]:
+        """Only the implements explicitly owned by this physical tractor."""
+        return list(self.equipment.implements)
+
+    def _tractor_pass_duration(self, farm: FarmContext, speed_ms: float) -> int:
+        return int(farm.world.field_length_m / speed_ms) + _HEADLAND_TURN_S
+
+    def _tractor_full_field_duration(
+        self, farm: FarmContext, working_width_m: float, speed_ms: float,
+    ) -> int:
+        passes = farm.world.field_geometry.working_width_m / working_width_m
+        return int(passes * farm.world.field_length_m / speed_ms + passes * _HEADLAND_TURN_S)
+
+    def _planting_error(
+        self, farm: FarmContext, ridges: list[RidgeState], depth_cm: float,
+        spacing_cm: float, *, rules: PlantingRules | None = None,
+    ) -> str | None:
+        """Check the same rules used by capability discovery and tool schemas."""
+        crop = farm.world.crop_definition
+        rules = rules or crop.planting_rules
+        missing = [op for op in rules.required_preparation if op not in farm.world.completed_prep_ops]
+        if missing:
+            return f"Field preparation incomplete (missing: {missing})"
+        if self.seed_type not in crop.seed_types:
+            return f"Load a seed type permitted on this field: {list(crop.seed_types)}"
+        error = rules.validate_parameters(depth_cm, spacing_cm) or rules.validate_implement(self._attached_implement)
+        if error:
+            return error
+        density = (farm.world.plants_per_ridge_from_spacing(spacing_cm)
+                   / farm.world.field_geometry.ridge_area_m2)
+        avg_vwc = sum(r.soil_vwc for r in ridges) / len(ridges)
+        avg_temp = sum(r.soil_temp_c for r in ridges) / len(ridges)
+        return (rules.validate_conditions(self.seed_type, avg_temp, avg_vwc, density)
+                or (farm.world.check_planting_window([r.ridge_id for r in ridges], self.seed_type)
+                    if rules.respect_scenario_window else None))
+
+    def _initialize_tractor_state(self, equipment: TractorEquipment | None = None) -> None:
         """Initialize the one physical tractor; farm preparation lives on the farm."""
+        self.equipment = equipment or getattr(self, "equipment", TractorEquipment())
         self.seed_type: str | None = None
         self._fuel_tank_l = _FUEL_TANK_MAX_L
         self._pesticide_tank_l = 0.0
@@ -158,7 +201,7 @@ class TractorOperations:
             "grain_bin_kg": self._grain_bin_kg,
             "grain_bin_max_kg": _GRAIN_BIN_MAX_KG,
             "attached_implement": self._attached_implement,
-            "available_implements": list(ATTACHMENTS),
+            "available_implements": self._tractor_available_implements(),
             "operation_log": [dict(entry) for entry in self._operation_log],
             "source_farm_id": self.source_farm_id,
             "grain_origin_farm_id": self.grain_origin_farm_id,
@@ -184,7 +227,7 @@ class TractorOperations:
         Args:
             implement: Name of the implement to attach.
         """
-        if implement not in _ATTACH_WIDTH_M:
+        if implement not in self._tractor_available_implements():
             return {"error": f"Unknown implement '{implement}'"}
         if (
             self._attached_implement is not None
@@ -290,7 +333,8 @@ class TractorOperations:
                     HEINONG84, HEIKE71.
             count:     Number of plants to load (must be positive).
         """
-        if seed_type not in {m.value for m in SeedType}:
+        allowed_seed_types = set(farm.world.crop_definition.seed_types)
+        if seed_type not in allowed_seed_types:
             return {"error": f"Unknown seed_type '{seed_type}'"}
         if self._seed_hopper > 0 and self.seed_type != seed_type:
             return {"error": "Seed hopper contains another seed type; empty or return it first"}
@@ -330,9 +374,18 @@ class TractorOperations:
             "seed_hopper": self._seed_hopper,
             "grain_bin_kg": round(self._grain_bin_kg, 1),
             "grain_bin_max_kg": _GRAIN_BIN_MAX_KG,
-            "available_implements": ATTACHMENTS,
+            "available_implements": self._tractor_available_implements(),
             "attached_implement": self._attached_implement,
         }
+
+    def _tractor_balance_after_use(
+        self, farm: FarmContext, available: float, used: float,
+    ) -> float:
+        """Keep shared stock transfers exact while preserving legacy single-farm balances."""
+        remaining = available - used
+        if getattr(farm.environment, "warehouse", None) is not None:
+            return remaining
+        return round(remaining, 2)
 
     def _operate_level(self, farm: FarmContext) -> dict[str, Any]:
         """
@@ -352,8 +405,10 @@ class TractorOperations:
 
         implement = self._attached_implement
         width_m = _ATTACH_WIDTH_M[implement]
-        duration = _full_field_duration(width_m, _SPEED_TILL_MS)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
+        duration = self._tractor_full_field_duration(farm, width_m, _SPEED_TILL_MS)
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PREP_OP
+        )
         farm.advance_time(duration)
         farm.world.completed_prep_ops.append("level")
         self._operation_log.append(
@@ -392,13 +447,24 @@ class TractorOperations:
         if traffic_error:
             return {"error": traffic_error}
 
-        self._fertilizer_spreader_kg = round(
-            self._fertilizer_spreader_kg - _BASE_FERTILIZE_KG, 2
+        shared_warehouse = (
+            getattr(farm.environment, "warehouse", None) is not None
         )
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
-        duration = _full_field_duration(_WIDTH_FERTILIZE_M, _SPEED_FERTILIZE_MS)
+        if shared_warehouse:
+            quota_error = farm.world.check_fertilizer_use(_BASE_FERTILIZE_KG)
+            if quota_error:
+                return {"error": quota_error}
+        self._fertilizer_spreader_kg = self._tractor_balance_after_use(
+            farm, self._fertilizer_spreader_kg, _BASE_FERTILIZE_KG
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PREP_OP
+        )
+        duration = self._tractor_full_field_duration(farm, _WIDTH_FERTILIZE_M, _SPEED_FERTILIZE_MS)
         farm.advance_time(duration)
         farm.world.completed_prep_ops.append("base_fertilize")
+        if shared_warehouse:
+            farm.world.record_fertilizer_use(_BASE_FERTILIZE_KG)
 
         if farm.world.physics_active:
             # Pre-planting broadcast → BASE_FERTILIZER action across all
@@ -437,13 +503,27 @@ class TractorOperations:
         Args:
             ridge_width_m: Width of each ridge in metres.
         """
+        # Ordinary preparation cannot terminate a living crop. Check both the
+        # public bootstrap state and authoritative dynamics before any charge.
+        live = any(r.planted for r in farm.world._ridges)
+        if farm.world.physics_active:
+            physics = farm.world.physics
+            live = live or any(physics.crop.project(rid, state).current_planted
+                               for rid, state in physics.management.states.items())
+        if live:
+            return {"error": "Cannot form ridges while a crop is planted; terminate the crop explicitly first"}
+        if (self.equipment.ridging_implement is not None
+                and self._attached_implement != self.equipment.ridging_implement):
+            return {"error": f"Ridging requires attached implement '{self.equipment.ridging_implement}'"}
         if self._fuel_tank_l < _FUEL_PER_PREP_OP:
             return {
                 "error": f"Insufficient fuel: need {_FUEL_PER_PREP_OP} L, have {self._fuel_tank_l:.1f} L"
             }
         ridge_width_m = float(ridge_width_m)
-        if ridge_width_m <= 0.0:
+        if not isfinite(ridge_width_m) or ridge_width_m <= 0.0:
             return {"error": "ridge_width_m must be positive"}
+        if ridge_width_m != farm.world.field_geometry.ridge_width_m:
+            return {"error": f"Field ridge width is configured as {farm.world.field_geometry.ridge_width_m:g} m"}
         # Each pass forms 4 ridges side by side
         ridges_per_pass = 4
         working_width_m = ridges_per_pass * ridge_width_m
@@ -451,8 +531,10 @@ class TractorOperations:
         if traffic_error:
             return {"error": traffic_error}
 
-        duration = _full_field_duration(working_width_m, _SPEED_RIDGE_MS)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
+        duration = self._tractor_full_field_duration(farm, working_width_m, _SPEED_RIDGE_MS)
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PREP_OP
+        )
         farm.advance_time(duration)
 
         # Preserve pre-conditioned soil state (VWC, temp, pressure baselines).
@@ -461,11 +543,9 @@ class TractorOperations:
         farm.world.ridge_width_m = ridge_width_m
         for i, r in enumerate(farm.world._ridges):
             r.ridge_id = i
-            r.planted = False
             r.seed_type = None
             r.seed_spacing_cm = None
             r.seeds_planted = 0
-            r.growth_stage = GrowthStage.BARE.value
             r.days_since_planted = 0
             r.ndvi = -1.0
             r.canopy_temp_c = -1.0
@@ -530,12 +610,23 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fertilizer_spreader_kg = round(
-            self._fertilizer_spreader_kg - required_kg, 2
+        shared_warehouse = (
+            getattr(farm.environment, "warehouse", None) is not None
         )
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_FERTILIZE_MS)
+        if shared_warehouse:
+            quota_error = farm.world.check_fertilizer_use(required_kg)
+            if quota_error:
+                return {"error": quota_error}
+        self._fertilizer_spreader_kg = self._tractor_balance_after_use(
+            farm, self._fertilizer_spreader_kg, required_kg
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_FERTILIZE_MS)
         farm.advance_time(duration)
+        if shared_warehouse:
+            farm.world.record_fertilizer_use(required_kg)
 
         if farm.world.physics_active:
             # Physics path: queue a FERTIGATION action; nutrient_index rises,
@@ -581,150 +672,81 @@ class TractorOperations:
             "fertilizer_used_kg": required_kg,
         }
 
+    def _prepare_planting_plan(
+        self, farm: FarmContext, ridges: list[RidgeState], depth_cm: float,
+        spacing_cm: float, *, replace_existing: bool = False,
+    ) -> PlantingPlan:
+        """Preflight the native crop, resources and future completion timestamp."""
+        from fairy.apps.farm_world.crop_dynamics import create_crop_dynamics
+        physics = farm.world._physics
+        duration = self._tractor_pass_duration(farm, _SPEED_PLANT_MS)
+        count = farm.world.plants_per_ridge_from_spacing(spacing_cm)
+        event = PlantingEvent(
+            ridge_ids=tuple(r.ridge_id for r in ridges),
+            planting_date=farm.world.simulation_date(farm.world.time_manager.time() + duration),
+            seed_type=self.seed_type, depth_cm=depth_cm,
+            stand_fraction_by_ridge={r.ridge_id: farm.world.planting_establishment(r.ridge_id) for r in ridges},
+            density_by_ridge={r.ridge_id: count / farm.world.field_geometry.ridge_area_m2 for r in ridges},
+            latitude_deg=physics.latitude_deg if physics is not None else 45.7,
+            replace_existing=replace_existing,
+        )
+        plan = PlantingPlan(event, spacing_cm, count, duration, _FUEL_PER_PASS)
+        error = self._planting_resource_error(plan)
+        if error:
+            raise ValueError(error)
+        # Validation must not install a bundle just because a caller tried a
+        # rejected action. The real bundle is created only when work commits.
+        crop = (physics.crop if physics is not None
+                else create_crop_dynamics(farm.world.crop_id, farm.world.num_ridges))
+        crop.validate_planting(event)
+        return plan
+
+    def _planting_resource_error(self, plan: PlantingPlan) -> str | None:
+        if self._seed_hopper < plan.total_seeds:
+            return f"Insufficient {self.seed_type} seeds in hopper: need {plan.total_seeds}, have {self._seed_hopper}"
+        if self._fuel_tank_l < plan.fuel_liters:
+            return f"Insufficient fuel: need {plan.fuel_liters} L, have {self._fuel_tank_l:.1f} L"
+        return None
+
     def _operate_plant_seeds(
-        self,
-        farm: FarmContext,
-        start_ridge: int,
-        end_ridge: int,
-        depth_cm: float,
-        seed_spacing_cm: float,
+        self, farm: FarmContext, start_ridge: int, end_ridge: int,
+        depth_cm: float, seed_spacing_cm: float,
     ) -> dict[str, Any]:
-        """
-        Sow seeds across a contiguous block of ridges (up to 4 per pass).
-
-        Seed types:
-          STANDARD
-          EARLY_COLD
-          HIGH_DENSITY
-          STRESS_TOLERANT
-          HEIHE43
-          HEIHE50
-          HEINONG60
-          HEINONG84
-          HEIKE71
-
-        Args:
-            start_ridge: First ridge to plant (0-63).
-            end_ridge:   Last ridge to plant (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth in centimetres.
-            seed_spacing_cm:
-                In-row seed spacing in centimetres.
-        """
-        err = self._tractor_validate_ridge_window(farm, start_ridge, end_ridge, max_width=4)
-        if err:
-            return {"error": err}
-        if not 3.0 <= float(depth_cm) <= 5.0:
-            return {"error": "depth_cm must be within 3–5 cm"}
-        if float(seed_spacing_cm) <= 0:
-            return {"error": "seed_spacing_cm must be positive"}
-
-        # Prep validity is defined by *coverage* (each step has been done at
-        # least once) rather than *exact-sequence equality*. Agents that
-        # redundantly redo prep — a common LLM behaviour, "be safe, prep
-        # again before planting" — used to trip a bogus "prep incomplete"
-        # error here because the strict-equality check broke as soon as
-        # the list grew beyond the canonical 3-tuple. The required
-        # ordering is still enforced inside each prep tool's own guards
-        # (form_ridges only runs after base_fertilize, etc.), so a set
-        # check here is sufficient.
-        missing = [
-            op for op in _FIELD_PREP_SEQUENCE if op not in farm.world.completed_prep_ops
-        ]
-        if missing:
-            return {
-                "error": (
-                    "Field preparation incomplete: must finish "
-                    "level -> base_fertilize -> form_ridges before planting"
-                    f" (missing: {missing})"
-                )
-            }
-
-        ridges = [
-            farm.world.get_ridge(r) for r in range(start_ridge, end_ridge + 1)
-        ]
+        """Validate one complete planting plan, then execute it exactly once."""
+        error = self._tractor_validate_ridge_window(
+            farm, start_ridge, end_ridge, max_width=self.equipment.planting_max_ridges_per_pass,
+        )
+        if error:
+            return {"error": error}
+        ridges = [farm.world.get_ridge(r) for r in range(start_ridge, end_ridge + 1)]
         if any(r.planted for r in ridges):
             return {"error": "One or more ridges are already planted"}
-
-        window_error = farm.world.check_planting_window(
-            [r.ridge_id for r in ridges], self.seed_type
-        )
-        if window_error:
-            return {"error": window_error}
-
-        avg_vwc = sum(r.soil_vwc for r in ridges) / len(ridges)
-        avg_temp = sum(r.soil_temp_c for r in ridges) / len(ridges)
-        if not 0.20 <= avg_vwc <= 0.35:
-            return {
-                "error": f"Soil VWC {avg_vwc:.3f} must be within 0.20–0.30 for planting"
-            }
-        if self.seed_type == SeedType.EARLY_COLD.value:
-            if avg_temp < 8.0:
-                return {
-                    "error": f"Soil temperature {avg_temp:.1f}°C too low for EARLY_COLD (min 8°C)"
-                }
-        elif avg_temp <= 10.0:
-            return {
-                "error": f"Soil temperature {avg_temp:.1f}°C must exceed 10°C for planting"
-            }
-
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
-        seed_count = len(ridges) * seeds_per_ridge
-        if self._seed_hopper < seed_count:
-            return {
-                "error": f"Insufficient {self.seed_type} seeds in hopper: need {seed_count}, have {self._seed_hopper}"
-            }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
-            return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
-            }
-
-        self._seed_hopper = self._seed_hopper - seed_count
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_PLANT_MS)
-        farm.advance_time(duration)
-        for r in ridges:
-            farm.world.set_ridge_planted(
-                r.ridge_id,
-                self.seed_type,
-                seed_spacing_cm=float(seed_spacing_cm),
-                seeds_planted=seeds_per_ridge,
-            )
-
-        # Physics integration: register the planting action with engines.
-        # This records the action, initialises phenology to PLANTED_PRE_EMERGENCE
-        # (NOT VE — emergence comes later via accumulated GDD), and queues a
-        # PLANTING management action so stand_fraction is set on next tick.
-        # Compatibility shadow: legacy growth_stage=VE set above is overwritten
-        # by the orchestrator's compat sync to "bare" until phenology emerges.
+        error = self._planting_error(farm, ridges, depth_cm, seed_spacing_cm)
+        if error:
+            return {"error": error}
+        try:
+            plan = self._prepare_planting_plan(farm, ridges, depth_cm, seed_spacing_cm)
+        except ValueError as exc:
+            return {"error": str(exc)}
+        farm.advance_time(plan.duration_s)
         self._tractor_register_planting_with_physics(
-            farm,
-            ridges=ridges,
-            seed_depth_cm=float(depth_cm),
-            seed_spacing_cm=float(seed_spacing_cm),
+            farm, ridges, depth_cm, seed_spacing_cm, event=plan.event,
         )
-
-        op_id = str(uuid.uuid4())[:8]
-        self._operation_log.append(
-            {
-                "farm_id": farm.farm_id,
-                "op_id": op_id,
-                "operation": "plant_seeds",
-                "ridge_ids": list(range(start_ridge, end_ridge + 1)),
-                "depth_cm": float(depth_cm),
-                "seed_spacing_cm": float(seed_spacing_cm),
-                "seeds_per_ridge": seeds_per_ridge,
-                "seeds_used": seed_count,
-                "duration_s": duration,
-            }
-        )
+        self._seed_hopper -= plan.total_seeds
+        self._fuel_tank_l = self._tractor_balance_after_use(farm, self._fuel_tank_l, plan.fuel_liters)
+        for ridge in ridges:
+            farm.world.record_planting_metadata(ridge.ridge_id, self.seed_type, seed_spacing_cm, plan.seeds_per_ridge)
+        self._operation_log.append({
+            "farm_id": farm.farm_id, "op_id": str(uuid.uuid4())[:8], "operation": "plant_seeds",
+            "ridge_ids": list(plan.event.ridge_ids), "depth_cm": depth_cm,
+            "seed_spacing_cm": seed_spacing_cm, "seeds_per_ridge": plan.seeds_per_ridge,
+            "seeds_used": plan.total_seeds, "duration_s": plan.duration_s,
+        })
         self.is_state_modified = True
         return {
-            "status": "ok",
-            "planted_ridges": list(range(start_ridge, end_ridge + 1)),
-            "depth_cm": float(depth_cm),
-            "seed_spacing_cm": float(seed_spacing_cm),
-            "seeds_per_ridge": seeds_per_ridge,
-            "seeds_used": seed_count,
+            "status": "ok", "planted_ridges": list(plan.event.ridge_ids), "depth_cm": depth_cm,
+            "seed_spacing_cm": seed_spacing_cm, "seeds_per_ridge": plan.seeds_per_ridge,
+            "seeds_used": plan.total_seeds,
         }
 
     def _operate_apply_pesticide(
@@ -768,9 +790,13 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
+        self._pesticide_tank_l = self._tractor_balance_after_use(
+            farm, self._pesticide_tank_l, required_liters
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_SPRAY_MS)
         farm.advance_time(duration)
         for ridge_id in range(start_ridge, end_ridge + 1):
             farm.world.update_ridge_pesticide(ridge_id)
@@ -884,9 +910,13 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
+        self._pesticide_tank_l = self._tractor_balance_after_use(
+            farm, self._pesticide_tank_l, required_liters
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_SPRAY_MS)
         farm.advance_time(duration)
         for ridge_id in range(start_ridge, end_ridge + 1):
             farm.world.update_ridge_pesticide(ridge_id)
@@ -998,9 +1028,13 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fungicide_tank_l = round(self._fungicide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
+        self._fungicide_tank_l = self._tractor_balance_after_use(
+            farm, self._fungicide_tank_l, required_liters
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_SPRAY_MS)
         farm.advance_time(duration)
 
         # Physics integration: queue FUNGICIDE treatment + management residual.
@@ -1082,9 +1116,13 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
+        self._pesticide_tank_l = self._tractor_balance_after_use(
+            farm, self._pesticide_tank_l, required_liters
+        )
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_SPRAY_MS)
         farm.advance_time(duration)
         self._tractor_register_weed_control_with_physics(
             farm,
@@ -1152,8 +1190,10 @@ class TractorOperations:
                 "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_TILL_MS)
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_TILL_MS)
         farm.advance_time(duration)
         self._tractor_register_weed_control_with_physics(
             farm,
@@ -1181,205 +1221,68 @@ class TractorOperations:
         }
 
     def _operate_replant_seeds(
-        self,
-        farm: FarmContext,
-        start_ridge: int,
-        end_ridge: int,
-        depth_cm: float,
-        spacing_cm: float,
-        full_replant: bool = False,
+        self, farm: FarmContext, start_ridge: int, end_ridge: int,
+        depth_cm: float, spacing_cm: float, full_replant: bool = False,
     ) -> dict[str, Any]:
-        """
-        Replant a block of failed/poorly-emerged ridges.
-
-        For ridges that have not emerged yet, this behaves like a fresh
-        planting pass. For ridges that already have an established crop, the
-        operation represents gap-filling within the row: it improves
-        ``stand_fraction`` without resetting the whole ridge's phenology.
-        Set ``full_replant=True`` only when inspection shows the ridge stand
-        failed badly enough that the farm decision is to re-sow the ridge and
-        accept a later maturity window.
-
-        Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth (3-5 cm).
-            spacing_cm:  In-row seed spacing (>0).
-            full_replant: Whether this pass resets the ridge phenology.
-        """
-        seed_spacing_cm = float(spacing_cm)
-        err = self._tractor_validate_ridge_window(farm, start_ridge, end_ridge, max_width=4)
-        if err:
-            return {"error": err}
-        if not 3.0 <= float(depth_cm) <= 5.0:
-            return {"error": "depth_cm must be within 3–5 cm"}
-        if float(seed_spacing_cm) <= 0:
-            return {"error": "seed_spacing_cm must be positive"}
-
-        ridges = [
-            farm.world.get_ridge(r) for r in range(start_ridge, end_ridge + 1)
-        ]
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
-        seed_count = len(ridges) * seeds_per_ridge
-        if self._seed_hopper < seed_count:
-            return {
-                "error": f"Insufficient {self.seed_type} seeds in hopper: need {seed_count}"
-            }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
-            return {"error": f"Insufficient fuel: need {_FUEL_PER_PASS} L"}
-
-        self._seed_hopper -= seed_count
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_PLANT_MS)
-        farm.advance_time(duration)
-
-        stand_fraction_before: dict[int, float] = {}
-        stand_fraction_overrides: dict[int, float] = {}
-        fresh_replant_ridges: list[RidgeState] = []
-
-        if farm.world.physics_active:
-            from fairy.physics import SoybeanStage
-
-            for r in ridges:
-                phen = farm.world.physics.phenology.states[r.ridge_id]
-                current_stand = max(0.0, min(1.0, float(r.stand_fraction)))
-                stand_fraction_before[r.ridge_id] = current_stand
-                recovered_stand = min(0.92, current_stand + (1.0 - current_stand) * 0.6)
-                stand_fraction_overrides[r.ridge_id] = max(
-                    current_stand, recovered_stand
-                )
-                r.stand_fraction = stand_fraction_overrides[r.ridge_id]
-
-                if full_replant or phen.stage in {
-                    SoybeanStage.NOT_PLANTED,
-                    SoybeanStage.PLANTED_PRE_EMERGENCE,
-                }:
-                    phen.stage = SoybeanStage.PLANTED_PRE_EMERGENCE
-                    phen.emerged = False
-                    phen.accumulated_gdd = 0.0
-                    phen.effective_development_gdd = 0.0
-                    phen.days_after_planting = 0
-                    fresh_replant_ridges.append(r)
-                else:
-                    mgmt = farm.world.physics.management.states[r.ridge_id]
-                    mgmt.planted = True
-                    mgmt.stand_fraction = stand_fraction_overrides[r.ridge_id]
-                    mgmt.planting_quality = max(
-                        mgmt.planting_quality,
-                        stand_fraction_overrides[r.ridge_id],
-                    )
-                    if "partial_replant_stand_recovery" not in mgmt.tags:
-                        mgmt.tags.append("partial_replant_stand_recovery")
-
-            if fresh_replant_ridges:
-                self._tractor_register_planting_with_physics(
-                    farm,
-                    ridges=fresh_replant_ridges,
-                    seed_depth_cm=float(depth_cm),
-                    seed_spacing_cm=float(seed_spacing_cm),
-                    initial_stand_fraction_by_ridge=stand_fraction_overrides,
-                )
-        else:
-            for r in ridges:
-                current_stand = max(0.0, min(1.0, float(r.stand_fraction)))
-                stand_fraction_before[r.ridge_id] = current_stand
-                recovered_stand = min(0.92, current_stand + (1.0 - current_stand) * 0.6)
-                stand_fraction_overrides[r.ridge_id] = max(
-                    current_stand, recovered_stand
-                )
-                r.stand_fraction = stand_fraction_overrides[r.ridge_id]
-
-        if farm.world.physics_active:
-            from fairy.apps.farm_world.farm_action_record import (
-                FarmActionRecord,
-            )
-
-            farm.world.record_action(
-                FarmActionRecord(
-                    action_id=str(uuid.uuid4())[:8],
-                    timestamp=float(self.time_manager.time()),
-                    actor_app=self.name,
-                    action_type="replanting",
-                    ridge_ids=list(range(start_ridge, end_ridge + 1)),
-                    parameters={
-                        "seed_type": self.seed_type,
-                        "seed_depth_cm": float(depth_cm),
-                        "spacing_cm": float(seed_spacing_cm),
-                        "full_replant": bool(full_replant),
-                    },
-                    direct_effect_summary={
-                        "phenology_reset_ridges": [
-                            ridge.ridge_id for ridge in fresh_replant_ridges
-                        ],
-                        "stand_fraction_before": {
-                            ridge_id: round(value, 3)
-                            for ridge_id, value in stand_fraction_before.items()
-                        },
-                        "stand_fraction_after": {
-                            ridge_id: round(value, 3)
-                            for ridge_id, value in stand_fraction_overrides.items()
-                        },
-                    },
-                )
-            )
-        # Fresh replanting behaves like a new sowing pass. Gap filling only
-        # improves stand; it must not reset the established crop's legacy
-        # planting date, days_since_planted, or growth_stage.
-        if farm.world.physics_active:
-            legacy_fresh_ridges = fresh_replant_ridges
-        else:
-            legacy_fresh_ridges = [r for r in ridges if not r.planted]
-        for r in legacy_fresh_ridges:
-            farm.world.set_ridge_planted(
-                r.ridge_id,
-                self.seed_type,
-                seed_spacing_cm=float(seed_spacing_cm),
-                seeds_planted=seeds_per_ridge,
-            )
-
-        op_id = str(uuid.uuid4())[:8]
-        self._operation_log.append(
-            {
-                "farm_id": farm.farm_id,
-                "op_id": op_id,
-                "operation": "replant_seeds",
-                "ridge_ids": list(range(start_ridge, end_ridge + 1)),
-                "depth_cm": float(depth_cm),
-                "seed_spacing_cm": float(seed_spacing_cm),
-                "full_replant": bool(full_replant),
-                "seeds_used": seed_count,
-                "phenology_reset_ridge_ids": [
-                    ridge.ridge_id for ridge in fresh_replant_ridges
-                ],
-                "stand_fraction_before": {
-                    ridge_id: round(value, 3)
-                    for ridge_id, value in stand_fraction_before.items()
-                },
-                "stand_fraction_after": {
-                    ridge_id: round(value, 3)
-                    for ridge_id, value in stand_fraction_overrides.items()
-                },
-                "duration_s": duration,
-            }
+        """Replant through the crop lifecycle, preserving established gap fills."""
+        from fairy.apps.farm_world.farm_action_record import FarmActionRecord
+        from dataclasses import replace
+        error = self._tractor_validate_ridge_window(
+            farm, start_ridge, end_ridge, max_width=self.equipment.planting_max_ridges_per_pass,
         )
-        self.is_state_modified = True
-        return {
-            "status": "ok",
-            "replanted_ridges": list(range(start_ridge, end_ridge + 1)),
-            "full_replant": bool(full_replant),
-            "seeds_used": seed_count,
-            "phenology_reset_ridges": [
-                ridge.ridge_id for ridge in fresh_replant_ridges
-            ],
-            "stand_fraction_before": {
-                ridge_id: round(value, 3)
-                for ridge_id, value in stand_fraction_before.items()
-            },
-            "stand_fraction_after": {
-                ridge_id: round(value, 3)
-                for ridge_id, value in stand_fraction_overrides.items()
-            },
+        if error:
+            return {"error": error}
+        ridges = [farm.world.get_ridge(r) for r in range(start_ridge, end_ridge + 1)]
+        definition = farm.world.crop_definition
+        error = self._planting_error(
+            farm, ridges, depth_cm, spacing_cm,
+            rules=definition.replanting_rules or definition.planting_rules,
+        )
+        if error:
+            return {"error": error}
+        try:
+            plan = self._prepare_planting_plan(farm, ridges, depth_cm, spacing_cm, replace_existing=True)
+            physics = farm.world.physics
+            replant = physics.crop.prepare_replant(plan.event, physics.management.states, full_replant=full_replant)
+        except ValueError as exc:
+            return {"error": str(exc)}
+        farm.advance_time(plan.duration_s)
+        physics.crop.apply_replant(replant, physics.management.states)
+        if replant.fresh_ridge_ids:
+            fresh = [farm.world.get_ridge(r) for r in replant.fresh_ridge_ids]
+            self._tractor_register_planting_with_physics(
+                farm, fresh, depth_cm, spacing_cm,
+                event=replace(replant.event, ridge_ids=replant.fresh_ridge_ids,
+                              stand_fraction_by_ridge=replant.stand_after), already_planted=True,
+            )
+            for ridge in fresh:
+                farm.world.record_planting_metadata(ridge.ridge_id, self.seed_type, spacing_cm, plan.seeds_per_ridge)
+        self._seed_hopper -= plan.total_seeds
+        self._fuel_tank_l = self._tractor_balance_after_use(farm, self._fuel_tank_l, plan.fuel_liters)
+        stand_feedback = {
+            "stand_fraction_before": {rid: round(value, 3) for rid, value in replant.stand_before.items()},
+            "stand_fraction_after": {rid: round(value, 3) for rid, value in replant.stand_after.items()},
         }
+        farm.world.record_action(FarmActionRecord(
+            action_id=str(uuid.uuid4())[:8], timestamp=float(self.time_manager.time()), actor_app=self.name,
+            action_type="replanting", ridge_ids=list(plan.event.ridge_ids),
+            parameters={"seed_type": self.seed_type, "seed_depth_cm": depth_cm,
+                        "spacing_cm": spacing_cm, "full_replant": full_replant},
+            direct_effect_summary={"phenology_reset_ridges": list(replant.fresh_ridge_ids),
+                                   **stand_feedback},
+        ))
+        farm.world.advance_physics_time()
+        self._operation_log.append({
+            "farm_id": farm.farm_id, "op_id": str(uuid.uuid4())[:8], "operation": "replant_seeds",
+            "ridge_ids": list(plan.event.ridge_ids), "depth_cm": depth_cm, "seed_spacing_cm": spacing_cm,
+            "seeds_used": plan.total_seeds, "duration_s": plan.duration_s,
+            "full_replant": full_replant, "phenology_reset_ridge_ids": list(replant.fresh_ridge_ids),
+            **stand_feedback,
+        })
+        self.is_state_modified = True
+        return {"status": "ok", "replanted_ridges": list(plan.event.ridge_ids),
+                "seeds_used": plan.total_seeds, "full_replant": full_replant,
+                "phenology_reset_ridges": list(replant.fresh_ridge_ids), **stand_feedback}
 
     def _operate_incorporate_residue(
         self,
@@ -1405,8 +1308,10 @@ class TractorOperations:
         if self._fuel_tank_l < _FUEL_PER_PASS:
             return {"error": f"Insufficient fuel: need {_FUEL_PER_PASS} L"}
 
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_TILL_MS)
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_TILL_MS)
         farm.advance_time(duration)
 
         if farm.world.physics_active:
@@ -1444,7 +1349,7 @@ class TractorOperations:
             start_ridge: First ridge to harvest (0-63).
             end_ridge:   Last ridge to harvest (0-63, max 4-ridge span).
         """
-        err = self._tractor_validate_ridge_window(farm, start_ridge, end_ridge, max_width=4)
+        err = self._tractor_validate_ridge_window(farm, start_ridge, end_ridge, max_width=self.equipment.harvest_max_ridges_per_pass)
         if err:
             return {"error": err}
         if farm.weather.rainfall_mm > 0.0:
@@ -1458,21 +1363,27 @@ class TractorOperations:
         ]
         if any(not r.planted for r in ridges):
             return {"error": "All ridges must be planted before harvest"}
+        rules = farm.world.crop_definition.harvest_rules
+        error = rules.validate_implement(self._attached_implement)
+        if error:
+            return {"error": error}
+        mature_stages = {stage.upper() for stage in rules.stage_codes}
+        max_moisture = rules.max_moisture_pct
         immature_ridges = [
             r.ridge_id
             for r in ridges
             if str(r.growth_stage).upper()
-            not in {GrowthStage.R8.value.upper(), "R8_FULL_MATURITY"}
+            not in mature_stages
         ]
         if immature_ridges:
             return {
                 "error": f"Ridges are not mature enough for harvest: {immature_ridges}"
             }
-        bad_moisture = [r.ridge_id for r in ridges if r.grain_moisture_pct > 18.0]
+        bad_moisture = [r.ridge_id for r in ridges if r.grain_moisture_pct > max_moisture]
         if bad_moisture:
             return {
                 "error": (
-                    "Grain moisture too high for harvest (>18%) on ridges "
+                    f"Grain moisture too high for harvest (>{max_moisture:g}%) on ridges "
                     f"{bad_moisture}"
                 )
             }
@@ -1483,7 +1394,9 @@ class TractorOperations:
 
         # Check that grain bin can hold this pass worst-case (yield_potential ≤ 1.0).
         ridge_count = end_ridge - start_ridge + 1
-        worst_case_grain = ridge_count * GRAIN_KG_PER_RIDGE
+        worst_case_grain = (ridge_count * farm.world.field_geometry.ridge_area_m2
+                            * farm.world.physics.crop.max_recoverable_yield_g_m2 / 1000.0
+                            if farm.world.physics_active else ridge_count * GRAIN_KG_PER_RIDGE)
         if self._grain_bin_kg + worst_case_grain > _GRAIN_BIN_MAX_KG:
             return {
                 "error": (
@@ -1494,9 +1407,39 @@ class TractorOperations:
             }
 
         ridge_ids = list(range(start_ridge, end_ridge + 1))
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_HARVEST_MS)
+        self._fuel_tank_l = self._tractor_balance_after_use(
+            farm, self._fuel_tank_l, _FUEL_PER_PASS
+        )
+        duration = self._tractor_pass_duration(farm, _SPEED_HARVEST_MS)
         farm.advance_time(duration)
+        if farm.world.physics_active:
+            # A pass can cross the daily weather boundary. Its real time and
+            # fuel were spent, but a newly wet crop must not enter the harvest
+            # queue and raise after resources have already been charged.
+            farm.world.advance_physics_time()
+            end_moistures = {
+                rid: farm.world.physics.yield_recovery.states[rid].grain_moisture_frac * 100.0
+                for rid in ridge_ids
+            }
+            too_wet = [rid for rid, moisture in end_moistures.items()
+                       if moisture > max_moisture]
+            if too_wet or farm.weather.rainfall_mm > 0.0:
+                reason = (f"Grain moisture exceeded {max_moisture:g}% during the pass on ridges {too_wet}"
+                          if too_wet else "Rain started during the harvest pass")
+                self._operation_log.append({
+                    "farm_id": farm.farm_id, "op_id": str(uuid.uuid4())[:8],
+                    "operation": "harvest", "ridge_ids": ridge_ids,
+                    "status": "failed", "error": reason, "duration_s": duration,
+                    "fuel_used_l": _FUEL_PER_PASS, "grain_kg_added": 0.0,
+                })
+                self.is_state_modified = True
+                return {
+                    "status": "failed", "error": reason, "harvested_ridges": [],
+                    "grain_kg_added": 0.0, "duration_s": duration,
+                    "fuel_used_l": _FUEL_PER_PASS,
+                    "grain_bin_kg": round(self._grain_bin_kg, 1),
+                    "grain_moisture_pct_by_ridge": end_moistures,
+                }
         # Sample the same end-of-pass moisture used by yield settlement.
         farm.world.record_grain_bin_moisture(ridge_ids)
         grain_added = 0.0
@@ -1609,38 +1552,28 @@ class TractorOperations:
         seed_depth_cm: float,
         seed_spacing_cm: float,
         initial_stand_fraction_by_ridge: dict[int, float] | None = None,
+        replace_existing: bool = False,
+        *, event: PlantingEvent | None = None, already_planted: bool = False,
     ) -> None:
         from fairy.apps.farm_world.farm_action_record import FarmActionRecord
-        from fairy.physics import (
-            ManagementAction,
-            ManagementActionType,
-            PlantingConfig,
-        )
-        from fairy.physics import (
-            SeedType as PhysicsSeedType,
-        )
+        from fairy.physics import ManagementAction, ManagementActionType
 
         physics = farm.world.physics
         ridge_ids = [r.ridge_id for r in ridges]
-        seed_type_value = self.seed_type or SeedType.STANDARD.value
-        try:
-            physics_seed_type = PhysicsSeedType(seed_type_value)
-        except ValueError:
-            physics_seed_type = PhysicsSeedType.STANDARD
-
+        seed_type_value = self.seed_type
         now_t = float(self.time_manager.time())
-        today = farm.world.simulation_date(now_t)
-
-        physics.phenology.plant_ridges(
-            ridge_ids,
-            PlantingConfig(
-                planting_date=today,
-                seed_type=physics_seed_type,
-                seed_depth_cm=float(seed_depth_cm),
-                planting_quality=1.0,
-                latitude_deg=physics.latitude_deg,
-            ),
-        )
+        stand_fractions = (dict(event.stand_fraction_by_ridge) if event is not None else {
+            r.ridge_id: float((initial_stand_fraction_by_ridge or {}).get(r.ridge_id, 1.0))
+            for r in ridges
+        })
+        initial_stand_fraction_by_ridge = stand_fractions
+        if event is None:
+            density = farm.world.plants_per_ridge_from_spacing(seed_spacing_cm) / farm.world.field_geometry.ridge_area_m2
+            event = PlantingEvent(tuple(ridge_ids), farm.world.simulation_date(now_t), seed_type_value,
+                                  seed_depth_cm, stand_fractions, {rid: density for rid in ridge_ids},
+                                  physics.latitude_deg, replace_existing)
+        if not already_planted:
+            physics.crop.plant(event)
         for ridge_id in ridge_ids:
             ridge = farm.world.get_ridge(ridge_id)
             initial_stand_fraction = max(
@@ -1735,7 +1668,7 @@ class TractorOperations:
 
         # Convert recovered yield from g/m² to kg per ridge: each ridge is
         # FIELD_LENGTH_M × DEFAULT_RIDGE_WIDTH_M m².
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = farm.world.field_geometry.ridge_area_m2
         total_kg = 0.0
         for ridge_id in ridge_ids:
             state = physics.yield_recovery.states[ridge_id]

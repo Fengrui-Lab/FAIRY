@@ -311,6 +311,7 @@ class PostHarvestMarketPreset:
     quality_discount_wet: float = 0.0
     quality_discount_damage: float = 0.0
     grade: str = "commodity"
+    require_safe_moisture: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -322,6 +323,7 @@ class PostHarvestMarketPreset:
             "quality_discount_wet": round(self.quality_discount_wet, 4),
             "quality_discount_damage": round(self.quality_discount_damage, 4),
             "grade": self.grade,
+            "require_safe_moisture": self.require_safe_moisture,
         }
 
     @classmethod
@@ -335,6 +337,7 @@ class PostHarvestMarketPreset:
             quality_discount_wet=float(d.get("quality_discount_wet", 0.0)),
             quality_discount_damage=float(d.get("quality_discount_damage", 0.0)),
             grade=d.get("grade", "commodity"),
+            require_safe_moisture=bool(d.get("require_safe_moisture", False)),
         )
 
 
@@ -400,7 +403,10 @@ class WeatherState:
 @dataclass
 class InventoryState:
     """
-    Farm warehouse inventory. Devices load from here before operating.
+    Legacy single-farm inventory adapter. Devices load from here before operating.
+
+    Multi-farm scenes use one WarehouseApp/WarehouseStock, declared by the
+    scenario. Grain is tracked there by batch, not by this legacy dried flag.
 
     Seed stock: ~4500-7500 plants/ridge × 64 ridges → 500 000 plants initial. [PDF-p6]
     Pesticide warehouse: initial 2000 L. [PDF-p9]

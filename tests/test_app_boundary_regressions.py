@@ -14,6 +14,7 @@ from fairy.apps.farm_world.sensor_app import SensorApp
 from fairy.apps.farm_world.shared_drone_app import SharedDroneApp
 from fairy.apps.farm_world.shared_robot_app import SharedRobotApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.scenarios.registry import get_scenario_class
 from fairy.time_manager import TimeManager
 
@@ -32,7 +33,10 @@ def environment(monkeypatch):
         sensors = SensorApp(world, name=f"{farm_id}_Sensor")
         irrigation = IrrigationApp(world, weather, name=f"{farm_id}_Irrigation")
         farms.append(FarmContext(farm_id, world, weather, sensors, irrigation))
-    return FarmEnvironment(farms, weather, clock)
+    return FarmEnvironment(farms, weather, clock, warehouse=WarehouseApp(stock=WarehouseStock(
+        seed_stock={"STANDARD": 2_000_000}, pesticide_liters=4000.0,
+        fertilizer_kg=4000.0, fuel_liters=2000.0,
+    )))
 
 
 @pytest.fixture(params=["shared", "legacy"])

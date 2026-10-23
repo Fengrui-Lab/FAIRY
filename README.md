@@ -1,14 +1,45 @@
 # FAIRY
 
+Multi-farm scenes use one common `Warehouse` for seeds, fertilizer, fuel, chemicals and grain. Fixed irrigation and water quotas remain local. See [ownership, tools and inventory accounting](docs/shared-warehouse.md).
+
 [中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md)
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
+
+[`scenario_single_farm_maize_full_season`](fairy/scenarios/maize/scenario_single_farm_maize_full_season.py) opts into independent maize growth and harvest rules for a complete single-farm season. Existing soybean scenarios retain their default path. See the [implementation, runnable reference and compatibility evidence](docs/single-farm-maize.md); the simulated maize cultivar is not field-calibrated.
+
+[`scenario_single_farm_maize_normal_management`](fairy/scenarios/maize/scenario_single_farm_maize_normal_management.py) adds observed nutrition management, one justified irrigation and a rain-aware decision to skip the second irrigation. [`scenario_two_farm_maize_soybean_full_season`](fairy/scenarios/two_farm/scenario_two_farm_maize_soybean_full_season.py) manages maize and soybean together with separate fixed installations, crop rules and grain batches, sharing one fleet, clock and warehouse. Both have complete independent scene files and validators. See [configuration, complete workflow and commands](docs/managed-maize-and-soybean.md).
 
 `scenario_two_farm_shared_equipment` manages two 64-ridge soybean farms with separate fixed sensors and irrigation, sharing one tractor, drone and ground robot. See the [two-farm implementation and runnable Oracle](docs/two-farm-step1.md) and its [complete scene file](fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py).
 
 [`scenario_two_farm_full_season_hn84_normal`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_normal.py) extends the Harbin Heinong84 normal-year baseline to two complete 64-ridge seasons, from field preparation through planting, monitoring, nutrient management, harvest, drying and separate storage. Configuration, the agent briefing and the complete named event workflow live in that file. Each farm has its own fixed installations; one tractor, two drones and one robot are shared. Task validation is intentionally unimplemented, so the report's default validation status is not a task score.
 
-[`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py) defines the complete three-farm season in its own file. Farms A/B/C each have 64 ridges, separate fixed sensors, irrigation and warehouses; the same mobile fleet and common clock serve all three farms. Task validation remains unimplemented.
+[`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py) defines the complete three-farm season in its own file. Farms A/B/C each have 64 ridges and separate fixed sensors and irrigation; one warehouse, mobile fleet and common clock serve all three farms. Task validation remains unimplemented.
+
+## Briefing Detail For The Seven New Scenarios
+
+The new scenes accept `detailed_briefing` as a JSON boolean, defaulting to `true`. Previously they accepted the option but always sent a fixed detailed briefing. Each scene now defines its complete `BASIC_BRIEFING` and `DETAILED_BRIEFING` locally, with the selected text used by both the Agent task and captured briefing event.
+
+`false` retains objectives, field/crop identity and area, equipment ownership, the shared clock and completion requirements. The same tools still expose crop rules, conditions, budgets and storage requirements, but full-season basic briefings do not supply reference calendars, doses, precomputed loads or management recipes. `true` adds the existing detailed guidance. Both modes retain identical Apps, tool schemas, initial state, weather, physics, Oracle actions and validation.
+
+| Scenario ID | Basic task (`false`) | Additional guidance (`true`) |
+| --- | --- | --- |
+| `scenario_two_farm_shared_equipment` | Two-field preparation, planting and specified irrigation/scouting | Preparation order, loading and shared-equipment advice |
+| `scenario_two_farm_full_season_hn84_normal` | Two complete soybean seasons | Stage windows, nutrition, weather waits and charging |
+| `scenario_three_farm_full_season_hn84_normal` | Three soybean seasons and resource accounting | Stage scouting, nutrition, scheduling and storage |
+| `scenario_two_farm_full_season_hn84_disease_water` | Two seasons, known disease history and contrasting water retention | Target ridges, recheck windows and treatment dates/doses |
+| `scenario_single_farm_maize_full_season` | One complete maize season | Seed loading, nutrition and two irrigation windows |
+| `scenario_single_farm_maize_normal_management` | Normal-loam maize management and safe storage | Nutrition, R1 irrigation and rain-aware R3 deferral |
+| `scenario_two_farm_maize_soybean_full_season` | Separate maize/soybean management and traceable storage | Crop-specific loading, nutrition, water and harvest scheduling |
+
+The short shared-equipment task retains its prescribed irrigation, planting and survey targets in both modes because these define the task contract. Detailed calendar/dose guidance remains subject to observations. Switching detail does not relax validation, including existing required fertilizer coverage or irrigation. See the [Chinese scene-by-scene explanation](README.zh-CN.md#新增7个场景的-detail-两档).
+
+```bash
+--scenario-kwargs '{"detailed_briefing": false}'
+--scenario-kwargs '{"detailed_briefing": true}'
+```
+
+Use JSON booleans, not strings or `--init-kwargs`. The CLI has no standalone `--detail`; the batch runner translates its `--detail false/true` into this constructor option. An explicitly supplied nonempty `scenario_input` overrides the built-in text. Legacy L3 context modes such as `kwoo` and `library` remain available in their original scenes; the seven new scenes support only booleans.
 
 ## System Scope
 
@@ -181,7 +212,9 @@ PYTHONPATH=. uv run python -m fairy.cli \
   --output-dir validation_runs/quickstart/fullseason/detail_false
 ```
 
-Complete `detailed_briefing` values:
+The following context modes apply to legacy Harbin L3 scenes. The seven new scenes above support only boolean briefing detail.
+
+Complete legacy L3 `detailed_briefing` values:
 
 | Value | JSON form | Meaning | Extra dependency |
 |---|---|---|---|

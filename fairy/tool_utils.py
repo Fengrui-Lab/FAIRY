@@ -3,10 +3,12 @@ from __future__ import annotations
 import inspect
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
 from typing import Any, Callable, get_type_hints
+
+from fairy.tool_contracts import OperationContract
 
 
 class OperationType(Enum):
@@ -21,6 +23,18 @@ class ToolAttributeName(Enum):
     USER = "_is_user_tool"
 
 
+class ToolArgumentRejection(dict):
+    """JSON-compatible refusal that retains its typed cause for Agent tracing.
+
+    Direct callers receive the normal ``error`` mapping. The Agent boundary
+    records this predictable rejection through its existing tool-error path.
+    """
+
+    def __init__(self, exception: Exception) -> None:
+        super().__init__(error=str(exception))
+        self.exception = exception
+
+
 @dataclass
 class AppToolArg:
     name: str
@@ -29,6 +43,7 @@ class AppToolArg:
     has_default: bool = False
     default: Any | None = None
     choices: list[Any] | None = None
+    schema_constraints: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -43,10 +58,10 @@ class AppTool:
     write_operation: bool | None = None
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        if getattr(self.class_instance, "require_explicit_tool_docs", False):
-            error = typed_arguments_error(self.function, self.class_instance, args, kwargs)
-            if error is not None:
-                return {"error": error}
+        if getattr(self.class_instance, "validate_tool_arguments", False):
+            exception = typed_arguments_exception(self.function, self.class_instance, args, kwargs)
+            if exception is not None:
+                return ToolArgumentRejection(exception)
         return self.function(self.class_instance, *args, **kwargs)
 
     def to_open_ai(self) -> dict[str, Any]:
@@ -56,6 +71,7 @@ class AppTool:
         }
         required = [arg.name for arg in self.args if not arg.has_default]
         for arg in self.args:
+            properties[arg.name].update(arg.schema_constraints)
             if arg.has_default:
                 properties[arg.name]["default"] = arg.default
             if arg.choices is not None:
@@ -82,15 +98,22 @@ def _json_type(type_name: str) -> str:
 
 
 def typed_arguments_error(function, instance, args, kwargs, *, check_choices: bool = True) -> str | None:
-    """Validate explicit primitive inputs for the new farm tools before effects.
+    """Compatibility text view of the typed argument validation result."""
+    exception = typed_arguments_exception(function, instance, args, kwargs, check_choices=check_choices)
+    return str(exception) if exception is not None else None
 
-    Both direct Python calls and AppTool JSON calls use this same check.
-    Legacy single-farm Apps keep their original validation behavior.
+
+def typed_arguments_exception(function, instance, args, kwargs, *, check_choices: bool = True) -> Exception | None:
+    """Validate primitive inputs and the operation contract before effects.
+
+    Apps opt into this independently of source-documentation strictness. Direct
+    Python calls and AppTool calls use the same parameter rules.
     """
     try:
         bound = inspect.signature(function).bind(instance, *args, **kwargs)
     except TypeError as exc:
-        return f"Invalid tool arguments: {exc}"
+        return TypeError(f"Invalid tool arguments: {exc}")
+    bound.apply_defaults()
     hints = get_type_hints(function)
     choices = getattr(instance, "tool_parameter_choices", {})
     for name, value in bound.arguments.items():
@@ -113,10 +136,20 @@ def typed_arguments_error(function, instance, args, kwargs, *, check_choices: bo
         else:
             valid = True
         if not valid:
-            return f"Invalid {name}: expected finite {getattr(expected, '__name__', expected)}"
+            return ValueError(f"Invalid {name}: expected finite {getattr(expected, '__name__', expected)}")
         if check_choices and name in choices and value not in choices[name]:
-            return f"Invalid {name}: choose one of {choices[name]}"
+            return ValueError(f"Invalid {name}: choose one of {choices[name]}")
+    contract = _operation_contract(instance, function.__name__)
+    if contract is not None:
+        error = contract.validate({name: value for name, value in bound.arguments.items() if name != "self"})
+        if error is not None:
+            return ValueError(error)
     return None
+
+
+def _operation_contract(instance: Any, method_name: str) -> OperationContract | None:
+    resolver = getattr(instance, "get_tool_contract", None)
+    return resolver(method_name) if resolver is not None else None
 
 
 def _mark_tool(attr: ToolAttributeName, func: Callable[..., Any] | None = None):
@@ -180,6 +213,11 @@ def build_tool(instance: Any, func: Callable[..., Any], failure_probability=None
     sig = inspect.signature(func)
     hints = get_type_hints(func)
     descriptions = _argument_descriptions(func)
+    contract = _operation_contract(instance, func.__name__)
+    if contract is not None:
+        unknown = set(contract.parameters) - (set(sig.parameters) - {"self"})
+        if unknown:
+            raise ValueError(f"Tool {func.__name__} contract refers to unknown arguments: {sorted(unknown)}")
     choices = getattr(instance, "tool_parameter_choices", {})
     # A service can expose several tools; selectors apply only to methods
     # which actually declare them, never add arguments to another method.
@@ -190,17 +228,22 @@ def build_tool(instance: Any, func: Callable[..., Any], failure_probability=None
             continue
         type_obj = hints.get(name, str)
         type_name = getattr(type_obj, "__name__", "str")
+        parameter_contract = contract.parameters.get(name) if contract is not None else None
+        parameter_choices = (parameter_contract.choices if parameter_contract is not None
+                             and parameter_contract.choices is not None else declared_choices.get(name))
         args.append(
             AppToolArg(
                 name=name,
                 arg_type=type_name,
-                description=descriptions.get(name),
+                description=parameter_contract.description if parameter_contract is not None else descriptions.get(name),
                 has_default=param.default is not inspect._empty,
                 default=None if param.default is inspect._empty else param.default,
-                choices=list(declared_choices[name]) if name in declared_choices else None,
+                choices=list(parameter_choices) if parameter_choices is not None else None,
+                schema_constraints=(parameter_contract.numeric.json_schema()
+                                    if parameter_contract is not None and parameter_contract.numeric is not None else {}),
             )
         )
-    description = inspect.getdoc(func) or ""
+    description = contract.description if contract is not None else inspect.getdoc(func) or ""
     farm_id = getattr(instance, "bound_farm_id", None)
     if farm_id is not None:
         description += f"\nBound farm: {farm_id}. Ridge and sensor IDs are local to this farm."

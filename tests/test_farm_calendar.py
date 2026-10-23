@@ -10,6 +10,7 @@ from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.physics_orchestrator import _dates_between
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.controllers.engine import Engine
 from fairy.scenarios.registry import get_scenario_class
 
@@ -42,7 +43,11 @@ def static_environment(monkeypatch, start: float) -> FarmEnvironment:
         world.configure_physics_profile("calendar_static_weather")
         farms.append(FarmContext(farm_id, world, weather))
     return FarmEnvironment(
-        farms, weather, start_time=start, timezone_name="Asia/Shanghai"
+        farms, weather, start_time=start, timezone_name="Asia/Shanghai",
+        warehouse=WarehouseApp(stock=WarehouseStock(
+            seed_stock={"HEINONG84": 2_000_000}, pesticide_liters=4000.0,
+            fertilizer_kg=4000.0, fuel_liters=2000.0,
+        ))
     )
 
 
@@ -127,7 +132,7 @@ def test_sowing_windows_planting_records_and_observations_use_local_day(monkeypa
     assert farm.check_planting_window([0], "HEINONG84") is None
     # The test starts from completed preparation to isolate the sowing calendar.
     farm.completed_prep_ops[:] = ["level", "base_fertilize", "form_ridges"]
-    assert scenario.tractor.load_seeds("farm_a", "HEINONG84", 10_000)["status"] == "ok"
+    assert scenario.tractor.load_seeds("HEINONG84", 10_000)["status"] == "ok"
     assert scenario.tractor.plant_seeds("farm_a", 0, 0, 4.0, 7.9)["status"] == "ok"
     assert farm.physics.phenology.states[0].planting_date == date(2026, 5, 5)
     # Hold flight eligibility constant; this assertion concerns observation dates.

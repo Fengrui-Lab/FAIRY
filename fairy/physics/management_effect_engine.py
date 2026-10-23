@@ -136,7 +136,7 @@ class ManagementSoilInput:
 
 @dataclass
 class ManagementCropInput:
-    stage: GrowthStage = GrowthStage.NOT_PLANTED
+    stage: GrowthStage | str = GrowthStage.NOT_PLANTED
     daily_biomass_g_m2: float = 0.0
 
 

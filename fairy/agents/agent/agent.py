@@ -11,6 +11,7 @@ from typing import Any
 from fairy.agents.agent.base_agent import BaseAgent, RetryableLLMResponseError
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.scenarios.workflow import WorkflowStep
+from fairy.tool_utils import ToolArgumentRejection
 
 
 class AgentRunLimitExceeded(RuntimeError):
@@ -187,6 +188,8 @@ class Agent(BaseAgent):
         )
         try:
             tool_response = self.tools_map[name](**args)
+            if isinstance(tool_response, ToolArgumentRejection):
+                raise tool_response.exception
         except Exception as exc:
             elapsed_time = round(time.perf_counter() - start_time, 6)
             self.record_event(

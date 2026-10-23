@@ -9,6 +9,7 @@ from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.physics_orchestrator import advance_physics_time
 from fairy.apps.farm_world.shared_tractor_app import SharedTractorApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.physics.biotic_pressure_engine import (
     BioticCropInput, BioticPressureEngine, BioticPressureState, BioticWeatherInput,
     GrowthStage as BioticStage, TreatmentApplication, TreatmentType,
@@ -121,8 +122,7 @@ def test_new_date_cursors_roundtrip_and_old_state_dictionaries_remain_valid():
         assert state_class(**vars(state)) == state
 
 
-@pytest.fixture
-def field(monkeypatch):
+def make_field(monkeypatch, warehouse=None):
     monkeypatch.setattr("fairy.time_manager.time.time", lambda: START)
     clock = TimeManager()
     clock.reset(START)
@@ -131,9 +131,23 @@ def field(monkeypatch):
                         wind_speed_ms=1, rainfall_mm=0, solar_radiation=350,
                         avg_soil_vwc=0.23)
     world.configure_physics_profile("idempotence_static_weather")
-    environment = FarmEnvironment([FarmContext("farm_a", world, weather)], weather, clock)
+    environment = FarmEnvironment([FarmContext("farm_a", world, weather)], weather, clock,
+                                  warehouse=warehouse)
     environment.sync()
     return environment, world
+
+
+@pytest.fixture
+def field(monkeypatch):
+    return make_field(monkeypatch)
+
+
+@pytest.fixture
+def shared_field(monkeypatch):
+    return make_field(monkeypatch, WarehouseApp(stock=WarehouseStock(
+        seed_stock={"STANDARD": 100_000}, pesticide_liters=100.0,
+        fertilizer_kg=500.0, fuel_liters=200.0,
+    )))
 
 
 def test_equal_timestamp_commits_irrigation_once_without_daily_evolution(field):
@@ -183,13 +197,14 @@ def test_backwards_time_rejects_without_consuming_pending_actions(field):
     assert physics.last_physics_sim_time == START
 
 
-def test_harvest_tool_settles_current_moisture_and_preserves_non_target(field):
-    env, world = field
+def test_harvest_tool_settles_current_moisture_and_preserves_non_target(shared_field):
+    env, world = shared_field
     physics = world.physics
     from fairy.physics import SoybeanStage
     for rid in (0, 1):
         ridge = world._ridges[rid]
         ridge.planted = True
+        ridge.seed_type = "STANDARD"
         ridge.growth_stage = "R8_FULL_MATURITY"
         ridge.grain_moisture_pct = 15
         phen = physics.phenology.states[rid]
@@ -206,7 +221,7 @@ def test_harvest_tool_settles_current_moisture_and_preserves_non_target(field):
     result = tractor.harvest("farm_a", 0, 0)
     assert result["status"] == "ok"
     assert physics.yield_recovery.states[0].grain_moisture_frac == 0.15
-    assert world._pending_bin_grain_moistures_pct == [15]
+    assert tractor.get_state()["grain_moistures_pct"] == [15]
     assert physics.yield_recovery.states[1] == non_target
     assert physics.yield_recovery.states[0].harvested
     assert not physics.pending_harvest_actions_by_ridge

@@ -12,6 +12,10 @@ from fairy.apps.farm_world.farm_environment import FarmContext
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp, PESTICIDE_L_PER_RIDGE
 from fairy.apps.farm_world.models import RidgeState
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.equipment import TractorEquipment
+from fairy.apps.farm_world.tractor_tool_contracts import (
+    TractorContractContext, tractor_operation_contract,
+)
 from fairy.apps.farm_world.tractor_operations import (
     TractorOperations,
     ATTACHMENTS,
@@ -39,6 +43,7 @@ from fairy.apps.farm_world.tractor_operations import (
     _FIELD_PREP_SEQUENCE,
 )
 from fairy.tool_utils import OperationType, app_tool, data_tool
+from fairy.tool_contracts import OperationContract
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
@@ -46,18 +51,38 @@ from fairy.utils.type_utils import type_check
 class TractorApp(App, TractorOperations):
     """Tractor bound to one farm for the original single-farm API."""
 
+    require_explicit_tool_docs = True
+    validate_tool_arguments = True
+
     def __init__(
         self,
         farm_world_app: FarmWorldApp,
         weather_app: WeatherApp,
         name: str | None = None,
+        *,
+        equipment: TractorEquipment | None = None,
     ) -> None:
         super().__init__(name=name)
         self._farm_world_app = farm_world_app
         self._weather_app = weather_app
         farm_world_app.attach_weather_app(weather_app)
         self._farm_context = FarmContext(farm_world_app.name, farm_world_app, weather_app)
-        self._initialize_tractor_state()
+        self._initialize_tractor_state(equipment)
+        self._tool_contract_context = TractorContractContext(
+            farms=lambda: {self._farm_world_app.farm_id or self._farm_world_app.name: self._farm_world_app},
+            equipment=lambda: self.equipment,
+            seed_types=lambda: self._farm_world_app.crop_definition.seed_types,
+        )
+
+    def _bind_farm_context(self) -> None:
+        """Use an explicit scene clock whenever this farm belongs to an environment."""
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            self._farm_context = environment.get_farm(self._farm_world_app.farm_id)
+        self._farm_context.legacy_clock = self.time_manager
+
+    def get_tool_contract(self, method_name: str) -> OperationContract | None:
+        return tractor_operation_contract(self._tool_contract_context, method_name)
 
     @property
     def _completed_prep_ops(self) -> list[str]:
@@ -72,9 +97,19 @@ class TractorApp(App, TractorOperations):
     def get_state(self) -> dict[str, Any]:
         state = self._tractor_device_state()
         state["completed_prep_ops"] = list(self._completed_prep_ops)
+        state["crop_id"] = self._farm_world_app.crop_id
         return state
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        world = self._farm_world_app
+        if state_dict.get("crop_id", "soybean") != world.crop_id:
+            raise ValueError("Tractor snapshot crop does not match its bound farm")
+        attached = state_dict.get("attached_implement")
+        if attached is not None and attached not in self.equipment.implements:
+            raise ValueError("Tractor snapshot mounts an implement not owned by this device")
+        if (state_dict.get("seed_hopper", 0) > 0
+                and state_dict.get("seed_type") not in world.crop_definition.seed_types):
+            raise ValueError("Tractor snapshot contains seeds incompatible with its bound farm")
         self._load_tractor_device_state(state_dict)
         self._completed_prep_ops = state_dict.get("completed_prep_ops", [])
 
@@ -111,7 +146,7 @@ class TractorApp(App, TractorOperations):
         Args:
             liters: Amount to transfer .
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_refuel(self._farm_context, liters=liters)
 
     @type_check
@@ -123,7 +158,7 @@ class TractorApp(App, TractorOperations):
         Args:
             liters: Amount to transfer
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_refill_pesticide_tank(self._farm_context, liters=liters)
 
     @type_check
@@ -134,23 +169,22 @@ class TractorApp(App, TractorOperations):
         Args:
             kg: Amount to transfer.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_load_fertilizer(self._farm_context, kg=kg)
 
     @type_check
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def load_seeds(self, seed_type: str, count: int) -> dict[str, Any]:
-        """Transfer seeds from the farm warehouse to the tractor seed hopper.
-        Hopper holds up to 300000 plants per seed type; excess is rejected.
+        """Transfer one permitted seed identity into this tractor's hopper.
+
+        The bound operation contract publishes the crop's seed choices.
 
         Args:
-            seed_type: One of STANDARD, EARLY_COLD, HIGH_DENSITY,
-                    STRESS_TOLERANT, HEIHE43, HEIHE50, HEINONG60,
-                    HEINONG84, HEIKE71.
-            count:     Number of plants to load (must be positive).
+            seed_type: Seed identity accepted by this loading point.
+            count: Positive number of seeds requested.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_load_seeds(self._farm_context, seed_type=seed_type, count=count)
 
     @type_check
@@ -168,7 +202,7 @@ class TractorApp(App, TractorOperations):
     def level(self) -> dict[str, Any]:
         """Level and till the full field surface using the attached implement.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_level(self._farm_context)
 
     @type_check
@@ -177,7 +211,7 @@ class TractorApp(App, TractorOperations):
     def base_fertilize(self) -> dict[str, Any]:
         """Apply base fertilizer across the full field using the tractor spreader.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_base_fertilize(self._farm_context)
 
     @type_check
@@ -189,7 +223,7 @@ class TractorApp(App, TractorOperations):
         Args:
             ridge_width_m: Width of each ridge in metres.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_form_ridges(self._farm_context, ridge_width_m=ridge_width_m)
 
     @type_check
@@ -209,7 +243,7 @@ class TractorApp(App, TractorOperations):
             end_ridge:     Last ridge to fertilize (max 10-ridge span).
             kg_per_ridge:  Fertilizer amount per ridge in kilograms (must be positive).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_apply_fertilizer(
             self._farm_context,
             start_ridge=start_ridge,
@@ -227,27 +261,16 @@ class TractorApp(App, TractorOperations):
         depth_cm: float,
         seed_spacing_cm: float,
     ) -> dict[str, Any]:
-        """Sow seeds across a contiguous block of ridges (up to 4 per pass).
-
-        Seed types:
-          STANDARD
-          EARLY_COLD
-          HIGH_DENSITY
-          STRESS_TOLERANT
-          HEIHE43
-          HEIHE50
-          HEINONG60
-          HEINONG84
-          HEIKE71
+        """Sow local ridges according to this field's crop operation rules.
 
         Args:
-            start_ridge: First ridge to plant (0-63).
-            end_ridge:   Last ridge to plant (0-63, max 4-ridge span).
+            start_ridge: First local ridge to plant, inclusive.
+            end_ridge: Last local ridge to plant, inclusive.
             depth_cm:    Sowing depth in centimetres.
             seed_spacing_cm:
                 In-row seed spacing in centimetres.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_plant_seeds(
             self._farm_context,
             start_ridge=start_ridge,
@@ -267,7 +290,7 @@ class TractorApp(App, TractorOperations):
             start_ridge: First ridge to spray (0-63).
             end_ridge:   Last ridge to spray (0-63, max 10-ridge span).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_apply_pesticide(
             self._farm_context,
             start_ridge=start_ridge,
@@ -284,7 +307,7 @@ class TractorApp(App, TractorOperations):
             liters: Amount of pesticide (insecticide) to transfer from
                     warehouse to the tractor's onboard pesticide tank.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_load_pesticide(self._farm_context, liters=liters)
 
     @type_check
@@ -310,7 +333,7 @@ class TractorApp(App, TractorOperations):
             end_ridge:        Last ridge (max 10-ridge span).
             liters_per_ridge: Insecticide application rate (>0).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_spray_pesticide(
             self._farm_context,
             start_ridge=start_ridge,
@@ -331,7 +354,7 @@ class TractorApp(App, TractorOperations):
         Args:
             liters: Amount to transfer.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_load_fungicide(self._farm_context, liters=liters)
 
     @type_check
@@ -355,7 +378,7 @@ class TractorApp(App, TractorOperations):
             end_ridge:        Last ridge to spray (0-63, max 10-ridge span).
             liters_per_ridge: Fungicide application rate (>0).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_apply_fungicide(
             self._farm_context,
             start_ridge=start_ridge,
@@ -384,7 +407,7 @@ class TractorApp(App, TractorOperations):
             end_ridge:        Last ridge to treat (0-63, max 10-ridge span).
             liters_per_ridge: Herbicide application rate (>0).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_apply_herbicide(
             self._farm_context,
             start_ridge=start_ridge,
@@ -411,7 +434,7 @@ class TractorApp(App, TractorOperations):
             start_ridge: First ridge to cultivate (0-63).
             end_ridge:   Last ridge to cultivate (0-63, max 10-ridge span).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_mechanical_weed_control(
             self._farm_context,
             start_ridge=start_ridge,
@@ -429,24 +452,18 @@ class TractorApp(App, TractorOperations):
         spacing_cm: float,
         full_replant: bool = False,
     ) -> dict[str, Any]:
-        """Replant a block of failed/poorly-emerged ridges.
+        """Replant local ridges using the modes supported by this crop.
 
-        For ridges that have not emerged yet, this behaves like a fresh
-        planting pass. For ridges that already have an established crop, the
-        operation represents gap-filling within the row: it improves
-        ``stand_fraction`` without resetting the whole ridge's phenology.
-        Set ``full_replant=True`` only when inspection shows the ridge stand
-        failed badly enough that the farm decision is to re-sow the ridge and
-        accept a later maturity window.
+        The operation contract publishes supported modes and agronomic limits.
 
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth (3-5 cm).
-            spacing_cm:  In-row seed spacing (>0).
+            start_ridge: First local ridge, inclusive.
+            end_ridge: Last local ridge, inclusive.
+            depth_cm: Sowing depth in centimetres.
+            spacing_cm: Positive in-row seed spacing in centimetres.
             full_replant: Whether this pass resets the ridge phenology.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_replant_seeds(
             self._farm_context,
             start_ridge=start_ridge,
@@ -471,7 +488,7 @@ class TractorApp(App, TractorOperations):
             start_ridge: First ridge (0-63).
             end_ridge:   Last ridge (0-63, max 10-ridge span).
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_incorporate_residue(
             self._farm_context,
             start_ridge=start_ridge,
@@ -482,13 +499,13 @@ class TractorApp(App, TractorOperations):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def harvest(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """Harvest a contiguous block of ridges (up to 4 per pass).
+        """Harvest local ridges using their crop's maturity and moisture rules.
 
         Args:
-            start_ridge: First ridge to harvest (0-63).
-            end_ridge:   Last ridge to harvest (0-63, max 4-ridge span).
+            start_ridge: First local ridge to harvest, inclusive.
+            end_ridge: Last local ridge to harvest, inclusive.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_harvest(
             self._farm_context,
             start_ridge=start_ridge,
@@ -503,7 +520,7 @@ class TractorApp(App, TractorOperations):
         Takes about 8 minutes. Call this when the bin is full or after the
         final harvest pass to deposit grain into the warehouse inventory.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._operate_unload_grain(self._farm_context)
 
     def _validate_ridge_window(
@@ -512,7 +529,7 @@ class TractorApp(App, TractorOperations):
         end_ridge: int,
         max_width: int,
     ) -> str | None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_validate_ridge_window(
             self._farm_context,
             start_ridge=start_ridge,
@@ -521,7 +538,7 @@ class TractorApp(App, TractorOperations):
         )
 
     def _trafficability_error(self, operation: str) -> str | None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_trafficability_error(self._farm_context, operation=operation)
 
     def _register_planting_with_physics(
@@ -531,7 +548,7 @@ class TractorApp(App, TractorOperations):
         seed_spacing_cm: float,
         initial_stand_fraction_by_ridge: dict[int, float] | None = None,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_planting_with_physics(
             self._farm_context,
             ridges=ridges,
@@ -550,7 +567,7 @@ class TractorApp(App, TractorOperations):
         returned grain quantity replaces the fixed GRAIN_KG_PER_RIDGE × yield_potential
         used in the legacy path.
         """
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_harvest_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -561,7 +578,7 @@ class TractorApp(App, TractorOperations):
         ridge_ids: list[int],
         total_kg: float,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_base_fertilizer_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -574,7 +591,7 @@ class TractorApp(App, TractorOperations):
         kg_per_ridge: float,
         method: str,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_fertilizer_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -587,7 +604,7 @@ class TractorApp(App, TractorOperations):
         ridge_ids: list[int],
         liters_per_ridge: float,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_fungicide_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -601,7 +618,7 @@ class TractorApp(App, TractorOperations):
         method: str,
         efficacy_multiplier: float,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_weed_control_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -614,7 +631,7 @@ class TractorApp(App, TractorOperations):
         self,
         ridge_ids: list[int],
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_residue_incorporation_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,
@@ -626,7 +643,7 @@ class TractorApp(App, TractorOperations):
         method: str,
         efficacy_multiplier: float = 1.0,
     ) -> None:
-        self._farm_context.legacy_clock = self.time_manager
+        self._bind_farm_context()
         return self._tractor_register_spray_with_physics(
             self._farm_context,
             ridge_ids=ridge_ids,

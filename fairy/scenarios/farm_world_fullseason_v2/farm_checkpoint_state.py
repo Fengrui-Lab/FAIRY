@@ -54,6 +54,13 @@ def export_farm_checkpoint_state(
         else None,
         "physics_state": None,
     }
+    if ("crop_configuration" in payload["farm_world_state"]
+            and "physics_state" in payload["farm_world_state"]):
+        # The World format is authoritative for every crop. Do not export a
+        # second soybean-specific copy of the native models alongside it.
+        payload["schema_version"] = 2
+        payload.pop("physics_state")
+        return payload
     if physics is None:
         return payload
 
@@ -91,6 +98,25 @@ def restore_farm_checkpoint_state(
 ) -> dict[str, Any]:
     """Restore a checkpoint into a FarmWorldApp/WeatherApp pair."""
 
+    world_state = dict(checkpoint_state["farm_world_state"])
+    farm_world.load_state(world_state)
+
+    # Modern World snapshots already contain native crop/environment state,
+    # including the scenario's own profile, coefficients and weather stream.
+    # Reconfiguring that profile from the registry would replace saved local
+    # weather overrides and restart its generator before continuation.
+    if "crop_configuration" in world_state and "physics_state" in world_state:
+        if (weather_app is not None and world_state.get("weather_state") is None
+                and checkpoint_state.get("weather_app_state")):
+            weather_app.load_state(dict(checkpoint_state["weather_app_state"]))
+        physics = farm_world._physics
+        if physics is not None and target_sim_time is not None:
+            physics.last_physics_sim_time = float(target_sim_time)
+        return _checkpoint_restore_result(farm_world, checkpoint_state)
+
+    # Historical checkpoints kept ridge shadows and engine state separately.
+    # Loading the shadows deliberately clears old engines. Create the profile
+    # only afterwards, so its generator exists when RNG/cache are restored.
     physics_state = checkpoint_state.get("physics_state") or {}
     profile_name = physics_state.get("profile_name")
     if profile_name:
@@ -102,7 +128,6 @@ def restore_farm_checkpoint_state(
             random_seed=physics_state.get("random_seed"),
             **dict(physics_state.get("scenario_metadata") or {}),
         )
-    farm_world.load_state(dict(checkpoint_state["farm_world_state"]))
     if weather_app is not None and checkpoint_state.get("weather_app_state"):
         weather_app.load_state(dict(checkpoint_state["weather_app_state"]))
 
@@ -138,6 +163,7 @@ def restore_farm_checkpoint_state(
         physics.biotic.states = _state_map(
             physics_state.get("biotic_states", {}),
             BioticPressureState,
+            date_fields=("last_daily_update_day",),
         )
         physics.management.states = _state_map(
             physics_state.get("management_states", {}),
@@ -147,7 +173,7 @@ def restore_farm_checkpoint_state(
         physics.yield_recovery.states = _state_map(
             physics_state.get("yield_recovery_states", {}),
             YieldRecoveryState,
-            date_fields=("maturity_date", "harvest_date"),
+            date_fields=("maturity_date", "harvest_date", "last_daily_update_day"),
         )
         physics.action_log = [
             FarmActionRecord(**dict(record))
@@ -163,6 +189,14 @@ def restore_farm_checkpoint_state(
             else _float_or_none(physics_state.get("last_physics_sim_time"))
         )
 
+    return _finish_checkpoint_restore(farm_world, weather_app, checkpoint_state)
+
+
+def _finish_checkpoint_restore(
+    farm_world: FarmWorldApp, weather_app: WeatherApp | None,
+    checkpoint_state: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Refresh public shadows without rebuilding the restored environment."""
     from fairy.apps.farm_world.physics_orchestrator import (
         sync_compatibility_fields_from_physics,
     )
@@ -170,12 +204,18 @@ def restore_farm_checkpoint_state(
     sync_compatibility_fields_from_physics(farm_world)
     if weather_app is not None:
         weather_app.set_avg_soil_vwc(farm_world.get_avg_vwc())
+    return _checkpoint_restore_result(farm_world, checkpoint_state)
+
+
+def _checkpoint_restore_result(
+    farm_world: FarmWorldApp, checkpoint_state: Mapping[str, Any],
+) -> dict[str, Any]:
     return {
         "status": "ok",
         "scenario_id": checkpoint_state.get("scenario_id"),
         "checkpoint_label": checkpoint_state.get("checkpoint_label"),
         "sim_time": farm_world.time_manager.time(),
-        "profile_name": getattr(farm_world.physics, "profile_name", None),
+        "profile_name": getattr(farm_world._physics, "profile_name", None),
     }
 
 

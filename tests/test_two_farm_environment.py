@@ -6,6 +6,7 @@ import pytest
 from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.system import SystemApp
 from fairy.controllers.engine import Engine
 from fairy.scenarios.scenario import Scenario
@@ -40,7 +41,10 @@ def two_farms(monkeypatch):
             ridge.soil_temp_c = 15.0
         world.configure_physics_profile("two_farm_static_weather")
         farms.append(FarmContext(farm_id, world, weather))
-    return FarmEnvironment(farms, weather, clock)
+    return FarmEnvironment(farms, weather, clock, warehouse=WarehouseApp(stock=WarehouseStock(
+        seed_stock={"STANDARD": 2_000_000}, pesticide_liters=4000.0,
+        fertilizer_kg=4000.0, fuel_liters=2000.0,
+    )))
 
 
 def test_two_physical_farms_use_one_forecast_day_and_keep_soil_independent(two_farms):
@@ -118,7 +122,7 @@ def test_engine_system_and_notification_wait_advance_all_farms(two_farms):
     env = two_farms
     system = SystemApp()
     scenario = Scenario(start_time=START, apps=[
-        *(farm.world for farm in env.farms.values()), env.weather, system,
+        *(farm.world for farm in env.farms.values()), env.weather, env.warehouse, system,
     ])
     scenario.farm_environment = env
     scenario.shared_equipment = []
@@ -148,7 +152,7 @@ def test_notification_wait_stops_at_event_and_synchronizes_before_event(two_farm
         step=lambda: "day changed",
     )
     system = SystemApp()
-    scenario = Scenario(start_time=START, apps=[system], dynamic_events=[event])
+    scenario = Scenario(start_time=START, apps=[system, env.warehouse], dynamic_events=[event])
     scenario.farm_environment = env
     Engine(None, scenario)
     system.wait_for_notification(timeout=2 * 86400)

@@ -15,6 +15,7 @@ class SharedRobotApp(RobotOperations, App):
     """One battery, charge session and inspection log across all target farms."""
 
     require_explicit_tool_docs = True
+    validate_tool_arguments = True
 
     def __init__(
         self,
@@ -38,9 +39,11 @@ class SharedRobotApp(RobotOperations, App):
         Consumes 20 percentage points of this robot's shared battery and advances
         every farm by the round-trip walking time. Refused during charging or
         with less than 20 percent battery available for the full trip. Wet weather
-        produces a ground-wet warning. This legacy single-ridge diagnostic reads
-        the target ridge's pest/disease state directly; use inspect_pests or
-        inspect_crop_health for noisy observation-model detections.
+        produces a ground-wet warning. Species labels require an explicitly
+        supported diagnostic capability for the target field. Otherwise the
+        observation model reports generic noisy detections without species or
+        disease identity; inspect_pests and inspect_crop_health always use noisy
+        ground-inspection products when physics is active.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -63,8 +66,9 @@ class SharedRobotApp(RobotOperations, App):
         """Inspect a local ridge range for pests using this shared ground robot.
 
         The observation model produces noisy pest, disease and weed detections
-        when physics is active. Coverage is limited to the first eight ridges and
-        can be reduced further by remaining battery. Each covered ridge consumes
+        when physics is active. A mission visits at most eight ridges, limited
+        by remaining battery. Every visited ridge is observed in sensor-sized
+        batches (four ridges per batch by default). Each ridge consumes
         5 battery percentage points, leaving at least 10 percent for return.
         Advances all farms by round-trip walking time per covered ridge.
         Charging or starting battery below 15 percent refuses the inspection.
@@ -96,7 +100,8 @@ class SharedRobotApp(RobotOperations, App):
 
         Physics-mode detections are noisy; the returned fields are the same
         ground-inspection products as inspect_pests, labelled crop_health.
-        Covers at most eight ridges, possibly fewer with low remaining battery.
+        A mission visits at most eight ridges, reduced by remaining battery,
+        using actual sensor-sized observation batches (four ridges by default).
         Each covered ridge consumes 5 battery percentage points, leaving at least
         10 percent for return. Advances time for every registered farm.
         Charging or starting battery below 15 percent refuses the inspection.
@@ -125,9 +130,11 @@ class SharedRobotApp(RobotOperations, App):
     ) -> dict[str, Any]:
         """Inspect emergence stand fraction in the specified farm's ridge range.
 
-        Physics mode returns the management stand fraction and noisy ground
-        detections; legacy mode estimates stand as 1 for planted ridges, else 0.
-        Covers at most eight ridges, possibly fewer with low remaining battery.
+        Physics mode returns visible current stand and noisy ground detections;
+        unemerged crops and harvested ground have zero visible stand. Legacy mode
+        estimates stand as 1 for planted ridges, else 0. A mission visits up to
+        eight ridges, limited by battery, with actual sensor-sized observation
+        batches (four ridges per batch by default).
         Each covered ridge consumes 5 battery percentage points, leaving at least
         10 percent for return. Advances time for every registered farm.
         Charging or starting battery below 15 percent refuses the inspection.

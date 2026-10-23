@@ -18,12 +18,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from fairy.apps.farm_world.crop_dynamics import CropDynamics
 
 from fairy.apps.farm_world.farm_action_record import FarmActionRecord
 from fairy.physics import (
     BioticPressureEngine,
-    CanopyBiomassGrowthEngine,
     HarvestAction,
     ManagementAction,
     ManagementEffectEngine,
@@ -31,10 +33,8 @@ from fairy.physics import (
     ObservationModelParameters,
     SensorAsset,
     SoilEngine,
-    ThermalTimePhenologyEngine,
     TreatmentApplication,
     WeatherGenerator,
-    YieldRecoveryEngine,
 )
 from fairy.physics.weather_engine import default_harbin_soybean_config
 
@@ -63,15 +63,17 @@ class FarmPhysicsState:
     scenario_type: str | None = None
     latitude_deg: float = 45.7  # Harbin/Heilongjiang default
     random_seed: int = 0
+    crop_id: str = "soybean"
 
     # Engines. Constructed in __post_init__ so they exist for type-checking but
     # remain unused until the first physics-aware activity flips engines_active.
     soil: SoilEngine = field(init=False)
-    phenology: ThermalTimePhenologyEngine = field(init=False)
-    canopy: CanopyBiomassGrowthEngine = field(init=False)
+    crop: CropDynamics = field(init=False)
+    phenology: Any = field(init=False)
+    canopy: Any = field(init=False)
     biotic: BioticPressureEngine = field(init=False)
     management: ManagementEffectEngine = field(init=False)
-    yield_recovery: YieldRecoveryEngine = field(init=False)
+    yield_recovery: Any = field(init=False)
     weather_generator: WeatherGenerator | None = field(init=False, default=None)
     observation_model: ObservationModel = field(init=False)
 
@@ -98,11 +100,16 @@ class FarmPhysicsState:
 
     def __post_init__(self) -> None:
         self.soil = SoilEngine(num_ridges=self.num_ridges)
-        self.phenology = ThermalTimePhenologyEngine(num_ridges=self.num_ridges)
-        self.canopy = CanopyBiomassGrowthEngine(num_ridges=self.num_ridges)
+        from fairy.apps.farm_world.crop_dynamics import create_crop_dynamics
+
+        self.crop = create_crop_dynamics(self.crop_id, self.num_ridges)
+        # Legacy validators and calibration helpers still address these native
+        # engines. They are aliases, never a second copy of crop state.
+        self.phenology = self.crop.phenology
+        self.canopy = self.crop.canopy
+        self.yield_recovery = self.crop.yield_recovery
         self.biotic = BioticPressureEngine(num_ridges=self.num_ridges)
         self.management = ManagementEffectEngine(num_ridges=self.num_ridges)
-        self.yield_recovery = YieldRecoveryEngine(num_ridges=self.num_ridges)
         self.observation_model = ObservationModel(
             params=ObservationModelParameters(random_seed=self.random_seed)
         )

@@ -28,6 +28,7 @@ class FieldOpsApp(IrrigationApp, ManualOperations):
     """Legacy single-farm irrigation and manual spraying tools."""
 
     require_explicit_tool_docs = False
+    validate_tool_arguments = True
 
     def __init__(self, farm_world_app: FarmWorldApp, weather_app: WeatherApp) -> None:
         super().__init__(farm_world_app, weather_app, name="FieldOpsApp")

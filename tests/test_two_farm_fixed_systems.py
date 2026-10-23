@@ -12,6 +12,7 @@ from fairy.apps.farm_world.irrigation_app import IrrigationApp
 from fairy.apps.farm_world.manual_ops_app import ManualOpsApp
 from fairy.apps.farm_world.sensor_app import SensorApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.app import App
 from fairy.tool_utils import app_tool
 from fairy.time_manager import TimeManager
@@ -31,7 +32,11 @@ def installations():
         sensor = SensorApp(world, name=f"{farm_id}_Sensor")
         irrigation = IrrigationApp(world, weather, name=f"{farm_id}_Irrigation")
         farms.append(FarmContext(farm_id, world, weather, sensor, irrigation))
-    environment = FarmEnvironment(farms, weather, clock)
+    warehouse = WarehouseApp(stock=WarehouseStock(
+        seed_stock={"STANDARD": 2_000_000}, pesticide_liters=4000.0,
+        fertilizer_kg=4000.0, fuel_liters=2000.0,
+    ))
+    environment = FarmEnvironment(farms, weather, clock, warehouse=warehouse)
     return environment, farms[0], farms[1]
 
 
@@ -81,15 +86,17 @@ def test_fixed_irrigation_catalog_does_not_expose_manual_sprayer(installations):
         assert f"Bound farm: {tool.class_instance.bound_farm_id}" in tool.function_description
 
 
-def test_manual_operator_draws_only_selected_farms_inventory(installations):
+def test_manual_operator_uses_common_stock_and_treats_only_selected_field(installations):
     environment, a, b = installations
     manual = ManualOpsApp(environment)
     assert manual.time_manager is environment.time_manager
-    initial_a, initial_b = a.world._inventory.pesticide_liters, b.world._inventory.pesticide_liters
+    initial = environment.warehouse.get_inventory()["pesticide_liters"]
+    a_before = deepcopy(a.world.get_ridge(0).to_dict())
     result = manual.apply_pesticide_manual("farm_b", 0, 1)
     assert result["farm_id"] == "farm_b" and result["status"] == "ok"
-    assert a.world._inventory.pesticide_liters == initial_a
-    assert b.world._inventory.pesticide_liters == initial_b - 6
+    assert environment.warehouse.get_inventory()["pesticide_liters"] == initial - 6
+    assert a.world.get_ridge(0).to_dict() == a_before
+    assert b.world.get_ridge(0).pesticide_applied_days_ago == 0
     assert manual.get_state()["manual_spray_log"][0]["farm_id"] == "farm_b"
 
 
@@ -97,10 +104,10 @@ def test_manual_operator_draws_only_selected_farms_inventory(installations):
 def test_bad_manual_dose_cannot_contaminate_inventory_or_advance_time(installations, dose):
     environment, a, _ = installations
     manual = ManualOpsApp(environment)
-    before = deepcopy(a.world._inventory.to_dict())
+    before = deepcopy(environment.warehouse.get_inventory())
     offset = environment.time_manager.offset
     assert "error" in manual.apply_pesticide_manual("farm_a", 0, 0, dose)
-    assert a.world._inventory.to_dict() == before
+    assert environment.warehouse.get_inventory() == before
     assert environment.time_manager.offset == offset
 
 

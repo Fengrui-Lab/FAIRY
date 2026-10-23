@@ -6,7 +6,8 @@
 
 田块：farm_a/FarmA、farm_b/FarmB，各 64 垄，垄长 268 m、垄距 1.1 m，
 每场 18,867.2 m²（1.88672 ha），一垄两行，HEINONG84，株距 7.9 cm。
-固定设施：每场独立 Sensor 和 Irrigation；仓库、土壤、作物和收获物也独立。
+固定设施：每场独立 Sensor 和 Irrigation；土壤、作物和水量预算独立。
+共享仓库：种子、肥料、农药、燃油统一存放；粮食在同一仓库按来源场和垄范围分批管理。
 共享设备：一台 Tractor、一台 Mavic3M、一台 Matrice4T、一台 Robot0。
 
 build_events_flow() 按以下顺序完整展开参考工作流：
@@ -16,8 +17,8 @@ build_events_flow() 按以下顺序完整展开参考工作流：
   4. +22 天：两场初花营养复核、健康抽查 28–35 垄、常规轻量追肥。
   5. +18 天：两场中期水分、全田 NDVI、病虫草抽查各场 56–63 垄。
   6. +8 天：两场灌浆水分和冠层检查，Matrice4T 分两半巡查各场全田。
-  7. +39 天：分别复核成熟、含水率、天气和通行；分 4 垄收获，逐趟卸回来源场，
-     分别完成必要干燥和入库。+1 天后核对两场库存并汇报。
+  7. +39 天：分别复核成熟、含水率、天气和通行；分 4 垄收获，逐趟卸到共享仓库并登记来源批次，
+     每批完成必要干燥和入库。+1 天后核对两场管理及共享库存并汇报。
 
 上述等待是指定 profile 下的参考巡查窗口，不是对生育期或可作业性的断言；
 Agent 要以实际观测调整时机。设备作业和充电也占用公共时间，A/B 始终一起生长。
@@ -46,6 +47,7 @@ from fairy.apps.farm_world.shared_drone_app import SharedDroneApp
 from fairy.apps.farm_world.shared_robot_app import SharedRobotApp
 from fairy.apps.farm_world.shared_tractor_app import SharedTractorApp
 from fairy.apps.farm_world.weather_app import WeatherApp
+from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.system import SystemApp
 from fairy.scenarios.registry import register_scenario
 from fairy.scenarios.scenario import Scenario
@@ -63,21 +65,40 @@ RIDGE_WIDTH_M = 1.1
 NUM_RIDGES = 64
 BASE_FERTILIZER_KG = 200.0  # 当前 base_fertilize 工具实际消耗，不沿用旧脚本的 250 kg 装载量。
 
-BRIEFING = """
+BASIC_BRIEFING = """
+管理哈尔滨同一地区farm_a和farm_b的完整黑农84大豆季，从播前裸地管理到收获、安全入库。
+两场初始均未整地、未播种；各有64垄（本地0–63），每垄268m长、垄距1.1m，一垄两行，
+每场18,867.2m²（1.88672ha）。种植HEINONG84，标准密度；按工具公开的作物要求选择适宜播种条件。
+这是正常年基线，两场共享区域天气；管理应根据各场实测情况和预报决定，不预设必须灌溉或施药。
+
+FarmA/FarmB分别提供farm_a/farm_b的田块状态与管理额度。
+FarmA_Sensor/FarmA_Irrigation固定服务farm_a，FarmB_Sensor/FarmB_Irrigation固定服务farm_b。
+Tractor、Mavic3M、Matrice4T、Robot0跨场共用，移动田间工具按其参数指定farm_id；
+Warehouse是唯一共享仓库，存放种子、肥料、农药、燃油及粮食批次。装卸物料与加油不传farm_id，
+机上兼容物料可跨场使用；换场前清空粮箱，粮食批次保留来源场与垄范围。
+两场使用同一北京时间，任何作业或等待都同时推进两场；commit_daily_physics也会消耗一天。
+
+完成两场的整地播种、全季观察与必要管理，并在满足作物成熟、籽粒水分、天气及通行条件后收获全田。
+按共享设备的实际容量、电量和覆盖范围安排作业，处理后复查；把所有粮食批次干燥至安全水分并入库。
+最后分别报告两场的管理依据、实际作业范围和产量，以及共享库存和设备状态。本场景validate暂空。
+""".strip()
+
+DETAILED_BRIEFING = """
 管理哈尔滨同一地区 farm_a 和 farm_b 的完整黑农84大豆季，从播前准备到安全入库。
 每场64垄（各自0–63），每垄268米长、垄距1.1米，一垄两行，每场约1.887公顷。
 品种HEINONG84，标准密度，播深4厘米、株距7.9厘米，两场均未整地、未播种。
 
-归属：FarmA/FarmB分别提供本场状态和仓库；FarmA_Sensor/FarmA_Irrigation只服务farm_a，
+归属：FarmA/FarmB分别提供本场状态与管理额度；Warehouse是两场共用的唯一仓库；FarmA_Sensor/FarmA_Irrigation只服务farm_a，
 FarmB_Sensor/FarmB_Irrigation只服务farm_b。Tractor、Mavic3M、Matrice4T、Robot0跨场共用，
-所有田间移动作业必须指定farm_id。切场前把剩余种肥药退回来源场，粮箱必须卸回粮食来源场。
+所有田间移动作业必须指定farm_id。装种肥药、加油和退料只操作共享仓库，不传farm_id。
+机上剩余物料可跨场使用；粮箱切场前先卸到共享仓库，用batch_id保留原田块与垄范围。
 两场共同经过时间；SystemApp.advance_time只推进一次，不要为两个农场各等待一遍。
 FarmA/FarmB的commit_daily_physics也会让两场一起经过一天，不能把它当无耗时刷新。
 
 全季工作：
-1. 读公共天气和预报，分别检查两场土壤、库存和共享设备。适播后逐场平地、施200kg底肥、
+1. 读公共天气和预报，读取一次共享库存，分别检查两场土壤、管理额度和共享设备。适播后逐场平地、施200kg底肥、
    按1.1米起垄，再以每趟最多4垄完成各场0–63垄播种。拖拉机油箱100L、种箱30万粒，
-   按真实需求补装；不要把一个农场装载的剩余物料带到另一个农场使用。
+   按真实需求从共享仓库补装；兼容的机上物料可在其他农场继续使用。
 2. 约播后15天进入出苗复核：分别读两场概览、土壤和冠层；Mavic3M巡查各场0–63垄；
    Robot0用inspect_emergence抽查各场0–7垄，异常时扩大调查，不把抽查当全田地面覆盖。
 3. 早期长势窗口（出苗复核后约23天）：两场分别读土壤/冠层、全田NDVI，
@@ -92,8 +113,8 @@ FarmA/FarmB的commit_daily_physics也会让两场一起经过一天，不能把�
 7. 参考收获窗口在再约39天后；这些间隔只是巡查计划，成熟和可作业条件必须重新观测。
    每场收获前分别确认0–63垄R8成熟、籽粒水分≤18%、无降雨、土壤允许通行。
    必要时继续观察和等待；不要强行收未成熟或不满足条件的田。安装harvester，每次最多4垄；
-   每趟卸粮到本场，粮箱清空后才能切场。分别检查收获物，偏湿粮干燥到13%后入库，
-   已满足≤13.5%安全水分的批次可直接入库；最后分别汇报两场管理、产量、库存及设备状态。
+   每趟卸粮到共享仓库并指定唯一batch_id，粮箱清空后才能切场。按批次检查水分、必要时干燥到13%再入库，
+   已满足≤13.5%安全水分的批次可直接入库；最后分别汇报两场管理与产量，再汇报共享库存及设备状态。
 
 无人机和机器人电池跨场连续，充电异步；先查看回执中的覆盖范围、剩余电量和充电状态。
 Robot0每次最多检查8垄，不能请求0–63后声称全田检查。Mavic3M一次64垄约耗64%电量，
@@ -113,19 +134,25 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
     queue_based_loop = True
     time_increment_in_seconds = 60
     expects_agent_harvest = True
-    scenario_input = BRIEFING
     additional_system_prompt = (
         "Manage both farm_a and farm_b through the entire soybean season, including harvest "
-        "and storage. Each farm has 64 local ridges and independent state, inventory, fixed "
+        "and storage. Each farm has 64 local ridges, independent field state, water allowances, fixed "
         "sensors and fixed irrigation. Tractor, Mavic3M, Matrice4T and Robot0 each have one "
-        "shared equipment state. Mobile field tools require farm_id. Return unused payload "
-        "to its source and unload grain to its origin before changing farms. All farms share "
+        "shared equipment state. One Warehouse owns seed, fertilizer, pesticide, fuel and grain batches. Mobile field tools require farm_id. Loading and returning supplies "
+        "use Warehouse without farm_id. Compatible supplies may cross farms; unload grain into a uniquely labelled batch before changing farms. All farms share "
         "one clock; advancing time or committing one farm's daily physics advances both. "
         "Observe each farm separately, check actual coverage, manage shared fuel and batteries, "
         "and finish only after both farms' harvest and storage work is complete. "
         "Calendar windows in the briefing guide observations; actual field conditions govern actions. "
         "Scenario validation is not implemented yet."
     )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        if not self.scenario_input:
+            self.scenario_input = DETAILED_BRIEFING if self.detailed_briefing else BASIC_BRIEFING
 
     def init_and_populate_apps(self) -> None:
         """两场的固定设施独立创建，四台移动设备各创建一次。"""
@@ -150,10 +177,27 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
         self.sensor_b = SensorApp(self.farm_b, name="FarmB_Sensor")
         self.irrigation_a = IrrigationApp(self.farm_a, self.weather, name="FarmA_Irrigation")
         self.irrigation_b = IrrigationApp(self.farm_b, self.weather, name="FarmB_Irrigation")
+        # 场景只声明一个仓库；预算保留原先各场库存之和，不随工具调用复制。
+        self.warehouse = WarehouseApp(stock=WarehouseStock(
+            seed_stock={
+                "STANDARD": 2_000_000,
+                "EARLY_COLD": 2_000_000,
+                "HIGH_DENSITY": 2_000_000,
+                "STRESS_TOLERANT": 2_000_000,
+                "HEIHE43": 2_000_000,
+                "HEIHE50": 2_000_000,
+                "HEINONG58": 2_000_000,
+                "HEINONG60": 2_000_000,
+                "HEINONG84": 2_000_000,
+                "HEIKE71": 2_000_000,
+            },
+            pesticide_liters=2_400.0, fertilizer_kg=5_000.0, fuel_liters=2_400.0,
+        ), name="Warehouse", max_storage_moisture_pct=13.5)
         self.farm_environment = FarmEnvironment([
             FarmContext("farm_a", self.farm_a, self.weather, self.sensor_a, self.irrigation_a),
             FarmContext("farm_b", self.farm_b, self.weather, self.sensor_b, self.irrigation_b),
-        ], self.weather, start_time=self.start_time, timezone_name="Asia/Shanghai")
+        ], self.weather, warehouse=self.warehouse,
+           start_time=self.start_time, timezone_name="Asia/Shanghai")
         self.tractor = SharedTractorApp(self.farm_environment, name="Tractor")
         self.mavic = SharedDroneApp(
             self.farm_environment, name="Mavic3M", description="共享多光谱巡查无人机",
@@ -168,20 +212,16 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
         self.system = SystemApp()
         self.shared_equipment = [self.tractor, self.mavic, self.matrice, self.robot]
         self.apps = [
-            self.aui, self.weather, self.farm_a, self.farm_b,
+            self.aui, self.weather, self.warehouse, self.farm_a, self.farm_b,
             self.sensor_a, self.sensor_b, self.irrigation_a, self.irrigation_b,
             *self.shared_equipment, self.manual_ops, self.system,
         ]
-        # 显式保留各场初态与资源；使用真实 Inventory 字段，不创建无效的库存别名。
+        # 各场只配置土壤、作物和管理预算；共享仓库资源已在上面声明一次。
         for farm in (self.farm_a, self.farm_b):
             farm.bound_farm_id = farm.farm_id
             farm._sim_date = "2026-05-05"
             farm.set_season_phase("full_season")
             farm.completed_prep_ops = []
-            farm._inventory.seed_stock[SEED_TYPE] = 1_000_000
-            farm._inventory.fertilizer_kg = 2500.0
-            farm._inventory.pesticide_liters = 1200.0
-            farm._inventory.fuel_liters = 1200.0
             for ridge in farm._ridges:
                 ridge.planted = False
                 ridge.soil_vwc = 0.30 + ((ridge.ridge_id % 5) - 2) * 0.003
@@ -209,21 +249,23 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
             ("farm_b", self.farm_b, self.sensor_b),
         )
         with EventRegisterer.capture_mode() as events:
-            previous = self.aui.send_message_to_agent(content=BRIEFING).with_id("briefing")
+            previous = self.aui.send_message_to_agent(content=self.scenario_input).with_id("briefing")
 
             # 1. 播前准备与播种：先完成A和B，再共同进入出苗等待。
             previous = self.weather.get_current_weather().oracle().with_id(
                 "prep_weather").depends_on(previous)
             previous = self.weather.get_forecast(days=5).oracle().with_id(
                 "prep_forecast").depends_on(previous)
+            previous = self.warehouse.get_inventory().oracle().with_id(
+                "prep_shared_warehouse_inventory").depends_on(previous)
             for farm_id, farm, sensor in farms:
                 previous = sensor.read_soil_sensors().oracle().with_id(
                     f"prep_{farm_id}_soil").depends_on(previous)
-                previous = farm.get_inventory().oracle().with_id(
-                    f"prep_{farm_id}_inventory").depends_on(previous)
+                previous = farm.get_management_status().oracle().with_id(
+                    f"prep_{farm_id}_management").depends_on(previous)
                 previous = self.tractor.get_status().oracle().with_id(
                     f"prep_{farm_id}_tractor_status").depends_on(previous)
-                previous = self.tractor.refuel(farm_id, 100.0).oracle().with_id(
+                previous = self.tractor.refuel(100.0).oracle().with_id(
                     f"prep_{farm_id}_refuel").depends_on(previous)
                 previous = self.tractor.attach_implement("grader").oracle().with_id(
                     f"prep_{farm_id}_attach_grader").depends_on(previous)
@@ -231,7 +273,7 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
                     f"prep_{farm_id}_level").depends_on(previous)
                 previous = self.tractor.detach_implement().oracle().with_id(
                     f"prep_{farm_id}_detach_grader").depends_on(previous)
-                previous = self.tractor.load_fertilizer(farm_id, BASE_FERTILIZER_KG).oracle().with_id(
+                previous = self.tractor.load_fertilizer(BASE_FERTILIZER_KG).oracle().with_id(
                     f"prep_{farm_id}_load_base_fertilizer").depends_on(previous)
                 previous = self.tractor.base_fertilize(farm_id).oracle().with_id(
                     f"prep_{farm_id}_base_fertilize").depends_on(previous)
@@ -241,16 +283,16 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
                     f"prep_{farm_id}_form_ridges").depends_on(previous)
                 previous = self.tractor.detach_implement().oracle().with_id(
                     f"prep_{farm_id}_detach_furrower").depends_on(previous)
-                # 每趟恰好装本场4垄所需种子，16趟共64垄，不把余种带入另一场。
+                # 每趟从共享仓库补装4垄种子；物料可跨场使用，品种仍不能混装。
                 for start in range(0, NUM_RIDGES, 4):
                     end = start + 3
                     count = plants_per_ridge_from_spacing(SEED_SPACING_CM) * 4
-                    previous = self.tractor.load_seeds(farm_id, SEED_TYPE, count).oracle().with_id(
+                    previous = self.tractor.load_seeds(SEED_TYPE, count).oracle().with_id(
                         f"plant_{farm_id}_load_seed_{start}_{end}").depends_on(previous)
                     previous = self.tractor.plant_seeds(
                         farm_id, start, end, DEPTH_CM, SEED_SPACING_CM,
                     ).oracle().with_id(f"plant_{farm_id}_{start}_{end}").depends_on(previous)
-                previous = self.tractor.return_supplies(farm_id).oracle().with_id(
+                previous = self.tractor.return_supplies().oracle().with_id(
                     f"plant_{farm_id}_return_supplies").depends_on(previous)
 
             # 来源场景播后有一次日结算。这里统一推进一天，不分别commit造成双倍时间。
@@ -381,7 +423,7 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
             previous = self.system.advance_time(days=1).oracle().with_id(
                 "settle_both_farms_after_podfill_1_day").depends_on(previous)
 
-            # 7. 成熟/收获/入库：每一场独立核对、收获、卸粮、干燥和入库。
+            # 7. 成熟/收获/入库：分别核对田块；共享仓库按唯一来源批次接收、干燥和入库。
             previous = self.system.advance_time(days=39).oracle().with_id(
                 "wait_both_farms_harvest_39_days").depends_on(previous)
             previous = self.weather.get_current_weather().oracle().with_id(
@@ -399,19 +441,23 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
                     f"harvest_{farm_id}_maturity_moisture_0_63").depends_on(previous)
                 previous = self.tractor.get_status().oracle().with_id(
                     f"harvest_{farm_id}_tractor_status").depends_on(previous)
-                previous = self.tractor.refuel(farm_id, 100.0).oracle().with_id(
+                previous = self.tractor.refuel(100.0).oracle().with_id(
                     f"harvest_{farm_id}_refuel").depends_on(previous)
                 for start in range(0, NUM_RIDGES, 4):
                     end = start + 3
                     previous = self.tractor.harvest(farm_id, start, end).oracle().with_id(
                         f"harvest_{farm_id}_{start}_{end}").depends_on(previous)
-                    previous = self.tractor.unload_grain(farm_id).oracle().with_id(
+                    batch_id = f"{farm_id}_{start}_{end}"
+                    previous = self.tractor.unload_grain(batch_id).oracle().with_id(
                         f"harvest_{farm_id}_unload_{start}_{end}").depends_on(previous)
-                # dry_grain 在已安全时返回 drying_skipped，不虚构一次烘干消耗。
-                previous = farm.dry_grain(target_moisture_pct=13.0).oracle().with_id(
-                    f"storage_{farm_id}_dry_if_needed").depends_on(previous)
-                previous = farm.store_grain().oracle().with_id(
-                    f"storage_{farm_id}_store").depends_on(previous)
+                # 仓库按来源场/垄范围留批次；每批独立检查水分、干燥和入库。
+                for start in range(0, NUM_RIDGES, 4):
+                    end = start + 3
+                    batch_id = f"{farm_id}_{start}_{end}"
+                    previous = self.warehouse.dry_grain(batch_id, target_moisture_pct=13.0).oracle().with_id(
+                        f"storage_{farm_id}_{start}_{end}_dry_if_needed").depends_on(previous)
+                    previous = self.warehouse.store_grain(batch_id).oracle().with_id(
+                        f"storage_{farm_id}_{start}_{end}_store").depends_on(previous)
             previous = self.tractor.detach_implement().oracle().with_id(
                 "harvest_detach_shared_harvester").depends_on(previous)
             previous = self.system.advance_time(days=1).oracle().with_id(
@@ -419,10 +465,14 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
             for farm_id, farm, sensor in farms:
                 previous = farm.get_farm_overview().oracle().with_id(
                     f"final_{farm_id}_overview").depends_on(previous)
-                previous = farm.get_inventory().oracle().with_id(
-                    f"final_{farm_id}_inventory").depends_on(previous)
+                previous = farm.get_management_status().oracle().with_id(
+                    f"final_{farm_id}_management").depends_on(previous)
+            previous = self.warehouse.get_inventory().oracle().with_id(
+                "final_shared_warehouse_inventory").depends_on(previous)
+            previous = self.warehouse.get_grain_batches().oracle().with_id(
+                "final_shared_grain_batches").depends_on(previous)
             self.aui.send_message_to_user(
-                content="双农场全季参考流程结束；请分别核对两场收获入库、库存及共享设备记录。validate暂未实现。",
+                content="双农场全季参考流程结束；请分别核对两场收获，统一核对仓库批次、库存及共享设备记录。validate暂未实现。",
             ).oracle().with_id("report_both_farms_full_season").depends_on(previous)
         self.events = events
         return events

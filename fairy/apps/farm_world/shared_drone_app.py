@@ -15,6 +15,7 @@ class SharedDroneApp(DroneOperations, App):
     """A single battery and mission log; each survey names its target farm."""
 
     require_explicit_tool_docs = True
+    validate_tool_arguments = True
 
     def __init__(
         self,

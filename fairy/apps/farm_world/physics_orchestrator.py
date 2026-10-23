@@ -32,40 +32,9 @@ from datetime import date, datetime, timedelta, timezone, tzinfo
 from typing import TYPE_CHECKING, Any, Callable
 
 from fairy.physics import (
-    BioticCropInput,
-    BioticSoilInput,
-    BioticWeatherInput,
-    CanopyPhenologyInput,
-    GrowthSoilInput,
-    GrowthWeatherInput,
-    ManagementCropInput,
-    ManagementSoilInput,
-    ManagementStressInput,
-    ManagementWeatherInput,
-    PhenologySoilInput,
-    PhenologyWeatherInput,
-    SeedType,
-    SoilWeatherInput,
-    SoybeanStage,
-    YieldGrowthInput,
-    YieldPhenologyInput,
-    YieldStressInput,
-    YieldWeatherInput,
-)
-from fairy.physics.biotic_pressure_engine import (
-    GrowthStage as BioticGrowthStage,
-)
-from fairy.physics.canopy_biomass_engine import (
-    GrowthStage as CanopyGrowthStage,
-)
-from fairy.physics.canopy_biomass_engine import (
-    SeedType as CanopySeedType,
-)
-from fairy.physics.management_effect_engine import (
-    GrowthStage as ManagementGrowthStage,
-)
-from fairy.physics.yield_recovery_engine import (
-    GrowthStage as YieldGrowthStage,
+    BioticSoilInput, BioticWeatherInput, GrowthWeatherInput,
+    ManagementSoilInput, ManagementWeatherInput, PhenologyWeatherInput,
+    SoilWeatherInput, YieldWeatherInput,
 )
 
 if TYPE_CHECKING:
@@ -102,7 +71,7 @@ def advance_physics_time(
 
     # First call seeds engine state from the scenario's initial ridge values.
     if physics.last_physics_sim_time is None:
-        _seed_physics_from_ridges(farm_world_app, target_sim_time)
+        physics.crop.initialize_from_ridges(farm_world_app, target_sim_time)
         subdaily_first_call = False
         # If a tool queued actions before the first advance_physics_time call
         # (e.g. plant_seeds calls advance after queuing), apply them now via
@@ -204,517 +173,46 @@ def _dates_between(
 
 
 # ---------------------------------------------------------------------------
-# Helpers — initial seeding from scenario state
-# ---------------------------------------------------------------------------
-
-
-def _seed_physics_from_ridges(
-    farm_world_app: "FarmWorldApp", target_sim_time: float
-) -> None:
-    """Seed engine state from the ridge values the scenario set up.
-
-    Most baseline scenarios (irrigation, planting, etc.) configure
-    ``r.soil_vwc``, ``r.soil_temp_c``, ``r.growth_stage``, ``r.planted``,
-    ``r.days_since_planted``, ``r.seed_type`` directly in
-    ``_configure_initial_state``. We mirror those into the engines so the
-    first daily tick starts from the scenario's intended world state, not
-    from engine defaults (0.25 VWC, NOT_PLANTED).
-    """
-    physics = farm_world_app.physics
-    physics.last_physics_sim_time = target_sim_time
-    today = farm_world_app.simulation_date(target_sim_time)
-
-    for ridge in farm_world_app._ridges:
-        rid = ridge.ridge_id
-
-        # Soil layer.
-        soil_state = physics.soil.states[rid]
-        soil_state.top_vwc = float(ridge.soil_vwc)
-        soil_state.root_vwc = float(ridge.soil_vwc)
-        soil_state.top_temp_c = float(ridge.soil_temp_c)
-        soil_state.root_temp_c = float(ridge.soil_temp_c)
-
-        # Phenology layer.
-        # Skip if the engine already has explicit planting state (i.e., a
-        # previous plant_seeds call has already initialised phenology). This
-        # preserves plant_seeds's PLANTED_PRE_EMERGENCE intent against the
-        # legacy growth_stage="VE" that set_ridge_planted writes.
-        phen_state = physics.phenology.states[rid]
-        if ridge.planted and not phen_state.planted:
-            phen_state.planted = True
-            phen_state.planting_date = today - timedelta(
-                days=int(ridge.days_since_planted)
-            )
-            phen_state.seed_type = _coerce_seed_type(ridge.seed_type)
-            phen_state.days_after_planting = int(ridge.days_since_planted)
-            mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
-            phen_state.stage = mapped
-            phen_state.emerged = mapped not in {
-                SoybeanStage.NOT_PLANTED,
-                SoybeanStage.PLANTED_PRE_EMERGENCE,
-            }
-            if phen_state.emerged and phen_state.emergence_date is None:
-                phen_state.emergence_date = phen_state.planting_date
-            # Seed effective_development_gdd so the engine's
-            # _stage_from_effective_gdd doesn't snap back to VE on the next
-            # daily tick. We pick the stage's threshold fraction × gdd_to_r8.
-            seed_type = phen_state.seed_type
-            if (
-                seed_type is not None
-                and seed_type in physics.phenology.seed_type_params
-            ):
-                seed_params = physics.phenology.seed_type_params[seed_type]
-                fraction = physics.phenology.params.stage_fraction_thresholds.get(
-                    mapped, 0.0
-                )
-                phen_state.effective_development_gdd = float(
-                    seed_params.gdd_to_r8 * fraction
-                )
-                phen_state.accumulated_gdd = max(
-                    phen_state.accumulated_gdd,
-                    phen_state.effective_development_gdd,
-                )
-                if mapped == SoybeanStage.R8 and phen_state.maturity_date is None:
-                    phen_state.maturity_date = phen_state.planting_date
-
-        # Biotic baseline reflects whatever the scenario configured for pest
-        # outbreaks via _configure_initial_state (carries through r.pest_pressure_base).
-        biotic_state = physics.biotic.states[rid]
-        biotic_state.insect_pressure = max(
-            biotic_state.insect_pressure, float(ridge.pest_pressure_base)
-        )
-        biotic_state.disease_pressure = max(
-            biotic_state.disease_pressure, float(ridge.disease_pressure_base)
-        )
-
-        # Management bridge: scenarios set r.nutrient_index / r.stand_fraction
-        # to describe anomaly blocks. Mirror them into ManagementEffectState
-        # so observation tools (canopy NDVI, robot inspect) see the truth.
-        # Also set mgmt.planted=True for planted ridges — robot.inspect_emergence
-        # only surfaces stand_fraction when mgmt.planted is True.
-        mgmt_state = physics.management.states.get(rid)
-        if mgmt_state is not None:
-            mgmt_state.nutrient_index = float(ridge.nutrient_index)
-            if ridge.planted:
-                mgmt_state.planted = True
-                mgmt_state.stand_fraction = float(ridge.stand_fraction)
-
-        # Canopy initialization for already-emerged crops in the seeded
-        # scenario state. Use the phenology engine's stage as the source of
-        # truth: if phenology says PLANTED_PRE_EMERGENCE (e.g. a freshly
-        # plant_seeds-ed ridge), skip canopy init even though the legacy
-        # ridge.growth_stage may temporarily say "VE". Daily ticks will init
-        # canopy when emergence actually happens.
-        canopy_state = physics.canopy.states[rid]
-        if ridge.planted and not canopy_state.initialized:
-            phen_stage = phen_state.stage
-            if phen_stage in {
-                SoybeanStage.NOT_PLANTED,
-                SoybeanStage.PLANTED_PRE_EMERGENCE,
-            }:
-                # Engine has authoritative pre-emergence state — don't init.
-                pass
-            else:
-                # Engine already at a post-emergence stage (or this ridge had
-                # planted=True from _configure_initial_state and we just set
-                # the engine stage from ridge.growth_stage).
-                seed_type = _coerce_seed_type(ridge.seed_type) or SeedType.STANDARD
-                physics.canopy.initialize_ridges(
-                    [rid],
-                    seed_type=CanopySeedType(seed_type.value),
-                    initial_stand_fraction=float(ridge.stand_fraction),
-                )
-                # Fast-forward LAI to a realistic value for the current stage.
-                # initialize_ridges always sets LAI ≈ 0.05 (VE-stage); for
-                # scenarios that start at R5/R6 we need a mature canopy so
-                # ET, NDVI, and biomass observations are sensible, and so
-                # post-irrigation soil VWC actually rises (under LAI=0.05
-                # the soil engine treats the field as bare and high ET cancels
-                # any irrigation gain).
-                _fast_forward_canopy_lai_for_stage(canopy_state, phen_stage)
-
-        # Canopy NDVI bridge: scenarios that pre-seed an anomaly NDVI via
-        # r.ndvi_proxy (>=0) overwrite the engine's default LAI-derived value.
-        if ridge.ndvi_proxy >= 0.0 and canopy_state.initialized:
-            canopy_state.ndvi_proxy = float(ridge.ndvi_proxy)
-
-
-_STAGE_LAI_TARGETS: dict[SoybeanStage, float] = {
-    SoybeanStage.VE: 0.10,
-    SoybeanStage.VC: 0.30,
-    SoybeanStage.V1: 0.60,
-    SoybeanStage.V2: 1.00,
-    SoybeanStage.V3: 1.60,
-    SoybeanStage.V4_PLUS: 2.50,
-    SoybeanStage.R1: 3.50,
-    SoybeanStage.R3: 4.00,
-    SoybeanStage.R5: 4.50,
-    SoybeanStage.R6: 4.50,
-    SoybeanStage.R7: 4.00,
-    SoybeanStage.R8: 1.50,
-}
-
-
-def _fast_forward_canopy_lai_for_stage(state, stage: SoybeanStage) -> None:
-    """Set canopy LAI/cover/biomass/NDVI to typical values for a phenology stage.
-
-    initialize_ridges always emits a VE-stage canopy (LAI ≈ 0.05). Scenarios
-    that start mid-season need the canopy "fast-forwarded" so the soil ET
-    model treats the ridge correctly and observation tools return sensible
-    NDVI/biomass values from day 0.
-    """
-    target_lai = _STAGE_LAI_TARGETS.get(stage)
-    if target_lai is None or target_lai <= state.lai:
-        return
-    state.lai = float(target_lai)
-    # Approximate canopy cover from LAI (Beer-Lambert with k≈0.6).
-    import math
-
-    state.canopy_cover = float(min(0.95, 1.0 - math.exp(-0.6 * target_lai)))
-    # Aboveground biomass scales roughly linearly with LAI in vegetative,
-    # plateaus in reproductive. Use a coarse proxy.
-    state.aboveground_biomass_g_m2 = float(target_lai * 180.0)
-    # NDVI saturates near 0.9 at high LAI.
-    state.ndvi_proxy = float(min(0.92, 0.20 + 0.155 * target_lai))
-
-
-def _ridge_planting_density_plants_m2(
-    farm_world_app: "FarmWorldApp",
-    ridge_id: int,
-) -> float:
-    """Return realized planting density for canopy growth in plants/m2."""
-    try:
-        ridge = farm_world_app._ridges[ridge_id]
-    except (AttributeError, IndexError):
-        return 40.0
-
-    ridge_width_m = float(getattr(farm_world_app, "ridge_width_m", 1.1) or 1.1)
-    if ridge_width_m <= 0.0:
-        return 40.0
-
-    if ridge.seeds_planted > 0:
-        from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M
-
-        ridge_area_m2 = FIELD_LENGTH_M * ridge_width_m
-        if ridge_area_m2 > 0.0:
-            return max(0.0, float(ridge.seeds_planted) / ridge_area_m2)
-
-    if ridge.seed_spacing_cm is not None and ridge.seed_spacing_cm > 0.0:
-        from fairy.apps.farm_world.farm_world_app import ROWS_PER_RIDGE
-
-        seed_spacing_m = float(ridge.seed_spacing_cm) / 100.0
-        return max(0.0, ROWS_PER_RIDGE / (ridge_width_m * seed_spacing_m))
-
-    return 40.0
-
-
-def _coerce_seed_type(seed_value: str | None) -> SeedType | None:
-    if seed_value is None:
-        return None
-    try:
-        return SeedType(seed_value)
-    except ValueError:
-        return SeedType.STANDARD
-
-
-def _map_legacy_growth_stage_to_soybean_stage(legacy_stage: str) -> SoybeanStage:
-    """Map farm_world.models.GrowthStage values to phenology SoybeanStage.
-
-    Legacy farm_world enum: BARE, VE, V1..V8, R1..R8.
-    SoybeanStage:           NOT_PLANTED, PLANTED_PRE_EMERGENCE, VE, VC, V1..V3,
-                            V4_PLUS, R1..R8 (R values use longer string codes).
-    """
-    if not legacy_stage or legacy_stage == "bare":
-        return SoybeanStage.NOT_PLANTED
-    direct_map = {
-        "VE": SoybeanStage.VE,
-        "VC": SoybeanStage.VC,
-        "V1": SoybeanStage.V1,
-        "V2": SoybeanStage.V2,
-        "V3": SoybeanStage.V3,
-    }
-    if legacy_stage in direct_map:
-        return direct_map[legacy_stage]
-    if legacy_stage.startswith("V"):
-        return SoybeanStage.V4_PLUS
-    r_map = {
-        "R1": SoybeanStage.R1,
-        "R3": SoybeanStage.R3,
-        "R5": SoybeanStage.R5,
-        "R6": SoybeanStage.R6,
-        "R7": SoybeanStage.R7,
-        "R8": SoybeanStage.R8,
-    }
-    if legacy_stage in r_map:
-        return r_map[legacy_stage]
-    if legacy_stage in {"R2"}:
-        return SoybeanStage.R1
-    if legacy_stage in {"R4"}:
-        return SoybeanStage.R3
-    return SoybeanStage.NOT_PLANTED
-
-
-def _map_soybean_stage_to_legacy(stage: SoybeanStage) -> str:
-    """Inverse mapping for compatibility shadowing."""
-    if stage == SoybeanStage.NOT_PLANTED:
-        return "bare"
-    if stage == SoybeanStage.PLANTED_PRE_EMERGENCE:
-        return "bare"
-    if stage == SoybeanStage.V4_PLUS:
-        return "V4"
-    legacy_map = {
-        SoybeanStage.VE: "VE",
-        SoybeanStage.VC: "VE",
-        SoybeanStage.V1: "V1",
-        SoybeanStage.V2: "V2",
-        SoybeanStage.V3: "V3",
-        SoybeanStage.R1: "R1",
-        SoybeanStage.R3: "R3",
-        SoybeanStage.R5: "R5",
-        SoybeanStage.R6: "R6",
-        SoybeanStage.R7: "R7",
-        SoybeanStage.R8: "R8",
-    }
-    return legacy_map.get(stage, "bare")
-
-
-# ---------------------------------------------------------------------------
 # Helpers — daily tick
 # ---------------------------------------------------------------------------
 
 
-def _run_daily_tick(
-    farm_world_app: "FarmWorldApp",
-    physics: "FarmPhysicsState",
-    weather_app: "WeatherApp | None",
-    day: date,
-    weather_inputs: dict[str, Any] | None = None,
-) -> None:
-    """Run one full daily tick following the integration-guide order."""
-    weather = (
-        weather_inputs
-        if weather_inputs is not None
-        else _build_weather_inputs(weather_app, day, physics=physics)
-    )
+def _run_daily_tick(farm_world_app, physics, weather_app, day, weather_inputs=None):
+    """One environmental update, with explicit crop phases around biotic growth."""
+    weather = weather_inputs if weather_inputs is not None else _build_weather_inputs(weather_app, day, physics=physics)
     _apply_biotic_outbreaks_for_day(physics, day)
-
-    pending_actions = physics.drain_pending_management_actions()
-    pending_treatments = physics.drain_pending_treatments()
-    pending_harvest = physics.drain_pending_harvest_actions()
-
-    # 1+2. Management engine consumes today's actions and updates residuals.
-    soil_inputs_for_management = _build_management_soil_inputs(physics)
-    crop_inputs_for_management = _build_management_crop_inputs(physics)
+    actions = physics.drain_pending_management_actions()
+    treatments = physics.drain_pending_treatments()
+    harvest = physics.drain_pending_harvest_actions()
     physics.management.update_day(
-        weather=weather["management"],
-        actions_by_ridge=pending_actions,
-        soil_by_ridge=soil_inputs_for_management,
-        crop_by_ridge=crop_inputs_for_management,
+        weather=weather["management"], actions_by_ridge=actions,
+        soil_by_ridge=_build_management_soil_inputs(physics),
+        crop_by_ridge=physics.crop.management_inputs(physics),
     )
-
-    # 3. Soil engine consumes today's irrigation as water input.
-    irrigation_mm = physics.management.irrigation_mm_by_ridge(pending_actions)
-    canopy_cover_by_ridge = {
-        rid: state.canopy_cover for rid, state in physics.canopy.states.items()
-    }
+    living_cover = {}
+    for rid, canopy in physics.canopy.states.items():
+        status = physics.crop.project(rid, physics.management.states[rid])
+        living_cover[rid] = (canopy.canopy_cover
+                             if status.current_planted and status.emerged else 0.0)
     physics.soil.update_day(
         weather=weather["soil"],
-        irrigation_mm_by_ridge=irrigation_mm,
-        canopy_cover_by_ridge=canopy_cover_by_ridge,
+        irrigation_mm_by_ridge=physics.management.irrigation_mm_by_ridge(actions),
+        canopy_cover_by_ridge=living_cover,
     )
-
-    # 4. Phenology consumes weather + soil.
-    phenology_soil_inputs = {
-        rid: PhenologySoilInput(
-            top_temp_c=physics.soil.states[rid].top_temp_c,
-            top_vwc=physics.soil.states[rid].top_vwc,
-            water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
-        )
-        for rid in physics.soil.states
-    }
-    phenology_results = physics.phenology.update_day(
-        weather=weather["phenology"],
-        soil_by_ridge=phenology_soil_inputs,
-    )
-
-    _apply_post_planting_cold_stand_penalty(physics, weather)
-
-    # 5. Initialize canopy state for ridges that just emerged.
-    for result in phenology_results:
-        if result.emerged:
-            canopy_state = physics.canopy.states[result.ridge_id]
-            if not canopy_state.initialized:
-                phen_state = physics.phenology.states[result.ridge_id]
-                seed_type_value = (
-                    phen_state.seed_type.value
-                    if phen_state.seed_type is not None
-                    else SeedType.STANDARD.value
-                )
-                stand_fraction = (
-                    physics.management.states[result.ridge_id].stand_fraction or 1.0
-                )
-                physics.canopy.initialize_ridges(
-                    [result.ridge_id],
-                    seed_type=CanopySeedType(seed_type_value),
-                    initial_stand_fraction=stand_fraction,
-                )
-
-    # 6. Canopy / biomass.
-    canopy_phenology_inputs = {
-        rid: CanopyPhenologyInput(
-            stage=CanopyGrowthStage(physics.phenology.states[rid].stage.value),
-            development_fraction=_phenology_development_fraction(
-                physics.phenology.states[rid],
-                getattr(physics.phenology, "seed_type_params", None),
-            ),
-        )
-        for rid in physics.phenology.states
-    }
-    canopy_soil_inputs = {
-        rid: GrowthSoilInput(
-            water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
-            root_vwc=physics.soil.states[rid].root_vwc,
-        )
-        for rid in physics.soil.states
-    }
-    canopy_management_inputs = {
-        rid: ManagementStressInput(
-            nutrient_stress=physics.management.states[rid].nutrient_stress,
-            biotic_stress=_compute_biotic_stress(physics.biotic.states[rid]),
-            stand_fraction=physics.management.states[rid].stand_fraction or 1.0,
-            planting_density_plants_m2=_ridge_planting_density_plants_m2(
-                farm_world_app,
-                rid,
-            ),
-            weed_pressure=physics.biotic.states[rid].weed_pressure,
-            insect_pressure=physics.biotic.states[rid].insect_pressure,
-            disease_pressure=physics.biotic.states[rid].disease_pressure,
-        )
-        for rid in physics.management.states
-    }
-    physics.canopy.update_day(
-        weather=weather["canopy"],
-        phenology_by_ridge=canopy_phenology_inputs,
-        soil_by_ridge=canopy_soil_inputs,
-        management_by_ridge=canopy_management_inputs,
-    )
-
-    # 7. Biotic pressure.
-    biotic_crop_inputs = {
-        rid: BioticCropInput(
-            stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
-            canopy_cover=physics.canopy.states[rid].canopy_cover,
-            seed_type=(
-                physics.phenology.states[rid].seed_type.value
-                if physics.phenology.states[rid].seed_type is not None
-                else None
-            ),
-        )
-        for rid in physics.phenology.states
-    }
-    biotic_soil_inputs = {
-        rid: BioticSoilInput(
-            top_vwc=physics.soil.states[rid].top_vwc,
-            root_vwc=physics.soil.states[rid].root_vwc,
-        )
-        for rid in physics.soil.states
-    }
+    physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
     physics.biotic.update_day(
-        weather=weather["biotic"],
-        crop_by_ridge=biotic_crop_inputs,
-        soil_by_ridge=biotic_soil_inputs,
-        treatments_by_ridge=pending_treatments,
+        weather=weather["biotic"], crop_by_ridge=physics.crop.biotic_inputs(physics),
+        soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
+                       for rid, state in physics.soil.states.items()},
+        treatments_by_ridge=treatments,
     )
-
-    # 8. Yield recovery (cheap; ignores ridges not yet at R5+).
-    yield_phenology = {
-        rid: YieldPhenologyInput(
-            stage=YieldGrowthStage(physics.phenology.states[rid].stage.value),
-            maturity_date=physics.phenology.states[rid].maturity_date,
-        )
-        for rid in physics.phenology.states
-    }
-    yield_growth = {
-        rid: YieldGrowthInput(
-            yield_potential_g_m2=state.yield_potential_g_m2,
-            aboveground_biomass_g_m2=state.aboveground_biomass_g_m2,
-        )
-        for rid, state in physics.canopy.states.items()
-    }
-    yield_stress = {
-        rid: YieldStressInput(
-            disease_severity=physics.biotic.states[rid].disease_pressure,
-            insect_pod_damage=physics.biotic.states[rid].insect_pressure,
-        )
-        for rid in physics.biotic.states
-    }
-    physics.yield_recovery.update_day(
-        weather=weather["yield"],
-        phenology_by_ridge=yield_phenology,
-        growth_by_ridge=yield_growth,
-        stress_by_ridge=yield_stress,
-        harvest_actions_by_ridge=pending_harvest,
-    )
+    physics.crop.advance_after_biotics(physics, day, weather, harvest)
 
     # 9. Observation cache regeneration is deferred — observation tools
     # call ObservationModel directly with the current truth on demand.
 
     # 10. Compatibility-field sync runs once after the loop in the entry
     # point, since multiple daily ticks can happen back-to-back.
-
-
-def _apply_post_planting_cold_stand_penalty(
-    physics: "FarmPhysicsState", weather: dict[str, Any]
-) -> None:
-    """Reduce final stand when cold/wet weather hits before emergence."""
-    phenology_weather = weather["phenology"]
-    soil_weather = weather["soil"]
-    day = phenology_weather.day
-    rain_mm = float(getattr(soil_weather, "rain_mm", 0.0) or 0.0)
-    min_temp_c = float(getattr(phenology_weather, "air_temp_min_c", 0.0) or 0.0)
-
-    for rid, mgmt_state in physics.management.states.items():
-        phen_state = physics.phenology.states.get(rid)
-        soil_state = physics.soil.states.get(rid)
-        if phen_state is None or soil_state is None:
-            continue
-        if (
-            not mgmt_state.planted
-            or not phen_state.planted
-            or phen_state.emerged
-            or phen_state.planting_date is None
-        ):
-            continue
-
-        days_after_planting = (day - phen_state.planting_date).days + 1
-        if days_after_planting < 1 or days_after_planting > 7:
-            continue
-
-        top_temp_c = float(soil_state.top_temp_c)
-        top_vwc = float(soil_state.top_vwc)
-        penalty = 0.012 * max(0.0, 10.0 - top_temp_c)
-        penalty += 0.035 * max(0.0, -min_temp_c)
-        if top_temp_c < 10.0 and top_vwc > 0.32:
-            penalty += 0.03
-        penalty += 0.002 * max(0.0, rain_mm - 10.0)
-        if penalty <= 0.0:
-            continue
-
-        old_stand = float(mgmt_state.stand_fraction or 1.0)
-        new_stand = max(0.35, min(1.0, old_stand - penalty))
-        if new_stand >= old_stand:
-            continue
-
-        mgmt_state.stand_fraction = new_stand
-        mgmt_state.planting_quality = min(
-            float(mgmt_state.planting_quality or 1.0), new_stand
-        )
-        phen_state.planting_quality = min(
-            float(phen_state.planting_quality or 1.0), new_stand
-        )
-        mgmt_state.tags.append(
-            f"post_plant_cold_stand_penalty:day={day.isoformat()},stand={new_stand:.3f}"
-        )
 
 
 def _build_weather_inputs(
@@ -922,80 +420,6 @@ def _build_management_soil_inputs(
     }
 
 
-def _build_management_crop_inputs(
-    physics: "FarmPhysicsState",
-) -> dict[int, ManagementCropInput]:
-    return {
-        rid: ManagementCropInput(
-            stage=ManagementGrowthStage(physics.phenology.states[rid].stage.value),
-            daily_biomass_g_m2=0.0,
-        )
-        for rid in physics.phenology.states
-    }
-
-
-def _phenology_development_fraction(
-    state: Any,
-    seed_type_params: Any | None = None,
-) -> float:
-    """Development fraction in [0, 1] for canopy/yield fill curves."""
-    seed_type = getattr(state, "seed_type", None)
-    params = None
-    if seed_type_params is not None and seed_type is not None:
-        params = seed_type_params.get(seed_type)
-    if params is not None:
-        gdd_to_r8 = float(getattr(params, "gdd_to_r8", 0.0) or 0.0)
-        if gdd_to_r8 > 0.0:
-            effective_gdd = float(
-                getattr(state, "effective_development_gdd", 0.0) or 0.0
-            )
-            return max(0.0, min(1.0, effective_gdd / gdd_to_r8))
-
-    stage_progress = {
-        SoybeanStage.NOT_PLANTED: 0.0,
-        SoybeanStage.PLANTED_PRE_EMERGENCE: 0.0,
-        SoybeanStage.VE: 0.05,
-        SoybeanStage.VC: 0.08,
-        SoybeanStage.V1: 0.12,
-        SoybeanStage.V2: 0.18,
-        SoybeanStage.V3: 0.25,
-        SoybeanStage.V4_PLUS: 0.40,
-        SoybeanStage.R1: 0.55,
-        SoybeanStage.R3: 0.70,
-        SoybeanStage.R5: 0.82,
-        SoybeanStage.R6: 0.90,
-        SoybeanStage.R7: 0.95,
-        SoybeanStage.R8: 1.0,
-    }
-    return stage_progress.get(state.stage, 0.0)
-
-
-def _compute_water_stress(root_vwc: float) -> float:
-    """0–1 multiplier where 1 is no water stress, 0 is severe stress.
-
-    Fixed ramp (wilting 0.12 → “unstressed” 0.22) is historical Farm-ARE canopy
-    behaviour. ``SoilEngine`` continues to use ``SoilParameters.wilting_point_vwc``
-    / ``water_stress_vwc`` for its internal transpiration factor; keeping this
-    mapping unchanged avoids silent yield shifts when scenarios override soil
-    hydraulics for water-balance realism (e.g. Tangyan5 Heilongjiang priors).
-    """
-    if root_vwc >= 0.18:
-        return 1.0
-    if root_vwc <= 0.12:
-        return 0.0
-    return (root_vwc - 0.12) / (0.18 - 0.12)
-
-
-def _compute_biotic_stress(biotic_state: Any) -> float:
-    """Translate biotic pressures to a 0–1 growth multiplier."""
-    weighted = (
-        0.28 * biotic_state.weed_pressure
-        + 0.32 * biotic_state.insect_pressure
-        + 0.45 * biotic_state.disease_pressure
-    )
-    return max(0.35, 1.0 - weighted)
-
-
 def _apply_biotic_outbreaks_for_day(physics: "FarmPhysicsState", day: date) -> None:
     """Inject scheduled biotic outbreaks from the active PhysicsProfile.
 
@@ -1114,102 +538,35 @@ def _avg_top_vwc(physics: "FarmPhysicsState | None") -> float | None:
 
 
 def _run_subdaily_injection(
-    physics: "FarmPhysicsState",
-    weather_app: "WeatherApp | None",
-    target_sim_time: float,
-    weather_inputs_provider: Callable[[date, bool], dict[str, Any]] | None = None,
-    *,
-    simulation_timezone: tzinfo = timezone.utc,
-) -> bool:
-    """Process pending actions inside a sub-daily lag (no local date crossed).
-
-    Feeds pending management actions to the management engine (so
-    cumulative_irrigation_mm / treatment residuals are recorded), pushes
-    irrigation water into soil VWC so sensor reads reflect it, and applies
-    treatments to the biotic engine, and settles harvest at current moisture.
-    These operations never age effects or evolve a second day. Returns True
-    if any irrigation was injected.
-    """
+    physics, weather_app, target_sim_time, weather_inputs_provider=None, *,
+    simulation_timezone=timezone.utc,
+):
+    """Commit new actions without growth, drydown or daily effect aging."""
     today = datetime.fromtimestamp(target_sim_time, tz=simulation_timezone).date()
-    weather = (
-        weather_inputs_provider(today, False)
-        if weather_inputs_provider is not None
-        else _build_weather_inputs(
-            weather_app,
-            today,
-            physics=physics,
-            advance_weather=False,
-        )
-    )
+    weather = (weather_inputs_provider(today, False) if weather_inputs_provider is not None
+               else _build_weather_inputs(weather_app, today, physics=physics, advance_weather=False))
     actions = physics.drain_pending_management_actions()
     treatments = physics.drain_pending_treatments()
-    harvest_actions = physics.drain_pending_harvest_actions()
-
+    harvest = physics.drain_pending_harvest_actions()
     if actions:
         physics.management.update_day(
-            weather=weather["management"],
-            actions_by_ridge=actions,
+            weather=weather["management"], actions_by_ridge=actions,
             soil_by_ridge=_build_management_soil_inputs(physics),
-            crop_by_ridge=_build_management_crop_inputs(physics),
-            advance_daily=False,
+            crop_by_ridge=physics.crop.management_inputs(physics), advance_daily=False,
         )
     if treatments:
         physics.biotic.update_day(
-            weather=weather["biotic"],
-            crop_by_ridge={
-                rid: BioticCropInput(
-                    stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
-                    canopy_cover=physics.canopy.states[rid].canopy_cover,
-                    seed_type=(
-                        physics.phenology.states[rid].seed_type.value
-                        if physics.phenology.states[rid].seed_type is not None
-                        else None
-                    ),
-                )
-                for rid in physics.phenology.states
-            },
-            soil_by_ridge={
-                rid: BioticSoilInput(
-                    top_vwc=physics.soil.states[rid].top_vwc,
-                    root_vwc=physics.soil.states[rid].root_vwc,
-                )
-                for rid in physics.soil.states
-            },
-            treatments_by_ridge=treatments,
-            advance_daily=False,
+            weather=weather["biotic"], crop_by_ridge=physics.crop.biotic_inputs(physics),
+            soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
+                           for rid, state in physics.soil.states.items()},
+            treatments_by_ridge=treatments, advance_daily=False,
         )
-
-    if harvest_actions:
-        physics.yield_recovery.settle_harvest(
-            weather=weather["yield"],
-            phenology_by_ridge={
-                rid: YieldPhenologyInput(
-                    stage=YieldGrowthStage(physics.phenology.states[rid].stage.value),
-                    maturity_date=physics.phenology.states[rid].maturity_date,
-                )
-                for rid in harvest_actions
-            },
-            growth_by_ridge={
-                rid: YieldGrowthInput(
-                    yield_potential_g_m2=physics.canopy.states[rid].yield_potential_g_m2,
-                )
-                for rid in harvest_actions
-            },
-            stress_by_ridge={
-                rid: YieldStressInput(
-                    disease_severity=physics.biotic.states[rid].disease_pressure,
-                    insect_pod_damage=physics.biotic.states[rid].insect_pressure,
-                )
-                for rid in harvest_actions
-            },
-            harvest_actions_by_ridge=harvest_actions,
-        )
-
-    irrigation_mm = physics.management.irrigation_mm_by_ridge(actions)
-    if irrigation_mm:
-        _apply_subdaily_irrigation(physics, irrigation_mm)
-        return True
-    return False
+    if harvest:
+        physics.crop.settle_harvest(physics, today, weather, harvest)
+    irrigation = physics.management.irrigation_mm_by_ridge(actions)
+    if irrigation:
+        _apply_subdaily_irrigation(physics, irrigation)
+    return bool(irrigation)
 
 
 def _apply_subdaily_irrigation(
@@ -1259,64 +616,21 @@ def _apply_subdaily_irrigation(
 # ---------------------------------------------------------------------------
 
 
-def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> None:
-    """Mirror engine outputs back onto RidgeState fields legacy code reads.
-
-    The mappings follow the integration guide's "Compatibility synchronization"
-    table. Pest/disease/yield are exposed as truth-mirror fields here so the
-    legacy validators and the sensor cache continue to work; in the long term
-    these reads should go through ObservationModel.
-    """
+def sync_compatibility_fields_from_physics(farm_world_app):
+    """Publish native crop projections after the common environmental update."""
     physics = farm_world_app._physics
     if physics is None or not physics.engines_active:
         return
-
     for ridge in farm_world_app._ridges:
         rid = ridge.ridge_id
         soil = physics.soil.states[rid]
-        # ridge.soil_vwc represents the 5-cm-depth sensor measurement
-        # (per RidgeState comment); that is the top layer in physics terms.
+        biotic = physics.biotic.states[rid]
         ridge.soil_vwc = float(soil.top_vwc)
         ridge.soil_temp_c = float(soil.top_temp_c)
-
-        # Public ridge lookups must reflect committed nutrition, including before planting.
         ridge.nutrient_index = float(physics.management.states[rid].nutrient_index)
-
-        phen = physics.phenology.states[rid]
-        if phen.planted:
-            ridge.planted = True
-            ridge.days_since_planted = int(phen.days_after_planting)
-            ridge.growth_stage = _map_soybean_stage_to_legacy(phen.stage)
-
-        biotic = physics.biotic.states[rid]
-        ridge.pest_pressure = float(biotic.insect_pressure)
-        ridge.disease_pressure = float(biotic.disease_pressure)
-        # Pest/disease baselines mirror the latent pressure so legacy code
-        # reading the *_base fields gets a consistent number.
-        ridge.pest_pressure_base = float(biotic.insect_pressure)
-        ridge.disease_pressure_base = float(biotic.disease_pressure)
-
-        canopy = physics.canopy.states[rid]
-        if canopy.initialized:
-            # Leave ridge.ndvi alone — that field is the agent-visible last
-            # observation populated by drone/sensor tools through
-            # ObservationModel. Truth is in canopy.ndvi_proxy and stays
-            # behind the observation boundary.
-            ridge.yield_potential = float(canopy.yield_potential_g_m2 / 350.0)
-            ridge.yield_potential = max(0.0, min(1.0, ridge.yield_potential))
-
-        yld = physics.yield_recovery.states[rid]
-        ridge.harvested = bool(yld.harvested)
-        if yld.grain_moisture_frac is not None:
-            ridge.grain_moisture_pct = float(yld.grain_moisture_frac * 100.0)
-        if yld.harvested:
-            ridge.planted = False
-            ridge.growth_stage = "BARE"
-            ridge.days_since_planted = 0
-            ridge.grain_moisture_pct = 0.0
-        elif phen.planted:
-            mgmt = physics.management.states[rid]
-            ridge.stand_fraction = float(mgmt.stand_fraction)
+        ridge.pest_pressure = ridge.pest_pressure_base = float(biotic.insect_pressure)
+        ridge.disease_pressure = ridge.disease_pressure_base = float(biotic.disease_pressure)
+    physics.crop.sync_public_fields(farm_world_app)
 
 
 # ---------------------------------------------------------------------------

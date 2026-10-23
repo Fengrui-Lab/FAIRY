@@ -18,12 +18,36 @@ def scene():
     return scenario, Engine(None, scenario)
 
 
+@pytest.mark.parametrize("scenario_id,seeds,pesticide,fertilizer,fuel", [
+    ("scenario_two_farm_shared_equipment", 2_000_000, 4000, 4000, 2000),
+    ("scenario_two_farm_full_season_hn84_normal", 2_000_000, 2400, 5000, 2400),
+    ("scenario_two_farm_full_season_hn84_disease_water", 2_000_000, 320, 5000, 2400),
+    ("scenario_three_farm_full_season_hn84_normal", 3_000_000, 3600, 7500, 3600),
+])
+def test_shared_warehouse_keeps_preexisting_scene_aggregate_budget(
+    scenario_id, seeds, pesticide, fertilizer, fuel,
+):
+    scenario = get_scenario_class(scenario_id)()
+    scenario.setup()
+    stock = scenario.warehouse.stock
+    assert len(stock.seed_stock) == 10
+    assert set(stock.seed_stock.values()) == {seeds}
+    assert stock.pesticide_liters == pesticide
+    assert stock.fertilizer_kg == fertilizer
+    assert stock.fuel_liters == fuel
+    assert scenario.warehouse.get_inventory()["inventory_scope"] == "scene"
+    assert scenario.farm_environment.warehouse is scenario.warehouse
+    assert sum(app is scenario.warehouse for app in scenario.apps) == 1
+
+
 def test_two_farm_oracle_completes_with_exact_fixed_and_mobile_ownership():
     scenario, engine = scene()
     engine.run_scenario_oracle(True)
     assert engine.evaluate().success
     assert scenario.sensor_a is not scenario.sensor_b
     assert scenario.irrigation_a is not scenario.irrigation_b
+    assert scenario.farm_environment.warehouse is scenario.warehouse
+    assert sum(app is scenario.warehouse for app in scenario.apps) == 1
     assert scenario.shared_equipment == [scenario.tractor, scenario.drone, scenario.robot]
     assert all(sum(r.planted for r in farm._ridges) == 64 for farm in (scenario.farm_a, scenario.farm_b))
     assert scenario.drone._battery_pct == 86
@@ -43,13 +67,13 @@ def test_saved_reference_replays_from_a_blank_scene(tmp_path):
     fresh, replay = scene()
     replay.replay_workflow(Workflow.load_workflow(str(path)))
     assert replay.evaluate().success
-    assert fresh.tractor.source_farm_id is None
+    assert "source_farm_id" not in fresh.tractor.get_state()
     assert fresh.farm_environment.time_manager is replay.time_manager
 
 
 def test_captured_reference_uses_same_public_actions():
     scenario, engine = scene()
-    assert len(scenario.events) == 87
+    assert len(scenario.events) == len(scenario._reference_actions()) + 1
     assert not any(r.planted for r in scenario.farm_b._ridges)
     engine._run_captured_oracle_events(True)
     assert engine.evaluate().success
@@ -71,7 +95,7 @@ def test_reference_obligations_cannot_be_replaced_by_partial_or_wrong_actions(om
         if omission == "short_survey" and method == "fly_survey":
             arguments["end_ridge"] = 0
         if omission == "short_robot" and method == "inspect_crop_health":
-            arguments["end_ridge"] = 0
+            arguments["end_ridge"] = arguments["start_ridge"]
         if omission == "wrong_depth" and method == "plant_seeds":
             arguments["depth_cm"] = 3.0
         modified.append((app, method, arguments, reason))
@@ -113,6 +137,8 @@ def test_actual_agent_gets_two_fixed_tool_sets_and_shared_explicit_drone():
     assert agent.run("Survey both farms with the shared drone", max_tool_calls=3) == "done"
     names = {t["function"]["name"] for t in llm.requests[0]}
     assert {"FarmA_Sensor__read_soil_sensors", "FarmB_Sensor__read_soil_sensors",
-            "FarmA_Irrigation__irrigate", "FarmB_Irrigation__irrigate"} <= names
+            "FarmA_Irrigation__irrigate", "FarmB_Irrigation__irrigate",
+            "Warehouse__get_inventory", "Warehouse__get_grain_batches"} <= names
+    assert {"FarmA__get_inventory", "FarmB__get_inventory"}.isdisjoint(names)
     assert scenario.drone._battery_pct == 98
     assert [log["farm_id"] for log in scenario.drone.get_state()["mission_log"]] == ["farm_a", "farm_b"]

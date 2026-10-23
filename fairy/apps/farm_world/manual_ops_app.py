@@ -13,6 +13,7 @@ from fairy.utils.type_utils import type_check
 
 class ManualOpsApp(App, ManualOperations):
     require_explicit_tool_docs = True
+    validate_tool_arguments = True
 
     def __init__(self, environment: FarmEnvironment, name: str = "ManualOps") -> None:
         super().__init__(name)
@@ -41,11 +42,12 @@ class ManualOpsApp(App, ManualOperations):
     ) -> dict[str, Any]:
         """Hand-spray one or two contiguous ridges in the selected farm.
 
-        Uses this farm's chemical inventory and quota, requires sprayable
-        weather, and advances the common clock for the operator passes.
+        Draws chemicals from the shared warehouse and records application quota
+        on the selected farm. Requires sprayable weather and advances the common
+        clock for the operator passes.
 
         Args:
-            farm_id: Exact target and chemical-source farm ID.
+            farm_id: Exact target farm ID; chemical stock comes from the shared warehouse.
             start_ridge: First local ridge ID, inclusive and zero based.
             end_ridge: Last local ridge ID; at most two ridges per call.
             liters_per_ridge: Positive pesticide dose in litres per ridge.

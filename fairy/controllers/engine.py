@@ -79,6 +79,14 @@ class Engine:
         previous_environment = getattr(self, "farm_environment", None)
         self.farm_environment = getattr(self.scenario, "farm_environment", None)
         if self.farm_environment is not None:
+            warehouse = self.farm_environment.warehouse
+            if warehouse is not None:
+                registrations = sum(
+                    getattr(app, "wrapped_app", app) is warehouse
+                    for app in self.scenario.apps or []
+                )
+                if registrations != 1:
+                    raise ValueError("Register the scene's common WarehouseApp exactly once in scenario.apps")
             clock = self.farm_environment.time_manager
             if clock.start_time != self.start_time:
                 raise ValueError("Scenario start_time must match its farm environment clock")
@@ -479,7 +487,7 @@ class Engine:
             equipment = getattr(self.scenario, "shared_equipment", [])
             if isinstance(equipment, dict):
                 equipment = list(equipment.values())
-            return {
+            summary = {
                 "farms": {
                     farm_id: self._farm_outcome(farm.world)
                     for farm_id, farm in self.farm_environment.farms.items()
@@ -488,6 +496,13 @@ class Engine:
                     app.name: app.get_state() for app in equipment
                 },
             }
+            warehouse = self.farm_environment.warehouse
+            if warehouse is not None:
+                summary["warehouse"] = {
+                    "inventory": warehouse.get_inventory(),
+                    "grain_batches": warehouse.get_grain_batches()["batches"],
+                }
+            return summary
         farm_world = next(
             (
                 app
@@ -503,8 +518,14 @@ class Engine:
     @staticmethod
     def _farm_outcome(farm_world: Any) -> dict[str, Any]:
         """Summarize one field; mobile equipment is reported by its owner once."""
-        inventory = farm_world.get_inventory() if hasattr(farm_world, "get_inventory") else {}
-        summary: dict[str, Any] = {"inventory": inventory}
+        if getattr(farm_world, "shared_warehouse", None) is not None:
+            summary: dict[str, Any] = {
+                "warehouse_id": farm_world.shared_warehouse.warehouse_id,
+                "management_status": farm_world.get_management_status(),
+            }
+        else:
+            inventory = farm_world.get_inventory() if hasattr(farm_world, "get_inventory") else {}
+            summary = {"inventory": inventory}
         physics = getattr(farm_world, "physics", None)
         yield_recovery = getattr(physics, "yield_recovery", None)
         states = list(getattr(yield_recovery, "states", {}).values()) if yield_recovery else []

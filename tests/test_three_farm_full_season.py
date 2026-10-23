@@ -39,12 +39,12 @@ def initial_state(scenario):
         "farms": [
             {
                 "ridges": [ridge.to_dict() for ridge in world._ridges],
-                "inventory": world._inventory.to_dict(),
                 "prep": list(world.completed_prep_ops),
                 "last_physics_time": world.physics.last_physics_sim_time,
             }
             for _, world, _, _ in farms(scenario)
         ],
+        "warehouse": scenario.warehouse.get_state(),
         "equipment": [app.get_state() for app in scenario.shared_equipment],
         "clock_offset": scenario.farm_environment.time_manager.offset,
     })
@@ -60,7 +60,8 @@ def test_fixed_installations_are_independent_and_actual_mobile_schemas_target_th
     contexts = farms(scenario)
     for attribute in (1, 2, 3):
         assert len({id(context[attribute]) for context in contexts}) == 3
-    assert len({id(world._inventory) for _, world, _, _ in contexts}) == 3
+    assert scenario.farm_environment.warehouse is scenario.warehouse
+    assert sum(app is scenario.warehouse for app in scenario.apps) == 1
     assert len({id(world._ridges) for _, world, _, _ in contexts}) == 3
     assert len({id(sensor._soil_sensors) for _, _, sensor, _ in contexts}) == 3
     for farm_id, world, sensor, irrigation in contexts:
@@ -82,6 +83,13 @@ def test_fixed_installations_are_independent_and_actual_mobile_schemas_target_th
     for prefix in ("FarmA", "FarmB", "FarmC"):
         assert f"{prefix}_Sensor__read_soil_sensors" in schemas
         assert f"{prefix}_Irrigation__irrigate" in schemas
+        assert f"{prefix}__get_management_status" in schemas
+        for method in ("get_inventory", "dry_grain", "store_grain"):
+            assert f"{prefix}__{method}" not in schemas
+    assert {"Warehouse__get_inventory", "Warehouse__get_grain_batches",
+            "Warehouse__dry_grain", "Warehouse__store_grain"} <= schemas.keys()
+    for method in ("load_seeds", "load_fertilizer", "refuel", "return_supplies", "unload_grain"):
+        assert "farm_id" not in schemas[f"Tractor__{method}"]["parameters"]["properties"]
     targeted = {
         name: schema["parameters"] for name, schema in schemas.items()
         if "farm_id" in schema["parameters"].get("properties", {})
@@ -138,14 +146,13 @@ def test_reference_capture_has_no_farm_side_effects_and_semantic_dependencies_ar
         if app_name in mobile_names and method in {
             "level", "base_fertilize", "form_ridges", "plant_seeds", "harvest",
             "fly_survey", "inspect_emergence", "inspect_crop_health", "inspect_pests",
-            "load_seeds", "load_fertilizer", "return_supplies", "unload_grain", "refuel",
         }:
             assert arguments.get("farm_id") in FARM_IDS
     assert observed_targets == FARM_IDS
 
 
 @pytest.mark.parametrize("operation", ["plant_seeds", "harvest"])
-def test_each_farm_has_complete_four_ridge_passes_and_harvest_unloads_to_its_origin(operation):
+def test_each_farm_has_complete_four_ridge_passes_and_traceable_warehouse_batches(operation):
     _, engine = scene()
     steps = exported_steps(engine)
     for farm_id in FARM_IDS:
@@ -169,7 +176,10 @@ def test_each_farm_has_complete_four_ridge_passes_and_harvest_unloads_to_its_ori
         for index, step in enumerate(steps):
             if step.tool_name == "Tractor__harvest":
                 assert steps[index + 1].tool_name == "Tractor__unload_grain"
-                assert steps[index + 1].tool_args["farm_id"] == step.tool_args["farm_id"]
+                args = step.tool_args
+                assert steps[index + 1].tool_args == {
+                    "batch_id": f"{args['farm_id']}_{args['start_ridge']}_{args['end_ridge']}"
+                }
 
 
 def test_robot_observations_are_real_samples_and_both_drones_cover_all_three_farms():
@@ -229,17 +239,11 @@ def test_saved_reference_replays_public_tools_from_fresh_state_with_three_safe_h
     tractor_state = fresh.tractor.get_state()
     for farm_id, world, _, _ in farms(fresh):
         assert sum(ridge.harvested for ridge in world._ridges) == 64
-        assert world._inventory.warehouse_grain_kg > 0
-        assert world._inventory.harvest_grain_kg == 0
-        assert world._inventory.grain_dried is True
         assert set(world.completed_prep_ops) == {"level", "base_fertilize", "form_ridges"}
         planting = [entry for entry in tractor_state["operation_log"]
                     if entry["operation"] == "plant_seeds" and entry["farm_id"] == farm_id]
         assert all(entry["seed_spacing_cm"] == 7.9 and entry["depth_cm"] == 4.0
                    for entry in planting)
-        assert 1_000_000 - world._inventory.seed_stock["HEINONG84"] == sum(
-            entry["seeds_used"] for entry in planting
-        )
         for operation in ("plant_seeds", "harvest"):
             entries = [entry for entry in tractor_state["operation_log"]
                        if entry["operation"] == operation and entry["farm_id"] == farm_id]
@@ -247,15 +251,28 @@ def test_saved_reference_replays_public_tools_from_fresh_state_with_three_safe_h
             assert Counter(ridge_id for entry in entries for ridge_id in entry["ridge_ids"]) == {
                 ridge_id: 1 for ridge_id in RIDGES
             }
-        stores = [step.content for step in replayed.dag.values()
-                  if step.tool_name == f"{world.name}__store_grain"]
-        assert len(stores) == 1
-        assert stores[0]["moved_kg"] > 0
-        assert stores[0]["storage_grain_moisture_pct"] <= stores[0]["max_storage_moisture_pct"]
-        assert set(stores[0]["batch_ridge_ids"]) == RIDGES
-        assert "warning" not in stores[0]
+        stores = [step.content["batch"] for step in replayed.dag.values()
+                  if step.tool_name == "Warehouse__store_grain"
+                  and step.content["batch"]["origin_farm_id"] == farm_id]
+        assert len(stores) == 16
+        assert all(batch["crop_id"] == "soybean" and batch["cultivar_id"] == "HEINONG84"
+                   and batch["cultivar_ids"] == ["HEINONG84"] for batch in stores)
+        assert all(batch["quantity_kg"] > 0 and batch["moisture_pct"] <= 13.5
+                   and batch["status"] == "stored" for batch in stores)
+        assert Counter(ridge_id for batch in stores for ridge_id in batch["ridge_ids"]) == {
+            ridge_id: 1 for ridge_id in RIDGES
+        }
 
-    assert fresh.tractor.source_farm_id is None
+    assert 3_000_000 - fresh.warehouse.stock.seed_stock["HEINONG84"] == sum(
+        entry["seeds_used"] for entry in tractor_state["operation_log"]
+        if entry["operation"] == "plant_seeds"
+    )
+    inventory = fresh.warehouse.get_inventory()
+    assert inventory["harvest_grain_kg"] == 0
+    assert inventory["warehouse_grain_kg"] == pytest.approx(sum(
+        batch.quantity_kg for batch in fresh.warehouse.grain_batches.values()
+    ))
+    assert "source_farm_id" not in fresh.tractor.get_state()
     assert fresh.tractor.grain_origin_farm_id is None
     assert all(tractor_state[key] == 0 for key in (
         "grain_bin_kg", "seed_hopper", "fertilizer_spreader_kg", "pesticide_tank_l", "fungicide_tank_l",
@@ -270,6 +287,16 @@ def test_saved_reference_replays_public_tools_from_fresh_state_with_three_safe_h
         "farm_a": 4, "farm_b": 4, "farm_c": 4,
     }
     assert all(len(entry["covered_ridges"]) == 8 for entry in robot_entries)
+    expected_coverage = Counter({
+        **{("emergence", rid): 1 for rid in range(8)},
+        **{("crop_health", rid): 2 for rid in range(28, 36)},
+        **{("pest", rid): 1 for rid in range(56, 64)},
+    })
+    for farm_id in FARM_IDS:
+        actual_coverage = Counter((entry["modality"], rid)
+                                  for entry in robot_entries if entry["farm_id"] == farm_id
+                                  for rid in entry["covered_ridges"])
+        assert actual_coverage == expected_coverage
     assert len({world._sim_date for _, world, _, _ in farms(fresh)}) == 1
     assert fresh.farm_environment.time_manager is replay_engine.time_manager
     assert fresh.validate(replay_engine.environment()) is None

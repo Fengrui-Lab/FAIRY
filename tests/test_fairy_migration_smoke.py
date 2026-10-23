@@ -501,7 +501,7 @@ def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() ->
     config = AgentConfigBuilder().build("farm_baseline_react")
     prompt = config.base_agent_config.system_prompt
 
-    assert "soybean farms configured in this scenario" in prompt
+    assert "farms and crops configured in this scenario" in prompt
     assert "actual farm count, field dimensions, ridge bounds" in prompt
     assert "specify its target on every operation" in prompt
     assert "provided function tools" in prompt
@@ -1573,7 +1573,12 @@ def test_agent_llm_retry_defaults_wait_for_rate_limits(monkeypatch: pytest.Monke
     assert agent._llm_retry_sleep_for_error(RuntimeError("connection reset")) == 0
 
 
-def test_agent_runtime_events_capture_tool_call_errors() -> None:
+@pytest.mark.parametrize("arguments,error_type", [
+    ('{"start_ridge": 0, "end_ridge": 3, "bad_arg": 1}', "TypeError"),
+    ('{"start_ridge": 0.5, "end_ridge": 3, "depth_cm": 4, "seed_spacing_cm": 10}', "ValueError"),
+    ('{"start_ridge": 0, "end_ridge": 3, "depth_cm": 7, "seed_spacing_cm": 10}', "ValueError"),
+])
+def test_agent_runtime_events_capture_tool_call_errors(arguments, error_type) -> None:
     scenario = ScenarioFarmWorldFieldPrep()
     scenario.setup()
     agent = build_controller_agent(
@@ -1584,7 +1589,7 @@ def test_agent_runtime_events_capture_tool_call_errors() -> None:
                     tool_calls=[
                         _ToolCall(
                             "TractorApp__plant_seeds",
-                            '{"start_ridge": 0, "end_ridge": 3, "bad_arg": 1}',
+                            arguments,
                         )
                     ]
                 )
@@ -1593,6 +1598,8 @@ def test_agent_runtime_events_capture_tool_call_errors() -> None:
         toolsets=scenario.apps,
     )
     engine = Engine(agent, scenario)
+    tractor = next(app for app in scenario.apps if app.name == "TractorApp")
+    before = tractor.get_state()
 
     engine.run_scenario_agent(
         max_tool_calls=5,
@@ -1608,12 +1615,8 @@ def test_agent_runtime_events_capture_tool_call_errors() -> None:
     assert tool_errors
     assert tool_errors[0]["status"] == "error"
     assert tool_errors[0]["tool_name"] == "TractorApp__plant_seeds"
-    assert tool_errors[0]["tool_args"] == {
-        "start_ridge": 0,
-        "end_ridge": 3,
-        "bad_arg": 1,
-    }
-    assert tool_errors[0]["error_type"] == "TypeError"
+    assert tool_errors[0]["tool_args"] == json.loads(arguments)
+    assert tool_errors[0]["error_type"] == error_type
     assert tool_errors[0]["error_message"]
     assert any(
         event["event_type"] == "tool_error_observation"
@@ -1622,7 +1625,7 @@ def test_agent_runtime_events_capture_tool_call_errors() -> None:
     )
     assert any(
         message.get("role") == "tool"
-        and "TypeError" in str(message.get("content"))
+        and error_type in str(message.get("content"))
         and "Now retry with valid arguments" in str(message.get("content"))
         for message in agent.messages.messages
         if isinstance(message, dict)
@@ -1635,6 +1638,12 @@ def test_agent_runtime_events_capture_tool_call_errors() -> None:
         event["event_type"] == "agent_run_error"
         for event in agent.runtime_events
     )
+    assert tractor.get_state() == before
+    error_steps = [step for step in agent.workflow.dag.values() if step.op_type == "TOOL_ERROR"]
+    assert len(error_steps) == 1
+    assert error_steps[0].tool_args == json.loads(arguments)
+    assert not any(event["event_type"] == "tool_call_end" and event["status"] == "ok"
+                   for event in agent.runtime_events)
 
 
 def test_rebatch_discovers_fairy_agent_workflow_bundles_only(tmp_path: Path) -> None:

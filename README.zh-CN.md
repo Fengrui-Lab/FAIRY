@@ -4,11 +4,43 @@
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
+多农场共用一个 `Warehouse` 管理种子、肥料、油、药和粮食；各场固定灌溉和水额独立。装料不选农场，田间作业选 `farm_id`，粮食按批追溯。见 [共有仓库设计、工具与记账规则](docs/shared-warehouse.md)。
+
+单农场玉米场景 [`scenario_single_farm_maize_full_season`](fairy/scenarios/maize/scenario_single_farm_maize_full_season.py) 显式选择独立玉米模型，从整地、播种、全季观察和水肥管理到 R6 收割、14% 水分入库。原大豆场景仍采用默认大豆路径。参见 [运行方法、实现边界与兼容验证](docs/single-farm-maize.md)；玉米品种是未田间标定的模拟品种。
+
+新增正常管理场景 [`scenario_single_farm_maize_normal_management`](fairy/scenarios/maize/scenario_single_farm_maize_normal_management.py)：V6追肥、吐丝期按墒情补水，灌浆期预报有雨则不重复灌水。异种双场 [`scenario_two_farm_maize_soybean_full_season`](fairy/scenarios/two_farm/scenario_two_farm_maize_soybean_full_season.py) 在同一场景管理玉米与大豆，各场固定设施、作物规则和粮食来源独立，共享机械、时钟和仓库。两者均为完整独立文件并实现验收。见 [配置、完整流程与运行命令](docs/managed-maize-and-soybean.md)。
+
 第一步双农场场景为 `scenario_two_farm_shared_equipment`：两场各64垄大豆，固定传感器和灌溉各一套，共用拖拉机、无人机和移动机器人。参见 [实现边界与运行方法](docs/two-farm-step1.md) 和 [完整场景文件](fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py)。
 
 双农场全季场景为 [`scenario_two_farm_full_season_hn84_normal`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_normal.py)，由哈尔滨黑农84标准密度正常年基线拓展：两场各64垄，从整地、播种、出苗、生长期巡查和水肥管理，一直到收获、干燥、分别入库。配置、Agent任务说明、带阶段/农场/垄范围的完整 `build_events_flow()` 均在该文件中；两套固定设施独立，拖拉机、两架无人机和机器人跨场共用。`validate()` 暂留空，报告的默认 validation 状态不表示已实现任务评分。
 
-三农场版本为 [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py)：A/B/C各64垄，三套传感器、固定灌溉和仓库独立；移动设备仍各一台，公共时间同时推进三场。完整配置和全季 workflow 独立定义在该场景文件中，`validate()` 同样暂留空。
+三农场版本为 [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py)：A/B/C各64垄，三套传感器和固定灌溉独立；仓库统一共享，移动设备仍各一台，公共时间同时推进三场。完整配置和全季 workflow 独立定义在该场景文件中，`validate()` 同样暂留空。
+
+## 新增7个场景的 detail 两档
+
+这7个场景使用构造参数 `detailed_briefing`，只接受 JSON 布尔值 `false` / `true`，默认 `true`。以前这批场景虽然接受参数，却始终发送固定的详细任务；现在两档分别选用各场景文件内完整定义的 `BASIC_BRIEFING` / `DETAILED_BRIEFING`，Agent 首条任务与事件图中的 briefing 使用同一份文本。
+
+`false` 给出任务目标、田块身份/面积/品种、设备与仓库归属、共同时钟和完成要求。全季场景的作物规则、实时水肥状态、额度和收储门槛仍可通过相同工具查询，但不附参考日期、剂量、已计算的装载量或预写的管理步骤。`true` 在这些事实之外提供内置的详细管理指导，保留原详细文本。工具说明、App、初态、天气、物理、Oracle动作和验收不随 detail 改变；`false` 也不会降低验收要求。
+
+| 场景 ID | `false` 的任务范围 | `true` 增加的指导 |
+| --- | --- | --- |
+| [`scenario_two_farm_shared_equipment`](fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py) | 两场整地播种、指定灌溉与巡查的短任务 | 完整准备顺序、物料装载及共享设备使用建议 |
+| [`scenario_two_farm_full_season_hn84_normal`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_normal.py) | 两场黑农84从裸地到分别安全入库 | 阶段巡查窗口、轻量追肥、充电和雨天等待参考 |
+| [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py) | 三场黑农84全季与共同资源核账 | 三场逐阶段巡查、追肥、设备调度和收储参考 |
+| [`scenario_two_farm_full_season_hn84_disease_water`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_disease_water.py) | 两场全季；保留A有病史、B持水较低的已知档案 | 重点垄段、调查/复查窗口、局部施药与灌溉的参考日期和用量 |
+| [`scenario_single_farm_maize_full_season`](fairy/scenarios/maize/scenario_single_farm_maize_full_season.py) | 单场玉米全季与安全收储 | 播种装载、追肥、两次补水窗口和阶段巡查参考 |
+| [`scenario_single_farm_maize_normal_management`](fairy/scenarios/maize/scenario_single_farm_maize_normal_management.py) | 正常壤土玉米全季与按需管理 | 追肥、R1补水、R3结合降雨暂缓灌溉等参考策略 |
+| [`scenario_two_farm_maize_soybean_full_season`](fairy/scenarios/two_farm/scenario_two_farm_maize_soybean_full_season.py) | 玉米＋大豆全季、分别管理与来源批次入库 | 两作物分别装种、追肥、补水、成熟收割与共享设备安排 |
+
+短任务 `scenario_two_farm_shared_equipment` 的固定灌溉范围/时长、播种参数与巡查范围是验收目标，两档都明确保留。详细档的日期和用量是参考，Agent 仍须以观测决定作业；全季场景现有验收可能要求完整追肥覆盖或正灌溉量，两档都执行这些规则。
+
+```bash
+# 在同一条 --agent 命令中切换；不要写成字符串 "false"，也不要放入 --init-kwargs。
+--scenario-kwargs '{"detailed_briefing": false}'
+--scenario-kwargs '{"detailed_briefing": true}'
+```
+
+CLI 没有独立的 `--detail` 选项；批量 runner 的 `--detail false/true` 会转成上述构造参数。代码调用方显式提供非空 `scenario_input` 时，自定义任务优先于内置两档。旧 L3 的 `kwoo` / `library` 等上下文模式不受影响，这7个新增场景只支持布尔两档。
 
 ## 系统定位
 
@@ -181,7 +213,9 @@ PYTHONPATH=. uv run python -m fairy.cli \
   --output-dir validation_runs/quickstart/fullseason/detail_false
 ```
 
-`detailed_briefing` 完整取值：
+下表针对旧 Harbin L3 场景；本分支新增7个场景仅支持上文的布尔两档。
+
+旧 L3 的 `detailed_briefing` 完整取值：
 
 | 取值 | JSON 写法 | 含义 | 额外依赖 |
 |---|---|---|---|
