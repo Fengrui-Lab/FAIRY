@@ -1,5 +1,9 @@
 """Generate cached oracle biological-yield baselines for FOS attribution.
 
+Rice IDs (or --scenarios rice) use the area-aware rice_outcome_v2 schema and
+native WOFOST 8.1 maturity. They are evaluated by fairy.scenarios.rice.evaluation;
+the ridge/R8 FOS description below applies only to the existing soybean tasks.
+
 For each requested scenario this script:
   1. Looks up the scenario class in the registry.
   2. Runs it under oracle mode (queue-based loop, no LLM agent) — i.e.
@@ -509,6 +513,9 @@ def _baseline_to_dict(b: BaselineResult) -> dict[str, Any]:
 
 def _resolve_scenarios(spec: str) -> list[str]:
     spec = spec.strip()
+    if spec == "rice":
+        from fairy.scenarios.registry import list_scenarios
+        return [sid for sid in list_scenarios() if sid.startswith("scenario_rice_")]
     if spec == "all":
         return _all_default_scenarios()
     if spec in {"full", "formal90", "l3_fullseason"}:
@@ -545,7 +552,7 @@ def main() -> int:
         help=(
             "Comma-separated scenario IDs, or one of: 'all', 'round12', "
             "'round3', 'round4', 'full'/'formal90'/'l3_fullseason', "
-            "'selected_l2_l1_20_30', 'l2_skill_72', 'l3_mini_20'. "
+            "'selected_l2_l1_20_30', 'l2_skill_72', 'l3_mini_20', 'rice'. "
             "Default: all."
         ),
     )
@@ -630,6 +637,16 @@ def main() -> int:
             continue
         try:
             logger.info("[BUILD] %s", sid)
+            if sid.startswith("scenario_rice_"):
+                from fairy.scenarios.rice.evaluation import build_baseline
+                if args.crop_backend == "legacy" or crop_backend_options:
+                    raise ValueError("Rice baselines require their WOFOST 8.1 profile")
+                payload = build_baseline(sid, include_donothing=args.include_donothing, max_days=args.max_days)
+                out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+                logger.info("  -> rice dry grain=%.1f kg, stored at 14%%=%.1f kg",
+                            payload["oracle"]["biological_dry_kg"], payload["oracle"]["stored_kg_at_14pct"])
+                n_ok += 1
+                continue
             baseline = _build_one_baseline(
                 sid,
                 extrapolation_max_days=args.max_days,

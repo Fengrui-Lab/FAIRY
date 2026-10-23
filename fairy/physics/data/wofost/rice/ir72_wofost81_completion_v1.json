@@ -1,0 +1,27 @@
+{
+  "profile_id": "ir72_wofost81_completion_v1",
+  "status": "uncalibrated_structural_transfer",
+  "base_variety": "Rice_IR72",
+  "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+  "parameters": {
+    "AMAX_REF": 40.0,
+    "KN": 0.4
+  },
+  "parameter_evidence": {
+    "AMAX_REF": {
+      "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+      "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+      "units": "kg CO2 ha-1 leaf h-1"
+    },
+    "KN": {
+      "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+      "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+      "units": "dimensionless"
+    }
+  },
+  "notes": [
+    "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+    "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+    "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+  ]
+}

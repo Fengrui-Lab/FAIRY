@@ -45,6 +45,8 @@ _LEGACY_ARTIFACT_SUFFIXES = (
 def _scenario_crop_backend_provenance(scenario: Any) -> dict[str, Any]:
     for app in scenario.apps or []:
         candidate = getattr(app, "wrapped_app", app)
+        if callable(getattr(candidate, "crop_backend_provenance", None)):
+            return candidate.crop_backend_provenance()
         if hasattr(candidate, "_physics"):
             return crop_backend_provenance(candidate)
     return crop_backend_provenance(None)
@@ -361,6 +363,7 @@ def main() -> None:
             system_message=get_farm_world_system_prompt(
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
+                crop=getattr(scenario, "crop_name", "soybean"),
             ),
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(

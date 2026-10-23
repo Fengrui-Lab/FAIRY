@@ -15,6 +15,9 @@ def crop_backend_provenance(farm_world_or_physics: Any) -> dict[str, Any]:
     expose the stable ``snapshot()['provenance']`` contract; an incomplete
     identity must never silently become a legacy identity.
     """
+    public_provider = getattr(farm_world_or_physics, "crop_backend_provenance", None)
+    if callable(public_provider):
+        return public_provider()
     physics = getattr(farm_world_or_physics, "_physics", farm_world_or_physics)
     backend_name = str(getattr(physics, "crop_backend_name", "legacy"))
     if backend_name == "legacy":

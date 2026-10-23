@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable
+from typing import Any, Callable, get_type_hints
 
-from fairy.tool_utils import agent_tool
+from fairy.tool_utils import agent_tool, type_to_json_schema
 
 
 def agent_toolset(obj: Any) -> list[Callable[..., Any]]:
@@ -23,12 +23,13 @@ def build_tool_schema(tool: Any) -> dict[str, Any]:
     if hasattr(tool, "to_open_ai"):
         return tool.to_open_ai()
     sig = inspect.signature(tool)
-    properties: dict[str, dict[str, str]] = {}
+    hints = get_type_hints(tool)
+    properties: dict[str, dict[str, Any]] = {}
     required: list[str] = []
     for name, param in sig.parameters.items():
         if name == "self":
             continue
-        properties[name] = {"type": "string", "description": None}
+        properties[name] = {**type_to_json_schema(hints.get(name, str)), "description": ""}
         if param.default is inspect._empty:
             required.append(name)
     return {

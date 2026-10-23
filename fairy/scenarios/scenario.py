@@ -63,7 +63,10 @@ class Scenario:
         if self.crop_backend != "legacy" or self.crop_backend_options:
             from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 
-            farm_world = self.get_typed_app(FarmWorldApp)
+            farm_world = next((app for app in self.apps or []
+                               if getattr(app, "simulation_world", False)), None)
+            if farm_world is None:
+                farm_world = self.get_typed_app(FarmWorldApp)
             farm_world.configure_crop_backend(
                 self.crop_backend, **self.crop_backend_options
             )
