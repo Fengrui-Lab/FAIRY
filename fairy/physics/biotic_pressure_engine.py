@@ -222,6 +222,8 @@ class BioticPressureState:
     cumulative_weed_pressure: float = 0.0
     cumulative_insect_pressure: float = 0.0
     cumulative_disease_pressure: float = 0.0
+    # Sub-daily treatments leave this unchanged; only a real daily tick sets it.
+    last_daily_update_day: date | None = None
 
     tags: list[str] = field(default_factory=list)
 
@@ -290,9 +292,14 @@ class BioticPressureEngine:
         crop_by_ridge: Mapping[int, BioticCropInput],
         soil_by_ridge: Mapping[int, BioticSoilInput] | None = None,
         treatments_by_ridge: Mapping[int, list[TreatmentApplication]] | None = None,
+        *,
+        advance_daily: bool = True,
     ) -> list[BioticPressureDayResult]:
         """
-        Advance all ridge biotic-pressure states by one day.
+        Apply treatments; evolve pressure at most once per date.
+
+        ``advance_daily=False`` applies new treatments without any daily growth,
+        cumulative exposure, or residual aging.
         """
         soil_by_ridge = soil_by_ridge or {}
         treatments_by_ridge = treatments_by_ridge or {}
@@ -306,7 +313,10 @@ class BioticPressureEngine:
             soil = soil_by_ridge.get(ridge_id, BioticSoilInput())
             treatments = treatments_by_ridge.get(ridge_id, [])
             results.append(
-                self._update_ridge_day(state, weather, crop, soil, treatments)
+                self._update_ridge_day(
+                    state, weather, crop, soil, treatments,
+                    advance_daily=advance_daily,
+                )
             )
 
         return results
@@ -343,9 +353,17 @@ class BioticPressureEngine:
         crop: BioticCropInput,
         soil: BioticSoilInput,
         treatments: list[TreatmentApplication],
+        *,
+        advance_daily: bool = True,
     ) -> BioticPressureDayResult:
         p = self.params
         tags: list[str] = []
+        if (
+            state.last_daily_update_day is not None
+            and weather.day < state.last_daily_update_day
+        ):
+            raise ValueError("Biotic pressure cannot move backwards in date")
+        evolve_daily = advance_daily and state.last_daily_update_day != weather.day
 
         # Apply treatments at the start of the day. If it rains enough on the
         # same day, reduce efficacy to represent wash-off / poor application.
@@ -401,43 +419,48 @@ class BioticPressureEngine:
         # Residual treatments suppress new growth pressure for a limited time.
         if state.herbicide_residual_days_left > 0:
             weed_suitability *= 1.0 - p.herbicide_residual_suppression
-            state.herbicide_residual_days_left -= 1
+            if evolve_daily:
+                state.herbicide_residual_days_left -= 1
             tags.append("herbicide_residual_active")
 
         if state.insecticide_residual_days_left > 0:
             insect_suitability *= 1.0 - p.insecticide_residual_suppression
-            state.insecticide_residual_days_left -= 1
+            if evolve_daily:
+                state.insecticide_residual_days_left -= 1
             tags.append("insecticide_residual_active")
 
         if state.fungicide_residual_days_left > 0:
             disease_suitability *= 1.0 - p.fungicide_residual_suppression
-            state.fungicide_residual_days_left -= 1
+            if evolve_daily:
+                state.fungicide_residual_days_left -= 1
             tags.append("fungicide_residual_active")
 
         # Logistic-like pressure growth under favorable conditions; decay under
         # unfavorable conditions. Pressures remain in [0, 1].
-        state.weed_pressure = self._update_pressure(
-            pressure=state.weed_pressure,
-            suitability=weed_suitability,
-            growth_rate=p.weed_base_growth,
-            decay_rate=p.weed_decay,
-        )
-        state.insect_pressure = self._update_pressure(
-            pressure=state.insect_pressure,
-            suitability=insect_suitability,
-            growth_rate=p.insect_base_growth,
-            decay_rate=p.insect_decay,
-        )
-        state.disease_pressure = self._update_pressure(
-            pressure=state.disease_pressure,
-            suitability=disease_suitability,
-            growth_rate=p.disease_base_growth,
-            decay_rate=p.disease_decay,
-        )
+        if evolve_daily:
+            state.weed_pressure = self._update_pressure(
+                pressure=state.weed_pressure,
+                suitability=weed_suitability,
+                growth_rate=p.weed_base_growth,
+                decay_rate=p.weed_decay,
+            )
+            state.insect_pressure = self._update_pressure(
+                pressure=state.insect_pressure,
+                suitability=insect_suitability,
+                growth_rate=p.insect_base_growth,
+                decay_rate=p.insect_decay,
+            )
+            state.disease_pressure = self._update_pressure(
+                pressure=state.disease_pressure,
+                suitability=disease_suitability,
+                growth_rate=p.disease_base_growth,
+                decay_rate=p.disease_decay,
+            )
 
-        state.cumulative_weed_pressure += state.weed_pressure
-        state.cumulative_insect_pressure += state.insect_pressure
-        state.cumulative_disease_pressure += state.disease_pressure
+            state.cumulative_weed_pressure += state.weed_pressure
+            state.cumulative_insect_pressure += state.insect_pressure
+            state.cumulative_disease_pressure += state.disease_pressure
+            state.last_daily_update_day = weather.day
 
         if state.weed_pressure > 0.35:
             tags.append("weed_pressure_high")

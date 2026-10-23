@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from fairy.apps.app import App
 from fairy.tool_utils import OperationType, app_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
+
+if TYPE_CHECKING:
+    from fairy.apps.farm_world.farm_environment import FarmEnvironment
 
 
 @dataclass
@@ -26,10 +29,14 @@ class SystemApp(App):
         self.wait_for_notification_timeout: WaitForNotificationTimeout | None = None
         self.wait_for_next_notification: Callable[[], None] = lambda: None
         self._farm_world_app = None
+        self.farm_environment: FarmEnvironment | None = None
 
     def wait(self, time: int = 0) -> None:
         assert time >= 0, "Time must be non-negative"
-        self.time_manager.add_offset(time)
+        if self.farm_environment is not None:
+            self.farm_environment.advance_time(time)
+        else:
+            self.time_manager.add_offset(time)
 
     @type_check
     @app_tool()
@@ -38,16 +45,29 @@ class SystemApp(App):
         """
         Get the current time, date, and weekday.
 
-        Returns a dictionary with the keys "current_timestamp" (epoch
-        timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
-        "current_weekday" (Monday, Tuesday, etc.).
+        Returns the epoch timestamp, scene-local datetime and weekday.
+        Multi-farm datetimes include a UTC offset and the configured timezone
+        name; scenes without a farm environment retain the legacy UTC format.
         """
-        timestamp = self.time_manager.time()
-        date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        return self._time_snapshot(self.time_manager.time())
+
+    def _time_snapshot(self, timestamp: float) -> dict:
+        simulation_timezone = (
+            self.farm_environment.simulation_timezone
+            if self.farm_environment is not None
+            else timezone.utc
+        )
+        date = datetime.fromtimestamp(timestamp, tz=simulation_timezone)
         return {
             "current_timestamp": timestamp,
-            "current_datetime": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "current_datetime": (
+                date.isoformat(sep=" ", timespec="seconds")
+                if self.farm_environment is not None
+                else date.strftime("%Y-%m-%d %H:%M:%S")
+            ),
             "current_weekday": date.strftime("%A"),
+            "timezone": str(simulation_timezone),
+            "utc_offset": date.strftime("%z"),
         }
 
     def reset_wait_for_notification_timeout(self) -> None:
@@ -55,6 +75,10 @@ class SystemApp(App):
 
     def attach_farm_world_app(self, farm_world_app) -> None:
         self._farm_world_app = farm_world_app
+
+    def attach_farm_environment(self, environment: FarmEnvironment) -> None:
+        """Bind an explicitly configured multi-farm scene to the System tools."""
+        self.farm_environment = environment
 
     @type_check
     @app_tool()
@@ -89,12 +113,15 @@ class SystemApp(App):
         if total_seconds <= 0:
             return {"error": "advance_time amount must be > 0"}
         farm_world_app = self._farm_world_app
-        if farm_world_app is not None:
+        if self.farm_environment is not None:
+            self.farm_environment.advance_time(total_seconds)
+        elif farm_world_app is not None:
             prepare = getattr(farm_world_app, "prepare_for_time_advance", None)
             if callable(prepare):
                 prepare(float(self.time_manager.time()))
-        self.time_manager.add_offset(total_seconds)
-        if farm_world_app is not None:
+        if self.farm_environment is None:
+            self.time_manager.add_offset(total_seconds)
+        if farm_world_app is not None and self.farm_environment is None:
             fw_tm = getattr(farm_world_app, "time_manager", None)
             if fw_tm is not None and fw_tm is not self.time_manager:
                 fw_tm.add_offset(total_seconds)
@@ -106,14 +133,10 @@ class SystemApp(App):
             advance = getattr(farm_world_app, "advance_physics_time", None)
             if callable(advance):
                 advance()
-        timestamp = self.time_manager.time()
         return {
             "status": "ok",
             "advanced_seconds": total_seconds,
-            "current_timestamp": timestamp,
-            "current_datetime": datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            **self._time_snapshot(self.time_manager.time()),
         }
 
     @app_tool()

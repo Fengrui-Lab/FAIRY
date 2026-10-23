@@ -6,10 +6,7 @@ import re
 import os
 from pathlib import Path
 from collections import deque, OrderedDict
-from datetime import datetime, timezone, timedelta
 from typing import Any
-
-CST = timezone(timedelta(hours=8))
 
 from fairy.agents.agent.base_agent import BaseAgent, RetryableLLMResponseError
 from fairy.agents.agent.toolset_builder import build_toolset
@@ -173,9 +170,7 @@ class Agent(BaseAgent):
         # human-readable ``time`` field remains the post-call timestamp for
         # backward compatibility with existing workflow consumers.
         env_time_before = self.time_manager.time()
-        env_datetime = datetime.fromtimestamp(env_time_before, tz=CST).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        env_datetime = self.format_sim_time(env_time_before)
 
         self.log(f"[Env Time: {env_datetime}] Calling tool: {name}({args})")
 
@@ -229,9 +224,7 @@ class Agent(BaseAgent):
 
         # Add time prefix to tool response
         env_time_after = self.time_manager.time()
-        env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        env_ts = self.format_sim_time(env_time_after)
         self.messages.tool_call_response(tool_response, tool_call, elapsed_time, env_ts)
         if deferred_messages:
             self.messages.messages.extend(deferred_messages)
@@ -272,9 +265,7 @@ class Agent(BaseAgent):
         time_before: float | None = None,
     ) -> None:
         env_time_after = self.time_manager.time()
-        env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        env_ts = self.format_sim_time(env_time_after)
         error_text = (
             f"[OUTPUT OF TOOL {tool_name}] ERROR:\n"
             "***\n"

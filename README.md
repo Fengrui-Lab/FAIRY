@@ -4,6 +4,12 @@
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 
+`scenario_two_farm_shared_equipment` manages two 64-ridge soybean farms with separate fixed sensors and irrigation, sharing one tractor, drone and ground robot. See the [two-farm implementation and runnable Oracle](docs/two-farm-step1.md) and its [complete scene file](fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py).
+
+[`scenario_two_farm_full_season_hn84_normal`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_normal.py) extends the Harbin Heinong84 normal-year baseline to two complete 64-ridge seasons, from field preparation through planting, monitoring, nutrient management, harvest, drying and separate storage. Configuration, the agent briefing and the complete named event workflow live in that file. Each farm has its own fixed installations; one tractor, two drones and one robot are shared. Task validation is intentionally unimplemented, so the report's default validation status is not a task score.
+
+[`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py) defines the complete three-farm season in its own file. Farms A/B/C each have 64 ridges, separate fixed sensors, irrigation and warehouses; the same mobile fleet and common clock serve all three farms. Task validation remains unimplemented.
+
 ## System Scope
 
 FAIRY executes FARM scenarios as reproducible agent experiments. A run is defined by the following inputs:

@@ -3,12 +3,14 @@ from __future__ import annotations
 import inspect
 import json
 from dataclasses import asdict, is_dataclass
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from fairy.scenarios.validation_result import ScenarioValidationResult
 from fairy.types import Action, CompletedEvent, EventType
+
+_LEGACY_WORKFLOW_TIMEZONE = timezone(timedelta(hours=8))
 
 
 def _make_serializable(value: Any) -> Any:
@@ -357,12 +359,17 @@ def _normalize_workflow_times(workflow: dict[str, dict[str, Any]]) -> None:
         if not isinstance(value, str):
             continue
         try:
-            step["time"] = datetime.fromisoformat(value).timestamp()
+            parsed = datetime.fromisoformat(value)
         except ValueError:
             try:
-                step["time"] = datetime.strptime(value, "%Y-%m-%d %H:%M:%S").timestamp()
+                parsed = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
             except ValueError:
                 step["time"] = None
+                continue
+        # Legacy Agent/Engine workflow strings were emitted in fixed UTC+8.
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=_LEGACY_WORKFLOW_TIMEZONE)
+        step["time"] = parsed.timestamp()
 
 
 def _default_workflow_dir(scenario: Any, env: Any) -> Path:

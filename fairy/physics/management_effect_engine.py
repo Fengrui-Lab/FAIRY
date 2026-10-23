@@ -179,6 +179,7 @@ class ManagementEffectState:
     # Nutrient effects.
     nutrient_index: float = 0.75
     nutrient_stress: float = 0.85
+    # Shared date cursor for nutrient, irrigation-memory and residual aging.
     last_nutrient_decay_day: date | None = None
 
     # Recent action memory.
@@ -263,13 +264,14 @@ class ManagementEffectEngine:
         actions_by_ridge: Mapping[int, list[ManagementAction]] | None = None,
         soil_by_ridge: Mapping[int, ManagementSoilInput] | None = None,
         crop_by_ridge: Mapping[int, ManagementCropInput] | None = None,
+        *,
+        advance_daily: bool = True,
     ) -> list[ManagementEffectDayResult]:
         """
-        Advance management-effect state by one day.
+        Apply new actions and, at most once per date, age persistent effects.
 
-        This should be called once per day after actions for that day are known.
-        Other modules can consume the returned state on the same day or next day,
-        depending on the scenario semantics.
+        Sub-daily callers use ``advance_daily=False``: actions take effect now,
+        without spending a day or marking the next daily tick as completed.
         """
         actions_by_ridge = actions_by_ridge or {}
         soil_by_ridge = soil_by_ridge or {}
@@ -280,7 +282,9 @@ class ManagementEffectEngine:
             actions = actions_by_ridge.get(ridge_id, [])
             soil = soil_by_ridge.get(ridge_id, ManagementSoilInput())
             crop = crop_by_ridge.get(ridge_id, ManagementCropInput())
-            results.append(self._update_ridge_day(state, weather, actions, soil, crop))
+            results.append(self._update_ridge_day(
+                state, weather, actions, soil, crop, advance_daily=advance_daily
+            ))
 
         return results
 
@@ -332,6 +336,8 @@ class ManagementEffectEngine:
         actions: list[ManagementAction],
         soil: ManagementSoilInput,
         crop: ManagementCropInput,
+        *,
+        advance_daily: bool = True,
     ) -> ManagementEffectDayResult:
         p = self.params
         tags: list[str] = []
@@ -340,8 +346,16 @@ class ManagementEffectEngine:
         if treatment_efficacy_modifier < 1.0:
             tags.append("application_conditions_reduce_efficacy")
 
-        # Age recent irrigation memory.
-        if state.days_since_irrigation is not None:
+        if (
+            state.last_nutrient_decay_day is not None
+            and weather.day < state.last_nutrient_decay_day
+        ):
+            raise ValueError("Management effects cannot move backwards in date")
+        # The existing nutrient-decay date guards all once-per-day aging.
+        age_effects = advance_daily and state.last_nutrient_decay_day != weather.day
+
+        # Age recent irrigation memory only on a real daily tick.
+        if age_effects and state.days_since_irrigation is not None:
             state.days_since_irrigation += 1
             if state.days_since_irrigation > p.irrigation_effect_window_days:
                 state.days_since_irrigation = None
@@ -350,7 +364,7 @@ class ManagementEffectEngine:
         # Decay nutrient index through background depletion and crop uptake.
         # Physics can tick multiple times on the same calendar day while several
         # tools are used; daily nutrient depletion should still happen once.
-        if state.last_nutrient_decay_day != weather.day:
+        if age_effects:
             uptake = p.nutrient_uptake_coeff * max(0.0, crop.daily_biomass_g_m2)
             state.nutrient_index -= p.daily_nutrient_decay + uptake
             state.nutrient_index = self._clip(
@@ -360,13 +374,16 @@ class ManagementEffectEngine:
 
         # Age residual treatment windows.
         if state.herbicide_residual_days_left > 0:
-            state.herbicide_residual_days_left -= 1
+            if age_effects:
+                state.herbicide_residual_days_left -= 1
             tags.append("herbicide_residual_active")
         if state.insecticide_residual_days_left > 0:
-            state.insecticide_residual_days_left -= 1
+            if age_effects:
+                state.insecticide_residual_days_left -= 1
             tags.append("insecticide_residual_active")
         if state.fungicide_residual_days_left > 0:
-            state.fungicide_residual_days_left -= 1
+            if age_effects:
+                state.fungicide_residual_days_left -= 1
             tags.append("fungicide_residual_active")
 
         for action in actions:

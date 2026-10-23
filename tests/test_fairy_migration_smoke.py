@@ -501,8 +501,9 @@ def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() ->
     config = AgentConfigBuilder().build("farm_baseline_react")
     prompt = config.base_agent_config.system_prompt
 
-    assert "soybean farm in Harbin, Heilongjiang" in prompt
-    assert "64 ridges across a 268m x 71m field" in prompt
+    assert "soybean farms configured in this scenario" in prompt
+    assert "actual farm count, field dimensions, ridge bounds" in prompt
+    assert "specify its target on every operation" in prompt
     assert "provided function tools" in prompt
     assert "do not hand-write JSON action blobs" in prompt
     assert "Don't call tools unnecessarily" not in prompt

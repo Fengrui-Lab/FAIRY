@@ -10,7 +10,7 @@ Farm layout: 268 m × 71 m, 64 ridges (ID 0-63), ridge width 1.1 m. [PDF-p1]
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any
 
 from fairy.apps.app import App
@@ -27,6 +27,7 @@ from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
 if TYPE_CHECKING:
+    from fairy.apps.farm_world.farm_environment import FarmEnvironment
     from fairy.apps.farm_world.farm_action_record import FarmActionRecord
     from fairy.apps.farm_world.farm_physics_state import FarmPhysicsState
     from fairy.apps.farm_world.weather_app import WeatherApp
@@ -160,8 +161,16 @@ class FarmWorldApp(App):
     The agent reads via app_tool calls.
     """
 
-    def __init__(self) -> None:
-        super().__init__(name="FarmWorldApp")
+    def __init__(
+        self, farm_id: str | None = None, name: str = "FarmWorldApp"
+    ) -> None:
+        super().__init__(name=name)
+        self.farm_id = farm_id
+        self.farm_environment: FarmEnvironment | None = None
+        self.simulation_timezone = timezone.utc
+        # Preparation is a property of the field, not of whichever tractor
+        # happened to work on it. Shared equipment must not carry it to B.
+        self.completed_prep_ops: list[str] = []
         self.ridge_width_m = DEFAULT_RIDGE_WIDTH_M
         self.num_ridges = DEFAULT_NUM_RIDGES
         self._ridges: list[RidgeState] = [
@@ -191,10 +200,19 @@ class FarmWorldApp(App):
     # App interface
     # ------------------------------------------------------------------
 
+    def simulation_date(self, timestamp: float | None = None) -> date:
+        """Return a business date using this farm's explicitly bound timezone."""
+        timestamp = self.time_manager.time() if timestamp is None else timestamp
+        return datetime.fromtimestamp(timestamp, tz=self.simulation_timezone).date()
+
     def get_state(self) -> dict[str, Any]:
+        if self.farm_environment is not None:
+            self.farm_environment.sync()
         self._apply_due_irrigation()
         return {
             "app_name": self.name,
+            "farm_id": self.farm_id,
+            "completed_prep_ops": list(self.completed_prep_ops),
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
             "ridges": [r.to_dict() for r in self._ridges],
@@ -215,6 +233,11 @@ class FarmWorldApp(App):
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        saved_farm_id = state_dict.get("farm_id", self.farm_id)
+        if self.farm_environment is not None and saved_farm_id != self.farm_id:
+            raise ValueError("Cannot load another farm's state into a bound FarmWorldApp")
+        self.farm_id = saved_farm_id
+        self.completed_prep_ops = list(state_dict.get("completed_prep_ops", []))
         self._sim_date = state_dict["sim_date"]
         self._season_phase = state_dict["season_phase"]
         self._ridges = [RidgeState.from_dict(d) for d in state_dict["ridges"]]
@@ -250,13 +273,24 @@ class FarmWorldApp(App):
         ]
 
     def reset(self) -> None:
+        """Restore an unconfigured empty field while retaining its identity and binding.
+
+        Recreate the scenario to restore its specific soil, inventory and profile.
+        A field reset must discard all old physical engines and pending actions.
+        """
         super().reset()
+        self._physics = None
+        self.completed_prep_ops = []
         self._ridges = [RidgeState.default(i) for i in range(self.num_ridges)]
         self._inventory = InventoryState.default()
         self._management_regime = ManagementRegimeState()
         self._postharvest_market = PostHarvestMarketPreset()
         self._planting_windows = []
-        self._sim_date = "2026-04-25"
+        self._sim_date = (
+            self.simulation_date().isoformat()
+            if self.farm_environment is not None
+            else "2026-04-25"
+        )
         self._season_phase = SeasonPhase.PREP.value
         self._pending_irrigation = {}
         self._pending_bin_grain_ridge_ids = []
@@ -357,6 +391,8 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
         """Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information."""
+        if self.farm_environment is not None:
+            self.farm_environment.before_tool()
         return {
             **self._inventory.to_dict(),
             "management_regime": self._management_regime.to_dict(),
@@ -423,9 +459,14 @@ class FarmWorldApp(App):
         """Return an error string if scenario planting-window rules block sowing."""
         if not self._planting_windows:
             return None
-        today = datetime.fromtimestamp(
-            float(self.time_manager.time()), tz=timezone(timedelta(hours=8))
-        ).date()
+        # Existing standalone scenarios define sowing windows in Beijing time.
+        today = (
+            self.simulation_date()
+            if self.farm_environment is not None
+            else datetime.fromtimestamp(
+                self.time_manager.time(), tz=timezone(timedelta(hours=8))
+            ).date()
+        )
         today_iso = today.isoformat()
         for ridge_id in ridge_ids:
             matches = [
@@ -841,8 +882,11 @@ class FarmWorldApp(App):
         if not self.physics_active:
             return {"status": "noop", "reason": "physics_inactive"}
         # Advance the clock by one day, then run the orchestrator.
-        self.time_manager.add_offset(86400)
-        result = self.advance_physics_time()
+        if self.farm_environment is not None:
+            result = self.farm_environment.advance_time(86400)[self.farm_id]
+        else:
+            self.time_manager.add_offset(86400)
+            result = self.advance_physics_time()
         return {"status": "ok", "tick_result": result}
 
     @type_check
@@ -1140,29 +1184,49 @@ class FarmWorldApp(App):
     ) -> dict[str, Any]:
         """Run physics forward to the current simulation clock.
 
-        Idempotent: if no time has elapsed since the last call, this is a
-        no-op. Day-boundary crossings trigger one daily tick per crossed
-        day; sub-daily intervals trigger a partial soil update if any
-        irrigation is pending. The orchestrator owns the actual engine call
-        sequence.
+        Repeated calls without elapsed time or pending actions are no-ops.
+        Pending actions also commit at the same timestamp without spending a
+        day. Business-date crossings trigger one daily tick per crossed day;
+        day-internal actions apply their effects without daily aging. The
+        orchestrator owns the engine call sequence.
 
         Returns a small status dict for tracing.
         """
+        if self.farm_environment is not None:
+            return self.farm_environment.sync(target_sim_time).get(
+                self.farm_id, {"status": "noop", "reason": "environment_sync_in_progress"}
+            )
+        return self._advance_physics_time_local(target_sim_time)
+
+    def _advance_physics_time_local(
+        self, target_sim_time: float | None = None
+    ) -> dict[str, Any]:
+        """Advance this field only; FarmEnvironment calls it for every field."""
+        if not self.physics_active and self.farm_environment is None:
+            return {"status": "skipped", "reason": "physics_inactive"}
+        current_time = (
+            float(target_sim_time)
+            if target_sim_time is not None
+            else float(self.time_manager.time())
+        )
+        self._sim_date = self.simulation_date(current_time).isoformat()
+        if self.farm_environment is not None:
+            self._apply_due_irrigation()
         if self._physics is None or not self._physics.engines_active:
             return {"status": "skipped", "reason": "physics_inactive"}
         from fairy.apps.farm_world.physics_orchestrator import (
             advance_physics_time as _advance,
         )
 
-        current_time = (
-            float(target_sim_time)
-            if target_sim_time is not None
-            else float(self.time_manager.time())
+        return _advance(
+            self,
+            current_time,
+            weather_inputs_provider=(
+                self.farm_environment.weather_inputs
+                if self.farm_environment is not None
+                else None
+            ),
         )
-        self._sim_date = datetime.fromtimestamp(current_time, tz=timezone.utc).strftime(
-            "%Y-%m-%d"
-        )
-        return _advance(self, current_time)
 
     def sync_initial_physics_state(
         self,

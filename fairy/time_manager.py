@@ -70,3 +70,10 @@ class TimeManager:
 
     def add_offset(self, offset: float) -> None:
         self.offset += offset
+
+
+class SimulationTimeManager(TimeManager):
+    """Advance only through explicit simulated durations, independent of host speed."""
+
+    def real_time_passed(self) -> float:
+        return 0.0

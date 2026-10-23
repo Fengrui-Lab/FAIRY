@@ -4,6 +4,12 @@
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
+第一步双农场场景为 `scenario_two_farm_shared_equipment`：两场各64垄大豆，固定传感器和灌溉各一套，共用拖拉机、无人机和移动机器人。参见 [实现边界与运行方法](docs/two-farm-step1.md) 和 [完整场景文件](fairy/scenarios/two_farm/scenario_two_farm_shared_equipment.py)。
+
+双农场全季场景为 [`scenario_two_farm_full_season_hn84_normal`](fairy/scenarios/two_farm/scenario_two_farm_full_season_hn84_normal.py)，由哈尔滨黑农84标准密度正常年基线拓展：两场各64垄，从整地、播种、出苗、生长期巡查和水肥管理，一直到收获、干燥、分别入库。配置、Agent任务说明、带阶段/农场/垄范围的完整 `build_events_flow()` 均在该文件中；两套固定设施独立，拖拉机、两架无人机和机器人跨场共用。`validate()` 暂留空，报告的默认 validation 状态不表示已实现任务评分。
+
+三农场版本为 [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py)：A/B/C各64垄，三套传感器、固定灌溉和仓库独立；移动设备仍各一台，公共时间同时推进三场。完整配置和全季 workflow 独立定义在该场景文件中，`validate()` 同样暂留空。
+
 ## 系统定位
 
 FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入决定：

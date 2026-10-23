@@ -61,6 +61,8 @@ def build_toolset(
             name = schema["function"]["name"]
             if name in excluded_tool_names:
                 continue
+            if name in tools_map:
+                raise ValueError(f"Duplicate tool name {name!r}; each registered App needs a unique name")
             tool_schemas.append(schema)
             tools_map[name] = tool
             tools.append(tool)

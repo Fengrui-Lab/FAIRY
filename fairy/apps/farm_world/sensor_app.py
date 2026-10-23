@@ -42,9 +42,10 @@ _SENSOR_ZONES: list[tuple[str, int, int, int]] = [
 class SensorApp(App):
     """Six soil probes and six canopy sensors, each covering a ridge zone."""
 
-    def __init__(self, farm_world_app: FarmWorldApp) -> None:
-        super().__init__(name="SensorApp")
+    def __init__(self, farm_world_app: FarmWorldApp, name: str | None = None) -> None:
+        super().__init__(name=name or "SensorApp")
         self._farm_world_app = farm_world_app
+        self.bound_farm_id = getattr(farm_world_app, "farm_id", None)
         self._soil_sensors = self._default_soil_sensors()
         self._canopy_sensors = self._default_canopy_sensors()
 
@@ -55,11 +56,23 @@ class SensorApp(App):
     def get_state(self) -> dict[str, Any]:
         return {
             "app_name": self.name,
+            "farm_id": self.bound_farm_id,
             "soil_sensors": [dict(s) for s in self._soil_sensors],
             "canopy_sensors": [dict(s) for s in self._canopy_sensors],
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        """Restore readings without changing this installation's farm binding.
+
+        Old snapshots without an identified farm, and unbound legacy instances,
+        retain their original loading behavior.
+        """
+        saved_farm_id = state_dict.get("farm_id")
+        if (self.bound_farm_id is not None and saved_farm_id is not None
+                and saved_farm_id != self.bound_farm_id):
+            raise ValueError(
+                f"Cannot load farm {saved_farm_id!r} state into sensor bound to {self.bound_farm_id!r}"
+            )
         self._soil_sensors = [dict(s) for s in state_dict["soil_sensors"]]
         self._canopy_sensors = [dict(s) for s in state_dict["canopy_sensors"]]
 
@@ -98,7 +111,7 @@ class SensorApp(App):
             )
             reading["temp_c"] = round(sensor["temp_c"] + self.rng.uniform(-0.3, 0.3), 2)
             readings.append(reading)
-        return {"soil_sensors": readings}
+        return {"farm_id": self.bound_farm_id, "soil_sensors": readings}
 
     @type_check
     @app_tool()
@@ -124,7 +137,7 @@ class SensorApp(App):
                 noisy = sensor["ndvi_proxy"] + self.rng.uniform(-0.02, 0.02)
                 reading["ndvi_proxy"] = round(max(0.0, min(1.0, noisy)), 3)
             readings.append(reading)
-        return {"canopy_sensors": readings}
+        return {"farm_id": self.bound_farm_id, "canopy_sensors": readings}
 
     @type_check
     @app_tool()
@@ -146,6 +159,7 @@ class SensorApp(App):
             max(0.0, min(1.0, sensor["vwc"] + self.rng.uniform(-0.01, 0.01))), 4
         )
         reading["temp_c"] = round(sensor["temp_c"] + self.rng.uniform(-0.3, 0.3), 2)
+        reading["farm_id"] = self.bound_farm_id
         return reading
 
     @type_check
@@ -167,6 +181,7 @@ class SensorApp(App):
         if sensor["ndvi_proxy"] >= 0.0:
             noisy = sensor["ndvi_proxy"] + self.rng.uniform(-0.02, 0.02)
             reading["ndvi_proxy"] = round(max(0.0, min(1.0, noisy)), 3)
+        reading["farm_id"] = self.bound_farm_id
         return reading
 
     def update_soil_sensor(
@@ -244,6 +259,9 @@ class SensorApp(App):
 
         Legacy mode: averages RidgeState fields by zone, exactly as before.
         """
+        environment = getattr(self._farm_world_app, "farm_environment", None)
+        if environment is not None:
+            environment.before_tool()
         if self._farm_world_app.physics_active:
             # Sensor reads should report current truth, not initialize physics
             # early. Before the first FARM action has seeded the engines, use

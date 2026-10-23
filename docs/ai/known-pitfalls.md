@@ -1,3 +1,11 @@
+## Deferred Single-Farm Calendar Issue
+
+- [TIME-001](../known-issues.md): legacy single-farm weather/physics/System
+  default to UTC while Engine/Agent display Beijing time. The four new
+  multi-farm scenes explicitly use Asia/Shanghai. This remains deferred by
+  user instruction on 2026-10-24; do not describe the calendar migration as
+  covering all existing scenarios.
+
 ## Migrated Scenario Class Defaults
 
 - ARE FARM scenarios often define runtime configuration such as `start_time`,

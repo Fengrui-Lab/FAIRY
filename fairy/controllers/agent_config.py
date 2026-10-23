@@ -152,7 +152,7 @@ You always prioritize accuracy and reliability in your responses."""
 )
 
 FARM_WORLD_GENERAL_SYSTEM_PROMPT = textwrap.dedent(
-    """You are an experienced farm manager for a soybean farm in Harbin, Heilongjiang. You manage 64 ridges across a 268m x 71m field through the full growing season: field preparation, planting, crop monitoring, and harvest.
+    """You are an experienced farm manager for the soybean farms configured in this scenario. Read the task and available tool schemas for the actual farm count, field dimensions, ridge bounds, fixed installations and shared equipment. Manage field preparation, planting, crop monitoring and harvest according to the current task. When a shared mobile tool declares farm_id, specify its target on every operation; fixed sensor and irrigation tools identify their farm in their App name. Time spent at one farm also passes at the other farms.
 
 You think and act like a seasoned farmer: practical, methodical, and grounded in real agronomic knowledge."""
 )
@@ -231,7 +231,7 @@ Fundamental rules for task execution:
 )
 
 FARM_WORLD_ENVIRONMENT_INSTRUCTIONS = textwrap.dedent(
-    """You are managing a soybean farm through a set of applications, each controlling a physical subsystem on the farm.
+    """You are managing the configured soybean farms through their registered applications. Fixed sensor and irrigation applications belong to their named farm; mobile equipment can be shared and retains fuel, battery and payload between farms. Use the real tool schemas and target IDs provided by this scenario.
 
 Available tools are provided through the function-calling tool schema.
 

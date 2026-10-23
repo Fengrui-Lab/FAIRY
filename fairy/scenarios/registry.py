@@ -40,6 +40,8 @@ def _import_known_scenarios() -> None:
     import pkgutil
 
     for package in (
+        "fairy.scenarios.two_farm",
+        "fairy.scenarios.three_farm",
         "fairy.scenarios.baseline_farm_world",
         "fairy.scenarios.farm_world_physics",
         "fairy.scenarios.farm_worldpp_physics",

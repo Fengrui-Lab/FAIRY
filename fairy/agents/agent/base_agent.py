@@ -37,6 +37,7 @@ class BaseAgent:
         self.system_message = system_message
         self.messages = messages if messages is not None else Messages(provider=llm.provider, system_message=system_message)
         self.time_manager = None
+        self.simulation_timezone = None
         self.workflow = Workflow()
         self.runtime_events: list[dict[str, Any]] = []
         self.runtime_event_sink = None
@@ -279,10 +280,17 @@ class BaseAgent:
         except Exception:
             return str(value)
 
+    def format_sim_time(self, timestamp: float) -> str:
+        """Format a sampled simulation epoch without reading the clock again."""
+        if self.simulation_timezone is not None:
+            return datetime.fromtimestamp(
+                timestamp, tz=self.simulation_timezone
+            ).isoformat(sep=" ", timespec="seconds")
+        return datetime.fromtimestamp(timestamp, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+
     def env_time_str(self):
         if self.time_manager:
-            t = self.time_manager.time()
-            return datetime.fromtimestamp(t, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
+            return self.format_sim_time(self.time_manager.time())
         return None
 
     def set_time_manager(self, time_manager):
