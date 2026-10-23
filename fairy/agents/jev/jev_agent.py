@@ -157,6 +157,7 @@ class JevAgent(Agent):
         self._action_count = 0
         self._jev_request_count = 0
         self._done_refusals = 0
+        self._llm_done_refusals = 0
         self._notes: list[str] = []
         self._facts: dict[str, Any] = {}
         self._snapshot: dict[str, Any] = {}
@@ -228,6 +229,7 @@ class JevAgent(Agent):
                 ),
                 "min_action_confidence": min(confidences) if confidences else None,
                 "done_refusals": self._done_refusals,
+                "llm_done_refusals": self._llm_done_refusals,
                 "jev_input_tokens": self._jev_tokens,
                 "llm_fallback_triggers": dict(self._fallbacks),
                 "llm_decisions": self._llm_decisions,
@@ -244,36 +246,48 @@ class JevAgent(Agent):
 
     def chat_completion(self, messages, tools=None):
         while True:
-            state = self._state()
-            pick, arguments, confidences = self._decide(state)
-            action_confidence = min(confidences.values())
-            reason = None
-            if pick == DONE_OPTION:
-                problems = self._done_problems(state["task"])
-                if problems and self._done_refusals < MAX_DONE_REFUSALS:
-                    # "done" refused: the reasons go into the next state, and Jev is asked again.
-                    self._done_refusals += 1
-                    self._notes = [f'"done" was not accepted: {p}' for p in problems]
-                    self.record_event("jev_done_refused", status="ok", reasons=problems)
-                    continue
-                if problems:
-                    reason = "done_refused_twice"
-            elif action_confidence < self.fallback_confidence:
-                reason = "low_confidence"
-            elif self._is_stuck(pick, arguments):
-                reason = "repeat_without_change"
+            while True:
+                state = self._state()
+                pick, arguments, confidences = self._decide(state)
+                action_confidence = min(confidences.values())
+                reason = None
+                if pick == DONE_OPTION:
+                    problems = self._done_problems(state["task"])
+                    if problems and self._done_refusals < MAX_DONE_REFUSALS:
+                        # "done" refused: the reasons go into the next state, and Jev is asked again.
+                        self._done_refusals += 1
+                        self._notes = [f'"done" was not accepted: {p}' for p in problems]
+                        self.record_event("jev_done_refused", status="ok", reasons=problems)
+                        continue
+                    if problems:
+                        reason = "done_refused_twice"
+                elif action_confidence < self.fallback_confidence:
+                    reason = "low_confidence"
+                elif self._is_stuck(pick, arguments):
+                    reason = "repeat_without_change"
+                break
+
+            source = "jev"
+            if reason and self.fallback_llm is not None:
+                self._fallbacks[reason] = self._fallbacks.get(reason, 0) + 1
+                decided = self._llm_decide(state, reason)
+                if decided is not None and decided[0] == DONE_OPTION:
+                    # The LLM's "done" gets the same check as Jev's, with its own limit
+                    # (it ended a wetjune run on 23 June with the crop still growing; Step 17).
+                    problems = self._done_problems(state["task"])
+                    if problems and self._llm_done_refusals < MAX_DONE_REFUSALS:
+                        self._llm_done_refusals += 1
+                        self._notes = [f'"done" was not accepted: {p}' for p in problems]
+                        self.record_event("llm_done_refused", status="ok", reasons=problems)
+                        continue
+                if decided is not None:
+                    pick, arguments = decided
+                    source = "llm"
+                    self._llm_decisions += 1
             break
 
         self._action_confidences.append(action_confidence)
         self._action_count += 1
-        source = "jev"
-        if reason and self.fallback_llm is not None:
-            self._fallbacks[reason] = self._fallbacks.get(reason, 0) + 1
-            decided = self._llm_decide(state, reason)
-            if decided is not None:
-                pick, arguments = decided
-                source = "llm"
-                self._llm_decisions += 1
         self.record_event(
             "jev_action",
             status="ok",

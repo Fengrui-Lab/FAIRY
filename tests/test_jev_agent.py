@@ -251,14 +251,35 @@ def test_repeat_without_change_goes_to_the_llm() -> None:
 
 
 def test_done_refused_twice_goes_to_the_llm() -> None:
-    fallback = _ScriptedLLM([("WeatherApp__get_current_weather", {}), None])
+    # The LLM's "done" gets the same check: refused twice, then accepted.
+    fallback = _ScriptedLLM([("WeatherApp__get_current_weather", {}), None, None, None])
     agent, workflow, _ = _run(
-        [{TOOL_QUESTION_ID: "done"}] * 4,
+        [{TOOL_QUESTION_ID: "done"}] * 6,
         task="Plant ridges 0-63.",
         fallback=fallback,
     )
     steps = [s for s in workflow.dag.values() if s.op_type == "TOOL"]
     assert [s.tool_name for s in steps] == ["WeatherApp__get_current_weather"]
     assert agent.telemetry["done_refusals"] == 2
-    assert agent.telemetry["llm_fallback_triggers"] == {"done_refused_twice": 2}
+    assert agent.telemetry["llm_done_refusals"] == 2
+    assert agent.telemetry["llm_fallback_triggers"] == {"done_refused_twice": 4}
     assert agent.stop_reason == "agent_finished"
+
+
+def test_llm_done_with_work_left_is_refused() -> None:
+    # The wetjune failure: Jev unsure, the LLM says "done" while ridges are unplanted.
+    fallback = _ScriptedLLM([None])
+    agent, workflow, llm = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_current_weather", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "WeatherApp__get_current_weather"},
+        ],
+        max_tool_calls=1,
+        task="Plant ridges 0-63.",
+        fallback=fallback,
+    )
+    steps = [s for s in workflow.dag.values() if s.op_type == "TOOL"]
+    assert [s.tool_name for s in steps] == ["WeatherApp__get_current_weather"]
+    assert agent.telemetry["llm_done_refusals"] == 1
+    assert "not planted" in llm.requests[1][0]["notes"][0]
+    assert agent.stop_reason == "max_tool_calls"
