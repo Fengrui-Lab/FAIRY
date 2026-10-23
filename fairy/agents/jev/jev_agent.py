@@ -46,6 +46,7 @@ from fairy.agents.jev.menu import (
     build_tool_menus,
     task_numbers,
 )
+from fairy.agents.jev.done_check import MAX_DONE_REFUSALS, REPORT_TOOL, done_problems
 from fairy.agents.jev.snapshot import RESULT_CHARS, _failed, _short, build_snapshot, ridge_ranges
 
 TOOL_QUESTION_ID = "next_action"
@@ -66,8 +67,6 @@ RIDGE_FILTERS = {
     "TractorApp__plant_seeds": lambda r: not r["planted"] and not r["harvested"],
 }
 
-REPORT_TOOL = "AgentUserInterface__send_message_to_user"
-MAX_DONE_REFUSALS = 2
 
 FALLBACK_INSTRUCTIONS = (
     "Decide the next single step of a farm agent. Below are the task, a snapshot of the farm "
@@ -634,36 +633,7 @@ class JevAgent(Agent):
 
     def _done_problems(self, task: str) -> list[str]:
         """Simple checks on visible facts before "done" is accepted (not the evaluator)."""
-        text = task.lower()
-        ridges = self._facts.get("ridges", [])
-        problems = [
-            f"{p['from_action']} on ridges {p['ridges']} is not ready until {p['ready_at']}; "
-            "wait, then check the result."
-            for p in self._facts.get("pending", [])
-            if p.get("ridges")
-        ]
-        if re.search(r"\bharvest", text):
-            left = [r["ridge_id"] for r in ridges if r["planted"] and not r["harvested"]]
-            if left:
-                problems.append(f"ridges {ridge_ranges(left)} are planted but not harvested yet.")
-        if re.search(r"\bplant ridges\b|\bplant\b", text):
-            left = [r["ridge_id"] for r in ridges if not r["planted"] and not r["harvested"]]
-            if left:
-                problems.append(f"ridges {ridge_ranges(left)} are not planted yet.")
-        for name, status in self._facts.get("machines", {}).items():
-            if (status.get("grain_bin_kg") or 0) > 0:
-                problems.append(f"the {name} grain bin still holds {status['grain_bin_kg']} kg; unload it.")
-        unstored = (self._facts.get("inventory") or {}).get("harvest_grain_kg") or 0
-        if unstored > 0 and re.search(r"\bstor", text):
-            problems.append(f"{unstored} kg of harvested grain is not stored yet.")
-        if re.search(r"\breport\b", text) and REPORT_TOOL in self.tools_map:
-            sent = any(
-                s.tool_name == REPORT_TOOL and s.op_type == "TOOL"
-                for s in self._facts.get("steps", [])
-            )
-            if not sent:
-                problems.append("the final report has not been sent to the user.")
-        return problems
+        return done_problems(task, self._facts, self.tools_map)
 
     def _report_text(self) -> str:
         farm = self._snapshot.get("farm_now", {})

@@ -283,3 +283,49 @@ def test_llm_done_with_work_left_is_refused() -> None:
     assert agent.telemetry["llm_done_refusals"] == 1
     assert "not planted" in llm.requests[1][0]["notes"][0]
     assert agent.stop_reason == "max_tool_calls"
+
+
+class _ScriptedChatLLM:
+    """Stands in for an LLM on the baseline agent: every reply is a final answer (no tool call)."""
+
+    provider = "openai"
+    model = "fake-chat"
+    max_output_tokens = 100
+    parallel_tool_calls = False
+
+    def __init__(self):
+        self.calls = []
+
+    def chat_completion(self, messages, tools=None):
+        self.calls.append(messages)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(
+                message=SimpleNamespace(role="assistant", content="done", tool_calls=None),
+                finish_reason="stop",
+            )],
+            usage=SimpleNamespace(
+                prompt_tokens=10, completion_tokens=1, total_tokens=11,
+                prompt_tokens_details=SimpleNamespace(cached_tokens=0),
+            ),
+        )
+
+
+def _run_baseline(done_check: bool):
+    scenario = ScenarioFarmWorldFieldPrep(scenario_input="Plant ridges 0-63.")
+    scenario.setup()
+    llm = _ScriptedChatLLM()
+    agent = build_controller_agent("farm_baseline_react", llm=llm, toolsets=scenario.apps, done_check=done_check)
+    Engine(agent=agent, scenario=scenario).run_scenario_agent(max_tool_calls=5, timeout_seconds=60, setup_scenario=False)
+    return agent, llm
+
+
+def test_baseline_done_check_is_off_by_default() -> None:
+    agent, llm = _run_baseline(done_check=False)
+    assert len(llm.calls) == 1 and agent.stop_reason == "agent_finished"
+
+
+def test_baseline_done_check_refuses_early_done_twice() -> None:
+    agent, llm = _run_baseline(done_check=True)
+    assert len(llm.calls) == 3  # refused twice, then accepted
+    assert agent.done_refusals == 2 and agent.stop_reason == "agent_finished"
+    assert any("not planted" in str(m.get("content")) for m in llm.calls[1] if isinstance(m, dict))

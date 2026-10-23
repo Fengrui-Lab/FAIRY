@@ -332,6 +332,7 @@ def build_controller_agent(
     fallback_llm: Any = None,
     fallback_confidence: float = 0.6,
     jev_state: str = "snapshot",
+    done_check: bool = False,
 ) -> ResearchARESimulationAgent:
     if family_id == "farm_jev":
         # Jev picks actions from a menu instead of generating tool calls.
@@ -354,9 +355,12 @@ def build_controller_agent(
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)
-    return AgentBuilder().build(
+    agent = AgentBuilder().build(
         agent_config=config,
         llm=llm,
         toolsets=toolsets,
         system_message=system_message,
     )
+    if done_check:
+        agent.enable_done_check(toolsets or [])
+    return agent
