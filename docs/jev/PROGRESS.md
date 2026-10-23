@@ -666,3 +666,26 @@ How to read: one run per agent and scenario. **Season finished** = the agent end
 6. One run per scenario: single results can vary a lot (section 12).
 
 Spent on this step: about $3.3. Part 2 total: about $9.
+
+## Step 19 – Same "done" check for the LLM baseline (2026-10-23)
+
+Fairness: the hybrid refuses an early "done", the baseline did not, and all 7 baseline failures in Step 18 were early stops. Added the same check to the baseline as an option and reran those 7 scenarios with it on, 1 run each.
+
+| Scenario | Baseline before (no check) | Baseline with check | Hybrid (section 13) | Check used |
+|---|---|---|---|---|
+| organic patch weed | stopped 18 Jul, 0/64 harvested, 100% | finished, 8.4%, $0.10 | finished, 4.2%, $0.10 | 1 refusal |
+| cloudy low radiation | stopped 5 May, 0/64, 100% | finished, 13.8%, $0.02 | finished, 0.9%, $0.05 | 1 refusal |
+| staggered wetjune | stopped 25 May, 0/64, 100% | finished, 3.5%, $0.08 | finished, 9.5%, $0.10 | 0 (finished by itself) |
+| micronutrient patch | stopped 22 Sep, 16/64, 80.9% | finished, 8.4%, $0.06 | finished, 8.6%, $0.09 | 1 refusal |
+| local soil constraint | stopped 18 Sep, 6/64, 90.4% | finished, −9.7%, $0.04 | finished, −9.1%, $0.17 | 1 refusal |
+| grain moisture sensor failure | stopped 6 Sep, 22/64, 66.0% | finished, 5.8%, $0.05 | finished, 0.0%, $0.05 | 1 refusal |
+| laterain shattering | stopped 23 Sep, 8/64, 88.8% | finished, 14.4%, $0.05 | finished, 0.1%, $0.04 | 0 (finished by itself) |
+
+Percentages = grain loss (grain not harvested and stored vs the oracle; below 0% = more than the oracle).
+
+- **All 7 now finish.** In 5 of them the check refused the early "done" once and the LLM then completed the season. In 2 (staggered, laterain) the check never triggered: the LLM finished on its own this time, so that difference is run-to-run variation, not the check.
+- **All 19 L3-mini, baseline with these 7 replaced:** 19 of 19 finished (hybrid 18 of 19); average grain loss 6.4% (hybrid 7.3%, which includes its one failed run at 61.5%); total cost about $1.20 (hybrid $2.37).
+- So the gap in finished seasons in section 13 came mostly from the missing check, not from the LLM itself. With the same check, the baseline finishes as often as the hybrid, with similar grain loss, at about half the cost.
+- Option: `--done-check true` (default off, so all earlier baseline runs are unchanged). Same rule and limit as Jev (`fairy/agents/jev/done_check.py`). Commit `27c9e48`.
+
+Spent: about $0.40. Part 2 total: about $9.4.
