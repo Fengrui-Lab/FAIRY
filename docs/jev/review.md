@@ -230,3 +230,30 @@ Fixes: Jev's ridge answer is now sent unchanged (the farm refuses it if it does 
 Merge test: (1) fewer asks and Jev tokens per action: yes on both. (2) Jev's share not lower: yes on wetjune, **no on hn58** (47% vs 49–60%). (3) season finishes, hn58 loss within 3–8%, wetjune harvests: yes.
 
 Extra hn58 run: finished, recovered-grain loss 1.9% (better than the 3–8% range), 1.08 asks per action, 9.1k Jev tokens per action, Jev's share 53%, $0.086. hn58 now: Jev's share 47% and 53% (before: 49–60%). Waiting for your decision on the merge.
+
+## 12. Final results (2026-10-23, code frozen at `7ac11ec`)
+
+These are the numbers to use. 3 runs per agent on each scenario, all on the same frozen code (branch `jev-agent`). Details: `PROGRESS.md`, Step 16.
+
+| Scenario | Agent | Season finished | Yield loss (crop) | Recovered-grain loss | Actions | Jev's share of decisions | Jev requests per action | Tokens | Cost | Time |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hn58 | LLM baseline | 3 of 3 | 1.8% / 1.8% / 1.8% (avg 1.8%) | 1.8% / 1.8% / 6.4% (avg 3.3%) | 128 / 100 / 139 (avg 122) | – | – | 3.9M / 2.8M / 3.6M (avg 3.4M) | $0.05 / $0.03 / $0.04 (avg $0.04) | 4.5 min / 3.6 min / 4.9 min (avg 4.3 min) |
+| hn58 | Hybrid | 3 of 3 | 1.5% / 1.4% / 1.8% (avg 1.6%) | 6.2% / 6.0% / 4.2% (avg 5.5%) | 133 / 135 / 134 (avg 134) | 57% / 50% / 51% (avg 53%) | 1.10 / 1.04 / 1.04 (avg 1.06) | 3.3M / 3.9M / 3.7M (avg 3.6M) | $0.09 / $0.10 / $0.10 (avg $0.10) | 2.2 min / 2.2 min / 2.2 min (avg 2.2 min) |
+| Wetjune disease | LLM baseline | 2 of 3 | 7.3% / 100.0% / 7.2% (avg 38.2%) | 18.3% / 100.0% / 8.0% (avg 42.1%) | 126 / 30 / 116 (avg 91) | – | – | 3.3M / 0.3M / 3.4M (avg 2.4M) | $0.04 / $0.01 / $0.04 (avg $0.03) | 5.0 min / 1.3 min / 4.4 min (avg 3.5 min) |
+| Wetjune disease | Hybrid | 2 of 3 | 4.6% / 19.2% / 4.0% (avg 9.3%) | 7.6% / 100.0% / 5.5% (avg 37.7%) | 217 / 136 / 186 (avg 180) | 39% / 25% / 41% (avg 35%) | 1.07 / 1.10 / 1.07 (avg 1.08) | 8.1M / 5.6M / 7.0M (avg 6.9M) | $0.22 / $0.14 / $0.18 (avg $0.18) | 4.5 min / 2.9 min / 3.3 min (avg 3.5 min) |
+| Dryer capacity | LLM baseline | 3 of 3 | 0.1% / 0.1% / 0.1% (avg 0.1%) | 0.5% / 14.6% / 0.5% (avg 5.2%) | 185 / 125 / 156 (avg 155) | – | – | 7.3M / 4.9M / 8.0M (avg 6.7M) | $0.08 / $0.06 / $0.09 (avg $0.08) | 7.3 min / 5.1 min / 6.3 min (avg 6.2 min) |
+| Dryer capacity | Hybrid | 3 of 3 | -0.0% / -0.0% / -0.0% (avg 0.0%) | 0.0% / 14.1% / 2.0% (avg 5.4%) | 97 / 125 / 124 (avg 115) | 82% / 69% / 63% (avg 71%) | 1.33 / 1.25 / 1.26 (avg 1.28) | 1.1M / 2.1M / 2.3M (avg 1.9M) | $0.04 / $0.07 / $0.07 (avg $0.06) | 1.0 min / 1.5 min / 1.9 min (avg 1.5 min) |
+
+How to read: each cell shows run 1 / run 2 / run 3 and the average. Recovered-grain loss = grain not harvested and stored, compared with the oracle (100% = nothing harvested). Hybrid = Jev, with gpt-6-luna taking the decision when Jev is unsure. LLM baseline = gpt-6-luna alone, reasoning "medium". Same farm and weather in every run (seed 0); runs differ only because the models' answers vary.
+
+**Findings:**
+1. **hn58:** both agents finish all 3 runs. The baseline loses less grain (3.3% vs 5.5% on average) and costs less ($0.04 vs $0.10). Jev makes 53% of the hybrid's decisions, with about 1 Jev request per action.
+2. **Wetjune disease:** each agent failed to harvest once out of 3.
+   - Baseline run 2: one planting attempt failed on 7 May; the LLM then stopped and reported that it could not continue.
+   - Hybrid run 2: on 23 June the LLM helper decided the task was done while the crop was still growing, and the run ended. The rule that refuses an early "done" only checks Jev's answers, not the LLM helper's. It also sent the message "done" to the user 4 times.
+   - In the runs that finished, the hybrid lost less grain (7.6% and 5.5%) than the baseline (18.3% and 8.0%), but cost about 5× more ($0.18 vs $0.03 on average).
+3. **Dryer capacity:** both agents finish all 3 runs with about the same grain loss (5.4% vs 5.2%). Here the hybrid is cheaper ($0.06 vs $0.08) and faster, and Jev makes 71% of the decisions.
+4. **Cost overall:** the hybrid is cheaper only on dryer capacity. The baseline's input is about 99% cached at $0.01 per million, which Jev cannot match.
+5. **Variation between runs is large** (for example the baseline's grain loss on dryer: 0.5% / 14.6% / 0.5%), so differences of a few points between the agents are not reliable with 3 runs.
+
+Spent on this set: about $1.45. Part 2 total: about $5.65.
