@@ -699,3 +699,13 @@ New agent `farm_llm_jev` (`fairy/agents/jev/llm_driven_agent.py`): gpt-6-luna (m
 - Details and table: `review.md`, section 14. Compacted headland hung once on an LLM call (laptop sleep); deleted and rerun.
 
 Spent: about $1.15. Part 2 total: about $10.5.
+
+## Step 21 – Jev tool with a note in the system prompt (2026-10-24, code `fdbac56`)
+
+Option `--jev-prompt-note true` (default off) adds a short neutral note to the system prompt: what Jev is, what it returns, "use it when it helps". 1 test added; all 106 pass. Reran the 19 L3-mini, 1 run each, everything else as in Step 20.
+
+- **0 Jev calls in all 19 runs** (2,537 farm actions); no LLM reply mentions Jev. "Followed Jev's pick" cannot be measured (no picks).
+- 19 of 19 finished; average grain loss 8.8% (Step 20: 9.6%, baseline 13.1: 6.4%); total $1.20.
+- Details: `review.md`, section 14.4.
+
+Spent: about $1.20. Part 2 total: about $11.7.

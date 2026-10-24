@@ -421,3 +421,53 @@ Each cell: season finished, grain loss (not harvested and stored, vs the oracle)
 One run per scenario. The compacted headland run hung once on an LLM request (laptop sleep) and was deleted and rerun.
 
 Spent: about $1.15. Part 2 total: about $10.5.
+
+### 14.4 Rerun with Jev explained in the system prompt (2026-10-24)
+
+Same agent, with one change: a new option `--jev-prompt-note true` (default off) adds this note to the system prompt:
+
+> You also have the tool ask_jev. Jev is a decision model: you give it a farm state that you write, a question and a list of options, and it returns its pick, the probability of each option and its confidence (0 to 1). Jev sees only what you pass. Use it when it helps; the decision stays yours.
+
+Nothing else changed (same task, tools, done check, limits, seed; 1 run per scenario). The note was in the prompt of every LLM call (checked in the logs). Commit `fdbac56`; 1 test added, all 106 pass.
+
+Each cell: season finished, grain loss, cost. The 14.2 column is repeated for comparison.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | Jev tool (14.2) | Jev tool + prompt note | Jev calls (14.2 / note) |
+|---|---|---|---|---|---|
+| organic_residue_weed_establishment | yes, 13.65%, $0.17 | yes, -0.27%, $0.18 | yes, 19.05%, $0.11 | yes, 14.26%, $0.11 | 0 / 0 |
+| organic_patch_weed_mechanical_capacity | yes, 8.36%, $0.10 | yes, 4.18%, $0.10 | yes, 8.23%, $0.06 | yes, 8.32%, $0.05 | 0 / 0 |
+| micronutrient_deficiency_flowering_patch | yes, 8.36%, $0.06 | yes, 8.61%, $0.08 | yes, 15.38%, $0.04 | yes, 14.06%, $0.04 | 0 / 0 |
+| local_soil_constraint_nutrition_patch | yes, -9.70%, $0.04 | yes, -9.11%, $0.17 | yes, -11.76%, $0.07 | yes, -10.31%, $0.10 | 0 / 0 |
+| heinong84_edge_low_fertility | yes, 5.06%, $0.07 | yes, 4.66%, $0.19 | yes, 17.12%, $0.09 | yes, 6.94%, $0.06 | 0 / 0 |
+| cloudy_wet_low_radiation_biomass | yes, 13.80%, $0.02 | yes, 0.86%, $0.05 | yes, 4.63%, $0.04 | yes, 4.63%, $0.02 | 0 / 0 |
+| poordrainage_wetjune_disease_trafficability | yes, 11.30%, $0.03 | yes, 7.37%, $0.11 | yes, 7.98%, $0.03 | yes, 10.44%, $0.03 | 0 / 0 |
+| staggered_wetjune_canopy_disease | yes, 3.46%, $0.08 | yes, 9.53%, $0.10 | yes, 9.61%, $0.04 | yes, 15.63%, $0.06 | 0 / 0 |
+| soy_after_soy_wetjune_disease | yes, 13.19%, $0.06 | yes, 9.04%, $0.06 | yes, 7.84%, $0.04 | yes, 17.78%, $0.05 | 0 / 0 |
+| dryr5r6_hn58_std_waterlimit | yes, 1.78%, $0.05 | yes, 5.23%, $0.08 | yes, 8.20%, $0.05 | yes, 15.55%, $0.05 | 0 / 0 |
+| drought_recovery_false_disease_signal | yes, 3.10%, $0.05 | yes, 3.43%, $0.30 | yes, 14.38%, $0.03 | yes, 9.71%, $0.03 | 0 / 0 |
+| heinong58_resistant_biotic_water_budget_priority | yes, 8.41%, $0.05 | yes, 11.53%, $0.10 | yes, 13.86%, $0.04 | yes, 7.88%, $0.04 | 0 / 0 |
+| hn60_high_fastdrain_dryr5r6 | yes, 0.54%, $0.05 | yes, 5.65%, $0.04 | yes, 5.70%, $0.08 | yes, 7.65%, $0.05 | 0 / 0 |
+| dryr5r6_insect_threshold_waterstress | yes, 7.49%, $0.05 | yes, 1.22%, $0.09 | yes, 7.10%, $0.04 | yes, 5.97%, $0.03 | 0 / 0 |
+| dryer_capacity_batch_harvest_storage | yes, 0.10%, $0.05 | yes, 6.09%, $0.15 | yes, 31.95%, $0.09 | yes, 15.24%, $0.08 | 0 / 0 |
+| grain_moisture_sensor_failure_harvest | yes, 5.76%, $0.05 | yes, 0.00%, $0.05 | yes, 0.14%, $0.05 | yes, 11.26%, $0.17 | 0 / 0 |
+| laterain_shattering_drying_tradeoff | yes, 14.39%, $0.05 | yes, 0.13%, $0.04 | yes, 16.23%, $0.07 | yes, 9.53%, $0.04 | 0 / 0 |
+| cool_august_lategrain_laterain | yes, 3.67%, $0.07 | yes, 8.35%, $0.04 | yes, 1.92%, $0.04 | yes, 0.05%, $0.03 | 0 / 0 |
+| compacted_headland_stand_recovery | yes, 8.70%, $0.08 | **no** (2026-09-03, 24/64), 61.53%, $0.45 | yes, 4.11%, $0.10 | yes, 3.02%, $0.16 | 0 / 0 |
+
+| | LLM baseline (13.1) | Hybrid (13) | Jev tool (14.2) | Jev tool + prompt note (14.4) |
+|---|---|---|---|---|
+| Seasons finished | 19 of 19 | 18 of 19 | 19 of 19 | 19 of 19 |
+| Average grain loss, all 19 | **6.4%** | 7.3% | 9.6% | 8.8% |
+| Total cost (19 runs) | $1.19 | $2.37 | **$1.11** | $1.20 |
+| Average actions per run | 137 | 143 | 130 | 134 |
+| Average time per run | 7.1 min | **3.4 min** | 5.4 min | 5.8 min |
+| Jev calls per run | – | – | 0 in every run | 0 in every run |
+| LLM followed Jev's pick | – | – | – (no calls) | – (no calls) |
+
+**Findings:**
+1. **Still no Jev calls:** 0 in all 19 runs (2,537 farm actions), even with Jev explained in the system prompt. None of the LLM's 2,564 replies mentions Jev. So "how often the LLM followed Jev's pick" cannot be measured: there were no picks.
+2. The done check refused an early "done" once in 6 runs; all 19 finished.
+3. Results are again those of the LLM baseline with the done check, within run-to-run variation: grain loss 8.8% (14.2: 9.6%, baseline: 6.4%), cost $1.20. Per scenario, 14.2 and 14.4 differ by up to 16 points (dryer capacity 32.0% vs 15.2%) with Jev unused in both, which shows the size of single-run noise.
+4. **Takeaway:** with a neutral note ("use it when it helps") gpt-6-luna still never asks Jev. Getting any use would take a stronger instruction (for example when or how often to ask), which this test deliberately did not include.
+
+Spent: about $1.20. Part 2 total: about $11.7.
