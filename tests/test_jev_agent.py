@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from fairy.agents.jev.jev_agent import TOOL_QUESTION_ID
 from fairy.agents.jev.menu import MAX_CHOICE_OPTIONS
 from fairy.controllers.agent_builder import AgentBuilder, build_controller_agent
@@ -57,9 +59,11 @@ class _ScriptedLLM:
     def __init__(self, replies):
         self.replies = list(replies)
         self.calls = []
+        self.tools = []
 
     def chat_completion(self, messages, tools=None):
         self.calls.append(messages)
+        self.tools.append([t["function"]["name"] for t in tools or []])
         reply = self.replies.pop(0)
         tool_calls = (
             [SimpleNamespace(function=SimpleNamespace(name=reply[0], arguments=json.dumps(reply[1])))]
@@ -74,12 +78,12 @@ class _ScriptedLLM:
         )
 
 
-def _run(script, max_tool_calls=20, task=TASK, fallback=None):
+def _run(script, max_tool_calls=20, task=TASK, fallback=None, hybrid_mode="full"):
     scenario = ScenarioFarmWorldFieldPrep(scenario_input=task)
     scenario.setup()
     llm = _ScriptedJev(script)
     agent = build_controller_agent(
-        "farm_jev", llm=llm, toolsets=scenario.apps, fallback_llm=fallback
+        "farm_jev", llm=llm, toolsets=scenario.apps, fallback_llm=fallback, hybrid_mode=hybrid_mode
     )
     engine = Engine(agent=agent, scenario=scenario)
     try:
@@ -283,6 +287,103 @@ def test_llm_done_with_work_left_is_refused() -> None:
     assert agent.telemetry["llm_done_refusals"] == 1
     assert "not planted" in llm.requests[1][0]["notes"][0]
     assert agent.stop_reason == "max_tool_calls"
+
+
+def _actions(agent):
+    return [e for e in agent.runtime_events if e["event_type"] == "jev_action"]
+
+
+def test_reflex_low_tool_confidence_llm_fills_only_the_arguments() -> None:
+    fallback = _ScriptedLLM([("WeatherApp__get_forecast", {"days": 2})])
+    agent, workflow, llm = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_forecast", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "done"},
+        ],
+        fallback=fallback,
+        hybrid_mode="reflex",
+    )
+    step = [s for s in workflow.dag.values() if s.op_type == "TOOL"][0]
+    assert step.tool_args == {"days": 2}
+    assert len(llm.requests) == 2  # Jev was not asked for the arguments
+    assert fallback.tools == [["WeatherApp__get_forecast"]]  # the LLM sees only Jev's tool
+    assert "Jev has already chosen the next action: `WeatherApp__get_forecast`" in fallback.calls[0][-1]["content"]
+    assert agent.telemetry["llm_fallback_triggers"] == {"low_tool_confidence": 1}
+    assert agent.telemetry["llm_argument_fills"] == 1
+    assert agent.telemetry["llm_decisions"] == 0
+    assert agent.telemetry["hybrid_mode"] == "reflex"
+    first = _actions(agent)[0]
+    assert first["source"] == "llm_arguments" and first["tool_confidence"] == 0.3
+
+
+def test_reflex_confident_tool_keeps_jevs_arguments_even_if_unsure() -> None:
+    fallback = _ScriptedLLM([])
+    agent, workflow, _ = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_forecast"},
+            {"arg__days": "3", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "done"},
+        ],
+        fallback=fallback,
+        hybrid_mode="reflex",
+    )
+    step = [s for s in workflow.dag.values() if s.op_type == "TOOL"][0]
+    assert step.tool_args == {"days": 3}
+    assert fallback.calls == []
+    assert agent.telemetry["llm_fallback_triggers"] == {}
+    assert _actions(agent)[0]["source"] == "jev"
+
+
+def test_reflex_unsure_tool_without_arguments_runs_without_the_llm() -> None:
+    fallback = _ScriptedLLM([])
+    agent, workflow, _ = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_current_weather", "_confidence": 0.3},
+            {TOOL_QUESTION_ID: "done"},
+        ],
+        fallback=fallback,
+        hybrid_mode="reflex",
+    )
+    steps = [s for s in workflow.dag.values() if s.op_type == "TOOL"]
+    assert [s.tool_name for s in steps] == ["WeatherApp__get_current_weather"]
+    assert fallback.calls == []
+
+
+def test_reflex_llm_calling_another_tool_falls_back_to_jevs_arguments() -> None:
+    fallback = _ScriptedLLM([("TractorApp__load_fertilizer", {"kg": 200})])
+    agent, workflow, llm = _run(
+        [
+            {TOOL_QUESTION_ID: "WeatherApp__get_forecast", "_confidence": 0.3},
+            {"arg__days": "3"},
+            {TOOL_QUESTION_ID: "done"},
+        ],
+        fallback=fallback,
+        hybrid_mode="reflex",
+    )
+    steps = [s for s in workflow.dag.values() if s.op_type == "TOOL"]
+    assert [(s.tool_name, s.tool_args) for s in steps] == [("WeatherApp__get_forecast", {"days": 3})]
+    assert len(llm.requests) == 3
+    assert agent.telemetry["llm_argument_fills"] == 0
+    assert _actions(agent)[0]["source"] == "jev"
+
+
+def test_reflex_repeat_without_change_still_goes_to_the_llm() -> None:
+    fallback = _ScriptedLLM([None])
+    agent, workflow, _ = _run(
+        [{TOOL_QUESTION_ID: "WeatherApp__get_current_weather"}] * 3,
+        fallback=fallback,
+        hybrid_mode="reflex",
+    )
+    assert agent.telemetry["llm_fallback_triggers"] == {"repeat_without_change": 1}
+    assert agent.stop_reason == "agent_finished"
+
+
+def test_hybrid_mode_is_only_for_farm_jev() -> None:
+    scenario = ScenarioFarmWorldFieldPrep(scenario_input=TASK)
+    with pytest.raises(ValueError):
+        build_controller_agent("farm_jev", llm=_ScriptedJev([]), toolsets=scenario.apps, hybrid_mode="other")
+    with pytest.raises(ValueError):
+        build_controller_agent("farm_baseline_react", llm=_ScriptedChatLLM(), toolsets=scenario.apps, hybrid_mode="reflex")
 
 
 class _ScriptedChatLLM:

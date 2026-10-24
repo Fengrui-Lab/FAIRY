@@ -333,6 +333,7 @@ def build_controller_agent(
     fallback_confidence: float = 0.6,
     jev_state: str = "snapshot",
     done_check: bool = False,
+    hybrid_mode: str = "full",
 ) -> ResearchARESimulationAgent:
     if family_id == "farm_jev":
         # Jev picks actions from a menu instead of generating tool calls.
@@ -349,9 +350,12 @@ def build_controller_agent(
             fallback_llm=fallback_llm,
             fallback_confidence=fallback_confidence,
             state_mode=jev_state,
+            hybrid_mode=hybrid_mode,
         )
     if fallback_llm is not None:
         raise ValueError("--fallback-model is only used by the farm_jev controller")
+    if hybrid_mode != "full":
+        raise ValueError("--hybrid-mode is only used by the farm_jev controller")
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)
