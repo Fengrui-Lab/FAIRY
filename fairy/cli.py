@@ -164,6 +164,7 @@ def main() -> None:
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
     parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
     parser.add_argument("--jev-model", default=None, help="farm_llm_jev: Jev model the LLM can ask through the ask_jev tool (provider typesafe)")
+    parser.add_argument("--jev-prompt-note", type=_str_to_bool, default=False, help="farm_llm_jev: add a short neutral note about Jev to the system prompt")
     parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
@@ -361,6 +362,7 @@ def main() -> None:
             jev_state=args.jev_state,
             done_check=args.done_check,
             jev_llm=jev_llm,
+            jev_prompt_note=args.jev_prompt_note,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event

@@ -12,7 +12,7 @@ from openai.types.chat.chat_completion_message_function_tool_call import (
     Function,
 )
 
-from fairy.agents.jev.llm_driven_agent import ASK_JEV_TOOL, JEV_PRICE_PER_INPUT_TOKEN
+from fairy.agents.jev.llm_driven_agent import ASK_JEV_TOOL, JEV_PRICE_PER_INPUT_TOKEN, JEV_PROMPT_NOTE
 from fairy.controllers.agent_builder import AgentBuilder, build_controller_agent
 from fairy.controllers.engine import Engine
 from fairy.controllers.run_artifacts import metric_totals
@@ -85,12 +85,13 @@ class _ScriptedLLM:
         )
 
 
-def _run(replies, task="Check the 3-day forecast, then load 200 kg of fertilizer.", done_check=False, max_tool_calls=20):
+def _run(replies, task="Check the 3-day forecast, then load 200 kg of fertilizer.", done_check=False, max_tool_calls=20, prompt_note=False):
     scenario = ScenarioFarmWorldFieldPrep(scenario_input=task)
     scenario.setup()
     llm, jev = _ScriptedLLM(replies), _FakeJev()
     agent = build_controller_agent(
-        "farm_llm_jev", llm=llm, toolsets=scenario.apps, jev_llm=jev, done_check=done_check
+        "farm_llm_jev", llm=llm, toolsets=scenario.apps, jev_llm=jev, done_check=done_check,
+        jev_prompt_note=prompt_note,
     )
     engine = Engine(agent=agent, scenario=scenario)
     try:
@@ -117,6 +118,17 @@ def test_llm_sees_the_baseline_tools_plus_ask_jev() -> None:
     assert names == [t["function"]["name"] for t in baseline.tool_schemas] + [ASK_JEV_TOOL]
     # Same system prompt as the baseline: Jev is only explained in the tool description.
     assert llm.calls[0][0][0]["content"].startswith(baseline.messages.messages[0]["content"])
+    assert JEV_PROMPT_NOTE not in llm.calls[0][0][0]["content"] and agent.telemetry["jev_prompt_note"] is False
+
+
+def test_prompt_note_is_added_to_the_system_prompt_only_when_asked() -> None:
+    agent, _, llm, _ = _run([None], prompt_note=True)
+    system = llm.calls[0][0][0]["content"]
+    assert JEV_PROMPT_NOTE in system and agent.telemetry["jev_prompt_note"] is True
+    scenario = ScenarioFarmWorldFieldPrep(scenario_input="x")
+    scenario.setup()
+    with pytest.raises(ValueError):
+        build_controller_agent("farm_baseline_react", llm=llm, toolsets=scenario.apps, jev_prompt_note=True)
 
 
 def test_ask_jev_returns_pick_and_is_not_a_farm_action() -> None:

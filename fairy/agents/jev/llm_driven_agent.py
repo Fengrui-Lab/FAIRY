@@ -4,7 +4,8 @@ The LLM baseline (farm_baseline_react) runs the farm as usual, with the normal
 FAIRY task, system prompt and tools, plus one extra tool, ``ask_jev``. The LLM
 writes a farm state itself and a question with options; Jev returns its pick,
 the probability of each option and its confidence. The LLM decides when to ask
-and what to do with the answer; no rule makes it ask.
+and what to do with the answer; no rule makes it ask. Optionally (``--jev-prompt-note``,
+off by default) a short neutral note about Jev is added to the system prompt.
 
 ask_jev is not a farm action: it is not in the workflow (so scoring and replay
 see only farm tools) and does not count toward max_tool_calls. Each call is
@@ -29,6 +30,14 @@ ASK_JEV_QUESTION_ID = "question"
 JEV_PRICE_PER_INPUT_TOKEN = 0.042e-6
 # Guard against a loop of asks: ask_jev does not count toward max_tool_calls.
 MAX_ASK_JEV_CALLS = 300
+
+# Optional system-prompt note (--jev-prompt-note): what Jev is and returns, no rule on when to ask.
+JEV_PROMPT_NOTE = (
+    "You also have the tool ask_jev. Jev is a decision model: you give it a farm state that you "
+    "write, a question and a list of options, and it returns its pick, the probability of each "
+    "option and its confidence (0 to 1). Jev sees only what you pass. Use it when it helps; "
+    "the decision stays yours."
+)
 
 ASK_JEV_SCHEMA = {
     "type": "function",
@@ -101,6 +110,10 @@ class LLMDrivenJevAgent(ResearchARESimulationAgent):
         super()._reset_research_state()
         self.telemetry["planning_mode"] = "react_llm_with_jev_tool"
         self.telemetry["jev_model"] = getattr(self.jev_llm, "model", None)
+        self.telemetry["jev_prompt_note"] = any(
+            isinstance(m, dict) and m.get("role") == "system" and JEV_PROMPT_NOTE in str(m.get("content"))
+            for m in self.messages.messages
+        )
         self._reset_jev_counts()
 
     # ------------------------------------------------------------------
@@ -255,6 +268,7 @@ def build_llm_driven_jev_agent(
     jev_llm: Any,
     toolsets: list[Any] | None,
     system_message: str,
+    prompt_note: bool = False,
 ) -> LLMDrivenJevAgent:
     if jev_llm is None or getattr(jev_llm, "provider", None) != "typesafe":
         raise ValueError("farm_llm_jev needs a Jev client (--jev-model, provider typesafe)")
@@ -262,6 +276,6 @@ def build_llm_driven_jev_agent(
         name=family_id,
         llm=llm,
         jev_llm=jev_llm,
-        system_message=system_message,
+        system_message=f"{system_message}\n\n{JEV_PROMPT_NOTE}" if prompt_note else system_message,
         toolsets=toolsets,
     )
