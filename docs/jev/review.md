@@ -362,3 +362,62 @@ Percentages = grain loss (grain not harvested and stored vs the oracle; below 0%
 - Option: `--done-check true` (default off, so all earlier baseline runs are unchanged). Same rule and limit as Jev (`fairy/agents/jev/done_check.py`). Commit `27c9e48`.
 
 Spent: about $0.40. Part 2 total: about $9.4.
+
+## 14. LLM runs the farm, Jev as a tool (branch `jev-llm-driven`, 2026-10-24)
+
+### 14.1 The idea
+
+The reverse of the hybrid: gpt-6-luna (reasoning "medium", Responses API) runs the farm like the LLM baseline, with the same task, system prompt and tools, plus one extra tool, `ask_jev`. To use it, the LLM writes a farm state itself and a question with a list of options. Jev returns its pick, the probability of each option and its confidence. The LLM decides when to ask and what to do with the answer; no rule makes it ask. The tool description is the only place Jev is explained.
+
+- Agent: `--controller farm_llm_jev --jev-model jev-latest` (`fairy/agents/jev/llm_driven_agent.py`). The Jev agent and the hybrid are unchanged.
+- `ask_jev` is not a farm action: it is not in the workflow (scoring sees farm tools only) and does not count toward the 300-action limit (separate cap: 300 asks per run).
+- Every ask is logged (`ask_jev` event: state size, question, options, pick, confidence, tokens, cost); the run report counts asks, asks per action and farm actions taken right after an ask.
+- Done check on (`--done-check true`), same as the baseline in 13.1. Same limits as section 13: 300 actions, 60 min, seed 0, 1 run per scenario.
+- 7 new tests; all 105 tests pass. One real Jev request through `ask_jev` checked by hand (pick, probabilities and confidence came back; cost $0.00002).
+
+### 14.2 Results (19 L3-mini, 1 run each)
+
+Each cell: season finished, grain loss (not harvested and stored, vs the oracle), cost. Baseline = LLM baseline with the done check (section 13.1 set: the 7 reruns with the check, the other 12 from section 13). Hybrid = section 13.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | LLM + Jev tool |
+|---|---|---|---|
+| organic_residue_weed_establishment | yes, 13.65%, $0.17 | yes, -0.27%, $0.18 | yes, 19.05%, $0.11 |
+| organic_patch_weed_mechanical_capacity | yes, 8.36%, $0.10 | yes, 4.18%, $0.10 | yes, 8.23%, $0.06 |
+| micronutrient_deficiency_flowering_patch | yes, 8.36%, $0.06 | yes, 8.61%, $0.08 | yes, 15.38%, $0.04 |
+| local_soil_constraint_nutrition_patch | yes, -9.70%, $0.04 | yes, -9.11%, $0.17 | yes, -11.76%, $0.07 |
+| heinong84_edge_low_fertility | yes, 5.06%, $0.07 | yes, 4.66%, $0.19 | yes, 17.12%, $0.09 |
+| cloudy_wet_low_radiation_biomass | yes, 13.80%, $0.02 | yes, 0.86%, $0.05 | yes, 4.63%, $0.04 |
+| poordrainage_wetjune_disease_trafficability | yes, 11.30%, $0.03 | yes, 7.37%, $0.11 | yes, 7.98%, $0.03 |
+| staggered_wetjune_canopy_disease | yes, 3.46%, $0.08 | yes, 9.53%, $0.10 | yes, 9.61%, $0.04 |
+| soy_after_soy_wetjune_disease | yes, 13.19%, $0.06 | yes, 9.04%, $0.06 | yes, 7.84%, $0.04 |
+| dryr5r6_hn58_std_waterlimit | yes, 1.78%, $0.05 | yes, 5.23%, $0.08 | yes, 8.20%, $0.05 |
+| drought_recovery_false_disease_signal | yes, 3.10%, $0.05 | yes, 3.43%, $0.30 | yes, 14.38%, $0.03 |
+| heinong58_resistant_biotic_water_budget_priority | yes, 8.41%, $0.05 | yes, 11.53%, $0.10 | yes, 13.86%, $0.04 |
+| hn60_high_fastdrain_dryr5r6 | yes, 0.54%, $0.05 | yes, 5.65%, $0.04 | yes, 5.70%, $0.08 |
+| dryr5r6_insect_threshold_waterstress | yes, 7.49%, $0.05 | yes, 1.22%, $0.09 | yes, 7.10%, $0.04 |
+| dryer_capacity_batch_harvest_storage | yes, 0.10%, $0.05 | yes, 6.09%, $0.15 | yes, 31.95%, $0.09 |
+| grain_moisture_sensor_failure_harvest | yes, 5.76%, $0.05 | yes, 0.00%, $0.05 | yes, 0.14%, $0.05 |
+| laterain_shattering_drying_tradeoff | yes, 14.39%, $0.05 | yes, 0.13%, $0.04 | yes, 16.23%, $0.07 |
+| cool_august_lategrain_laterain | yes, 3.67%, $0.07 | yes, 8.35%, $0.04 | yes, 1.92%, $0.04 |
+| compacted_headland_stand_recovery | yes, 8.70%, $0.08 | **no** (2026-09-03, 24/64), 61.53%, $0.45 | yes, 4.11%, $0.10 |
+
+| | LLM baseline (13.1) | Hybrid (13) | LLM + Jev tool |
+|---|---|---|---|
+| Seasons finished | 19 of 19 | 18 of 19 | 19 of 19 |
+| Average grain loss, all 19 | **6.4%** | 7.3% | 9.6% |
+| Total cost (19 runs) | $1.19 | $2.37 | **$1.11** |
+| Average actions per run | 137 | 143 | 130 |
+| Average time per run | 7.1 min | **3.4 min** | 5.4 min |
+| Jev asks | – | – | **0** (in 2,470 farm actions) |
+
+### 14.3 Findings
+
+1. **The LLM never asked Jev.** 0 asks in all 19 runs, although `ask_jev` was in the tool list of every LLM call (checked in the logs). Jev cost: $0.
+2. So in these runs the agent is the LLM baseline with the done check plus one unused tool. The done check refused an early "done" in 6 runs (once in 5, twice in 1); all 19 finished.
+3. Grain loss is higher on average (9.6% vs 6.4%), mostly because of one run (dryer capacity 32.0%; without it 8.4%). With Jev unused, the differences from the baseline are run-to-run variation (section 12: baseline dryer 0.5% / 14.6% / 0.5% over 3 runs), not an effect of Jev.
+4. Cost and time are close to the baseline ($1.11 vs $1.19; 5.4 vs 7.1 min).
+5. **Takeaway:** offered Jev as an optional tool with no instruction, gpt-6-luna does not use it. Getting any use would need the LLM to be told about Jev or asked to use it (for example in the system prompt), which these runs deliberately did not do.
+
+One run per scenario. The compacted headland run hung once on an LLM request (laptop sleep) and was deleted and rerun.
+
+Spent: about $1.15. Part 2 total: about $10.5.
