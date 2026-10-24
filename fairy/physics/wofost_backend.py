@@ -20,6 +20,7 @@ from .phenology_engine import SoybeanStage
 from .canopy_biomass_engine import SeedType as CanopySeedType
 from .soil_engine import SoilDayResult
 from .wofost_profiles import load_cultivar_profile
+from .crop_profiles import get_crop_profile, maize_yield_parameters
 
 _DATA = Path(__file__).with_name("data") / "wofost"
 _MODEL = "Wofost81_NWLP_CWB_CNB"
@@ -52,7 +53,7 @@ def _number(value: Any, name: str, *, minimum: float | None = None) -> float:
 @dataclass
 class WofostConfig:
     crop_name: str = "soybean"
-    variety_name: str = "Soybean_901"
+    variety_name: str | None = None
     cultivar_map: dict[str, str] = field(default_factory=dict)
     # Named literature transfer, scoped to the seed labels listed in its file.
     # Omission preserves the existing European default for every cultivar.
@@ -66,7 +67,7 @@ class WofostConfig:
     fertilizer_n_fraction: float = 0.46
     fertilizer_n_recovery: float = 0.7
     irrigation_efficiency: float = 0.92
-    reference_density_plants_m2: float = 40.0
+    reference_density_plants_m2: float | None = None
     latitude_deg: float = 45.7
     longitude_deg: float = 126.6
     elevation_m: float = 150.0
@@ -78,11 +79,30 @@ class WofostConfig:
     soil_overrides: dict[str, float] = field(default_factory=dict)
     site_overrides: dict[str, float] = field(default_factory=dict)
     max_duration_days: int = 366
-    external_biotic_coupling: bool = True
+    external_biotic_coupling: bool | None = None
 
     def __post_init__(self) -> None:
-        if self.crop_name != "soybean":
-            raise ValueError("Offline WOFOST data currently supports crop_name='soybean' only")
+        profile = get_crop_profile(self.crop_name)
+        if self.variety_name is None:
+            self.variety_name = "Grain_maize_201" if self.crop_name == "maize" else "Soybean_901"
+        if self.reference_density_plants_m2 is None:
+            self.reference_density_plants_m2 = (profile.reference_density_plants_m2
+                                                if self.crop_name == "maize" else 40.0)
+        if self.external_biotic_coupling is None:
+            self.external_biotic_coupling = self.crop_name == "soybean"
+        if self.crop_name == "maize":
+            if self.cultivar_profile is not None:
+                raise ValueError("Soybean cultivar profiles cannot be applied to maize")
+            if self.variety_name != "Grain_maize_201":
+                raise ValueError("Maize v1 requires variety_name='Grain_maize_201'")
+            if self.external_biotic_coupling:
+                raise ValueError("Maize v1 requires external_biotic_coupling=False; soybean pests are not adapted")
+            if any(seed not in {"*", "MAIZE_201"} for seed in (*self.cultivar_map, *self.parameter_overrides)):
+                raise ValueError("Maize configuration only accepts seed MAIZE_201")
+            if any(variety != "Grain_maize_201" for variety in self.cultivar_map.values()):
+                raise ValueError("Maize v1 only supports Grain_maize_201")
+        elif "MAIZE_201" in self.cultivar_map or "MAIZE_201" in self.parameter_overrides:
+            raise ValueError("Seed MAIZE_201 does not match WOFOST crop 'soybean'")
         if not isinstance(self.require_explicit_cultivar_parameters, bool):
             raise ValueError("require_explicit_cultivar_parameters must be a boolean")
         for name in ("fertilizer_n_fraction", "fertilizer_n_recovery", "irrigation_efficiency"):
@@ -184,10 +204,11 @@ class WofostBackend:
                                      f"base_variety {self._cultivar_profile.base_variety!r}; "
                                      "use parameter_overrides for explicit native parameter changes")
         self._runtime = _load_runtime()
-        self._data_provenance = json.loads((_DATA / "provenance.json").read_text())
-        content = (_DATA / "soybean.yaml").read_bytes()
+        provenance_file = "maize.provenance.json" if self.config.crop_name == "maize" else "provenance.json"
+        self._data_provenance = json.loads((_DATA / provenance_file).read_text())
+        content = (_DATA / f"{self.config.crop_name}.yaml").read_bytes()
         if hashlib.sha256(content).hexdigest() != self._data_provenance["sha256"]:
-            raise RuntimeError("Bundled WOFOST soybean data failed its SHA-256 integrity check")
+            raise RuntimeError(f"Bundled WOFOST {self.config.crop_name} data failed its SHA-256 integrity check")
         self._varieties = self._runtime["yaml"].safe_load(content)["CropParameters"]["Varieties"]
         self._crop_parameters(self.config.variety_name, "*")  # fail early on invalid configuration
         for seed, variety in self.config.cultivar_map.items():
@@ -213,6 +234,8 @@ class WofostBackend:
 
     def bind_physics(self, physics: Any) -> None:
         """Record static soil assumptions before any action (for oracle hashes)."""
+        if self.config.crop_name == "maize":
+            physics.yield_recovery.params = maize_yield_parameters()
         signature = {"parameters": _json_safe(asdict(physics.soil.params)),
                      "hydraulic_modifiers": _json_safe({rid: asdict(value) for rid, value in
                                                         physics.soil.hydraulic_modifiers.items()})}
@@ -236,6 +259,8 @@ class WofostBackend:
         )
 
     def _variety_for_seed(self, seed: str) -> str:
+        if seed != "*" and (seed == "MAIZE_201") != (self.config.crop_name == "maize"):
+            raise ValueError(f"Seed {seed!r} does not match WOFOST crop {self.config.crop_name!r}")
         self._require_explicit_cultivar(seed)
         if self._cultivar_profile is not None and self._cultivar_profile.applies_to(seed):
             return self._cultivar_profile.base_variety
@@ -244,7 +269,7 @@ class WofostBackend:
     def _crop_parameters(self, variety: str, seed: str) -> dict[str, Any]:
         self._require_explicit_cultivar(seed)
         if variety not in self._varieties:
-            raise ValueError(f"Unknown bundled WOFOST soybean variety {variety!r}; "
+            raise ValueError(f"Unknown bundled WOFOST {self.config.crop_name} variety {variety!r}; "
                              f"available: {', '.join(sorted(self._varieties))}")
         parameters = {key: copy.deepcopy(value[0]) for key, value in self._varieties[variety].items()
                       if key != "Metadata"}
@@ -343,7 +368,7 @@ class WofostBackend:
         parameters = runtime["ParameterProvider"](cropdata=crop,
                                                   soildata=specification["soil_parameters"],
                                                   sitedata=specification["site_parameters"])
-        agro = [{start: {"CropCalendar": {"crop_name": "soybean", "variety_name": specification["variety"],
+        agro = [{start: {"CropCalendar": {"crop_name": self.config.crop_name, "variety_name": specification["variety"],
                                           "crop_start_date": start, "crop_start_type": "sowing",
                                           "crop_end_date": None, "crop_end_type": "maturity",
                                           "max_duration": self.config.max_duration_days},
@@ -419,6 +444,9 @@ class WofostBackend:
                 specification["calibration"] = profile.get("calibration", {}).get(
                     "status", "uncalibrated"
                 )
+        if self.config.crop_name == "maize":
+            specification["crop_name"] = "maize"
+            specification["cultivar_mapping"] = "explicit_reference_cultivar"
         return specification
 
     def _advance_native(self, run: _RidgeRun, entry: dict[str, Any]) -> None:
@@ -550,7 +578,13 @@ class WofostBackend:
         phen, soil, canopy = (physics.phenology.states[rid], physics.soil.states[rid], physics.canopy.states[rid])
         dvs = float(values.get("DVS") or 0)
         if phen.planted:
-            phen.stage = self._stage(dvs)
+            if self.config.crop_name == "maize":
+                phen.stage = (SoybeanStage.MATURE if values.get("DOM") is not None else
+                              SoybeanStage.REPRODUCTIVE if dvs >= 1 else
+                              SoybeanStage.VEGETATIVE if dvs >= 0 else
+                              SoybeanStage.PLANTED_PRE_EMERGENCE)
+            else:
+                phen.stage = self._stage(dvs)
             phen.emerged = dvs >= 0
             phen.days_after_planting = (day - date.fromisoformat(run.specification["planting_date"])).days + 1
             # PCSE labels the integration boundary as tomorrow; FAIRY reports
@@ -565,8 +599,10 @@ class WofostBackend:
             phen.last_effective_gdd = phen.last_daily_gdd
             phen.last_photoperiod_multiplier = 1.0
             phen.last_stress_multiplier = 1.0
+            stage_tag = ("native_maize_coarse_stages" if self.config.crop_name == "maize"
+                         else "DVS_to_soybean_stage_approximation")
             phen.tags = list(dict.fromkeys(phen.tags + ["wofost_native_DVS", "wofost_thermal_time_not_legacy_gdd",
-                                                       "DVS_to_soybean_stage_approximation", "uncalibrated_cultivar"]))
+                                                       stage_tag, "uncalibrated_cultivar"]))
             canopy.initialized = phen.emerged
             canopy.seed_type = CanopySeedType(run.specification["seed_type"])
             if canopy.initialized:
@@ -625,19 +661,27 @@ class WofostBackend:
                       "calibration": "uncalibrated", "external_biotic_coupling": "PGASS multiplier before respiration"}
         if self._cultivar_profile is not None:
             provenance["cultivar_profile"] = self._cultivar_profile.provenance()
+        if self.config.crop_name == "maize":
+            provenance["external_biotic_coupling"] = "disabled; soybean biotic models are not adapted to maize"
         provenance["config_fingerprint"] = hashlib.sha256(json.dumps(provenance, sort_keys=True,
                                                                       separators=(",", ":")).encode()).hexdigest()
         return _json_safe({"backend": "wofost", "config": config, "provenance": provenance,
                            "assumptions": [("Selected cultivar profile is an unvalidated literature transfer; "
                                             "local cultivar calibration has not been established"
                                             if self._cultivar_profile is not None else
+                                            "European maize reference cultivar; not calibrated for Northeast China"
+                                            if self.config.crop_name == "maize" else
                                             "European soybean defaults; Chinese seed labels uncalibrated unless explicitly configured"),
                              "Density changes TDWI initial biomass only; no individual plants or row geometry",
-                             "DVS-to-VE/R-stage mapping is approximate; DVSEND=2 is required",
+                             ("Coarse maize stages: emergence, DVS=1 reproductive transition, native DOM maturity; no leaf-number inference"
+                              if self.config.crop_name == "maize" else
+                              "DVS-to-VE/R-stage mapping is approximate; DVSEND=2 is required"),
                              "CWB root-zone SM is also exposed as top_vwc; no native seed-zone moisture",
                              "Preplant soil/temperature use labeled auxiliary models; preplant N enters native pool at sowing",
                              "Fertilizer defaults to 46% N and 70% recovery; configure actual product",
-                             "Biotic stress empirically scales native PGASS before carbon allocation",
+                             ("Soybean pests, diseases and weeds are disabled for maize v1"
+                              if self.config.crop_name == "maize" else
+                              "Biotic stress empirically scales native PGASS before carbon allocation"),
                              "Native crop yield freezes at maturity; FAIRY late-harvest/storage losses remain downstream",
                              "Events are exposed on completed forcing day; PCSE integration boundary is the next day"],
                            "last_day": self._last_day,

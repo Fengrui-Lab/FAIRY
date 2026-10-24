@@ -27,6 +27,26 @@
   `scenario.validate(env)`. The environment exposes `scenario`, `workflow`,
   `apps`, `time_manager`, and `engine`.
 
+## Maize On The Shared Upland Runtime
+
+- `fairy/scenarios/maize/` follows the soybean V2 authoring convention:
+  explicitly registered modules, shared Python specs and captured events.
+  No offline Oracle plan is loaded and setup does not simulate a season.
+- `FarmWorldApp` retains the existing tools and daily orchestrator. Selecting
+  WOFOST with `crop_name="maize"` chooses pinned `Grain_maize_201` data and
+  `MAIZE_201` seeds. Legacy maize or mismatched crop/seed combinations fail.
+- Native DOM and generic crop stages drive maize harvest readiness; no
+  soybean R8 display or soybean pest/weed dynamics are used for maize.
+  Yield recovery is configured for 14% market moisture and a 25% harvest
+  ceiling. Inventory is standardized market mass, not current wet mass.
+- Maize checkpoints additionally embed local weather configuration and
+  event schedules, preserving future synthetic forcing after restoration.
+  Historical soybean checkpoint shapes and defaults are retained.
+- The normal, water-limit and nitrogen-limit L3 tasks require all 64 ridges
+  mature, harvested and safely stored with consistent seed/water/fertilizer
+  ledgers. Cross-crop yield baselines are rejected by the existing native
+  parameter fingerprint checks. See `docs/maize-foundation.md`.
+
 ## Rice Scenario Runtime And Offline Artifacts
 
 - Rice uses the same event-graph execution protocol as full-season v2. Eight
@@ -177,3 +197,11 @@
   `rain_event` label as workflow events.
 - The regression check is
   `tests/test_fairy_migration_smoke.py::test_weather_event_rain_event_is_physics_input_not_framework_event`.
+
+Maize task splits reuse real L3 checkpoints: 11 L1 operations and 4 L2 loops
+under `maize/l2_l1_splits/`, with Python event builders and explicit registration.
+The maize checkpoint adapter adds lossless equipment and RNG state to the shared
+farm/native checkpoint. Offline rebuilding runs source seasons and matched water/N
+controls; runtime validation checks task progress and resource conservation without
+simulating future outcomes. Normal maize harvest occurs at management day 101 to
+exercise real wet-grain drying. The other two L3 harvest windows remain day 145.

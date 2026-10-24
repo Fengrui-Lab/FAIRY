@@ -142,13 +142,15 @@ def _grain_moisture_for_stage(stage: str, days_in_r6_plus: int) -> float:
     return round(moisture, 2)
 
 
-def plants_per_ridge_from_spacing(seed_spacing_cm: float) -> int:
+def plants_per_ridge_from_spacing(
+    seed_spacing_cm: float, rows_per_ridge: int = ROWS_PER_RIDGE
+) -> int:
     """
     Convert in-row seed spacing to the realized plant count for one ridge.
 
-    Each ridge contains two soybean rows across the fixed 268 m ridge length. [PDF-p6]
+    The default retains two soybean rows; other crops configure their row count.
     """
-    return int(round(FIELD_LENGTH_M * ROWS_PER_RIDGE * 100.0 / float(seed_spacing_cm)))
+    return int(round(FIELD_LENGTH_M * rows_per_ridge * 100.0 / float(seed_spacing_cm)))
 
 
 class FarmWorldApp(App):
@@ -162,6 +164,9 @@ class FarmWorldApp(App):
 
     def __init__(self) -> None:
         super().__init__(name="FarmWorldApp")
+        self.crop_name = "soybean"
+        self.variety_name: str | None = None
+        self.rows_per_ridge = ROWS_PER_RIDGE
         self.ridge_width_m = DEFAULT_RIDGE_WIDTH_M
         self.num_ridges = DEFAULT_NUM_RIDGES
         self._ridges: list[RidgeState] = [
@@ -197,6 +202,7 @@ class FarmWorldApp(App):
             "app_name": self.name,
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
+            **self._crop_metadata(),
             **({"crop_backend": self._physics.crop_backend.snapshot()["provenance"]}
                if self._physics is not None and self._physics.crop_backend is not None
                else {}),
@@ -218,6 +224,14 @@ class FarmWorldApp(App):
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        # Historical soybean snapshots omitted geometry and retained the scenario's
+        # configured width. Returning from a maize state restores soybean defaults.
+        old_width = (self.ridge_width_m if self.crop_name == "soybean"
+                     else DEFAULT_RIDGE_WIDTH_M)
+        self.crop_name = state_dict.get("crop_name", "soybean")
+        self.variety_name = state_dict.get("variety_name")
+        self.rows_per_ridge = int(state_dict.get("rows_per_ridge", ROWS_PER_RIDGE))
+        self.ridge_width_m = float(state_dict.get("ridge_width_m", old_width))
         self._sim_date = state_dict["sim_date"]
         self._season_phase = state_dict["season_phase"]
         self._ridges = [RidgeState.from_dict(d) for d in state_dict["ridges"]]
@@ -312,6 +326,7 @@ class FarmWorldApp(App):
         return {
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
+            **self._crop_metadata(),
             "inventory": self._inventory.to_dict(),
             "ridges_overview": overview,
             **({"model_assumptions": self._physics.crop_backend.snapshot().get("assumptions", [])}
@@ -373,6 +388,7 @@ class FarmWorldApp(App):
         """Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information."""
         return {
             **self._inventory.to_dict(),
+            **self._crop_metadata(),
             "management_regime": self._management_regime.to_dict(),
             "postharvest_market": self._postharvest_market.to_dict(),
         }
@@ -548,7 +564,8 @@ class FarmWorldApp(App):
         r.seeds_planted = seeds_planted or 0
         r.planted_at_sim_time = float(self.time_manager.time())
         r.days_since_planted = 0
-        r.growth_stage = GrowthStage.VE.value
+        r.growth_stage = ("PLANTED_PRE_EMERGENCE" if self.crop_name == "maize"
+                          else GrowthStage.VE.value)
         r.grain_moisture_pct = 0.0
         self.is_state_modified = True
         return {
@@ -737,6 +754,42 @@ class FarmWorldApp(App):
         """
         return self._physics is not None and self._physics.engines_active
 
+    def _crop_metadata(self) -> dict[str, Any]:
+        """Keep historical soybean snapshots unchanged; identify other crops explicitly."""
+        if self.crop_name == "soybean":
+            return {}
+        return {
+            "crop_name": self.crop_name,
+            "variety_name": self.variety_name,
+            "rows_per_ridge": self.rows_per_ridge,
+            "ridge_width_m": self.ridge_width_m,
+            "grain_mass_basis": "market_moisture",
+            "market_moisture_pct": self._postharvest_market.market_moisture_pct,
+        }
+
+    def validate_seed_for_crop(self, seed_type: str | None) -> str | None:
+        """Reject unsupported crop/seed combinations before consuming resources."""
+        backend = self._physics.crop_backend if self._physics is not None else None
+        if backend is not None and backend.config.crop_name != self.crop_name:
+            return "Crop identity does not match the native backend; restore a complete farm checkpoint"
+        if self.crop_name == "maize":
+            if backend is None:
+                return "Maize requires the WOFOST crop backend"
+            if seed_type != "MAIZE_201":
+                return "The maize crop requires MAIZE_201 seeds"
+        elif seed_type == "MAIZE_201":
+            return "MAIZE_201 seeds require crop_name='maize' with the WOFOST backend"
+        return None
+
+    def is_ridge_mature(self, ridge_id: int) -> bool:
+        """Native crop maturity is authoritative when a native backend is active."""
+        if self._physics is not None and self._physics.crop_backend is not None:
+            state = self._physics.phenology.states[ridge_id]
+            return state.maturity_date is not None
+        return str(self._ridges[ridge_id].growth_stage).upper() in {
+            "R8", "R8_FULL_MATURITY"
+        }
+
     def configure_crop_backend(
         self, backend: str = "legacy", **options: Any
     ) -> dict[str, Any]:
@@ -748,6 +801,8 @@ class FarmWorldApp(App):
         """
         if backend not in {"legacy", "wofost"}:
             raise ValueError("crop backend must be 'legacy' or 'wofost'")
+        if backend == "legacy" and self.crop_name == "maize":
+            raise ValueError("Maize requires the WOFOST crop backend")
         if backend == "legacy" and options:
             raise ValueError("WOFOST options require the 'wofost' crop backend")
         physics = self.physics
@@ -757,6 +812,8 @@ class FarmWorldApp(App):
 
             config = WofostConfig(**{"latitude_deg": physics.latitude_deg, **options})
         current = physics.crop_backend
+        if current is not None and config is not None and current.config.crop_name != config.crop_name:
+            raise ValueError("Changing crop identity requires a fresh farm or complete farm checkpoint")
         if physics.crop_backend_name == backend and (
             current is None or current.config == config
         ):
@@ -774,6 +831,28 @@ class FarmWorldApp(App):
 
             current = WofostBackend(config)
             current.bind_physics(physics)
+            from fairy.physics.crop_profiles import get_crop_profile
+
+            profile = get_crop_profile(config.crop_name)
+            self.crop_name = config.crop_name
+            self.variety_name = config.variety_name
+            self.rows_per_ridge = profile.rows_per_ridge
+            if self.crop_name == "maize":
+                self.ridge_width_m = profile.ridge_width_m
+                # The maize foundation does not simulate soybean biotic processes.
+                # Remove their default latent pressure as well as disabling updates.
+                for state in physics.biotic.states.values():
+                    state.weed_pressure = 0.0
+                    state.insect_pressure = 0.0
+                    state.disease_pressure = 0.0
+                for ridge in self._ridges:
+                    ridge.pest_pressure = ridge.pest_pressure_base = 0.0
+                    ridge.disease_pressure = ridge.disease_pressure_base = 0.0
+                self._inventory.seed_stock = {
+                    "MAIZE_201": self._inventory.seed_stock.get("MAIZE_201", 1000000)
+                }
+                self._postharvest_market.market_moisture_pct = profile.market_moisture_frac * 100
+                self._postharvest_market.max_storage_moisture_pct = profile.max_storage_moisture_frac * 100
         else:
             current = None
         physics.crop_backend = current

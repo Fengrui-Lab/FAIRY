@@ -229,7 +229,13 @@ def _seed_physics_from_ridges(
             )
             phen_state.seed_type = _coerce_seed_type(ridge.seed_type)
             phen_state.days_after_planting = int(ridge.days_since_planted)
-            mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
+            if farm_world_app.crop_name == "maize":
+                error = farm_world_app.validate_seed_for_crop(ridge.seed_type)
+                if error:
+                    raise ValueError(error)
+                mapped = SoybeanStage(ridge.growth_stage)
+            else:
+                mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
             phen_state.stage = mapped
             phen_state.emerged = mapped not in {
                 SoybeanStage.NOT_PLANTED,
@@ -288,7 +294,8 @@ def _seed_physics_from_ridges(
         # ridge.growth_stage may temporarily say "VE". Daily ticks will init
         # canopy when emergence actually happens.
         canopy_state = physics.canopy.states[rid]
-        if ridge.planted and not canopy_state.initialized:
+        if (ridge.planted and not canopy_state.initialized
+                and farm_world_app.crop_name != "maize"):
             phen_stage = phen_state.stage
             if phen_stage in {
                 SoybeanStage.NOT_PLANTED,
@@ -382,10 +389,8 @@ def _ridge_planting_density_plants_m2(
             return max(0.0, float(ridge.seeds_planted) / ridge_area_m2)
 
     if ridge.seed_spacing_cm is not None and ridge.seed_spacing_cm > 0.0:
-        from fairy.apps.farm_world.farm_world_app import ROWS_PER_RIDGE
-
         seed_spacing_m = float(ridge.seed_spacing_cm) / 100.0
-        return max(0.0, ROWS_PER_RIDGE / (ridge_width_m * seed_spacing_m))
+        return max(0.0, farm_world_app.rows_per_ridge / (ridge_width_m * seed_spacing_m))
 
     return 40.0
 
@@ -473,7 +478,8 @@ def _run_daily_tick(
 ) -> None:
     """Run one full daily tick following the integration-guide order."""
     weather = _build_weather_inputs(weather_app, day, physics=physics)
-    _apply_biotic_outbreaks_for_day(physics, day)
+    if farm_world_app.crop_name != "maize":
+        _apply_biotic_outbreaks_for_day(physics, day)
 
     pending_actions = physics.drain_pending_management_actions()
     pending_treatments = physics.drain_pending_treatments()
@@ -597,32 +603,34 @@ def _run_daily_tick(
             management_by_ridge=canopy_management_inputs,
         )
 
-    # 7. Biotic pressure.
-    biotic_crop_inputs = {
-        rid: BioticCropInput(
-            stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
-            canopy_cover=physics.canopy.states[rid].canopy_cover,
-            seed_type=(
-                physics.phenology.states[rid].seed_type.value
-                if physics.phenology.states[rid].seed_type is not None
-                else None
-            ),
+    # Maize v1 excludes soybean pest, disease and weed dynamics.
+    if farm_world_app.crop_name != "maize":
+        # 7. Biotic pressure.
+        biotic_crop_inputs = {
+            rid: BioticCropInput(
+                stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
+                canopy_cover=physics.canopy.states[rid].canopy_cover,
+                seed_type=(
+                    physics.phenology.states[rid].seed_type.value
+                    if physics.phenology.states[rid].seed_type is not None
+                    else None
+                ),
+            )
+            for rid in physics.phenology.states
+        }
+        biotic_soil_inputs = {
+            rid: BioticSoilInput(
+                top_vwc=physics.soil.states[rid].top_vwc,
+                root_vwc=physics.soil.states[rid].root_vwc,
+            )
+            for rid in physics.soil.states
+        }
+        physics.biotic.update_day(
+            weather=weather["biotic"],
+            crop_by_ridge=biotic_crop_inputs,
+            soil_by_ridge=biotic_soil_inputs,
+            treatments_by_ridge=pending_treatments,
         )
-        for rid in physics.phenology.states
-    }
-    biotic_soil_inputs = {
-        rid: BioticSoilInput(
-            top_vwc=physics.soil.states[rid].top_vwc,
-            root_vwc=physics.soil.states[rid].root_vwc,
-        )
-        for rid in physics.soil.states
-    }
-    physics.biotic.update_day(
-        weather=weather["biotic"],
-        crop_by_ridge=biotic_crop_inputs,
-        soil_by_ridge=biotic_soil_inputs,
-        treatments_by_ridge=pending_treatments,
-    )
 
     # 8. Yield recovery (cheap; ignores ridges not yet at R5+).
     yield_phenology = {
@@ -1147,7 +1155,8 @@ def _run_subdaily_injection(
             soil_by_ridge=_build_management_soil_inputs(physics),
             crop_by_ridge=_build_management_crop_inputs(physics),
         )
-    if treatments:
+    if treatments and (physics.crop_backend is None
+                       or physics.crop_backend.config.crop_name != "maize"):
         physics.biotic.update_day(
             weather=weather["biotic"],
             crop_by_ridge={
@@ -1266,7 +1275,8 @@ def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> No
         if phen.planted:
             ridge.planted = True
             ridge.days_since_planted = int(phen.days_after_planting)
-            ridge.growth_stage = _map_soybean_stage_to_legacy(phen.stage)
+            ridge.growth_stage = (phen.stage.value if farm_world_app.crop_name == "maize"
+                                  else _map_soybean_stage_to_legacy(phen.stage))
 
         biotic = physics.biotic.states[rid]
         ridge.pest_pressure = float(biotic.insect_pressure)

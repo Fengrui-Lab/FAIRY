@@ -19,8 +19,9 @@ from typing import Any
 
 
 class SeedType(str, Enum):
-    """Soybean seed types available for planting. [PDF-p5]"""
+    """Seed identities supported by the configured crop backend."""
 
+    MAIZE_201 = "MAIZE_201"  # WOFOST Grain_maize_201 reference cultivar
     EARLY_COLD = "EARLY_COLD"  # 早熟耐寒, 100-110 days, tolerates <10°C
     STANDARD = "STANDARD"  # 标准型,   110-115 days, typical window
     HIGH_DENSITY = "HIGH_DENSITY"  # 高密度紧凑型, sensitive to uneven moisture

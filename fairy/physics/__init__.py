@@ -61,6 +61,7 @@ from fairy.physics.observation_model import (
     SensorAsset,
 )
 from fairy.physics.phenology_engine import (
+    CropStage,
     PhenologyDayResult,
     PhenologyParameters,
     PhenologySoilInput,
@@ -125,6 +126,7 @@ __all__ = [
     "SeedType",
     "SeedTypeParameters",
     "SoybeanStage",
+    "CropStage",
     "ThermalTimePhenologyEngine",
     # Canopy / biomass
     "CanopyBiomassDayResult",

@@ -2,11 +2,13 @@
 
 [English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md) | [WOFOST 接入与无 LLM 演示](docs/wofost-integration.md)
 
+玉米复用旱田工具和 WOFOST 8.1 后端，使用固定来源的通用参考品种，提供11个 L1、4个 L2，以及正常、缺水、缺氮三个 L3，共18个场景。Oracle 按大豆 V2 的方式直接编写为 Python 事件图。运行方法、参数依据、水分质量口径与模型边界见 [玉米场景说明](docs/maize-foundation.md)。
+
 水稻基础场景与大豆共用 WOFOST 8.1 环境，从成品苗插秧开始，支持田格水氮管理、观测、农机、植保与分批收获，包含 35 个水稻工具和 28 个 L1/L2/L3 场景。各场景显式注册，使用标准事件图及离线生成的固定 oracle 计划和来源季检查点。代码入口、产物生成、重放方法、参数依据及模型边界见 [水稻基础场景说明](docs/rice-foundation.md)。
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
-已支持可选的 WOFOST 作物内核：安装 `uv sync --extra wofost` 后，可在主入口添加 `--crop-backend wofost`。运行 `uv run --extra wofost python scripts/run_wofost_demo.py` 可通过实际农事工具完成播种、灌溉、施氮和收获，无需 LLM。当前接入大豆，使用未本地标定的品种参数；密度通过初始生物量进入群体生长和水氮反馈，尚未经过本地密度试验验证。配置、模型边界和完整示例见 [WOFOST 接入说明](docs/wofost-integration.md)，当前进展与后续工作见 [交接文档](docs/wofost-handoff-20261021.md)。
+已支持可选的 WOFOST 作物内核：安装 `uv sync --extra wofost` 后，可在主入口添加 `--crop-backend wofost`。运行 `uv run --extra wofost python scripts/run_wofost_demo.py` 可通过实际农事工具完成播种、灌溉、施氮和收获，无需 LLM。该演示使用大豆及未本地标定的品种参数；密度通过初始生物量进入群体生长和水氮反馈，尚未经过本地密度试验验证。配置、模型边界和完整示例见 [WOFOST 接入说明](docs/wofost-integration.md)，当前进展与后续工作见 [交接文档](docs/wofost-handoff-20261021.md)。
 
 ## 系统定位
 

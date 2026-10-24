@@ -2,7 +2,8 @@
 
 - `fairy/controllers/engine.py` is the lightweight runtime entry point. It registers a shared `TimeManager`, dynamic-event scheduler, `SystemApp`, and automatic `FarmWorldApp` physics attachment.
 - `fairy/apps/farm_world/` contains the migrated FARM app/action layer and physics orchestrator.
-- `fairy/apps/paddy/` contains the separate rice world, observations, machinery, operations, infrastructure and drone apps. `PaddyWorldApp` advances one native model per hydraulic plot; it does not use the soybean ridge orchestrator.
+- `fairy/apps/paddy/` contains the separate rice world, observations, machinery, operations, infrastructure and drone apps. `PaddyWorldApp` advances one native model per hydraulic plot; it does not use the upland ridge orchestrator.
+- `fairy/scenarios/maize/` provides 11 L1 tasks, 4 L2 loops and 3 L3 seasons with Python-authored captured Oracle events, following soybean V2 conventions. Maize shares `FarmWorldApp` and `wofost_backend.py`; `physics/crop_profiles.py` and pinned `data/wofost/maize.yaml` supply its operational settings and native parameters. See `docs/maize-foundation.md` for mass accounting and scope.
 - `fairy/physics/` contains the migrated FARM physics engines and profiles.
 - `fairy/physics/rice_backend.py`, `paddy_waterbalance.py`, and `data/wofost/rice/` contain the rice PCSE/WOFOST adapter, continuous water/nitrogen ledgers, and pinned IR72 parameters. The soybean `wofost_backend.py` and Harbin `profiles.py` remain separate.
 - `fairy/scenarios/baseline_farm_world/` contains FarmAgent-style scenarios with `scenario_input` and `oracle_solution()`.

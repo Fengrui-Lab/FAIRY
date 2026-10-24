@@ -313,6 +313,23 @@ def get_farm_world_system_prompt(
                 "Read plot maturity and harvest readiness before harvesting. "
                 "Perform physical operations sequentially and inspect their results."),
         )
+    elif crop == "maize":
+        prompt = SYSTEM_PROMPT_TEMPLATE.format(
+            general_instructions=("You manage a grain maize farm through field preparation, sowing, "
+                "crop monitoring, water and nitrogen management, harvest, drying and storage. "
+                "Use the scenario's field dimensions, seed inventory and resource limits. "
+                "The reference cultivar is not calibrated to a local commercial hybrid."),
+            agent_instructions=(ARE_FUNCTION_CALL_AGENT_INSTRUCTIONS if mode == "are"
+                                else FUNCTION_CALL_AGENT_INSTRUCTIONS),
+            environment_instructions=("Use the supplied farm, tractor, field operations, sensor, robot, "
+                "weather and time tools. Each physical operation consumes time and resources. "
+                "Inspect soil moisture, crop development, nitrogen status and grain moisture before acting. "
+                "Crop stages are coarse observations: pre-emergence, vegetative, reproductive and mature. "
+                "Maturity alone does not imply harvest readiness; grain must meet the equipment's moisture limit. "
+                "Unload, dry and store the harvested grain, respecting capacities and the stated storage target. "
+                "Use the reported mass basis when comparing yields and inventory. "
+                "Perform physical operations sequentially and inspect their results."),
+        )
     elif crop != "soybean":
         raise ValueError(f"Unsupported FARM crop context: {crop!r}")
     if not parallel_tool_calls and SINGLE_TOOL_CALL_INSTRUCTION not in prompt:

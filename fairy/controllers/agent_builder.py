@@ -330,11 +330,13 @@ def build_controller_agent(
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
 ) -> ResearchARESimulationAgent:
-    if system_message is None and any(
-        getattr(getattr(app, "wrapped_app", app), "crop_name", None) == "rice"
-        for app in toolsets or []
-    ):
-        system_message = get_farm_world_system_prompt(crop="rice")
+    if system_message is None:
+        crop = next((getattr(getattr(app, "wrapped_app", app), "crop_name", None)
+                     for app in toolsets or []
+                     if getattr(getattr(app, "wrapped_app", app), "crop_name", None)
+                     in {"rice", "maize"}), None)
+        if crop is not None:
+            system_message = get_farm_world_system_prompt(crop=crop)
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)

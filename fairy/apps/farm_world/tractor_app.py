@@ -154,7 +154,11 @@ class TractorApp(App):
         self._operation_log: list[dict[str, Any]] = []
         self._completed_prep_ops: list[str] = []
         self._attached_implement: str | None = None  # currently mounted attachment
-        self._harvest_moisture_limit_pct: float = 18.0
+        from fairy.physics.crop_profiles import get_crop_profile
+
+        self._harvest_moisture_limit_pct = (
+            get_crop_profile(farm_world_app.crop_name).max_harvest_moisture_frac * 100
+        )
 
     def get_state(self) -> dict[str, Any]:
         return {
@@ -201,7 +205,11 @@ class TractorApp(App):
         self._operation_log = []
         self._completed_prep_ops = []
         self._attached_implement = None
-        self._harvest_moisture_limit_pct = 18.0
+        from fairy.physics.crop_profiles import get_crop_profile
+
+        self._harvest_moisture_limit_pct = (
+            get_crop_profile(self._farm_world_app.crop_name).max_harvest_moisture_frac * 100
+        )
 
     def configure_harvest(self, *, max_grain_moisture_pct: float = 18.0) -> None:
         """Configure scenario equipment capability; keep legacy's 18% default.
@@ -340,12 +348,14 @@ class TractorApp(App):
         Args:
             seed_type: One of STANDARD, EARLY_COLD, HIGH_DENSITY,
                     STRESS_TOLERANT, HEIHE43, HEIHE50, HEINONG60,
-                    HEINONG84, HEIKE71.
+                    HEINONG84, HEIKE71, MAIZE_201 (maize crop only).
             count:     Number of plants to load (must be positive).
         """
         if seed_type not in {m.value for m in SeedType}:
             return {"error": f"Unknown seed_type '{seed_type}'"}
-        self.seed_type = seed_type
+        crop_error = self._farm_world_app.validate_seed_for_crop(seed_type)
+        if crop_error:
+            return {"error": crop_error}
         count = int(count)
         if count <= 0:
             return {"error": "count must be positive"}
@@ -358,6 +368,7 @@ class TractorApp(App):
             return {
                 "error": f"Insufficient {seed_type} seeds in warehouse: need {to_transfer}"
             }
+        self.seed_type = seed_type
         self._seed_hopper = current + to_transfer
         self.is_state_modified = True
         return {
@@ -659,6 +670,7 @@ class TractorApp(App):
           HEINONG60
           HEINONG84
           HEIKE71
+          MAIZE_201 (maize crop only)
 
         Args:
             start_ridge: First ridge to plant (0-63).
@@ -724,7 +736,12 @@ class TractorApp(App):
                 "error": f"Soil temperature {avg_temp:.1f}°C must exceed 10°C for planting"
             }
 
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
+        crop_error = self._farm_world_app.validate_seed_for_crop(self.seed_type)
+        if crop_error:
+            return {"error": crop_error}
+        seeds_per_ridge = plants_per_ridge_from_spacing(
+            seed_spacing_cm, self._farm_world_app.rows_per_ridge
+        )
         seed_count = len(ridges) * seeds_per_ridge
         if self._seed_hopper < seed_count:
             return {
@@ -1261,7 +1278,12 @@ class TractorApp(App):
         ridges = [
             self._farm_world_app.get_ridge(r) for r in range(start_ridge, end_ridge + 1)
         ]
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
+        crop_error = self._farm_world_app.validate_seed_for_crop(self.seed_type)
+        if crop_error:
+            return {"error": crop_error}
+        seeds_per_ridge = plants_per_ridge_from_spacing(
+            seed_spacing_cm, self._farm_world_app.rows_per_ridge
+        )
         seed_count = len(ridges) * seeds_per_ridge
         if self._seed_hopper < seed_count:
             return {
@@ -1495,8 +1517,7 @@ class TractorApp(App):
         immature_ridges = [
             r.ridge_id
             for r in ridges
-            if str(r.growth_stage).upper()
-            not in {GrowthStage.R8.value.upper(), "R8_FULL_MATURITY"}
+            if not self._farm_world_app.is_ridge_mature(r.ridge_id)
         ]
         if immature_ridges:
             return {
@@ -1519,6 +1540,14 @@ class TractorApp(App):
         # Check that grain bin can hold this pass worst-case (yield_potential ≤ 1.0).
         ridge_count = end_ridge - start_ridge + 1
         worst_case_grain = ridge_count * GRAIN_KG_PER_RIDGE
+        if self._farm_world_app.crop_name == "maize":
+            area = FIELD_LENGTH_M * self._farm_world_app.ridge_width_m
+            market_frac = self._farm_world_app._postharvest_market.market_moisture_pct / 100.0
+            worst_case_grain = sum(
+                self._farm_world_app.physics.canopy.states[r.ridge_id].yield_potential_g_m2
+                * area / 1000.0 / (1.0 - market_frac)
+                for r in ridges
+            )
         if self._grain_bin_kg + worst_case_grain > _GRAIN_BIN_MAX_KG:
             return {
                 "error": (
@@ -1661,8 +1690,8 @@ class TractorApp(App):
         seed_type_value = self.seed_type or SeedType.STANDARD.value
         try:
             physics_seed_type = PhysicsSeedType(seed_type_value)
-        except ValueError:
-            physics_seed_type = PhysicsSeedType.STANDARD
+        except ValueError as exc:
+            raise ValueError(f"Unsupported planting seed: {seed_type_value}") from exc
 
         now_t = float(self.time_manager.time())
         today = datetime.fromtimestamp(now_t, tz=timezone.utc).date()
@@ -1841,7 +1870,11 @@ class TractorApp(App):
 
         # Convert recovered yield from g/m² to kg per ridge: each ridge is
         # FIELD_LENGTH_M × DEFAULT_RIDGE_WIDTH_M m².
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        # Preserve legacy soybean accounting; maize uses its configured row area.
+        ridge_width = (self._farm_world_app.ridge_width_m
+                       if self._farm_world_app.crop_name == "maize"
+                       else DEFAULT_RIDGE_WIDTH_M)
+        ridge_area_m2 = FIELD_LENGTH_M * ridge_width
         total_kg = 0.0
         for result in results:
             if result.ridge_id in ridge_ids and result.harvested:

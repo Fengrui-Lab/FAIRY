@@ -93,6 +93,21 @@ def export_farm_checkpoint_state(
         "pending_harvest_actions_by_ridge": _to_jsonable(physics.pending_harvest_actions_by_ridge),
         "weather_generator": _export_weather_generator(weather_generator),
     }
+    if getattr(farm_world, "crop_name", "soybean") == "maize":
+        # Maize scenes use local, versioned synthetic weather profiles rather
+        # than global soybean profile names. Preserve future forcing as well
+        # as the already-generated day cache when resuming a checkpoint.
+        payload["physics_state"]["physics_profile"] = _to_jsonable(
+            getattr(physics, "profile", None)
+        )
+        if weather_generator is not None:
+            payload["physics_state"]["weather_generator"].update({
+                "config": _to_jsonable(weather_generator.config),
+                "day_overrides": {
+                    day.isoformat(): _to_jsonable(value)
+                    for day, value in weather_generator._day_overrides.items()
+                },
+            })
     return payload
 
 
@@ -196,12 +211,17 @@ def restore_farm_checkpoint_state(
                 raise ValueError("WOFOST checkpoint is missing native model history")
             physics.crop_backend = WofostBackend.from_state(backend_state)
             physics.crop_backend_name = "wofost"
+            if physics.crop_backend.config.crop_name == "maize":
+                # Restore crop-specific downstream accounting as well as the
+                # native model. Old checkpoints retain soybean defaults.
+                physics.crop_backend.bind_physics(physics)
         elif backend_name == "legacy":
             physics.crop_backend = None
             physics.crop_backend_name = "legacy"
         else:
             raise ValueError(f"Unsupported checkpoint crop backend: {backend_name!r}")
         physics.yield_recovery.params.biological_yield_is_dry_matter = backend_name == "wofost"
+        _restore_embedded_weather(physics, physics_state)
         _restore_weather_generator(
             getattr(physics, "weather_generator", None),
             physics_state.get("weather_generator") or {},
@@ -226,6 +246,44 @@ def restore_farm_checkpoint_state(
         "sim_time": farm_world.time_manager.time(),
         "profile_name": getattr(farm_world.physics, "profile_name", None),
     }
+
+
+def _restore_embedded_weather(physics: Any, state: Mapping[str, Any]) -> None:
+    """Restore optional self-contained weather data; historical caches omit it."""
+    from fairy.physics.profiles import BioticOutbreak, PhysicsProfile
+    from fairy.physics.weather_engine import (
+        MonthlyClimate, WeatherEvent, WeatherGenerator, WeatherGeneratorConfig,
+    )
+
+    profile = state.get("physics_profile")
+    if profile:
+        profile = dict(profile)
+        profile["start_date"] = date.fromisoformat(profile["start_date"])
+        profile["monthly_climate"] = {
+            int(month): MonthlyClimate(**values)
+            for month, values in profile["monthly_climate"].items()
+        }
+        profile["weather_events"] = [WeatherEvent(**{
+            **event, "start_date": date.fromisoformat(event["start_date"])
+        }) for event in profile.get("weather_events", [])]
+        profile["biotic_outbreaks"] = [BioticOutbreak(**{
+            **event, "pressure_type": TreatmentType(event["pressure_type"])
+        }) for event in profile.get("biotic_outbreaks", [])]
+        physics.profile = PhysicsProfile(**profile)
+    weather = state.get("weather_generator") or {}
+    if weather.get("config"):
+        config = dict(weather["config"])
+        config["monthly"] = {
+            int(month): MonthlyClimate(**values)
+            for month, values in config["monthly"].items()
+        }
+        physics.weather_generator = WeatherGenerator(
+            WeatherGeneratorConfig(**config), seed=physics.random_seed
+        )
+        physics.weather_generator._day_overrides = {
+            date.fromisoformat(day): _weather_day_from_dict(value)
+            for day, value in weather.get("day_overrides", {}).items()
+        }
 
 
 def _export_weather_generator(generator: Any) -> dict[str, Any] | None:
