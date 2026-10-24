@@ -362,3 +362,50 @@ Percentages = grain loss (grain not harvested and stored vs the oracle; below 0%
 - Option: `--done-check true` (default off, so all earlier baseline runs are unchanged). Same rule and limit as Jev (`fairy/agents/jev/done_check.py`). Commit `27c9e48`.
 
 Spent: about $0.40. Part 2 total: about $9.4.
+
+## 14. Full history instead of the snapshot (2026-10-24)
+
+Hybrid on all 19 L3-mini scenarios with `--jev-state history`: Jev sees every earlier action with its full result, not the farm snapshot. Everything else is the same as the Step 18 hybrid runs: same scenarios and task texts, fallback gpt-6-luna at confidence 0.4, 300 actions / 3600 s, seed 0, 1 run each. No code changes (code `1655bd7`; since Step 18 the only change for the hybrid is that the done check moved to a shared file, same rule). History was not shortened.
+
+| Scenario | Finished | Stopped (sim date) | Grain loss | Actions | Jev tokens (last OK request) | Cost | Time | Jev's share | Context errors |
+|---|---|---|---|---|---|---|---|---|---|
+| organic_residue_weed_establishment | no | 2026-05-12 | 100.0% | 114 | 2.3M (35k) | $0.17 | 3.0 min | 56% | 6 |
+| organic_patch_weed_mechanical_capacity | no | 2026-05-09 | 100.0% | 47 | 1.1M (38k) | $0.07 | 0.8 min | 70% | 6 |
+| micronutrient_deficiency_flowering_patch | no | 2026-07-14 | 100.0% | 74 | 1.7M (35k) | $0.17 | 2.3 min | 23% | 6 |
+| local_soil_constraint_nutrition_patch | no | 2026-05-18 | 100.0% | 76 | 1.7M (34k) | $0.11 | 2.3 min | 68% | 6 |
+| heinong84_edge_low_fertility | no | 2026-05-09 | 100.0% | 106 | 2.2M (34k) | $0.15 | 2.1 min | 68% | 6 |
+| cloudy_wet_low_radiation_biomass | no | 2026-07-11 | 100.0% | 79 | 1.7M (35k) | $0.15 | 2.2 min | 39% | 6 |
+| poordrainage_wetjune_disease_trafficability | no | 2026-05-10 | 100.0% | 103 | 2.2M (37k) | $0.21 | 3.1 min | 30% | 6 |
+| staggered_wetjune_canopy_disease | no | 2026-05-08 | 100.0% | 46 | 0.9M (27k) | $0.08 | 2.0 min | 28% | 6 |
+| soy_after_soy_wetjune_disease | no | 2026-06-03 | 100.0% | 96 | 1.9M (35k) | $0.17 | 2.7 min | 39% | 6 |
+| dryr5r6_hn58_std_waterlimit | no | 2026-05-31 | 100.0% | 68 | 1.1M (32k) | $0.09 | 1.9 min | 41% | 6 |
+| drought_recovery_false_disease_signal | no | 2026-05-08 | 100.0% | 89 | 1.8M (34k) | $0.13 | 1.9 min | 55% | 6 |
+| heinong58_resistant_biotic_water_budget_priority | no | 2026-05-20 | 100.0% | 106 | 2.3M (36k) | $0.19 | 3.9 min | 41% | 6 |
+| hn60_high_fastdrain_dryr5r6 | no | 2026-05-05 | 100.0% | 84 | 1.7M (37k) | $0.15 | 2.5 min | 35% | 6 |
+| dryr5r6_insect_threshold_waterstress | no | 2026-05-06 | 100.0% | 79 | 1.7M (31k) | $0.13 | 1.8 min | 48% | 6 |
+| dryer_capacity_batch_harvest_storage | no | 2026-05-05 | 100.0% | 45 | 0.8M (31k) | $0.05 | 0.7 min | 64% | 6 |
+| grain_moisture_sensor_failure_harvest | no | 2026-05-05 | 100.0% | 43 | 0.9M (25k) | $0.06 | 0.7 min | 51% | 6 |
+| laterain_shattering_drying_tradeoff | no | 2026-05-11 | 100.0% | 73 | 1.0M (34k) | $0.09 | 1.4 min | 42% | 6 |
+| cool_august_lategrain_laterain | no | 2026-09-07 | 100.0% | 52 | 0.7M (25k) | $0.05 | 0.8 min | 63% | 6 |
+| compacted_headland_stand_recovery | no | 2026-05-23 | 100.0% | 87 | 1.9M (34k) | $0.14 | 1.4 min | 57% | 6 |
+
+How to read: **Context errors** = Jev requests refused with `max_tokens_exceeded` (Jev's input limit). Each run has 6: one request, tried once and retried 5 times, all refused, after which the run ends with an error. Jev tokens = total Jev input for the run, with the size of the last request that went through in brackets. Cost = Jev input plus the LLM helper.
+
+**Averages, next to section 13.1:**
+
+| | Hybrid, history | Hybrid, snapshot (section 13) | LLM baseline with done check (section 13.1) |
+|---|---|---|---|
+| Seasons finished | **0 of 19** | 18 of 19 | 19 of 19 |
+| Average grain loss | 100% | 7.3% | 6.4% |
+| Total cost (19 runs) | $2.36 | $2.37 | about $1.20 |
+| Average time per run | 2.0 min | 3.4 min | 7.1 min |
+| Average Jev share of decisions | 48% | 50% | – |
+| Runs ended by Jev's input limit | 19 | 0 | – |
+
+- **Every run hit Jev's input limit before harvest.** Mostly in May (planting); the latest stop was 7 Sep (cool August). Nothing was harvested in any run, so grain loss is 100% everywhere.
+- The history grows with every action. The last requests that got through were 25–38k tokens; the next one was refused. This happened after 43–114 actions; the snapshot hybrid used 76–251 actions for a full season (section 13).
+- Cost is the same as the snapshot hybrid only because the runs ended early: about $0.12 per run for less than half a season.
+- Same result as Part 1 on L1 (52 of 78 runs stopped by the input limit) and the reason the snapshot was built. On full seasons, the full history does not work with Jev at all.
+- Jev's share (48%) is close to the snapshot hybrid's (50%); the runs did not fail because of low confidence, they could not continue.
+
+Spent: about $2.36. Part 2 total: about $11.8.
