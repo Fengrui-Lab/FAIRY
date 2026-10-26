@@ -182,9 +182,10 @@ def omit_action(workflow, tool):
     control = Workflow()
     for step in workflow.dag.values():
         if step.tool_name == tool:
-            content = step.content or {}
-            seconds = content.get("total_duration_minutes", content.get("duration_minutes", 0)) * 60
-            step = replace(step, tool_name="SystemApp__advance_time", tool_args={"seconds": int(round(seconds))})
+            # Replay a no-tool step at the original precise timestamps. Rounded
+            # display durations can overshoot time_after, and a management
+            # counterfactual must keep the same weather/calendar as its source.
+            step = replace(step, tool_name=None, tool_args=None)
         control.add_node(step)
     return control
 
@@ -204,7 +205,7 @@ def test_checkpoint_restores_exact_device_state_and_native_history(sid):
     tractor = scenario.get_typed_app(TractorApp)
     assert {key: getattr(tractor, key) for key in TRACTOR_FIELDS} == saved["apps"]["TractorApp"]["exact_state"]
     farm = scenario.get_typed_app(FarmWorldApp)
-    assert farm.physics.crop_backend.export_state() == saved["farm"]["physics_state"]["crop_backend_state"]
+    assert farm.physics.crop_backend.export_state() == saved["farm"]["farm_world_state"]["physics_state"]["crop_backend_state"]
     assert scenario.start_time == saved["farm"]["sim_time"]
     assert farm.get_state() == saved["farm"]["farm_world_state"]
 
