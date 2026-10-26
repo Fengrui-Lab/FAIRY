@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_repair_bund",
+  "task": "repair_bund",
+  "variant": "infrastructure",
+  "source_l3_scenario_id": "scenario_rice_l3_infrastructure",
+  "source_checkpoint_label": "initial_before_field_prep",
+  "initial_checkpoint_sha256": "02f1e41695b6843a0acb2fef6a052b51617b95922669563a58afad8c50f6f461",
+  "config_fingerprint": "594bee638d6464c0c2e5ed1280dfab00c62e2f98280e8dab2e21c3bf233688bd",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "8248348a8f36f027e94acb54a06fce8a6addaacea69e3d7b903a41e17f7e7658",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 1200.0
+    },
+    {
+      "tool_name": "PaddyInfrastructureApp__repair_bund",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 7200.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

@@ -1,0 +1,6224 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l3_equipment_limit",
+  "task": "season",
+  "variant": "equipment_limit",
+  "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
+  "source_checkpoint_label": "initial_before_field_prep",
+  "initial_checkpoint_sha256": "48a8956bba6d972e64cdfbea3a5c0ffc9af42df8d0aa8b1f406ac4bdf3756906",
+  "config_fingerprint": "974c9b95656a8888352c2bb41fd4cad44184494e046d777e81b1a24e2dbab2d1",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "28a0b81fe6f55333bffa4f2f77866ce9a4f0353a80b1e59a99704d6dafa7c90e",
+  "checkpoint_steps": {
+    "initial_before_field_prep": 0,
+    "before_puddle": 18,
+    "before_transplant": 51,
+    "after_transplant": 64,
+    "before_treat": 73,
+    "before_irrigate": 84,
+    "management_start": 298,
+    "before_topdress": 298,
+    "before_drain": 769,
+    "before_harvest": 870,
+    "before_dry": 878,
+    "before_store": 880
+  },
+  "steps": [
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 1200.0
+    },
+    {
+      "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 1200.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 100.0
+      },
+      "duration_seconds": 5000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__soak",
+      "tool_args": {
+        "plot_id": "p1",
+        "hours": 24
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__soak",
+      "tool_args": {
+        "plot_id": "p1",
+        "hours": 24
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__refuel",
+      "tool_args": {
+        "machine_id": "tractor",
+        "liters": 59.0
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__attach_implement",
+      "tool_args": {
+        "machine_id": "tractor",
+        "implement": "puddler"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__puddle_and_level",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 3600.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 100.0
+      },
+      "duration_seconds": 7500.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__soak",
+      "tool_args": {
+        "plot_id": "p2",
+        "hours": 24
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__soak",
+      "tool_args": {
+        "plot_id": "p2",
+        "hours": 24
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__puddle_and_level",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 5400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 4.5
+      },
+      "duration_seconds": 203.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__detach_implement",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__attach_implement",
+      "tool_args": {
+        "machine_id": "tractor",
+        "implement": "spreader"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 12.0
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p1",
+        "kg_per_ha": 120.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 30.1
+      },
+      "duration_seconds": 2032.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 18.0
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p2",
+        "kg_per_ha": 120.0
+      },
+      "duration_seconds": 1350.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "transplanter"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__refuel",
+      "tool_args": {
+        "machine_id": "transplanter",
+        "liters": 24.0
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_seedlings",
+      "tool_args": {
+        "batch_id": "ir72_standard",
+        "quantity": 75000
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__transplant",
+      "tool_args": {
+        "plot_id": "p1",
+        "batch_id": "ir72_standard",
+        "area_m2": 1000.0
+      },
+      "duration_seconds": 1800.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "transplanter"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_seedlings",
+      "tool_args": {
+        "batch_id": "ir72_standard",
+        "quantity": 75000
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__transplant",
+      "tool_args": {
+        "plot_id": "p2",
+        "batch_id": "ir72_standard",
+        "area_m2": 1000.0
+      },
+      "duration_seconds": 1800.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_seedlings",
+      "tool_args": {
+        "batch_id": "ir72_standard",
+        "quantity": 37500
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__transplant",
+      "tool_args": {
+        "plot_id": "p2",
+        "batch_id": "ir72_standard",
+        "area_m2": 500.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_establishment",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_establishment",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_operation_log",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 26.299999999999997
+      },
+      "duration_seconds": 1184.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 15.0
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p1",
+        "kg_per_ha": 150.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 22.5
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p2",
+        "kg_per_ha": 150.0
+      },
+      "duration_seconds": 1350.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 25.299999999999997
+      },
+      "duration_seconds": 1139.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 15.0
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p1",
+        "kg_per_ha": 150.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 22.5
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p2",
+        "kg_per_ha": 150.0
+      },
+      "duration_seconds": 1350.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 3000.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__irrigate",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 40.0
+      },
+      "duration_seconds": 2000.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 35.8
+      },
+      "duration_seconds": 1611.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p2",
+        "water_mm": 31.4
+      },
+      "duration_seconds": 2118.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_pests",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_forecast",
+      "tool_args": {
+        "days": 3
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__refuel",
+      "tool_args": {
+        "machine_id": "combine",
+        "liters": 49.0
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p1",
+        "area_m2": 400.0
+      },
+      "duration_seconds": 720.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0001"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0001"
+      },
+      "duration_seconds": 11700.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0001"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p1",
+        "area_m2": 400.0
+      },
+      "duration_seconds": 720.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0002"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0002"
+      },
+      "duration_seconds": 11700.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0002"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p1",
+        "area_m2": 200.0
+      },
+      "duration_seconds": 360.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0003"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0003"
+      },
+      "duration_seconds": 5850.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0003"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p2",
+        "area_m2": 400.0
+      },
+      "duration_seconds": 720.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0004"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0004"
+      },
+      "duration_seconds": 11722.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0004"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p2",
+        "area_m2": 400.0
+      },
+      "duration_seconds": 720.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0005"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0005"
+      },
+      "duration_seconds": 11586.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0005"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p2",
+        "area_m2": 400.0
+      },
+      "duration_seconds": 720.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0006"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0006"
+      },
+      "duration_seconds": 11586.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0006"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "combine"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__harvest",
+      "tool_args": {
+        "plot_id": "p2",
+        "area_m2": 300.0
+      },
+      "duration_seconds": 540.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__unload_grain",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
+      "tool_args": {
+        "batch_id": "grain_0007"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__dry_grain",
+      "tool_args": {
+        "batch_id": "grain_0007"
+      },
+      "duration_seconds": 8690.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__store_grain",
+      "tool_args": {
+        "batch_id": "grain_0007"
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 1
+      },
+      "duration_seconds": 86400.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

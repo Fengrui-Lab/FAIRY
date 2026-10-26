@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import inspect
+import copy
+import re
 import time
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timedelta, timezone
 from math import isfinite
 from threading import Thread
 from typing import Any
 
 from fairy.agents.agent.toolset_builder import build_toolset
+from fairy.agents.agent.tool_arguments import parse_tool_arguments
 from fairy.apps.system import SystemApp
 from fairy.apps.farm_world.multi_farm import farm_world_apps, iter_apps_of_type, unwrap_app
 from fairy.apps.farm_world.tractor_app import TractorApp
@@ -20,6 +23,35 @@ from fairy.tool_execution import ToolExecutionError, ToolResult, WorkflowBundle
 
 CST = timezone(timedelta(hours=8))
 
+
+class ReplayDivergenceError(RuntimeError):
+    """A replayed tool no longer agrees with the recorded failure contract."""
+
+
+def _recorded_tool_error(step: WorkflowStep) -> tuple[str, str, str | None]:
+    """Read structured errors, or the error block emitted by older agents."""
+    if step.error_type is not None and step.error_message is not None:
+        return step.error_type, step.error_message, step.raw_arguments
+    content = step.content
+    if isinstance(content, dict):
+        error_type = content.get("error_type")
+        error_message = content.get("error_message")
+        if error_type is not None and error_message is not None:
+            return str(error_type), str(error_message), content.get("raw_arguments")
+        content = content.get("error", "")
+    text = str(content or "")
+    raw_arguments = step.raw_arguments
+    if text.startswith("[OUTPUT OF TOOL ") and " ERROR:\n***\n" in text:
+        text = text.split(" ERROR:\n***\n", 1)[1]
+        text, separator, arguments = text.partition("\nRaw arguments: ")
+        if separator:
+            raw_arguments = arguments.rsplit("\n***\n", 1)[0]
+    match = re.fullmatch(r"([\w.]+): ?([\s\S]*)", text)
+    if not match:
+        raise ReplayDivergenceError(
+            f"Workflow step {step.name!r} has no identifiable recorded exception"
+        )
+    return match.group(1), match.group(2), raw_arguments
 
 @dataclass
 class EngineEnvironment:
@@ -97,6 +129,8 @@ class Engine:
             if self.agent is not None:
                 self.agent.set_time_manager(self.time_manager)
         farms = farm_world_apps(self.scenario.apps or [])
+        other_worlds = [unwrap_app(app) for app in self.scenario.apps or []
+                        if getattr(unwrap_app(app), "simulation_world", False)]
         participants = list(getattr(self.scenario, "runtime_participants", []) or [])
         for app in self.scenario.apps or []:
             runtime = getattr(unwrap_app(app), "runtime", None)
@@ -111,6 +145,12 @@ class Engine:
             self.time_manager.register_offset_observer(key, runtime.before_advance, runtime.advance_to)
             self._runtime_observer_keys.append(key)
         self.runtime_participants = participants
+        if (other_worlds and self.farm_environment is None and not participants
+                and not self.run_log and self.time_manager.offset == 0):
+            # A paddy checkpoint can set its season timestamp during setup,
+            # after Engine construction. Bind that restored epoch before tools.
+            self.start_time = self.scenario.start_time
+            self.time_manager.reset(start_time=self.start_time)
         names = [app.name for app in self.scenario.apps or []]
         if len(names) != len(set(names)):
             raise ValueError("Scenario app names must be unique; namespace each farm's apps.")
@@ -128,7 +168,7 @@ class Engine:
                     candidate.attach_farm_environment(self.farm_environment)
                     candidate.attach_farm_world_apps([])
                 else:
-                    candidate.attach_farm_world_apps([] if participants else farms)
+                    candidate.attach_farm_world_apps([] if participants else [*farms, *other_worlds])
         self.time_manager.unregister_offset_observer("farm_fleet")
         if len(farms) > 1 and not participants and self.farm_environment is None:
             def prepare_all(timestamp: float) -> None:
@@ -362,93 +402,85 @@ class Engine:
             if step.time_after is not None and (not isfinite(step.time_after) or step.time_after < sim_time_before):
                 raise ValueError(f"Workflow step {name!r} has an invalid end timestamp")
             if not step.tool_name:
+                if step.op_type == "TOOL_ERROR":
+                    raise ReplayDivergenceError(
+                        f"Workflow step {name!r} records a tool error without a tool"
+                    )
                 if step.time_after is not None:
                     self._align_replay_timestamp(step.time_after)
-                wall_elapsed = time.perf_counter() - wall_start
-                replayed.add_node(
-                    WorkflowStep(
-                        name=name,
-                        content=step.content,
-                        op_type=step.op_type,
-                        tool_name=step.tool_name,
-                        tool_args=step.tool_args,
-                        depends_on=list(step.depends_on),
-                        time=self._env_time_str(),
-                        time_before=sim_time_before, time_after=self.time_manager.time(),
-                    )
-                )
+                replayed.add_node(replace(
+                    step, name=name, depends_on=list(step.depends_on),
+                    time=self._env_time_str(), time_before=sim_time_before,
+                    time_after=self.time_manager.time(),
+                ))
                 self._record_run_log(
-                    step_name=name,
-                    phase="replay",
-                    tool_name=step.tool_name,
-                    tool_args=step.tool_args,
-                    status="skipped_no_tool",
+                    step_name=name, phase="replay", tool_name=step.tool_name,
+                    tool_args=step.tool_args, status="skipped_no_tool",
                     sim_time_before=sim_time_before,
                     sim_time_after=self.time_manager.time(),
-                    wall_time_seconds=wall_elapsed,
+                    wall_time_seconds=time.perf_counter() - wall_start,
                     content=step.content,
                 )
                 continue
-            if step.tool_name not in tools_map:
-                raise KeyError(f"Workflow step {name!r} references unknown tool {step.tool_name!r}")
-            args = dict(step.tool_args or {})
+            expected_error = step.op_type == "TOOL_ERROR"
+            # Historical failed calls may have null/non-object arguments. Do
+            # not turn them into a different executable call during replay.
+            args = step.tool_args if expected_error or step.tool_args is not None else {}
             failure = None
+            status, error = "ok", None
             try:
-                content = tools_map[step.tool_name](**args)
-                status = "ok"
-                error = None
-                if isinstance(content, ToolResult) and not content.ok:
-                    detail = content.error
-                    status = "error"
-                    error = f"{detail['code']}: {detail['message']}"
-                    failure = ToolExecutionError(detail["code"], detail["message"],
-                                                 field=detail.get("field"), details=detail.get("details"),
-                                                 stage=detail.get("stage", "execution"),
-                                                 partial_effects=detail.get("partial_effects", "unknown"))
-                elif isinstance(content, dict) and (
-                    bool(content.get("error")) or content.get("status") in {"error", "failed", "partial"}
-                ):
-                    # Legacy Apps return their domain rejection as a dict.
-                    # Preserve its receipt and any work already performed, then
-                    # stop through the same recorded-failure path as ToolResult.
-                    status = "error"
-                    error = str(content.get("error") or content.get("reason")
-                                or f"Tool returned status {content.get('status')!r}")
-                    failure = ToolExecutionError("LEGACY_TOOL_ERROR", error,
-                        details={"tool": step.tool_name, "response": deepcopy(content)},
-                        stage="execution", partial_effects="unknown")
+                if expected_error:
+                    error = self._replay_tool_error(step, tools_map, args)
+                    content = step.content
+                    status = "expected_error"
+                else:
+                    if step.tool_name not in tools_map:
+                        raise KeyError(f"Workflow step {name!r} references unknown tool {step.tool_name!r}")
+                    content = tools_map[step.tool_name](**args)
+                    if isinstance(content, ToolResult) and not content.ok:
+                        detail = content.error
+                        status = "error"
+                        error = f"{detail['code']}: {detail['message']}"
+                        failure = ToolExecutionError(detail["code"], detail["message"],
+                            field=detail.get("field"), details=detail.get("details"),
+                            stage=detail.get("stage", "execution"),
+                            partial_effects=detail.get("partial_effects", "unknown"))
+                    elif isinstance(content, dict) and (
+                        bool(content.get("error")) or content.get("status") in {"error", "failed", "partial"}
+                    ):
+                        # Keep an actual returned failure and its partial
+                        # effects, then stop. Expected Python exceptions above
+                        # remain errors while allowing a recorded correction.
+                        status = "error"
+                        error = str(content.get("error") or content.get("reason")
+                                    or f"Tool returned status {content.get('status')!r}")
+                        failure = ToolExecutionError("LEGACY_TOOL_ERROR", error,
+                            details={"tool": step.tool_name, "response": deepcopy(content)},
+                            stage="execution", partial_effects="unknown")
             except Exception as exc:
-                content = {"error": str(exc)}
-                status = "error"
-                error = f"{type(exc).__name__}: {exc}"
+                self._record_run_log(
+                    step_name=name, phase="replay", tool_name=step.tool_name,
+                    tool_args=args, status="error", sim_time_before=sim_time_before,
+                    sim_time_after=self.time_manager.time(),
+                    wall_time_seconds=time.perf_counter() - wall_start,
+                    content={"error": str(exc)},
+                    error=f"{type(exc).__name__}: {exc}",
+                )
                 raise
-            finally:
-                wall_elapsed = time.perf_counter() - wall_start
             if step.time_after is not None:
                 self._align_replay_timestamp(step.time_after)
-            replayed.add_node(
-                WorkflowStep(
-                    name=name,
-                    content=content,
-                    op_type=step.op_type,
-                    tool_name=step.tool_name,
-                    tool_args=args,
-                    depends_on=list(step.depends_on),
-                    time=self._env_time_str(),
-                    time_before=sim_time_before, time_after=self.time_manager.time(),
-                )
-            )
+            sim_time_after = self.time_manager.time()
+            replayed.add_node(replace(
+                step, name=name, content=content, tool_args=args,
+                depends_on=list(step.depends_on), time=self._env_time_str(),
+                time_before=sim_time_before, time_after=sim_time_after,
+            ))
             self._record_run_log(
-                step_name=name,
-                phase="replay",
-                tool_name=step.tool_name,
-                tool_args=args,
-                status=status,
-                sim_time_before=sim_time_before,
-                sim_time_after=self.time_manager.time(),
-                wall_time_seconds=wall_elapsed,
-                content=content,
-                error=error,
+                step_name=name, phase="replay", tool_name=step.tool_name,
+                tool_args=args, status=status, sim_time_before=sim_time_before,
+                sim_time_after=sim_time_after,
+                wall_time_seconds=time.perf_counter() - wall_start,
+                content=content, error=error,
             )
             if failure is not None:
                 self.scenario.workflow = replayed
@@ -458,6 +490,68 @@ class Engine:
         if registry is not None:
             self._attach_workflow_manifest(replayed)
         return replayed
+
+    def _replay_error_state(self) -> tuple[Any, ...]:
+        # Compare explicit simulation time, not wall-clock time spent replaying.
+        # Apps without snapshots cannot have their private state checked here.
+        states = []
+        for app in self.scenario.apps or []:
+            get_state = getattr(app, "get_state", None)
+            if callable(get_state):
+                state = get_state()
+                if state is not None:
+                    states.append((app.name, copy.deepcopy(state)))
+        return self.time_manager.start_time, self.time_manager.offset, states
+
+    def _replay_tool_error(
+        self, step: WorkflowStep, tools_map: dict[str, Any], args: Any
+    ) -> str:
+        error_type, error_message, raw_arguments = _recorded_tool_error(step)
+        stage = step.error_stage
+        # Older agent traces have the same error block but lack error_stage.
+        if stage is None:
+            stage = "tool_args_parse" if error_type == "JSONDecodeError" else "tool_call"
+        if stage not in {"tool_args_parse", "tool_call"}:
+            raise ReplayDivergenceError(
+                f"Workflow step {step.name!r} has unsupported error stage {stage!r}"
+            )
+        if stage == "tool_args_parse" and raw_arguments is None:
+            raise ReplayDivergenceError(
+                f"Workflow step {step.name!r} cannot reproduce argument parsing without raw arguments"
+            )
+        if stage == "tool_call" and not isinstance(args, dict):
+            # Old agents let non-object JSON reach Python's ** operator. Its
+            # exception contains unstable callable reprs; reject safely instead
+            # of guessing a match or executing a different argument set.
+            raise ReplayDivergenceError(
+                f"Workflow step {step.name!r} has legacy non-object tool arguments; "
+                "cannot safely replay the recorded call"
+            )
+        before = self._replay_error_state()
+        try:
+            if stage == "tool_args_parse":
+                # Neither invalid JSON nor a non-object value may reach a tool.
+                parse_tool_arguments(raw_arguments)
+            else:
+                # Lookup remains inside the try: missing-tool KeyErrors are also
+                # recoverable agent observations, but must match the old error.
+                tools_map[step.tool_name](**args)
+        except Exception as exc:
+            if type(exc).__name__ != error_type or str(exc) != error_message:
+                raise ReplayDivergenceError(
+                    f"Workflow step {step.name!r}: expected {error_type}: {error_message}; "
+                    f"got {type(exc).__name__}: {exc}"
+                ) from exc
+            if self._replay_error_state() != before:
+                raise ReplayDivergenceError(
+                    f"Workflow step {step.name!r}: failed tool changed application state "
+                    "or explicit simulation time"
+                ) from exc
+            return f"{type(exc).__name__}: {exc}"
+        raise ReplayDivergenceError(
+            f"Workflow step {step.name!r}: expected {error_type}: {error_message}, "
+            "but the call succeeded"
+        )
 
     def _align_replay_timestamp(self, timestamp: float) -> None:
         """Replay recorded epochs without rewinding any farm's physical state."""
@@ -527,6 +621,10 @@ class Engine:
                 "shared_equipment": {app.name: app.get_state()
                                      for app in getattr(self.scenario, "shared_equipment", [])},
             }
+        for app in self.scenario.apps or []:
+            candidate = unwrap_app(app)
+            if getattr(candidate, "simulation_world", False):
+                return candidate.outcome_summary()
         farms = farm_world_apps(self.scenario.apps or [])
         if not farms:
             return {}

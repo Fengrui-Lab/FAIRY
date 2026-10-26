@@ -54,9 +54,15 @@ def _save_workflow_artifact(workflow: Workflow, path: Path, engine: Engine) -> P
 
 
 def _scenario_crop_backend_provenance(scenario: Any) -> dict[str, Any]:
-    from fairy.apps.farm_world.multi_farm import farm_world_apps
+    from fairy.apps.farm_world.multi_farm import farm_world_apps, unwrap_app
 
     farms = farm_world_apps(scenario.apps or [])
+    if not farms:
+        for app in scenario.apps or []:
+            candidate = unwrap_app(app)
+            provenance = getattr(candidate, "crop_backend_provenance", None)
+            if getattr(candidate, "simulation_world", False) and callable(provenance):
+                return provenance()
     if len(farms) < 2:
         return crop_backend_provenance(farms[0] if farms else None)
     return {
@@ -69,6 +75,7 @@ def _scenario_crop_backend_provenance(scenario: Any) -> dict[str, Any]:
             for farm in farms
         },
     }
+
 
 
 def _cleanup_legacy_artifacts(output_dir: Path, scenario_id: str) -> None:
@@ -393,6 +400,7 @@ def main() -> None:
             system_message=get_farm_world_system_prompt(
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
+                crop=getattr(scenario, "crop_name", "soybean"),
             ),
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
@@ -411,6 +419,19 @@ def main() -> None:
             )
             final_message = agent.messages.messages[-1] if agent.messages.messages else None
             stopped_reason = agent.stop_reason or "agent_finished"
+        except KeyboardInterrupt:
+            stopped_reason = agent.stop_reason = "interrupted"
+            workflow = agent.workflow
+            agent.after_agent_run()
+            agent.record_event(
+                "agent_run_end",
+                status="stopped",
+                stopped_reason=stopped_reason,
+                interruption="KeyboardInterrupt",
+                wall_time_seconds=round(time.perf_counter() - run_wall_start, 6),
+                tool_call_count=agent.tool_call_count,
+                llm_turn_count=agent.llm_turn_count,
+            )
         except Exception as exc:
             stopped_reason = agent.stop_reason or "error"
             if not (

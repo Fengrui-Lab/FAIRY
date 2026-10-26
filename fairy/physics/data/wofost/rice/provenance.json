@@ -1,0 +1,8 @@
+{
+  "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+  "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+  "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+  "license": "EUPL",
+  "variety": "Rice_IR72",
+  "calibration": "upstream_transfer_not_locally_calibrated"
+}

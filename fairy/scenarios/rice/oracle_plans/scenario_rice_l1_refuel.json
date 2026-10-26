@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_refuel",
+  "task": "refuel",
+  "variant": "equipment_limit",
+  "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
+  "source_checkpoint_label": "initial_before_field_prep",
+  "initial_checkpoint_sha256": "48a8956bba6d972e64cdfbea3a5c0ffc9af42df8d0aa8b1f406ac4bdf3756906",
+  "config_fingerprint": "974c9b95656a8888352c2bb41fd4cad44184494e046d777e81b1a24e2dbab2d1",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "784f304fc4d2911e0a4672bc48b716e77f58faa5bd1bd4ad92187b3deaef4bc5",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyMachineryApp__refuel",
+      "tool_args": {
+        "machine_id": "tractor",
+        "liters": 10.0
+      },
+      "duration_seconds": 300.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

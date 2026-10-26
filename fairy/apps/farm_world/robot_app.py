@@ -148,6 +148,8 @@ class RobotApp(App):
         self._battery_pct = round(self._battery_pct - _BATTERY_PER_INSPECTION, 1)
         duration = _inspect_duration(self._farm_world_app.field_length_m)
         self._advance_operation_time(duration)
+        if self._farm_world_app.is_native_maize:
+            self._farm_world_app.advance_physics_time()
         ridge = self._farm_world_app.get_ridge(ridge_id)
         result = {
             "ridge_id": ridge_id,
@@ -158,6 +160,18 @@ class RobotApp(App):
             "disease_type": "leaf_spot" if ridge.disease_pressure >= 0.2 else None,
             "confidence": "high",
         }
+        if self._farm_world_app.is_native_maize:
+            phen = self._farm_world_app.physics.phenology.states[ridge_id]
+            harvested = self._farm_world_app.physics.yield_recovery.states[ridge_id].harvested
+            result.update({
+                "crop_name": "maize", "growth_stage": "bare" if harvested else phen.stage.value,
+                "emerged": phen.emerged and not harvested,
+                "mature": phen.is_mature, "harvested": harvested,
+                "biotic_status": "not_simulated",
+                "pest_detected": None, "pest_type": None,
+                "pest_count_estimate": None, "disease_detected": None,
+                "disease_type": None, "confidence": None,
+            })
         if wet_ground:
             result["warning"] = "ground_wet, mobility_reduced"
 
@@ -414,12 +428,23 @@ class RobotApp(App):
                     disease_pressure=biotic.disease_pressure,
                     nutrient_index=management.nutrient_index,
                 )
-            products = physics.observation_model.observe_ground_inspection(
+            maize = self._farm_world_app.is_native_maize
+            # Disabled maize biotics must not create soybean false-positive alerts.
+            products = [] if maize else physics.observation_model.observe_ground_inspection(
                 day=today,
                 truth_by_ridge=truth_by_ridge,
                 ridge_ids=covered_ridges,
                 asset_id=self.name,
             )
+            spad_values = {}
+            if maize and modality == "crop_health":
+                spad_values = physics.observation_model.observe_spad(
+                    day=today, truth_by_ridge=truth_by_ridge,
+                    ridge_ids=[rid for rid in covered_ridges
+                               if physics.phenology.states[rid].emerged
+                               and not physics.yield_recovery.states[rid].harvested],
+                    asset_id=self.name,
+                ).values
             # Ground inspection returns pest, disease, and weed detection products.
             pest_values = products[0].values if products else {}
             disease_values = products[1].values if len(products) > 1 else {}
@@ -444,7 +469,27 @@ class RobotApp(App):
                     "weed_pressure_band": weed.get("weed_pressure_band", "unknown"),
                     "stand_fraction": round(float(stand_fraction), 3),
                 }
-                if modality == "crop_health":
+                if maize:
+                    phen = physics.phenology.states[rid]
+                    harvested = physics.yield_recovery.states[rid].harvested
+                    visible_stand = phen.emerged and not harvested
+                    per_ridge[rid].update({
+                        "crop_name": "maize", "growth_stage": "bare" if harvested else phen.stage.value,
+                        "emerged": visible_stand, "mature": phen.is_mature,
+                        "harvested": harvested,
+                        "stand_fraction": round(float(stand_fraction), 3) if visible_stand else 0.0,
+                        "biotic_status": "not_simulated",
+                        "pest_present": None, "pest_confidence": None,
+                        "disease_present": None, "disease_confidence": None,
+                        "weed_present": None, "weed_confidence": None,
+                        "weed_pressure_band": "not_simulated",
+                    })
+                    if modality == "crop_health":
+                        per_ridge[rid]["spad_proxy"] = spad_values.get(rid)
+                        per_ridge[rid]["measurement_note"] = (
+                            "Noisy canopy/nutrient proxy; not a calibrated maize SPAD measurement"
+                        )
+                elif modality == "crop_health":
                     # Noisy ordinal leaf-color diagnosis; expose a simulated
                     # scouting observation rather than the nutrient truth.
                     nutrition_signal = physics.management.states[rid].nutrient_index + self.rng.uniform(-0.04, 0.04)

@@ -157,7 +157,7 @@ class TractorApp(App):
         if not hasattr(farm_world_app, "_field_preparation_ops"):
             farm_world_app._field_preparation_ops = []
         self._attached_implement: str | None = None  # currently mounted attachment
-        self._harvest_moisture_limit_pct: float = farm_world_app.crop_profile.harvest_moisture_max_pct
+        self._harvest_moisture_limit_pct: float = farm_world_app.default_harvest_moisture_limit_pct
 
     @property
     def _completed_prep_ops(self) -> list[str]:
@@ -195,7 +195,7 @@ class TractorApp(App):
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
         self.configure_harvest(
-            max_grain_moisture_pct=state_dict.get("harvest_moisture_limit_pct", self._farm_world_app.crop_profile.harvest_moisture_max_pct)
+            max_grain_moisture_pct=state_dict.get("harvest_moisture_limit_pct", self._farm_world_app.default_harvest_moisture_limit_pct)
         )
         self._fuel_tank_l = state_dict.get("fuel_tank_l", _FUEL_TANK_MAX_L)
         self._pesticide_tank_l = state_dict.get("pesticide_tank_l", 0.0)
@@ -224,7 +224,7 @@ class TractorApp(App):
         self._grain_bin_kg = 0.0
         self._operation_log = []
         self._attached_implement = None
-        self._harvest_moisture_limit_pct = self._farm_world_app.crop_profile.harvest_moisture_max_pct
+        self._harvest_moisture_limit_pct = self._farm_world_app.default_harvest_moisture_limit_pct
         self.seed_type = None
 
     @property
@@ -271,11 +271,9 @@ class TractorApp(App):
         profile = self._farm_world_app.crop_profile
         if self.seed_type is None:
             return "Load compatible seeds before planting"
-        if seed_crop_type(self.seed_type) != profile.crop_type:
-            return f"Seed {self.seed_type} does not match farm crop {profile.crop_type}"
-        native_seed_error = official_seed_backend_error(self.seed_type, self._farm_world_app._physics)
-        if native_seed_error:
-            return native_seed_error
+        seed_error = self._farm_world_app.validate_seed_for_crop(self.seed_type)
+        if seed_error:
+            return seed_error
         depth = float(depth_cm)
         spacing = float(spacing_cm)
         lo, hi = profile.planting_depth_range_cm
@@ -423,15 +421,17 @@ class TractorApp(App):
                     STRESS_TOLERANT, HEIHE43, HEIHE50, HEINONG60,
                     HEINONG84, HEIKE71 for soybean; SOYBEAN_901, SOYBEAN_902,
                     SOYBEAN_903, SOYBEAN_905 require their matching native WOFOST
-                    parameter sets. MAIZE_STANDARD for maize;
+                    parameter sets. MAIZE_201 for native WOFOST maize;
+                    MAIZE_STANDARD for legacy maize;
                     RICE_STANDARD for direct-seeded non-flooded rice. The seed
                     must match the target farm's crop profile.
             count:     Number of plants to load (must be positive).
         """
         if seed_type not in {m.value for m in SeedType}:
             return {"error": f"Unknown seed_type '{seed_type}'"}
-        if seed_crop_type(seed_type) != self._farm_world_app.crop_type:
-            return {"error": f"Seed {seed_type} does not match farm crop {self._farm_world_app.crop_type}"}
+        crop_error = self._farm_world_app.validate_seed_for_crop(seed_type)
+        if crop_error:
+            return {"error": crop_error}
         if self._seed_hopper > 0 and self.seed_type != seed_type:
             return {"error": "Seed hopper contains a different seed type; finish it before changing seeds"}
         count = int(count)
@@ -759,7 +759,8 @@ class TractorApp(App):
         Sow seeds across a contiguous block of ridges (up to 4 per pass).
 
         Load a seed type compatible with the target crop before sowing:
-        soybean cultivars for soybean, MAIZE_STANDARD for maize, and
+        soybean cultivars for soybean, MAIZE_201 for native WOFOST maize,
+        MAIZE_STANDARD for legacy maize, and
         RICE_STANDARD for rice. Depth and spacing use the target crop profile.
         Complete this farm's required_field_preparation_ops, published by
         get_farm_overview. The legacy default includes base_fertilize; a farm
@@ -1607,10 +1608,7 @@ class TractorApp(App):
         immature_ridges = [
             r.ridge_id
             for r in ridges
-            if str(r.growth_stage).upper()
-            not in ({self._farm_world_app.crop_profile.mature_stage.upper(), "R8_FULL_MATURITY"}
-                    if self._farm_world_app.crop_type == "soybean"
-                    else {self._farm_world_app.crop_profile.mature_stage.upper()})
+            if not self._farm_world_app.is_ridge_mature(r.ridge_id)
         ]
         if immature_ridges:
             return {

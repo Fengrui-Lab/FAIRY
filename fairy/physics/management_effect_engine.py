@@ -50,6 +50,10 @@ class GrowthStage(str, Enum):
     R6 = "R6_FULL_SEED"
     R7 = "R7_BEGINNING_MATURITY"
     R8 = "R8_FULL_MATURITY"
+    # Native non-soybean crops use coarse stages, not soybean reproductive labels.
+    VEGETATIVE = "VEGETATIVE"
+    REPRODUCTIVE = "REPRODUCTIVE"
+    MATURE = "MATURE"
 
 
 @dataclass

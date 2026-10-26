@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_gap_fill",
+  "task": "gap_fill",
+  "variant": "poor_stand",
+  "source_l3_scenario_id": "scenario_rice_l3_poor_stand",
+  "source_checkpoint_label": "after_transplant",
+  "initial_checkpoint_sha256": "844b89419dfeb47f4876ea44b101b7a8d42996112594bc6eaceb919e40b04e23",
+  "config_fingerprint": "62abf630532968126eb2922ce559623133abf2d9f7ac39394a8f76f294dffe04",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "b93387966d97d76b1ada42636aed548cdd9b6b13bde3f14b72eec4e786b2500d",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_establishment",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_seedlings",
+      "tool_args": {
+        "batch_id": "ir72_standard",
+        "quantity": 18750
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "transplanter"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__replant_seedlings",
+      "tool_args": {
+        "plot_id": "p1",
+        "quantity": 18750
+      },
+      "duration_seconds": 1800.0
+    },
+    {
+      "tool_name": "SystemApp__advance_time",
+      "tool_args": {
+        "days": 2
+      },
+      "duration_seconds": 172800.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_establishment",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

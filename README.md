@@ -82,6 +82,10 @@ overrides. See the [official framework research](docs/tool-framework-research.md
 
 [中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md) | [WOFOST integration and no-LLM demo](docs/wofost-integration.md)
 
+Grain maize reuses the upland farm tools and WOFOST 8.1 backend with a pinned reference cultivar and 18 scenarios: 11 L1 operations, 4 L2 management loops, and 3 L3 seasons (normal, water-limited and nitrogen-limited). Oracles are authored as Python event graphs following the soybean V2 layout. See the [maize guide](docs/maize-foundation.md) for commands, parameter provenance, moisture accounting and model limits.
+
+Transplanted rice uses WOFOST 8.1 with hydraulic plots, finite water/nitrogen supplies, 35 rice tools and 28 L1/L2/L3 scenarios covering observations, machinery, crop protection and harvest batches. Explicit scenario modules use the standard event graph with fixed oracle plans and source-season checkpoints generated offline. See the [rice guide](docs/rice-foundation.md) for entry points, artifact generation, replay, parameter provenance and model limits.
+
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
 
 ## System Scope

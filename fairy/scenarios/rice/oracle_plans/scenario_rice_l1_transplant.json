@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_transplant",
+  "task": "transplant",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "before_transplant",
+  "initial_checkpoint_sha256": "7c0cb55e06fc7224bbf957a612bce7d641591cafaa89b3d780f052bb74e8a64a",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "e3e558b80e4457d918b31bca1580140c13fe51bf1e6b9073d6edf1ad7f6041c7",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "transplanter"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_seedlings",
+      "tool_args": {
+        "batch_id": "ir72_standard",
+        "quantity": 75000
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__transplant",
+      "tool_args": {
+        "plot_id": "p1",
+        "batch_id": "ir72_standard",
+        "area_m2": 1000.0
+      },
+      "duration_seconds": 1800.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

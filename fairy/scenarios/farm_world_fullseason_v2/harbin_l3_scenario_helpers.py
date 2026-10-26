@@ -74,9 +74,10 @@ def install_common_farm_apps(
     *,
     thermal: bool = True,
     field_ops: bool = False,
+    farm_world: FarmWorldApp | None = None,
 ) -> None:
     aui = AgentUserInterface()
-    farm_world = FarmWorldApp()
+    farm_world = farm_world if farm_world is not None else FarmWorldApp()
     weather = WeatherApp()
     sensor = SensorApp(farm_world_app=farm_world)
     mavic = DroneApp(
@@ -346,7 +347,9 @@ def plant_range(
     spacing_cm: float = HEINONG84_SPACING_CM,
     id_prefix: str,
 ) -> Any:
-    seeds_per_ridge = plants_per_ridge_from_spacing(spacing_cm)
+    seeds_per_ridge = plants_per_ridge_from_spacing(
+        spacing_cm, rows_per_ridge=tractor._farm_world_app.rows_per_ridge
+    )
     blocks = [
         (start, min(start + 3, end_ridge))
         for start in range(start_ridge, end_ridge + 1, 4)
@@ -413,6 +416,7 @@ def harvest_range(
     end_ridge: int,
     id_prefix: str,
     dry_after_harvest: bool = True,
+    drying_target_moisture_pct: float = 13.0,
 ) -> Any:
     for start in range(start_ridge, end_ridge + 1, 4):
         end = min(start + 3, end_ridge)
@@ -430,7 +434,7 @@ def harvest_range(
         )
     if dry_after_harvest:
         prev = (
-            farm_world.dry_grain(target_moisture_pct=13.0)
+            farm_world.dry_grain(target_moisture_pct=drying_target_moisture_pct)
             .oracle()
             .with_id(f"{id_prefix}_dry_grain")
             .depends_on(prev, delay_seconds=2)

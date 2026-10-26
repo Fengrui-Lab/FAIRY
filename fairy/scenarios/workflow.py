@@ -18,6 +18,9 @@ class WorkflowStep:
     time_before: float | None = None
     time_after: float | None = None
     error_stage: str | None = None
+    error_type: str | None = None
+    error_message: str | None = None
+    raw_arguments: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = {
@@ -35,6 +38,10 @@ class WorkflowStep:
             data["time_after"] = self.time_after
         if self.error_stage is not None:
             data["error_stage"] = self.error_stage
+        for key in ("error_type", "error_message", "raw_arguments"):
+            value = getattr(self, key)
+            if value is not None:
+                data[key] = value
         return data
 
 

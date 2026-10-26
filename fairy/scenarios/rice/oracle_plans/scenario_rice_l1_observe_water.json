@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_observe_water",
+  "task": "observe_water",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "after_transplant",
+  "initial_checkpoint_sha256": "74adf4f8db8fb049a3be0298e51ae75dcc1075b800a8f72124b5e3c621c74a39",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "24f3b584c8d31bdbb2242c2cc0fcffb793e72bd08dcba4397b70be592074e558",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

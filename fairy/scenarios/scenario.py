@@ -61,11 +61,15 @@ class Scenario:
         else:
             self.init_and_populate_apps(*args, **kwargs)
         if self.crop_backend != "legacy" or self.crop_backend_options:
-            from fairy.apps.farm_world.multi_farm import farm_world_apps
+            from fairy.apps.farm_world.multi_farm import farm_world_apps, unwrap_app
 
             farms = farm_world_apps(self.apps or [])
-            if not farms:
-                raise ValueError("Crop backend configured for a scenario without a FarmWorldApp")
+            # Paddy worlds declare their own native adapter instead of using
+            # ridge physics. Keep their configuration separate from farm fields.
+            other_worlds = [unwrap_app(app) for app in self.apps or []
+                            if getattr(unwrap_app(app), "simulation_world", False)]
+            if not farms and not other_worlds:
+                raise ValueError("Crop backend configured for a scenario without a FarmWorldApp or simulation world")
             if self.crop_backend == "wofost":
                 from zoneinfo import ZoneInfo
                 # Native day boundaries must follow the scene's forcing calendar.
@@ -75,7 +79,7 @@ class Scenario:
                     farm_world.simulation_timezone = calendar
                     if farm_world._weather_app is not None:
                         farm_world._weather_app.simulation_timezone = calendar
-            for farm_world in farms:
+            for farm_world in [*farms, *other_worlds]:
                 farm_world.configure_crop_backend(
                     self.crop_backend, **self.crop_backend_options
                 )

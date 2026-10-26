@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/ajwdewit/WOFOST_crop_parameters",
+  "commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+  "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/maize.yaml",
+  "sha256": "f1bf8e3202418f294873bb3236727e07a10cd2b91c297b3660d46341a84f469d",
+  "license": "European Union Public License (EUPL)",
+  "license_note": "Upstream maize.yaml metadata declares EUPL without a version. Copyright/attribution and metadata are preserved in the bundled file.",
+  "crop_name": "maize",
+  "variety_name": "Grain_maize_201",
+  "calibration": "Uncalibrated European reference cultivar; synthetic Harbin scenarios do not establish Northeast China calibration."
+}

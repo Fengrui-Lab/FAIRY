@@ -432,6 +432,9 @@ def _resolve_model_family(provider: str, model: str, explicit: str | None) -> st
 
 
 def _classify_level(scenario_id: str) -> str:
+    for level in (1, 2, 3):
+        if scenario_id.startswith(f"scenario_rice_l{level}_"):
+            return f"Level {level}"
     if scenario_id.startswith("scenario_full_season_"):
         return "Level 3"
     if scenario_id.startswith("scenario_physics_"):

@@ -12,6 +12,7 @@ from typing import Any
 CST = timezone(timedelta(hours=8))
 
 from fairy.agents.agent.base_agent import BaseAgent, RetryableLLMResponseError
+from fairy.agents.agent.tool_arguments import parse_tool_arguments
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.scenarios.workflow import WorkflowStep
 
@@ -149,8 +150,8 @@ class Agent(BaseAgent):
         raw_arguments = tool_call.function.arguments
         tool_type = tool_call.type
         try:
-            args = json.loads(raw_arguments or "{}")
-        except json.JSONDecodeError as exc:
+            args = parse_tool_arguments(raw_arguments)
+        except (json.JSONDecodeError, TypeError) as exc:
             self.record_event(
                 "tool_args_parse_error",
                 status="error",
@@ -316,6 +317,9 @@ class Agent(BaseAgent):
                 ),
                 time_after=env_time_after,
                 error_stage=error_stage,
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+                raw_arguments=raw_arguments,
             )
         )
         self.record_event(

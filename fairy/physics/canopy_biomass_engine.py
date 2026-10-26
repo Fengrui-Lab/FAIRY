@@ -29,6 +29,10 @@ class GrowthStage(str, Enum):
     R6 = "R6_FULL_SEED"
     R7 = "R7_BEGINNING_MATURITY"
     R8 = "R8_FULL_MATURITY"
+    # Native non-soybean crops use coarse stages, not soybean reproductive labels.
+    VEGETATIVE = "VEGETATIVE"
+    REPRODUCTIVE = "REPRODUCTIVE"
+    MATURE = "MATURE"
 
 
 class SeedType(str, Enum):
@@ -52,6 +56,7 @@ class SeedType(str, Enum):
     SOYBEAN_902 = "SOYBEAN_902"
     SOYBEAN_903 = "SOYBEAN_903"
     SOYBEAN_905 = "SOYBEAN_905"
+    MAIZE_201 = "MAIZE_201"
 
 
 @dataclass
@@ -513,6 +518,8 @@ class CanopyBiomassGrowthEngine:
         if state.seed_type is None:
             raise ValueError("Initialized growth state is missing seed_type")
 
+        if state.seed_type == SeedType.MAIZE_201:
+            raise ValueError("MAIZE_201 requires the native WOFOST backend; legacy soybean biomass is not a maize model")
         sp = self.seed_params[state.seed_type]
         p = self.params
 

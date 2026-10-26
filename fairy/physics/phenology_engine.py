@@ -36,6 +36,14 @@ class SoybeanStage(str, Enum):
     R6 = "R6_FULL_SEED"
     R7 = "R7_BEGINNING_MATURITY"
     R8 = "R8_FULL_MATURITY"
+    # Native non-soybean crops use coarse stages, not soybean reproductive labels.
+    VEGETATIVE = "VEGETATIVE"
+    REPRODUCTIVE = "REPRODUCTIVE"
+    MATURE = "MATURE"
+
+
+# Compatibility alias: persisted soybean values and imports remain unchanged.
+CropStage = SoybeanStage
 
 
 class SeedType(str, Enum):
@@ -66,6 +74,7 @@ class SeedType(str, Enum):
     SOYBEAN_902 = "SOYBEAN_902"
     SOYBEAN_903 = "SOYBEAN_903"
     SOYBEAN_905 = "SOYBEAN_905"
+    MAIZE_201 = "MAIZE_201"
 
 
 @dataclass
@@ -215,7 +224,7 @@ del _reference_seed
 
 # Native-only seed identities still pass through the compatibility planting
 # initializer. These neutral placeholders do not describe their maturity or
-# stress traixts; native WOFOST owns their daily growth and phenology.
+# stress traits; native WOFOST owns their daily growth and phenology.
 for _official_seed in (SeedType.SOYBEAN_901, SeedType.SOYBEAN_902,
                        SeedType.SOYBEAN_903, SeedType.SOYBEAN_905):
     DEFAULT_SEED_TYPE_PARAMS[_official_seed] = replace(DEFAULT_SEED_TYPE_PARAMS[SeedType.STANDARD])
@@ -360,6 +369,11 @@ class PhenologyState:
     last_stress_multiplier: float = 1.0
     tags: list[str] = field(default_factory=list)
 
+    @property
+    def is_mature(self) -> bool:
+        """Crop-independent maturity flag; native adapters set maturity_date."""
+        return self.maturity_date is not None and self.stage in {SoybeanStage.R8, SoybeanStage.MATURE}
+
 
 @dataclass
 class PhenologyDayResult:
@@ -502,6 +516,8 @@ class ThermalTimePhenologyEngine:
                 ["incomplete_planting_metadata"],
             )
 
+        if state.seed_type == SeedType.MAIZE_201:
+            raise ValueError("MAIZE_201 requires the native WOFOST backend; the legacy soybean engine cannot grow maize")
         seed_params = self.seed_type_params[state.seed_type]
 
         state.days_after_planting = max(0, (weather.day - state.planting_date).days + 1)

@@ -256,7 +256,12 @@ def _seed_physics_from_ridges(
                 ridge.seed_type or farm_world_app.crop_profile.seed_type
             )
             phen_state.days_after_planting = int(ridge.days_since_planted)
-            if physics.crop_type == "soybean":
+            if _uses_native_maize(physics):
+                error = farm_world_app.validate_seed_for_crop(ridge.seed_type)
+                if error:
+                    raise ValueError(error)
+                mapped = SoybeanStage(ridge.growth_stage)
+            elif physics.crop_type == "soybean":
                 mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
             else:
                 from fairy.physics.crop_physiology import compatibility_stage
@@ -334,7 +339,8 @@ def _seed_physics_from_ridges(
         # ridge.growth_stage may temporarily say "VE". Daily ticks will init
         # canopy when emergence actually happens.
         canopy_state = physics.canopy.states[rid]
-        if ridge.planted and not canopy_state.initialized:
+        if (ridge.planted and not canopy_state.initialized
+                and not _uses_native_maize(physics)):
             phen_stage = phen_state.stage
             if phen_stage in {
                 SoybeanStage.NOT_PLANTED,
@@ -456,7 +462,7 @@ def _ridge_planting_density_plants_m2(
 
     if ridge.seed_spacing_cm is not None and ridge.seed_spacing_cm > 0.0:
         seed_spacing_m = float(ridge.seed_spacing_cm) / 100.0
-        return max(0.0, farm_world_app.crop_profile.rows_per_ridge / (ridge_width_m * seed_spacing_m))
+        return max(0.0, farm_world_app.rows_per_ridge / (ridge_width_m * seed_spacing_m))
 
     profile = farm_world_app.crop_profile
     if profile.crop_type == "soybean":
@@ -547,7 +553,8 @@ def _run_daily_tick(
 ) -> None:
     """Run one full daily tick following the integration-guide order."""
     weather = weather_inputs if weather_inputs is not None else _build_weather_inputs(weather_app, day, physics=physics)
-    _apply_biotic_outbreaks_for_day(physics, day)
+    if not _uses_native_maize(physics):
+        _apply_biotic_outbreaks_for_day(physics, day)
     if "wofost_scenario_events" in (getattr(physics, "scenario_metadata", None) or {}):
         from fairy.scenarios.wofost_events import apply_scenario_events_for_day
 
@@ -681,32 +688,34 @@ def _run_daily_tick(
             management_by_ridge=canopy_management_inputs,
         )
 
-    # 7. Biotic pressure.
-    biotic_crop_inputs = {
-        rid: BioticCropInput(
-            stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
-            canopy_cover=physics.canopy.states[rid].canopy_cover,
-            seed_type=(
-                physics.phenology.states[rid].seed_type.value
-                if physics.phenology.states[rid].seed_type is not None
-                else None
-            ),
+    # Maize v1 excludes soybean pest, disease and weed dynamics.
+    if not _uses_native_maize(physics):
+        # 7. Biotic pressure.
+        biotic_crop_inputs = {
+            rid: BioticCropInput(
+                stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
+                canopy_cover=physics.canopy.states[rid].canopy_cover,
+                seed_type=(
+                    physics.phenology.states[rid].seed_type.value
+                    if physics.phenology.states[rid].seed_type is not None
+                    else None
+                ),
+            )
+            for rid in physics.phenology.states
+        }
+        biotic_soil_inputs = {
+            rid: BioticSoilInput(
+                top_vwc=physics.soil.states[rid].top_vwc,
+                root_vwc=physics.soil.states[rid].root_vwc,
+            )
+            for rid in physics.soil.states
+        }
+        physics.biotic.update_day(
+            weather=weather["biotic"],
+            crop_by_ridge=biotic_crop_inputs,
+            soil_by_ridge=biotic_soil_inputs,
+            treatments_by_ridge=pending_treatments,
         )
-        for rid in physics.phenology.states
-    }
-    biotic_soil_inputs = {
-        rid: BioticSoilInput(
-            top_vwc=physics.soil.states[rid].top_vwc,
-            root_vwc=physics.soil.states[rid].root_vwc,
-        )
-        for rid in physics.soil.states
-    }
-    physics.biotic.update_day(
-        weather=weather["biotic"],
-        crop_by_ridge=biotic_crop_inputs,
-        soil_by_ridge=biotic_soil_inputs,
-        treatments_by_ridge=pending_treatments,
-    )
 
     # 8. Yield recovery (cheap; ignores ridges not yet at R5+).
     yield_phenology = {
@@ -1064,6 +1073,12 @@ def _phenology_development_fraction(
     return stage_progress.get(state.stage, 0.0)
 
 
+def _uses_native_maize(physics: "FarmPhysicsState") -> bool:
+    """Keep native maize rules separate from the legacy multi-crop proxy."""
+    backend = physics.crop_backend
+    return backend is not None and backend.config.crop_name == "maize"
+
+
 def _compute_water_stress(root_vwc: float) -> float:
     """0–1 multiplier where 1 is no water stress, 0 is severe stress.
 
@@ -1261,7 +1276,7 @@ def _run_subdaily_injection(physics, weather_app, target_sim_time,
         physics.management.update_day(weather=weather["management"], actions_by_ridge=actions,
             soil_by_ridge=_build_management_soil_inputs(physics),
             crop_by_ridge=_build_management_crop_inputs(physics), advance_daily=False)
-    if treatments:
+    if treatments and not _uses_native_maize(physics):
         _apply_treatments_now(physics, weather, treatments)
     _settle_harvest_now(physics, weather, harvest)
     if physics.crop_backend is not None:
@@ -1349,7 +1364,9 @@ def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> No
         if phen.planted:
             ridge.planted = True
             ridge.days_since_planted = int(phen.days_after_planting)
-            if physics.crop_type == "soybean":
+            if _uses_native_maize(physics):
+                ridge.growth_stage = phen.stage.value
+            elif physics.crop_type == "soybean":
                 ridge.growth_stage = _map_soybean_stage_to_legacy(phen.stage)
             else:
                 from fairy.physics.crop_physiology import public_crop_stage

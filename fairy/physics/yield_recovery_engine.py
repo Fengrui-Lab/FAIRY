@@ -75,6 +75,10 @@ class GrowthStage(str, Enum):
     R6 = "R6_FULL_SEED"
     R7 = "R7_BEGINNING_MATURITY"
     R8 = "R8_FULL_MATURITY"
+    # Native non-soybean crops use coarse stages, not soybean reproductive labels.
+    VEGETATIVE = "VEGETATIVE"
+    REPRODUCTIVE = "REPRODUCTIVE"
+    MATURE = "MATURE"
 
 
 @dataclass
@@ -168,7 +172,7 @@ class YieldRecoveryParameters:
 
     # Unit conversion.
     # 1 bushel soybean = 60 lb at 13% moisture.
-    kg_per_bushel_soybean: float = 27.2155
+    kg_per_bushel_soybean: float | None = 27.2155
     bushel_reporting_enabled: bool = True
 
     # WOFOST TWSO is dry matter, unlike the old empirical wet-yield proxy.
@@ -291,7 +295,7 @@ class YieldRecoveryDayResult:
     harvestable_yield_g_m2: float
     recovered_yield_g_m2_at_market_moisture: float
     recovered_yield_kg_ha_at_market_moisture: float
-    recovered_yield_bu_ac_at_market_moisture: float
+    recovered_yield_bu_ac_at_market_moisture: float | None
     harvested: bool
     drying_required: bool
     quality_discount_fraction: float
@@ -424,13 +428,13 @@ class YieldRecoveryEngine:
             )
 
         # Initialize R8/maturity state.
-        if phen.stage == GrowthStage.R8 and not state.r8_reached:
+        if phen.stage in {GrowthStage.R8, GrowthStage.MATURE} and not state.r8_reached:
             state.r8_reached = True
             state.maturity_date = phen.maturity_date or weather.day
             state.grain_moisture_frac = p.initial_r8_grain_moisture
             state.wet_dry_cycles_after_r8 = 0
             state.last_rain_or_rewetting = weather.rain_mm > 0.0
-            tags.append("r8_maturity_reached")
+            tags.append("maturity_reached" if phen.stage == GrowthStage.MATURE else "r8_maturity_reached")
 
         # Update grain moisture and field loss only after R8 and before harvest.
         if state.r8_reached and not state.harvested and evolve_daily:
@@ -444,7 +448,8 @@ class YieldRecoveryEngine:
         # Harvest if action is provided and pass is completed.
         if harvest_action is not None:
             if not state.r8_reached:
-                tags.append("harvest_attempt_before_r8")
+                tags.append("harvest_attempt_before_maturity" if p.kg_per_bushel_soybean is None
+                            else "harvest_attempt_before_r8")
             elif state.harvested:
                 tags.append("harvest_attempt_already_harvested")
             elif not harvest_action.pass_completed:
@@ -544,7 +549,8 @@ class YieldRecoveryEngine:
         if state.r8_reached:
             if rewet and not state.last_rain_or_rewetting:
                 state.wet_dry_cycles_after_r8 += 1
-                tags.append("wet_dry_cycle_after_r8")
+                tags.append("wet_dry_cycle_after_maturity" if p.kg_per_bushel_soybean is None
+                            else "wet_dry_cycle_after_r8")
             state.last_rain_or_rewetting = rewet
 
     def _update_equilibrium_grain_moisture(
@@ -632,7 +638,8 @@ class YieldRecoveryEngine:
         loss = 0.0
 
         # Delayed harvest shattering loss.
-        if days_after_maturity > p.shatter_delay_grace_days:
+        if (days_after_maturity > p.shatter_delay_grace_days
+                and (p.kg_per_bushel_soybean is not None or p.shatter_loss_per_day_after_grace > 0)):
             delay_days = days_after_maturity - p.shatter_delay_grace_days
             loss += delay_days * p.shatter_loss_per_day_after_grace
             tags.append("delayed_harvest_loss")
@@ -732,6 +739,8 @@ class YieldRecoveryEngine:
             return None
         # 1 ha = 2.47105 acres.
         # bu/ac = kg/ha / kg_per_bushel / 2.47105
+        if self.params.kg_per_bushel_soybean is None:
+            return None
         return kg_ha / self.params.kg_per_bushel_soybean / 2.47105
 
     @staticmethod

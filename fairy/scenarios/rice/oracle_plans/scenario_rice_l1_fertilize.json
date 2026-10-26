@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "scenario_id": "scenario_rice_l1_fertilize",
+  "task": "fertilize",
+  "variant": "normal",
+  "source_l3_scenario_id": "scenario_rice_l3_normal",
+  "source_checkpoint_label": "before_topdress",
+  "initial_checkpoint_sha256": "7c19326f7ae7575122a909276c4c24a443dec3feb08c8e0a63a5d2c9e26951ca",
+  "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
+  "pcse_version": "6.0.13",
+  "expected_final_state_sha256": "91b2fc3963a01184d990ce3e40f2f0126d27b5dccd7cba088c0770d809e7ddda",
+  "checkpoint_steps": {},
+  "steps": [
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__drain",
+      "tool_args": {
+        "plot_id": "p1",
+        "water_mm": 26.299999999999997
+      },
+      "duration_seconds": 1184.0
+    },
+    {
+      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_args": {
+        "machine_id": "tractor"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_inventory",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__load_fertilizer",
+      "tool_args": {
+        "kg": 15.0
+      },
+      "duration_seconds": 600.0
+    },
+    {
+      "tool_name": "PaddyOpsApp__apply_fertilizer",
+      "tool_args": {
+        "plot_id": "p1",
+        "kg_per_ha": 150.0
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_args": {},
+      "duration_seconds": 0.0
+    }
+  ]
+}

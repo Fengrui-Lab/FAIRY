@@ -13,6 +13,7 @@ from dataclasses import asdict, dataclass
 # These IDs preserve the upstream parameter-set identity. They are not named
 # Chinese cultivars or independently established cold/drought tolerance classes.
 OFFICIAL_WOFOST_SEED_VARIETIES = {
+    "MAIZE_201": "Grain_maize_201",
     "SOYBEAN_901": "Soybean_901",
     "SOYBEAN_902": "Soybean_902",
     "SOYBEAN_903": "Soybean_903",
@@ -32,6 +33,10 @@ def official_seed_backend_error(seed_type: str | None, physics) -> str | None:
     backend = getattr(physics, "crop_backend", None)
     if getattr(physics, "crop_backend_name", "legacy") != "wofost" or backend is None:
         return f"Seed {seed_type} requires the native WOFOST backend; legacy growth is not supported"
+    if seed_type == "MAIZE_201":
+        if backend.config.crop_name != "maize" or backend.config.variety_name != variety:
+            return f"Seed {seed_type} requires native maize cultivar {variety}"
+        return None
     if backend.config.cultivar_map.get(seed_type) != variety:
         return f"Seed {seed_type} requires explicit native cultivar_map identity {variety}"
     return None
@@ -124,7 +129,7 @@ def get_crop_profile(crop_type: str) -> CropProfile:
 
 
 def seed_crop_type(seed_type: str) -> str:
-    if seed_type == "MAIZE_STANDARD":
+    if seed_type in {"MAIZE_STANDARD", "MAIZE_201"}:
         return "maize"
     if seed_type == "RICE_STANDARD":
         return "rice"
