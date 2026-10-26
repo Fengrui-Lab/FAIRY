@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from math import isfinite
 from dataclasses import replace
-from typing import Any, Mapping, Protocol
+from typing import TYPE_CHECKING, Any
 
 from fairy.crops.runtime import CropStatus, PlantingEvent, CropObservationTraits, ReplantPlan
 from fairy.crops.soybean import SoybeanCropModel
@@ -23,9 +23,14 @@ from fairy.physics.canopy_biomass_engine import GrowthStage as CanopyGrowthStage
 from fairy.physics.management_effect_engine import GrowthStage as ManagementGrowthStage
 from fairy.physics.yield_recovery_engine import GrowthStage as YieldGrowthStage
 
+if TYPE_CHECKING:
+    from fairy.apps.farm_world.crop_dynamics import WeatherInputs
+    from fairy.apps.farm_world.farm_physics_state import FarmPhysicsState
+    from fairy.apps.farm_world.farm_world_app import FarmWorldApp
+
 
 class SoybeanDynamics:
-    """Preserve the existing soybean equations and engine call order."""
+    """Adapt soybean growth and report actual increments for nutrient settlement."""
     observation_traits = CropObservationTraits(unstressed_root_vwc=0.20, diagnosed_pest_type="aphid", diagnosed_disease_type="leaf_spot")
 
     def __init__(self, num_ridges: int) -> None:
@@ -114,10 +119,17 @@ class SoybeanDynamics:
     def initialize_from_ridges(self, world, target_sim_time):
         _initialize_soybean_from_ridges(world, target_sim_time)
 
-    def management_inputs(self, physics):
-        # Keep the historical soybean zero-uptake proxy unchanged.
-        return {rid: ManagementCropInput(stage=ManagementGrowthStage(state.stage.value), daily_biomass_g_m2=0.0)
-                for rid, state in self.phenology.states.items()}
+    def management_inputs(self, physics: FarmPhysicsState) -> dict[int, ManagementCropInput]:
+        # Today's growth is computed after management and soil. None explicitly
+        # defers uptake; the orchestrator settles the increment returned below.
+        # A numeric zero would incorrectly declare that no biomass was grown.
+        return {
+            rid: ManagementCropInput(
+                stage=ManagementGrowthStage(state.stage.value),
+                daily_biomass_g_m2=None,
+            )
+            for rid, state in self.phenology.states.items()
+        }
 
     def biotic_inputs(self, physics):
         return {rid: BioticCropInput(stage=BioticGrowthStage(state.stage.value),
@@ -125,7 +137,13 @@ class SoybeanDynamics:
                                     seed_type=state.seed_type.value if state.seed_type is not None else None)
                 for rid, state in self.phenology.states.items()}
 
-    def advance_before_biotics(self, farm_world_app, physics, day, weather):
+    def advance_before_biotics(
+        self,
+        farm_world_app: FarmWorldApp,
+        physics: FarmPhysicsState,
+        day: date,
+        weather: WeatherInputs,
+    ) -> dict[int, float]:
         for rid, grain in self.yield_recovery.states.items():
             if grain.harvested:
                 self.phenology.states[rid].planted = False
@@ -199,12 +217,22 @@ class SoybeanDynamics:
             )
             for rid in physics.management.states
         }
+        # Take the baseline after emergence initialization: the seed-funded
+        # initial biomass is not new growth drawing on the soil nutrient proxy.
+        # Differences retain native precision, unlike rounded diagnostic results.
+        biomass_before = {
+            rid: state.aboveground_biomass_g_m2 for rid, state in self.canopy.states.items()
+        }
         physics.canopy.update_day(
             weather=weather["canopy"],
             phenology_by_ridge=canopy_phenology_inputs,
             soil_by_ridge=canopy_soil_inputs,
             management_by_ridge=canopy_management_inputs,
         )
+        return {
+            rid: state.aboveground_biomass_g_m2 - biomass_before[rid]
+            for rid, state in self.canopy.states.items()
+        }
 
     def advance_after_biotics(self, physics, day, weather, harvest_actions):
         pending_harvest = harvest_actions

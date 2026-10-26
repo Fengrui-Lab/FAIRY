@@ -292,6 +292,11 @@ class FarmWorldApp(App):
             "replanting": asdict(definition.replanting_rules or definition.planting_rules),
             "harvest": asdict(definition.harvest_rules),
             "postharvest": self._postharvest_market.to_dict(),
+            "nutrition": {
+                "nutrient_index": "dimensionless availability proxy, not a soil N/P/K measurement",
+                "fertilizer_kg": "fertilizer product mass; elemental composition is unspecified",
+                "scope": "no explicit N/P/K mass balance or mechanistic nitrogen fixation",
+            },
             "model_scope": "reduced simulation; cultivar parameters are not field-calibrated",
         }
 
@@ -305,7 +310,9 @@ class FarmWorldApp(App):
         Rules include seed-specific temperature limits, planting depth, VWC,
         supported replant modes, mature stages and required implements. They
         are the same typed rules used by tools and execution. Crop needs do
-        not imply that a device owns the required implement.
+        not imply that a device owns the required implement. Nutrition metadata
+        distinguishes the availability proxy from measured N/P/K and fertilizer
+        product mass from elemental nutrient mass.
         """
         return self.crop_capabilities()
 
@@ -505,6 +512,8 @@ class FarmWorldApp(App):
 
         Includes planting status, seed type, growth stage, days since planting,
         grain moisture, yield-potential proxy, and days since pesticide application.
+        Nutrient index is a dimensionless model proxy; it does not identify a
+        specific N/P/K deficiency or diagnose root-nodule activity.
 
         Args:
             ridge_id: Ridge identifier, 0-63.
@@ -526,6 +535,8 @@ class FarmWorldApp(App):
 
         Includes planting status, seed type, growth stage, days since planting,
         grain moisture, yield-potential proxy, and days since pesticide application.
+        Nutrient index is a dimensionless model proxy; it does not identify a
+        specific N/P/K deficiency or diagnose root-nodule activity.
 
         Args:
             start: First ridge ID

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+from math import isfinite
 from typing import Mapping
 
 
@@ -83,12 +84,15 @@ class ManagementEffectParameters:
     min_stand_fraction: float = 0.35
 
     # Nutrient state.
-    # 1.0 means no nutrient limitation. Lower values reduce growth.
+    # A composite availability index, not kg of nitrogen or an N/P/K balance.
+    # Full-growth and low-availability thresholds are configured below.
     initial_nutrient_index: float = 0.75
     max_nutrient_index: float = 1.10
     base_fertilizer_gain: float = 1.0
     fertigation_gain: float = 0.32
     daily_nutrient_decay: float = 0.0008
+    # Index units per g/m² of new biomass; inherited proxy coefficient, not
+    # field-calibrated plant N concentration or total nitrogen requirement.
     nutrient_uptake_coeff: float = 0.00018
     nutrient_stress_min: float = 0.72
 
@@ -137,7 +141,9 @@ class ManagementSoilInput:
 @dataclass
 class ManagementCropInput:
     stage: GrowthStage | str = GrowthStage.NOT_PLANTED
-    daily_biomass_g_m2: float = 0.0
+    # None defers uptake until the crop reports actual growth for this date.
+    # Zero is a known no-growth result, not an unavailable measurement.
+    daily_biomass_g_m2: float | None = None
 
 
 @dataclass
@@ -181,6 +187,12 @@ class ManagementEffectState:
     nutrient_stress: float = 0.85
     # Shared date cursor for nutrient, irrigation-memory and residual aging.
     last_nutrient_decay_day: date | None = None
+    # Growth may be settled after daily aging. These fields describe the last
+    # settled growth date; uptake is composite index depletion, not kg N.
+    last_growth_uptake_day: date | None = None
+    daily_growth_biomass_g_m2: float = 0.0
+    daily_growth_uptake_index: float = 0.0
+    cumulative_growth_uptake_index: float = 0.0
 
     # Recent action memory.
     days_since_irrigation: int | None = None
@@ -277,6 +289,19 @@ class ManagementEffectEngine:
         soil_by_ridge = soil_by_ridge or {}
         crop_by_ridge = crop_by_ridge or {}
 
+        # Validate all available growth inputs before any ridge is aged. A
+        # later invalid ridge must not leave earlier ridges partly advanced.
+        if advance_daily:
+            self._validate_growth_inputs(weather.day, {
+                rid: crop.daily_biomass_g_m2
+                for rid, crop in crop_by_ridge.items()
+                if crop.daily_biomass_g_m2 is not None
+            })
+        for state in self.states.values():
+            for previous in (state.last_nutrient_decay_day, state.last_growth_uptake_day):
+                if previous is not None and weather.day < previous:
+                    raise ValueError("Management effects cannot move backwards in date")
+
         results: list[ManagementEffectDayResult] = []
         for ridge_id, state in self.states.items():
             actions = actions_by_ridge.get(ridge_id, [])
@@ -287,6 +312,79 @@ class ManagementEffectEngine:
             ))
 
         return results
+
+    def settle_crop_growth(
+        self, day: date, biomass_by_ridge: Mapping[int, float],
+    ) -> None:
+        """Debit actual new biomass once per ridge and calendar date.
+
+        This second phase changes only nutrient availability and its stress
+        signal. It neither advances the clock nor repeats action application,
+        crop growth, pesticide aging or irrigation-memory aging. Validate the
+        complete batch before mutating any ridge. Repeated settlement for an
+        already settled date is a no-op; None inputs belong to update_day and
+        must not be submitted here as if they were observed zero growth.
+
+        Biomass is in g/m². The inherited uptake coefficient converts that
+        increment to composite nutrient-index units, not a measured N mass.
+        """
+        self._validate_growth_inputs(day, biomass_by_ridge)
+        for ridge_id, biomass in biomass_by_ridge.items():
+            state = self.states[ridge_id]
+            if state.last_growth_uptake_day == day:
+                continue
+            self._settle_ridge_growth(state, day, float(biomass))
+            tags = [tag for tag in state.tags
+                    if tag not in {"nutrient_stress", "nutrient_excess_penalty"}]
+            self._refresh_nutrient_stress(state, tags)
+            state.tags = tags
+
+    def _validate_growth_inputs(self, day: date, biomass_by_ridge: Mapping[int, float]) -> None:
+        if type(day) is not date:
+            raise ValueError("Growth settlement requires a calendar date")
+        coefficient = self.params.nutrient_uptake_coeff
+        if not isfinite(coefficient) or coefficient < 0:
+            raise ValueError("Nutrient uptake coefficient must be finite and nonnegative")
+        for ridge_id, biomass in biomass_by_ridge.items():
+            if type(ridge_id) is not int or ridge_id not in self.states:
+                raise ValueError(f"Unknown growth settlement ridge {ridge_id!r}")
+            if (type(biomass) not in (int, float) or not isfinite(biomass)
+                    or biomass < 0 or not isfinite(coefficient * biomass)):
+                raise ValueError("Daily biomass must be finite and nonnegative")
+            state = self.states[ridge_id]
+            for previous in (state.last_growth_uptake_day, state.last_nutrient_decay_day):
+                if previous is not None and day < previous:
+                    raise ValueError("Growth settlement cannot move backwards in date")
+
+    def _settle_ridge_growth(
+        self, state: ManagementEffectState, day: date, biomass: float,
+        *, background_depletion: float = 0.0,
+    ) -> None:
+        """Shared debit for existing pre-growth and new post-growth callers."""
+        if state.last_growth_uptake_day == day:
+            # A post-growth caller can settle before the day's ordinary aging.
+            # A later daily update still owes background depletion, but no
+            # second biomass-driven debit.
+            state.nutrient_index = self._clip(
+                state.nutrient_index - background_depletion,
+                0.0, self.params.max_nutrient_index,
+            )
+            return
+        before = state.nutrient_index
+        requested_uptake = self.params.nutrient_uptake_coeff * biomass
+        state.nutrient_index = self._clip(
+            before - (background_depletion + requested_uptake),
+            0.0, self.params.max_nutrient_index,
+        )
+        # Report the part actually debited, separately from background aging;
+        # availability cannot fall below zero even when demand exceeds it.
+        available_after_background = self._clip(
+            before - background_depletion, 0.0, self.params.max_nutrient_index,
+        )
+        state.daily_growth_biomass_g_m2 = biomass
+        state.daily_growth_uptake_index = max(0.0, available_after_background - state.nutrient_index)
+        state.cumulative_growth_uptake_index += state.daily_growth_uptake_index
+        state.last_growth_uptake_day = day
 
     def irrigation_mm_by_ridge(
         self,
@@ -361,15 +459,20 @@ class ManagementEffectEngine:
                 state.days_since_irrigation = None
                 state.recent_irrigation_mm = 0.0
 
-        # Decay nutrient index through background depletion and crop uptake.
-        # Physics can tick multiple times on the same calendar day while several
-        # tools are used; daily nutrient depletion should still happen once.
+        # Background availability ages once per day. Crops whose daily growth
+        # is not known yet settle their actual increment after canopy growth.
+        # Existing callers with an explicit biomass retain the original debit
+        # order: subtract background plus uptake before applying new actions.
         if age_effects:
-            uptake = p.nutrient_uptake_coeff * max(0.0, crop.daily_biomass_g_m2)
-            state.nutrient_index -= p.daily_nutrient_decay + uptake
-            state.nutrient_index = self._clip(
-                state.nutrient_index, 0.0, p.max_nutrient_index
-            )
+            if crop.daily_biomass_g_m2 is None:
+                state.nutrient_index = self._clip(
+                    state.nutrient_index - p.daily_nutrient_decay, 0.0, p.max_nutrient_index,
+                )
+            else:
+                self._settle_ridge_growth(
+                    state, weather.day, float(crop.daily_biomass_g_m2),
+                    background_depletion=p.daily_nutrient_decay,
+                )
             state.last_nutrient_decay_day = weather.day
 
         # Age residual treatment windows.
@@ -429,17 +532,7 @@ class ManagementEffectEngine:
             else:
                 raise ValueError(f"Unsupported action type: {action.action_type}")
 
-        state.nutrient_stress = self._nutrient_stress_from_index(state.nutrient_index)
-
-        if state.nutrient_index > p.nutrient_excess_threshold:
-            state.nutrient_stress = max(
-                0.0, state.nutrient_stress - p.nutrient_excess_penalty
-            )
-            tags.append("nutrient_excess_penalty")
-
-        if state.nutrient_stress < 0.80:
-            tags.append("nutrient_stress")
-
+        self._refresh_nutrient_stress(state, tags)
         state.tags = tags
 
         return ManagementEffectDayResult(
@@ -576,6 +669,14 @@ class ManagementEffectEngine:
         if weather.wind_ms >= p.high_wind_ms:
             modifier *= p.high_wind_efficacy_factor
         return self._clip(modifier, 0.0, 1.0)
+
+    def _refresh_nutrient_stress(self, state: ManagementEffectState, tags: list[str]) -> None:
+        state.nutrient_stress = self._nutrient_stress_from_index(state.nutrient_index)
+        if state.nutrient_index > self.params.nutrient_excess_threshold:
+            state.nutrient_stress = max(0.0, state.nutrient_stress - self.params.nutrient_excess_penalty)
+            tags.append("nutrient_excess_penalty")
+        if state.nutrient_stress < 0.80:
+            tags.append("nutrient_stress")
 
     def _nutrient_stress_from_index(self, nutrient_index: float) -> float:
         p = self.params

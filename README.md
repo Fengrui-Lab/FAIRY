@@ -16,11 +16,17 @@ FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing fa
 
 [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py) defines the complete three-farm season in its own file. Farms A/B/C each have 64 ridges and separate fixed sensors and irrigation; one warehouse, mobile fleet and common clock serve all three farms. Task validation remains unimplemented.
 
-## Briefing Detail For The Seven New Scenarios
+[`scenario_two_farm_soybean_shared_management`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_management.py) independently defines initialization, both briefings and the complete `build_events_flow()`. Each farm has 64 Heinong84 ridges covering 1.88672 ha, with common weather and water-retaining soil; A20–39 and B40–59 have lower initial fertility. The reference observes both fields, rechecks conditions after rain, then shares one tractor to apply 40 kg of fertilizer product to each local block. The single drone recharges between whole-field surveys while the ground robot inspects a sample. Management windows overlap, but field operations execute sequentially; charging is asynchronous and inter-farm travel is not modeled. The workflow continues through monitoring, harvest and storage. There is no scenario-specific `validate()`; its default validation status is not evidence of task completion.
 
-The new scenes accept `detailed_briefing` as a JSON boolean, defaulting to `true`. Previously they accepted the option but always sent a fixed detailed briefing. Each scene now defines its complete `BASIC_BRIEFING` and `DETAILED_BRIEFING` locally, with the selected text used by both the Agent task and captured briefing event.
+[`scenario_two_farm_soybean_shared_weeding`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_weeding.py) defines two complete soybean seasons with whole-field weed management. Both 64-ridge fields start with weed pressure; each receives a whole-field aerial survey and four distributed ground samples (16 ridges), followed by seven shared-tractor cultivation passes covering all 64 ridges. The robot recharges between farms, then follow-up samples and full harvest/storage complete the workflow. Initialization, both briefings and the complete workflow are local to this file; there is no validator. Run with `PYTHONHASHSEED=0 python -m fairy.cli -s scenario_two_farm_soybean_shared_weeding --build-oracle --run-oracle-tools --replay --output-dir /tmp/two-farm-soybean-shared-weeding`.
 
-`false` retains objectives, field/crop identity and area, equipment ownership, the shared clock and completion requirements. The same tools still expose crop rules, conditions, budgets and storage requirements, but full-season basic briefings do not supply reference calendars, doses, precomputed loads or management recipes. `true` adds the existing detailed guidance. Both modes retain identical Apps, tool schemas, initial state, weather, physics, Oracle actions and validation.
+[`scenario_two_farm_soybean_weeding_pest_control`](fairy/scenarios/two_farm/scenario_two_farm_soybean_weeding_pest_control.py) adds an independent soybean scenario with different needs: whole-field mechanical weed control on A and whole-field insect control on B. Both fields are surveyed and sampled before one tractor sprays B, returns surplus material, changes implements and cultivates A. Scouting batteries, spray stock, fuel and time are shared. Initialization, both briefings and the complete full-season workflow are in the new file; no validator is implemented. The existing whole-field-weeding scenario remains available.
+
+## Briefing Detail For The Ten New Scenarios
+
+The ten scenes accept `detailed_briefing` as a JSON boolean, defaulting to `true`. Each scene defines its complete `BASIC_BRIEFING` and `DETAILED_BRIEFING` locally, with the selected text used by both the Agent task and captured briefing event.
+
+`false` retains objectives, field/crop identity and area, equipment ownership, the shared clock and completion requirements. The same tools still expose crop rules, conditions, budgets and storage requirements, but full-season basic briefings do not supply reference calendars, precomputed loads or treatment recipes. Fixed equipment consumption rules can be stated so the agent can plan resources. `true` adds detailed guidance. Both modes retain identical Apps, tool schemas, initial state, weather, physics, Oracle actions and validation.
 
 | Scenario ID | Basic task (`false`) | Additional guidance (`true`) |
 | --- | --- | --- |
@@ -31,15 +37,18 @@ The new scenes accept `detailed_briefing` as a JSON boolean, defaulting to `true
 | `scenario_single_farm_maize_full_season` | One complete maize season | Seed loading, nutrition and two irrigation windows |
 | `scenario_single_farm_maize_normal_management` | Normal-loam maize management and safe storage | Nutrition, R1 irrigation and rain-aware R3 deferral |
 | `scenario_two_farm_maize_soybean_full_season` | Separate maize/soybean management and traceable storage | Crop-specific loading, nutrition, water and harvest scheduling |
+| [`scenario_two_farm_soybean_shared_management`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_management.py) | Two soybean seasons, observed local fertility differences and shared equipment; no task validator | Target blocks, rain rechecks, local fertilizer doses and ground inspections during drone charging |
+| [`scenario_two_farm_soybean_shared_weeding`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_weeding.py) | Two full soybean seasons with whole-field weeds and shared equipment; no task validator | Rain/drainage wait, distributed ground samples, charging between farms, fourteen cultivation passes and rechecks |
+| [`scenario_two_farm_soybean_weeding_pest_control`](fairy/scenarios/two_farm/scenario_two_farm_soybean_weeding_pest_control.py) | Two soybean seasons with different weed/insect risks, shared resources and the standard tool consumption rule; no validator | Scout schedule, B-first spraying window, loads, implement changes, A cultivation and separate rechecks |
 
-The short shared-equipment task retains its prescribed irrigation, planting and survey targets in both modes because these define the task contract. Detailed calendar/dose guidance remains subject to observations. Switching detail does not relax validation, including existing required fertilizer coverage or irrigation. See the [Chinese scene-by-scene explanation](README.zh-CN.md#新增7个场景的-detail-两档).
+The short shared-equipment task retains its prescribed irrigation, planting and survey targets in both modes because these define the task contract. Detailed calendar/dose guidance remains subject to observations. Switching detail does not relax existing validation, including required fertilizer coverage or irrigation where implemented. See the [Chinese scene-by-scene explanation](README.zh-CN.md#新增8个场景的-detail-两档).
 
 ```bash
 --scenario-kwargs '{"detailed_briefing": false}'
 --scenario-kwargs '{"detailed_briefing": true}'
 ```
 
-Use JSON booleans, not strings or `--init-kwargs`. The CLI has no standalone `--detail`; the batch runner translates its `--detail false/true` into this constructor option. An explicitly supplied nonempty `scenario_input` overrides the built-in text. Legacy L3 context modes such as `kwoo` and `library` remain available in their original scenes; the seven new scenes support only booleans.
+Use JSON booleans, not strings or `--init-kwargs`. The CLI has no standalone `--detail`; the batch runner translates its `--detail false/true` into this constructor option. An explicitly supplied nonempty `scenario_input` overrides the built-in text. Legacy L3 context modes such as `kwoo` and `library` remain available in their original scenes; the eight new scenes support only booleans.
 
 ## System Scope
 

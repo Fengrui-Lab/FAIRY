@@ -16,11 +16,17 @@ FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通�
 
 三农场版本为 [`scenario_three_farm_full_season_hn84_normal`](fairy/scenarios/three_farm/scenario_three_farm_full_season_hn84_normal.py)：A/B/C各64垄，三套传感器和固定灌溉独立；仓库统一共享，移动设备仍各一台，公共时间同时推进三场。完整配置和全季 workflow 独立定义在该场景文件中，`validate()` 同样暂留空。
 
-## 新增7个场景的 detail 两档
+双场大豆轻量管理场景 [`scenario_two_farm_soybean_shared_management`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_management.py) 将初始化、两档任务和完整 `build_events_flow()` 放在一个独立文件中。两场各64垄黑农84、各1.88672ha，同天气和保水黑土，A20–39、B40–59为局部低肥区。参考流程先分别观测、雨后复核通行，再用同一台拖拉机依次给两处各追肥40kg产品；唯一无人机在两场全田巡查之间充电，用地面机器人的抽查时间覆盖充电。两地需求窗口重叠，田间工具仍串行执行，充电异步，未建模跨场路程；全季继续观察并分别收储。本场景不实现 `validate()`，默认 validation 状态不能代替操作和结果核查。
 
-这7个场景使用构造参数 `detailed_briefing`，只接受 JSON 布尔值 `false` / `true`，默认 `true`。以前这批场景虽然接受参数，却始终发送固定的详细任务；现在两档分别选用各场景文件内完整定义的 `BASIC_BRIEFING` / `DETAILED_BRIEFING`，Agent 首条任务与事件图中的 briefing 使用同一份文本。
+全田中耕场景 [`scenario_two_farm_soybean_shared_weeding`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_weeding.py)：两场各64垄、各1.88672ha，均种黑农84，两场全田均有杂草背景，A略重。初始化、两档任务和完整workflow均在该文件中，不实现validate。参考6月12日查雨后墒情，15日复核；每场航测全64垄，再在四个分布样带抽查16垄。两场证据齐全后，同一拖拉机先A后B，每场7趟覆盖全部64垄，共14趟128垄。机器人两场之间充电，后续跨区复查并完成全季收储。运行：`PYTHONHASHSEED=0 python -m fairy.cli -s scenario_two_farm_soybean_shared_weeding --build-oracle --run-oracle-tools --replay --output-dir /tmp/two-farm-soybean-shared-weeding`。
 
-`false` 给出任务目标、田块身份/面积/品种、设备与仓库归属、共同时钟和完成要求。全季场景的作物规则、实时水肥状态、额度和收储门槛仍可通过相同工具查询，但不附参考日期、剂量、已计算的装载量或预写的管理步骤。`true` 在这些事实之外提供内置的详细管理指导，保留原详细文本。工具说明、App、初态、天气、物理、Oracle动作和验收不随 detail 改变；`false` 也不会降低验收要求。
+新增不同管理场景 [`scenario_two_farm_soybean_weeding_pest_control`](fairy/scenarios/two_farm/scenario_two_farm_soybean_weeding_pest_control.py)：A全田机械除草、B全田虫害管理，都种大豆。两场分别观察后，同一拖拉机先喷施B，再退余料、换机具并中耕A；无人机/机器人电量、药液、油料和作业时间共同调度。新文件独立包含初始化、两档任务与完整全季workflow，不实现validate；原全田中耕场景保留。B的虫害来自初始化声明的单日合成外源输入，标准喷液量是模型工具消耗规则，不代表现实药剂标签剂量。
+
+## 新增10个场景的 detail 两档
+
+这10个场景使用构造参数 `detailed_briefing`，只接受 JSON 布尔值 `false` / `true`，默认 `true`。两档分别选用各场景文件内完整定义的 `BASIC_BRIEFING` / `DETAILED_BRIEFING`，Agent 首条任务与事件图中的 briefing 使用同一份文本。
+
+`false` 给出任务目标、田块身份/面积/品种、设备与仓库归属、共同时钟和完成要求。全季场景的作物规则、实时水肥状态、额度和收储门槛仍可通过相同工具查询，但不附参考日期、处方、已计算的装载量或预写的管理步骤；设备固定消耗规则可以明确，供Agent自行计算资源需求。`true` 在这些事实之外提供内置的详细管理指导。工具说明、App、初态、天气、物理、Oracle动作和验收不随 detail 改变；`false` 也不会降低已有验收要求。
 
 | 场景 ID | `false` 的任务范围 | `true` 增加的指导 |
 | --- | --- | --- |
@@ -31,6 +37,9 @@ FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通�
 | [`scenario_single_farm_maize_full_season`](fairy/scenarios/maize/scenario_single_farm_maize_full_season.py) | 单场玉米全季与安全收储 | 播种装载、追肥、两次补水窗口和阶段巡查参考 |
 | [`scenario_single_farm_maize_normal_management`](fairy/scenarios/maize/scenario_single_farm_maize_normal_management.py) | 正常壤土玉米全季与按需管理 | 追肥、R1补水、R3结合降雨暂缓灌溉等参考策略 |
 | [`scenario_two_farm_maize_soybean_full_season`](fairy/scenarios/two_farm/scenario_two_farm_maize_soybean_full_season.py) | 玉米＋大豆全季、分别管理与来源批次入库 | 两作物分别装种、追肥、补水、成熟收割与共享设备安排 |
+| [`scenario_two_farm_soybean_shared_management`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_management.py) | 双场大豆全季、分别观测局部肥力差异并安排共享设备，无场景验收 | 低肥垄段、雨后复核、局部追肥用量及用地面抽查覆盖无人机充电的参考顺序 |
+| [`scenario_two_farm_soybean_shared_weeding`](fairy/scenarios/two_farm/scenario_two_farm_soybean_shared_weeding.py) | 双场大豆全季、全田杂草管理与共享设备调度，无场景验收 | 雨后等待、分布样带检查、跨场充电、14趟全田中耕与复查的参考顺序 |
+| [`scenario_two_farm_soybean_weeding_pest_control`](fairy/scenarios/two_farm/scenario_two_farm_soybean_weeding_pest_control.py) | 双场大豆分别有杂草/虫害风险，明确共享资源和标准工具消耗，无场景验收 | 观察窗口、先B喷施、装料与换机具、A全田中耕和分别复查的参考流程 |
 
 短任务 `scenario_two_farm_shared_equipment` 的固定灌溉范围/时长、播种参数与巡查范围是验收目标，两档都明确保留。详细档的日期和用量是参考，Agent 仍须以观测决定作业；全季场景现有验收可能要求完整追肥覆盖或正灌溉量，两档都执行这些规则。
 
@@ -40,7 +49,7 @@ FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通�
 --scenario-kwargs '{"detailed_briefing": true}'
 ```
 
-CLI 没有独立的 `--detail` 选项；批量 runner 的 `--detail false/true` 会转成上述构造参数。代码调用方显式提供非空 `scenario_input` 时，自定义任务优先于内置两档。旧 L3 的 `kwoo` / `library` 等上下文模式不受影响，这7个新增场景只支持布尔两档。
+CLI 没有独立的 `--detail` 选项；批量 runner 的 `--detail false/true` 会转成上述构造参数。代码调用方显式提供非空 `scenario_input` 时，自定义任务优先于内置两档。旧 L3 的 `kwoo` / `library` 等上下文模式不受影响，这8个新增场景只支持布尔两档。
 
 ## 系统定位
 

@@ -121,7 +121,7 @@ def restore_physics(snapshot: dict | None, num_ridges: int, crop_id: str | None 
     physics.management.params = ManagementEffectParameters(**snapshot["management"]["parameters"])
     physics.management.states = _restore_states(
         snapshot["management"]["states"], ManagementEffectState, num_ridges,
-        ("planting_date", "last_nutrient_decay_day"),
+        ("planting_date", "last_nutrient_decay_day", "last_growth_uptake_day"),
     )
     physics.biotic.params = BioticPressureParameters(**snapshot["biotic"]["parameters"])
     physics.biotic.states = _restore_states(

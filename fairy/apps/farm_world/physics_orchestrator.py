@@ -199,7 +199,11 @@ def _run_daily_tick(farm_world_app, physics, weather_app, day, weather_inputs=No
         irrigation_mm_by_ridge=physics.management.irrigation_mm_by_ridge(actions),
         canopy_cover_by_ridge=living_cover,
     )
-    physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
+    growth_for_uptake = physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
+    if growth_for_uptake is not None:
+        # Settle actual growth once, without aging effects, replaying actions or
+        # recomputing today's canopy. The reduced availability feeds the next day.
+        physics.management.settle_crop_growth(day, growth_for_uptake)
     physics.biotic.update_day(
         weather=weather["biotic"], crop_by_ridge=physics.crop.biotic_inputs(physics),
         soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)

@@ -1903,7 +1903,7 @@ class TractorOperations:
                     "efficacy_multiplier": float(efficacy_multiplier),
                 },
                 direct_effect_summary={
-                    "treatment_type": "HERBICIDE",
+                    "treatment_type": treatment_type.value,
                     "weed_control_registered": True,
                     "residual_window_opened": action_type == "herbicide",
                 },
