@@ -273,7 +273,7 @@ def workflow_from_oracle_events(scenario: Any) -> dict[str, dict[str, Any]]:
             continue
         fn = getattr(function, "__name__", function.__class__.__name__)
         app_name = getattr(app, "name", cls)
-        tool_name = f"{app_name}__{fn}" if cls in {"DroneApp", "RobotApp"} else f"{cls}__{fn}"
+        tool_name = f"{app_name}__{fn}"
         tool_args = dict(getattr(event, "kwargs", {}) or {})
         args = list(getattr(event, "args", ()) or ())
         try:
@@ -292,8 +292,14 @@ def workflow_from_oracle_events(scenario: Any) -> dict[str, dict[str, Any]]:
                 tool_args.update({f"arg{i}": value for i, value in enumerate(args)})
         is_advance_time = cls == "SystemApp" and fn == "advance_time"
         event_id = getattr(event, "event_id", None) or f"oracle_{step_index}"
+        metadata = dict(getattr(event, "workflow_metadata", {}) or {})
 
-        if is_advance_time and previous_advance_step_name is not None:
+        if (
+            is_advance_time
+            and previous_advance_step_name is not None
+            and not metadata
+            and not workflow[previous_advance_step_name].get("content")
+        ):
             previous_args = workflow[previous_advance_step_name].get("tool_args") or {}
             total_seconds = _advance_time_seconds_from_args(
                 dict(previous_args)
@@ -313,7 +319,7 @@ def workflow_from_oracle_events(scenario: Any) -> dict[str, dict[str, Any]]:
         ]
         workflow[step_name] = {
             "name": step_name,
-            "content": None,
+            "content": _make_serializable(metadata) if metadata else None,
             "op_type": str(getattr(getattr(event, "operation_type", None), "value", "")).upper()
             or None,
             "tool_name": tool_name,

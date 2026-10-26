@@ -2,6 +2,26 @@
 
 [English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md) | [WOFOST 接入与无 LLM 演示](docs/wofost-integration.md)
 
+当前13个选定任务分别保留经典版与WOFOST版：**无后缀的原ID、原文件、原类使用`legacy`；WOFOST的ID、文件名、类名均加`_V2`。** `farm_world_fullseason_v2`只是历史目录名，不是后端开关。[13对版本及运行示例](docs/wofost-scenario-versions.md)给出对应关系，[版本清单](configs/oracles/wofost_scenario_versions.json)保存准确ID、路径和类名。
+
+13套WOFOST中12套已校准，03保留原花期营养任务并标为未校准。前9套已校准方案中，正常季为7个管理窗口、两次30mm补水、无例行氮肥，展开为89次工具调用。本轮另完成3个灌溉题，每场8个窗口、101次调用，包含真实SurveyDrone全田粗查和Robot定点检查；按13%水分安全入库分别为7097.36、7005.65、6649.92kg。扩展名单后17场已暂停。这些是实际工具Oracle回放，**尚未运行35B Agent**。[前10场农事计划](docs/wofost-farming-plans.md)、[新增3场计划](docs/wofost-next20-farming-plans.md)和[接入说明](docs/wofost-integration.md)分别说明管理及运行方式；不能把前9场都说成已补无人机。
+
+经典版来源于Git提交`e0a302c3d3de9cf532ea5fd01bc79ebb3e9bb864`，完整原源码另有备份。旧workflow只改为明确的4垄代表性抽样，以及3场在原天气下分别多等3/1/1天采收；不改初始题设、作物物理、App、Engine或TimeManager。13套经典版和13套`_V2`均通过普通生产CLI的build→replay→evaluate；经典版每场64垄全收且安全入库，初始世界与原Git定义13/13完全一致。12套已校准WOFOST的产量与改名前参照完全相同，03可运行至8229.50kg但仍未校准。[验证证据](docs/wofost-scenario-versions.md#当前完成与核验边界)区分两版本结果和考点校准。
+
+本次相关广泛回归**644项通过，0失败、0错误、0跳过**，覆盖原生模型、版本与源码契约、经典workflow兼容及App／共享运行时，**不是全仓库测试声明**。另仅修正一个旧天气测试把“4天合计82mm”误当“每天82mm”的断言，生产天气未改；[验收记录与修正依据](docs/wofost-scenario-versions.md#当前完成与核验边界)可核对。
+
+现已增加场景作者直接设置真实土壤氮池的事件，支持当天观测、存档恢复和回放；其独立529项回归记录早于此次版本拆分，不能当作当前全部改动的验收统计。只清土壤氮仍不足以使官方大豆配置下的03追肥保产考点成立，详见[事件写法、数据流与对照结果](docs/wofost-soil-nitrogen-events.md)。
+
+支持按农场配置垄数、垄长、垄宽及作物，分别声明农场状态、共享工具服务和设备资产。**一个场景管理多个农场全季**可使用 `scenario_multi_crop_full_season_mixed`，让三个农场从整地、播种、实际生长一直完成收储：[全季管理与详细 Oracle](docs/multi-farm-full-season.md)。运行 `uv run python scripts/validate_diverse_oracles.py --suite full-season` 可验证 4 个多农场全季与 4 个多作物全季配置。另保留 [8 个阶段任务](docs/multi-farm-multi-crop-oracles.md) 用于单项操作回归。
+
+全季场景采用一个场景一个完整文件，文件内包含本地配置类型、全部输入与目标、初始化、`build_events_flow()`、Oracle 和验收。阅读或修改主混合场景可直接打开 [scenario_multi_crop_full_season_mixed.py](fairy/scenarios/farm_world_diverse/scenario_multi_crop_full_season_mixed.py)。先读 `build_events_flow()`：setup 时 capture 任务 briefing，通过独立副本推演全季并构建完整工具事件图，原场景保持初态。再读 `oracle_solution()`，区分导出事件图与直接动态执行本地管理器两种模式。
+
+八个全季场景均显式共享一台 Tractor、一台 Robot、一台 Drone；八个阶段任务则显式配置逐场专用设备。两类场景都只注册一套共享工具，通过 `farm_id`、`asset_id` 选择目标。例如 `Tractor__plant_seeds` 同时选择农场和设备，`Tractor__get_status` 只选择设备。资产切换目标时保留同一份油量、电量、载荷、挂载和充电状态；`tool_prefix` 只作显示与旧内部句柄兼容。
+
+Agent 从 `World__describe_environment` 取得实际目标与绑定，从 `World__get_capabilities` 取得作物约束和设备容量。发给模型的 schema 与实际执行来自同一工具契约；默认混合全季 FARM Agent 收到 47 个 function schema（加上隐藏的任务注入工具共注册 48 个），不会按农场复制。Tractor 换场前须通过 `return_supplies` 将剩余种子、肥料和药剂退回记录的来源；粮食须先在来源场卸粮。当前不模拟道路、运输时间或成本。详见 [共享工具与资产设计](docs/multi-farm-shared-tools-design.md)。
+
+公开工具逐个写在 [services/](fairy/apps/farm_world/services/) 的八个普通类中。例如 [DroneService.fly_survey](fairy/apps/farm_world/services/drone.py) 直接声明 `farm_id, asset_id, start_ridge, end_ridge`，并说明耗电、耗时与部分覆盖。类型、默认值和参数说明从真实函数编译，注册时拒绝缺失／陈旧参数说明与伪造签名；不再从旧 App 动态加工新接口。参照依据见 [OpenAI、Google、Microsoft 工具框架研究](docs/tool-framework-research.md)。
+
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 
 已支持可选的 WOFOST 作物内核：安装 `uv sync --extra wofost` 后，可在主入口添加 `--crop-backend wofost`。运行 `uv run --extra wofost python scripts/run_wofost_demo.py` 可通过实际农事工具完成播种、灌溉、施氮和收获，无需 LLM。当前接入大豆，使用未本地标定的品种参数；密度通过初始生物量进入群体生长和水氮反馈，尚未经过本地密度试验验证。配置、模型边界和完整示例见 [WOFOST 接入说明](docs/wofost-integration.md)，当前进展与后续工作见 [交接文档](docs/wofost-handoff-20261021.md)。
@@ -32,11 +52,13 @@ FAIRY 面向 FARM 场景的可执行实验运行。一次运行由以下输入�
 | 模式 | 命令参数 | 输入 | 输出 | 用途 |
 |---|---|---|---|---|
 | Agent run | `--agent` | 场景、控制器、模型 | `run_report.json`, `runtime_log.jsonl`, `agent_workflow.json` | 执行真实 function-calling agent。 |
-| Oracle build | `--build-oracle` | 场景 | `oracle.json` | 导出场景内置 reference workflow。 |
-| Workflow replay | `--replay --workflow <file>` | 任意 workflow JSON | `replay.json`, `runtime_log.jsonl`, `run_report.json` | 在全新场景状态中重放 workflow。 |
-| Evaluation | `--replay --evaluate --workflow <file>` | 任意 workflow JSON | `run_report.json` | 对 replay 后的 workflow 和农场状态执行场景验证。 |
+| Oracle build | `--build-oracle` | 场景 | `oracle.json`；共享工具另有 manifest | 导出场景内置 reference workflow。 |
+| Workflow replay | `--replay --workflow <file>` | workflow JSON；共享工具需配套 manifest | `replay.json`, `runtime_log.jsonl`, `run_report.json` | 在全新场景状态中重放 workflow。 |
+| Evaluation | `--replay --evaluate --workflow <file>` | workflow JSON；共享工具需配套 manifest | `run_report.json` | 对 replay 后的 workflow 和农场状态执行场景验证。 |
 | Batch run | `scripts/iclr_validation_runner.py` | controller 集合、scenario 集合 | `results.csv` 和每个 cell 的 run bundle | 执行 controller × scenario 矩阵。 |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles、oracle baselines | `summary_v2.csv` | 从已有 `agent_workflow.json` run 重新计算 FOS、yield loss 和错误列。 |
+
+共享工具运行保持原步骤 JSON 格式，并写配套 `.manifest.json` sidecar，例如 `oracle.json` 与 `oracle.manifest.json`。复制参考答案时两者一起保留；manifest 绑定工具目录、场景配置和 workflow 内容。Replay 在目标工具执行前检查版本、参数与依赖，旧单场 workflow 保留兼容路径。模型能收到准确 schema，不等于已经验证它会选择成功的管理策略。
 
 ## 安装和环境准备
 
@@ -804,9 +826,12 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 
 ```text
 <scenario>.oracle.json
+<scenario>.oracle.manifest.json   # 共享工具场景
 ```
 
 这是“标准答案步骤表”。它记录场景 oracle 认为应该执行的工具、参数、依赖和环境时间。用途是当 baseline、当 replay 输入、和 agent workflow 做路径对照。
+
+共享工具的 sidecar 保存工具目录版本、场景配置指纹和 workflow 内容指纹。修改农场、资产、作物后端、期限或巡检要求后，应重新生成匹配的参考答案。旧农场前缀轨迹需要显式迁移，不能猜测目标农场或设备。
 
 第 2 步：`--replay`
 
@@ -940,6 +965,7 @@ scenario_full_season_balanced_v2
 ## Full-season detail/context 模式
 
 通过 `--scenario-kwargs '{"detailed_briefing": ...}'` 或 `iclr_validation_runner.py --detail` 设置。
+本节示例使用原经典版`legacy` ID及其context资料库。13套独立WOFOST场景请使用`_V2` ID，并按[版本运行说明](docs/wofost-scenario-versions.md)执行；原90名单不因版本拆分而自动改名。
 
 `fairy-run` 示例：
 

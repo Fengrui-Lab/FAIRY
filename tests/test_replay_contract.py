@@ -264,6 +264,66 @@ def test_replay_time_alignment_does_not_tick_physics() -> None:
     assert farm_world.advance_calls == 0
 
 
+def test_replay_wall_time_does_not_advance_farm_physics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import fairy.time_manager as clocks
+    from fairy.apps.farm_world import FarmWorldApp
+
+    scenario = rebatch._instantiate_scenario_for_replay(
+        "scenario_full_season_hb_base_hn84_std_normal_V2", None, 0
+    )
+    farm = scenario.get_typed_app(FarmWorldApp)
+    farm.get_farm_overview()
+    start = scenario.start_time
+    assert farm.physics.last_physics_sim_time == start
+
+    # Model computation and I/O may take arbitrary real time. They must not
+    # change the recorded simulation timestamp or integrate another day.
+    wall = clocks.time.time()
+    monkeypatch.setattr(clocks.time, "time", lambda: wall + 86400.0)
+    assert all(app.time_manager.time() == start for app in scenario.apps)
+    result = farm.advance_physics_time()
+    assert result["status"] == "noop"
+    assert farm.physics.last_physics_sim_time == start
+
+
+def test_replay_repeated_same_epoch_reads_do_not_move_physics_backwards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import fairy.time_manager as clocks
+    from fairy.apps.farm_world import FarmWorldApp
+
+    wall = clocks.time.time()
+
+    def elapsed_wall_time() -> float:
+        nonlocal wall
+        wall += 0.01
+        return wall
+
+    monkeypatch.setattr(clocks.time, "time", elapsed_wall_time)
+    scenario_id = "scenario_full_season_hb_base_hn84_std_normal_V2"
+    from fairy.scenarios.registry import registry
+
+    start = registry.get_scenario(scenario_id)().start_time
+    steps = [
+        _step(f"step{index}", "FarmWorldApp__get_farm_overview", content={})
+        for index in range(3)
+    ]
+    for step in steps:
+        step.update(time=start, time_before=start, time_after=start)
+    bundle = _bundle(steps)
+    bundle.update(scenario_id=scenario_id, start_time=start, seed=0)
+
+    scenario, _, info = rebatch._replay_fairy_run_bundle(bundle)
+
+    farm = scenario.get_typed_app(FarmWorldApp)
+    assert info["n_executed"] == 3
+    assert info["exec_errors"] == 0
+    assert farm.time_manager.time() == start
+    assert farm.physics.last_physics_sim_time == start
+
+
 def test_run_report_persists_replay_initialization_metadata() -> None:
     report = build_run_report(
         scenario_id="scenario_x",

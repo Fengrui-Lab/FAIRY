@@ -16,6 +16,9 @@ from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.scenarios.workflow import WorkflowStep
 
 
+EMPTY_RESPONSE_RETRY_FEEDBACK = "上次未返回可用正文或工具调用，请继续任务并按工具协议输出。"
+
+
 class AgentRunLimitExceeded(RuntimeError):
     def __init__(self, limit_type: str, limit_value: float | int):
         self.limit_type = limit_type
@@ -88,7 +91,8 @@ class Agent(BaseAgent):
             "max_llm_call_retries": self.max_llm_call_retries,
             "max_llm_call_attempts": self.max_llm_call_retries + 1,
             # An agent attempt may include the SDK's own HTTP retries.
-            "retry_changes_request": False,
+            # Only empty responses add corrective feedback; other retries reuse context.
+            "retry_changes_request": True,
         }
 
     def before_llm_turn(self, task: str) -> str:
@@ -329,8 +333,14 @@ class Agent(BaseAgent):
 
     def _chat_completion_with_retries(self, messages, tools=None):
         attempt = 0
+        retry_feedback = None
+        feedback_added = False
         while True:
             self._check_limits(timeout_seconds=self.run_wall_timeout_seconds)
+            if retry_feedback is not None and not feedback_added:
+                # Append only when the next request can actually start.
+                messages.append({"role": "user", "content": retry_feedback})
+                feedback_added = True
             try:
                 return self.chat_completion(messages, tools=tools)
             except AgentRunLimitExceeded:
@@ -341,6 +351,13 @@ class Agent(BaseAgent):
                     if isinstance(exc, RetryableLLMResponseError):
                         self.stop_reason = exc.reason
                     raise
+                if (
+                    isinstance(exc, RetryableLLMResponseError)
+                    and exc.reason == "empty_response"
+                    and retry_feedback is None
+                ):
+                    # Plan one correction per retry sequence, without rejected content.
+                    retry_feedback = EMPTY_RESPONSE_RETRY_FEEDBACK
                 attempt += 1
                 sleep_seconds = self._llm_retry_sleep_for_error(exc)
                 if self.run_started_at_wall is not None and self.run_wall_timeout_seconds is not None:
@@ -358,6 +375,7 @@ class Agent(BaseAgent):
                     error_message=str(exc),
                     rejection_reason=getattr(exc, "reason", None),
                     finish_reason=getattr(exc, "finish_reason", None),
+                    retry_feedback=retry_feedback,
                 )
                 if sleep_seconds > 0:
                     time.sleep(sleep_seconds)

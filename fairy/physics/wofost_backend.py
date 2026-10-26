@@ -57,6 +57,9 @@ class WofostConfig:
     # Named literature transfer, scoped to the seed labels listed in its file.
     # Omission preserves the existing European default for every cultivar.
     cultivar_profile: str | None = None
+    # Explicit per-seed profiles allow several researched cultivar references
+    # within one scene without changing the fallback for historical scenarios.
+    cultivar_profiles: dict[str, str] = field(default_factory=dict)
     # Keys are FAIRY SeedType values (or '*' for all seeds), values native PCSE
     # crop parameters. No legacy GDD/stress coefficients are auto-converted.
     parameter_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
@@ -79,12 +82,31 @@ class WofostConfig:
     site_overrides: dict[str, float] = field(default_factory=dict)
     max_duration_days: int = 366
     external_biotic_coupling: bool = True
+    # Explicit transfer of a legacy rainfall gain into a declared external
+    # surface-water source. This is not a spatial catchment model.
+    allow_external_runon: bool = False
+    external_runon_source: str | None = None
 
     def __post_init__(self) -> None:
         if self.crop_name != "soybean":
             raise ValueError("Offline WOFOST data currently supports crop_name='soybean' only")
         if not isinstance(self.require_explicit_cultivar_parameters, bool):
             raise ValueError("require_explicit_cultivar_parameters must be a boolean")
+        if not isinstance(self.external_biotic_coupling, bool):
+            raise ValueError("external_biotic_coupling must be a boolean")
+        if type(self.allow_external_runon) is not bool:
+            raise ValueError("allow_external_runon must be a boolean")
+        if self.allow_external_runon and (
+            not isinstance(self.external_runon_source, str) or not self.external_runon_source.strip()
+        ):
+            raise ValueError("allow_external_runon requires a non-empty external_runon_source declaration")
+        if not self.allow_external_runon and self.external_runon_source is not None:
+            raise ValueError("external_runon_source requires explicit allow_external_runon=True")
+        if (not isinstance(self.cultivar_profiles, dict)
+                or any(not isinstance(seed, str) or not seed or seed == "*"
+                       or not isinstance(profile, str) or not profile
+                       for seed, profile in self.cultivar_profiles.items())):
+            raise ValueError("cultivar_profiles requires explicit seed labels and profile IDs")
         for name in ("fertilizer_n_fraction", "fertilizer_n_recovery", "irrigation_efficiency"):
             value = _number(getattr(self, name), name, minimum=0)
             if value > 1:
@@ -100,6 +122,10 @@ class WofostConfig:
         for key, values in self.parameter_overrides.items():
             if not isinstance(values, dict):
                 raise ValueError(f"parameter_overrides[{key!r}] must be a native parameter dictionary")
+        if "NOTINF" in self.site_overrides:
+            notinf = _number(self.site_overrides["NOTINF"], "site_overrides.NOTINF", minimum=0)
+            if notinf > 1:
+                raise ValueError("Native NOTINF is a non-infiltrating rainfall fraction in [0, 1]")
 
 
 def _load_runtime() -> dict[str, Any]:
@@ -142,11 +168,15 @@ def _load_runtime() -> dict[str, Any]:
 
     class ExternalStressAssimilation(WOFOST81_Assimilation):
         external_factor = Float(1.0)
+        last_unstressed_pgass = Float(0.0)
+        last_pgass = Float(0.0)
 
         def __call__(self, day, drv):
             # Empirical pest/weed/disease coupling changes current assimilation
             # before native respiration/partitioning, preserving carbon balance.
-            return super().__call__(day, drv) * self.external_factor
+            self.last_unstressed_pgass = super().__call__(day, drv)
+            self.last_pgass = self.last_unstressed_pgass * self.external_factor
+            return self.last_pgass
 
     _RUNTIME = dict(pcse=pcse, signals=signals, ParameterProvider=ParameterProvider,
                     WeatherDataContainer=WeatherDataContainer, WeatherDataProvider=WeatherDataProvider,
@@ -167,6 +197,10 @@ class _RidgeRun:
     cumulative_irrigation_mm: float = 0.0
     cumulative_fertilizer_kg: float = 0.0
     cumulative_n_kg_ha: float = 0.0
+    cumulative_external_soil_n_delta_kg_ha: float = 0.0
+    cumulative_external_runon_mm: float = 0.0
+    cumulative_native_management_effective_irrigation_mm: float = 0.0
+    last_soil_nitrogen_event_day: date | None = None
     last_day: date | None = None
 
 
@@ -176,12 +210,21 @@ class WofostBackend:
                                     else WofostConfig(**dict(config or {})))
         self._cultivar_profile = (load_cultivar_profile(self.config.cultivar_profile)
                                   if self.config.cultivar_profile is not None else None)
+        self._cultivar_profiles = {seed: load_cultivar_profile(profile_id)
+                                   for seed, profile_id in self.config.cultivar_profiles.items()}
+        for seed, profile in self._cultivar_profiles.items():
+            if not profile.applies_to(seed):
+                raise ValueError(f"WOFOST profile {profile.profile_id!r} does not support seed {seed!r}")
+        selected_seeds = set(self._cultivar_profiles)
         if self._cultivar_profile is not None:
-            for seed in self._cultivar_profile.supported_seed_types:
+            selected_seeds.update(self._cultivar_profile.supported_seed_types)
+        for seed in selected_seeds:
+            profile = self._profile_for_seed(seed)
+            if profile is not None:
                 explicit = self.config.cultivar_map.get(seed)
-                if explicit is not None and explicit != self._cultivar_profile.base_variety:
+                if explicit is not None and explicit != profile.base_variety:
                     raise ValueError(f"cultivar_map[{seed!r}] conflicts with cultivar_profile "
-                                     f"base_variety {self._cultivar_profile.base_variety!r}; "
+                                     f"base_variety {profile.base_variety!r}; "
                                      "use parameter_overrides for explicit native parameter changes")
         self._runtime = _load_runtime()
         self._data_provenance = json.loads((_DATA / "provenance.json").read_text())
@@ -194,14 +237,16 @@ class WofostBackend:
             self._crop_parameters(variety, seed)
         for seed in self.config.parameter_overrides:
             self._crop_parameters(self._variety_for_seed(seed), seed)
-        if self._cultivar_profile is not None:
-            for seed in self._cultivar_profile.supported_seed_types:
-                self._crop_parameters(self._variety_for_seed(seed), seed)
+        for seed in selected_seeds:
+            self._crop_parameters(self._variety_for_seed(seed), seed)
         self._runs: dict[int, _RidgeRun] = {}
         self._pending: dict[int, dict[str, float]] = {}
+        self._pending_soil_nitrogen: dict[int, list[dict[str, Any]]] = {}
+        self._soil_nitrogen_events: dict[str, dict[str, Any]] = {}
         self._preplant_totals: dict[int, dict[str, float]] = {}
         self._last_day: date | None = None
         self._soil_signature: dict[str, Any] = {}
+        self._preplant_external_runon_inputs: dict[int, list[dict[str, Any]]] = {}
 
     @property
     def has_started(self) -> bool:
@@ -211,8 +256,121 @@ class WofostBackend:
     def last_day(self) -> date | None:
         return self._last_day
 
+    def native_soil_nitrogen(self, ridge_ids) -> dict[int, dict[str, Any]]:
+        """Read the real CNB pools, without inventing values before native sowing.
+
+        ``native_effective_day`` is the last completed forcing day. PCSE's
+        internal clock already points at the following, uncalculated day.
+        """
+        result = {}
+        for rid in ridge_ids:
+            run = self._runs.get(int(rid))
+            if run is None:
+                result[int(rid)] = dict(status="not_started", available_n_kg_ha=None,
+                    reserve_n_kg_ha=None, release_reference_n_kg_ha=None, native_effective_day=None,
+                    nitrogen_state_effective_day=None)
+                continue
+            nitrogen = run.model.soil.nutrientbalance
+            effective_days = [day for day in (run.last_day, run.last_soil_nitrogen_event_day) if day is not None]
+            result[int(rid)] = dict(status="native", available_n_kg_ha=float(nitrogen.states.NAVAIL),
+                reserve_n_kg_ha=float(nitrogen.states.NSOIL),
+                release_reference_n_kg_ha=float(nitrogen.NSOILI),
+                native_effective_day=run.last_day.isoformat() if run.last_day is not None else None,
+                nitrogen_state_effective_day=max(effective_days).isoformat() if effective_days else None)
+        return result
+
+    def apply_soil_nitrogen_event(self, *, event_id: str, day: date, ridge_ids,
+                                 available_n_kg_ha: float | None = None,
+                                 reserve_n_kg_ha: float | None = None) -> bool:
+        """Apply an external pool edit now and journal it with the coming day.
+
+        This is a scenario disturbance, not fertilizer: no warehouse stock,
+        fertilizer recovery factor or fertilizer total is changed. Reserve
+        edits preserve CNB's original ``NSOILI`` release-rate reference.
+        """
+        if not isinstance(event_id, str) or not event_id.strip() or type(day) is not date:
+            raise ValueError("Soil nitrogen events require an event_id and a calendar day")
+        ridges = list(ridge_ids)
+        if not ridges or any(type(rid) is not int or rid < 0 for rid in ridges) or len(set(ridges)) != len(ridges):
+            raise ValueError("Soil nitrogen events require distinct nonnegative integer ridges")
+        values = dict(available_n_kg_ha=available_n_kg_ha, reserve_n_kg_ha=reserve_n_kg_ha)
+        if all(value is None for value in values.values()):
+            raise ValueError("Soil nitrogen events must set an available and/or reserve pool")
+        for name, value in values.items():
+            if value is not None:
+                if isinstance(value, bool):
+                    raise ValueError(f"{name} must be a finite nonnegative number")
+                values[name] = _number(value, name, minimum=0)
+        declaration = dict(event_id=event_id, day=day.isoformat(), ridge_ids=ridges, **values)
+        prior = self._soil_nitrogen_events.get(event_id)
+        if prior is not None:
+            if prior != declaration:
+                raise ValueError("Cannot replace an applied soil nitrogen event")
+            return False
+        # Validate every target before queuing any, preventing a partial field
+        # edit when an unplanted or already-integrated ridge is encountered.
+        for rid in ridges:
+            run = self._runs.get(rid)
+            if run is None:
+                raise ValueError("Soil nitrogen events require an already started native crop/soil run")
+            if run.model.day != day:
+                raise ValueError("Soil nitrogen event must precede its exact native growth day")
+            if values["reserve_n_kg_ha"] and run.model.soil.nutrientbalance.NSOILI <= 0:
+                raise ValueError("Cannot add reserve nitrogen with a zero initial release reference; configure initial soil N")
+        self._soil_nitrogen_events[event_id] = copy.deepcopy(declaration)
+        for rid in ridges:
+            event = {key: value for key, value in declaration.items() if key != "ridge_ids"}
+            run = self._runs[rid]
+            change = self._apply_soil_nitrogen_events(run, dict(day=day.isoformat(),
+                soil_nitrogen_events=[event]))[0]
+            run.pcse["NAVAIL"] = run.model.soil.nutrientbalance.states.NAVAIL
+            run.cumulative_external_soil_n_delta_kg_ha += change["external_n_delta_kg_ha"]
+            run.last_soil_nitrogen_event_day = day
+            self._pending_soil_nitrogen.setdefault(rid, []).append(dict(event=event, change=change))
+        return True
+
+    @staticmethod
+    def _apply_soil_nitrogen_events(run: _RidgeRun, entry: dict[str, Any]) -> list[dict[str, Any]]:
+        """Apply recorded external edits to native CNB, including during replay."""
+        nitrogen = run.model.soil.nutrientbalance
+        changes = []
+        for event in entry.get("soil_nitrogen_events", []):
+            if event["day"] != entry["day"]:
+                raise ValueError("Soil nitrogen event and native forcing day disagree")
+            before = dict(available_n_kg_ha=float(nitrogen.states.NAVAIL),
+                          reserve_n_kg_ha=float(nitrogen.states.NSOIL))
+            after = {name: before[name] if event.get(name) is None else _number(event[name], name, minimum=0)
+                     for name in before}
+            if after["reserve_n_kg_ha"] > 0 and nitrogen.NSOILI <= 0:
+                raise ValueError("Positive soil reserve requires a positive initial release reference")
+            # CNB has no generic PCSE setter for these pools. Updating its
+            # registered states publishes NAVAIL to the crop's native kiosk.
+            nitrogen.states.unlock()
+            try:
+                nitrogen.states.NAVAIL = after["available_n_kg_ha"]
+                nitrogen.states.NSOIL = after["reserve_n_kg_ha"]
+            finally:
+                nitrogen.states.lock()
+            changes.append(dict(event_id=event["event_id"], native_effective_day=entry["day"],
+                before=before, after=after, release_reference_n_kg_ha=float(nitrogen.NSOILI),
+                external_n_delta_kg_ha=sum(after.values()) - sum(before.values())))
+        recorded = entry.get("soil_nitrogen_changes")
+        if recorded is not None and recorded != changes:
+            raise ValueError("Replayed soil nitrogen state changes disagree with the saved audit record")
+        return changes
+
     def bind_physics(self, physics: Any) -> None:
         """Record static soil assumptions before any action (for oracle hashes)."""
+        if getattr(physics, "crop_type", "soybean") != "soybean":
+            raise ValueError("The bundled WOFOST backend supports soybean physics only")
+        # Legacy profiles sometimes amplify rainfall as an empirical proxy for
+        # run-on/poor drainage. A negative NOTINF would manufacture native
+        # rainfall. Retain the rejection unless the caller explicitly declares
+        # an external source; then local rain and external run-on stay separate.
+        for rid in physics.soil.states:
+            capture = _number(physics.soil.params_for_ridge(rid).rainfall_capture_efficiency,
+                              f"ridge {rid} rainfall_capture_efficiency", minimum=0)
+            self._external_runon_declaration(rid, capture)
         signature = {"parameters": _json_safe(asdict(physics.soil.params)),
                      "hydraulic_modifiers": _json_safe({rid: asdict(value) for rid, value in
                                                         physics.soil.hydraulic_modifiers.items()})}
@@ -220,10 +378,37 @@ class WofostBackend:
             raise ValueError("Cannot change WOFOST soil assumptions after native simulation starts")
         self._soil_signature = signature
 
+    def _external_runon_declaration(self, rid: int, capture: float) -> dict[str, Any] | None:
+        if capture <= 1:
+            return None
+        if not self.config.allow_external_runon:
+            raise ValueError(
+                f"WOFOST cannot map ridge {rid} rainfall_capture_efficiency={capture} "
+                "to native NOTINF: rainfall capture must be a fraction in [0, 1]. "
+                "A legacy gain above 1 requires an explicit catchment/run-on water model."
+            )
+        if self.config.site_overrides.get("NOTINF", 0) != 0:
+            raise ValueError("Declared external run-on split requires local rainfall NOTINF=0")
+        return {
+            "source": self.config.external_runon_source,
+            "legacy_rainfall_capture_multiplier": capture,
+            "external_runon_per_rain_mm": capture - 1.0,
+            "local_rainfall_NOTINF": 0.0,
+            "native_transport": "irrigation signal at efficiency 1; not Agent irrigation",
+            "calibration": "unvalidated legacy capture transfer; no catchment geometry or runoff calibration",
+        }
+
+    def _profile_for_seed(self, seed: str):
+        if seed in self._cultivar_profiles:
+            return self._cultivar_profiles[seed]
+        if self._cultivar_profile is not None and self._cultivar_profile.applies_to(seed):
+            return self._cultivar_profile
+        return None
+
     def _require_explicit_cultivar(self, seed: str) -> None:
         if not self.config.require_explicit_cultivar_parameters or seed == "*":
             return
-        if ((self._cultivar_profile is not None and self._cultivar_profile.applies_to(seed))
+        if (self._profile_for_seed(seed) is not None
                 or seed in self.config.cultivar_map
                 or self.config.parameter_overrides.get(seed)):
             return
@@ -237,8 +422,9 @@ class WofostBackend:
 
     def _variety_for_seed(self, seed: str) -> str:
         self._require_explicit_cultivar(seed)
-        if self._cultivar_profile is not None and self._cultivar_profile.applies_to(seed):
-            return self._cultivar_profile.base_variety
+        profile = self._profile_for_seed(seed)
+        if profile is not None:
+            return profile.base_variety
         return self.config.cultivar_map.get(seed, self.config.variety_name)
 
     def _crop_parameters(self, variety: str, seed: str) -> dict[str, Any]:
@@ -248,11 +434,10 @@ class WofostBackend:
                              f"available: {', '.join(sorted(self._varieties))}")
         parameters = {key: copy.deepcopy(value[0]) for key, value in self._varieties[variety].items()
                       if key != "Metadata"}
-        profile_overrides = (self._cultivar_profile.parameter_overrides
-                             if self._cultivar_profile is not None
-                             and self._cultivar_profile.applies_to(seed) else {})
-        if (self._cultivar_profile is not None and self._cultivar_profile.applies_to(seed)
-                and self._cultivar_profile.provenance().get("parameter_set_kind")
+        profile = self._profile_for_seed(seed)
+        profile_overrides = profile.parameter_overrides if profile is not None else {}
+        if (profile is not None
+                and profile.provenance().get("parameter_set_kind")
                 == "complete_native_parameters"):
             missing = set(parameters) - set(profile_overrides)
             if missing:
@@ -274,6 +459,14 @@ class WofostBackend:
     @staticmethod
     def _empty_inputs() -> dict[str, float]:
         return {"irrigation_mm": 0.0, "fertilizer_kg": 0.0, "n_kg_ha": 0.0}
+
+    def check_replant(self, ridge_ids) -> str | None:
+        """Reject crop replacement/gap filling before a tool spends its resources."""
+        started = [int(rid) for rid in ridge_ids if int(rid) in self._runs]
+        if started:
+            return (f"WOFOST replanting or gap filling on started ridges {started} requires "
+                    "a new native season; existing crop states cannot be edited through a stand proxy")
+        return None
 
     def queue_actions(self, actions_by_ridge: Mapping[int, list[Any]], ridge_area_m2: float) -> None:
         """Consume a drained action batch once; subdaily water/N awaits next native day.
@@ -375,9 +568,19 @@ class WofostBackend:
         density = _number(density, "density_plants_m2", minimum=0)
         if density <= 0:
             raise ValueError("Planted WOFOST ridges require positive realized plant density")
-        stand = float(physics.management.states[rid].stand_fraction or 1.0)
-        crop["TDWI"] *= density / self.config.reference_density_plants_m2 * max(0, min(1, stand))
+        stand = _number(physics.management.states[rid].stand_fraction,
+                        "initial_stand_fraction", minimum=0)
+        if stand > 1:
+            raise ValueError("initial_stand_fraction must be in [0, 1]")
+        if stand == 0:
+            raise ValueError("initial_stand_fraction is zero: the failed stand has no initial "
+                             "crop biomass; PCSE requires positive biomass and cannot start "
+                             "this ridge until it is replanted")
+        crop["TDWI"] *= density / self.config.reference_density_plants_m2 * stand
         p = physics.soil.params_for_ridge(rid)
+        capture = _number(p.rainfall_capture_efficiency,
+                          f"ridge {rid} rainfall_capture_efficiency", minimum=0)
+        runon = self._external_runon_declaration(rid, capture)
         soil = {"SMW": p.wilting_point_vwc, "SMFCF": p.field_capacity_vwc,
                 "SM0": p.saturation_vwc, "CRAIRC": 0.06,
                 "SOPE": p.max_infiltration_mm_day / 10,
@@ -392,15 +595,15 @@ class WofostBackend:
                     CO2=self.config.co2_ppm, NAVAILI=self.config.initial_available_n_kg_ha,
                     NSOILBASE=self.config.base_soil_n_kg_ha,
                     NSOILBASE_FR=self.config.soil_n_mineralization_fraction,
-                    NOTINF=1 - p.rainfall_capture_efficiency, SSI=0., SSMAX=0., IFUNRN=0)
+                    NOTINF=0.0 if runon else 1 - capture, SSI=0., SSMAX=0., IFUNRN=0)
         site.update(self.config.site_overrides)
         preplant = self._preplant_totals.get(rid, self._empty_inputs())
         # Preplant fertilizer is sent as a single native apply_n event on the
         # first native day. Do not force it into NAVAILI, whose PCSE provider
         # permits <=250 kg/ha even though real management inputs may exceed it.
         site = dict(self._runtime["SiteProvider"](**site))
-        profile = (self._cultivar_profile.provenance() if self._cultivar_profile is not None
-                   and self._cultivar_profile.applies_to(seed) else None)
+        selected_profile = self._profile_for_seed(seed)
+        profile = selected_profile.provenance() if selected_profile is not None else None
         specification = {"start_date": day.isoformat(), "planting_date": _json_safe(phen.planting_date or day),
                 "seed_type": seed, "variety": variety, "crop_parameters": crop,
                 "soil_parameters": soil, "site_parameters": site,
@@ -409,6 +612,13 @@ class WofostBackend:
                 "cultivar_mapping": ("literature_transfer" if profile else
                                      "explicit" if seed in self.config.cultivar_map else "uncalibrated_default"),
                 "calibration": "uncalibrated", "density_method": "TDWI_initial_biomass_scaling_only"}
+        if runon is not None:
+            specification["external_runon"] = runon
+            # Preplant auxiliary soil already contains these inputs in SM/WAV.
+            # They are provenance, not another native irrigation application.
+            specification["preplant_external_runon_inputs"] = copy.deepcopy(
+                self._preplant_external_runon_inputs.get(rid, [])
+            )
         if profile is not None:
             specification["cultivar_profile"] = profile
             # A complete, versioned native parameter set has its own cultivar
@@ -421,7 +631,8 @@ class WofostBackend:
                 )
         return specification
 
-    def _advance_native(self, run: _RidgeRun, entry: dict[str, Any]) -> None:
+    def _advance_native(self, run: _RidgeRun, entry: dict[str, Any], *,
+                        soil_nitrogen_preapplied: bool = False) -> None:
         model = run.model
         day = date.fromisoformat(entry["day"])
         if model.day != day:
@@ -434,13 +645,38 @@ class WofostBackend:
         run.provider._store_WeatherDataContainer(
             self._weather_container(tomorrow, entry["weather"], entry["humidity_pct"]), tomorrow)
         model.drv = model._get_driving_variables(day)
+        soil_nitrogen_changes = (entry.get("soil_nitrogen_changes", []) if soil_nitrogen_preapplied
+                                else self._apply_soil_nitrogen_events(run, entry))
+        if soil_nitrogen_changes:
+            entry["soil_nitrogen_changes"] = soil_nitrogen_changes
         if entry.get("harvested") and model.crop is not None:
             model._send_signal(signal=self._runtime["signals"].crop_finish,
                                day=day, finish_type="harvest", crop_delete=True)
         inputs = entry["inputs"]
+        runon_mm = _number(entry.get("external_runon_mm", 0.0), "external_runon_mm", minimum=0)
+        declaration = run.specification.get("external_runon")
+        if declaration is not None:
+            if not self.config.allow_external_runon or declaration.get("source") != self.config.external_runon_source:
+                raise ValueError("Native external run-on specification lacks the configured source permission")
+            expected_runon = declaration["external_runon_per_rain_mm"] * _number(
+                entry["weather"]["rain_mm"], "rain_mm", minimum=0
+            )
+            if (entry.get("external_runon_source") != declaration["source"]
+                    or not math.isclose(runon_mm, expected_runon, rel_tol=1e-12, abs_tol=1e-10)):
+                raise ValueError("Native external run-on input does not match its declared source/rainfall ratio")
+        elif runon_mm:
+            raise ValueError("Native external run-on has no declared source and rainfall-capture split")
+        effective_management_mm = inputs["irrigation_mm"] * self.config.irrigation_efficiency
         preplant_n = (run.specification.get("preplant_inputs", {}).get("n_kg_ha", 0.0)
                       if not run.journal else 0.0)
-        if inputs["irrigation_mm"]:
+        if runon_mm:
+            # CWB's _on_IRRIGATE REPLACES its pending amount. Send one combined
+            # effective input, with separate accounting below; two signals would
+            # silently discard one source. External water has no pump loss.
+            model._send_signal(signal=self._runtime["signals"].irrigate,
+                               amount=(effective_management_mm + runon_mm) / 10,
+                               efficiency=1.0)
+        elif inputs["irrigation_mm"]:
             model._send_signal(signal=self._runtime["signals"].irrigate,
                                amount=inputs["irrigation_mm"] / 10,
                                efficiency=self.config.irrigation_efficiency)
@@ -450,10 +686,20 @@ class WofostBackend:
                                N_recovery=self.config.fertilizer_n_recovery)
         if model.crop is not None:
             model.crop.assim.external_factor = entry["external_growth_factor"]
+        assimilation = model.crop.assim if model.crop is not None else None
+        if assimilation is not None:
+            # The pre-emergence and crop-finalization paths can skip assimilation.
+            # Do not carry yesterday's PGASS into today's diagnostic record.
+            assimilation.last_unstressed_pgass = assimilation.last_pgass = 0.0
         model.calculate_current_day()
         # Soil WTRA survives the boundary day's crop deletion; crop TRA may
         # already be absent here. Cache soil fluxes before integration resets rates.
-        rates = {name: model.get_variable(name) for name in ("RFTRA", "RFRGRL", "TRA", "WTRA", "EVS", "EVW", "RIRR", "DTSR", "LOSS")}
+        rates = {name: model.get_variable(name) for name in (
+            "RFTRA", "RFRGRL", "TRA", "WTRA", "EVS", "EVW", "RIRR", "DTSR", "LOSS",
+            "GASS", "MRES", "ASRC", "DMI", "ADMI",
+        )}
+        rates["PGASS_BEFORE_BIOTICS"] = assimilation.last_unstressed_pgass if assimilation is not None else 0.0
+        rates["PGASS"] = assimilation.last_pgass if assimilation is not None else 0.0
         if model.crop is not None and model.crop.pheno.get_variable("STAGE") == "emerging":
             # Native crop stress routines have not run yet; zero-filled rate
             # templates do not mean complete water/N stress before emergence.
@@ -483,6 +729,23 @@ class WofostBackend:
                                   "preplant_n_kg_ha": preplant_n,
                                   "recovered_n_kg_ha": (inputs["n_kg_ha"] + preplant_n) * self.config.fertilizer_n_recovery,
                                   "external_growth_factor": entry["external_growth_factor"]}
+        run.last_native_inputs["biotic_pressure"] = copy.deepcopy(entry.get("biotic_pressure"))
+        if soil_nitrogen_changes:
+            run.last_native_inputs["soil_nitrogen_changes"] = copy.deepcopy(soil_nitrogen_changes)
+            run.last_soil_nitrogen_event_day = day
+            if not soil_nitrogen_preapplied:
+                run.cumulative_external_soil_n_delta_kg_ha += sum(
+                    change["external_n_delta_kg_ha"] for change in soil_nitrogen_changes)
+        if self.config.allow_external_runon:
+            run.last_native_inputs.update({
+                "external_runon_mm": runon_mm,
+                "external_runon_source": entry.get("external_runon_source"),
+                "effective_management_irrigation_mm": effective_management_mm,
+                "native_effective_irrigation_signal_mm": effective_management_mm + runon_mm,
+                "native_TOTIRR_includes_external_runon": True,
+            })
+            run.cumulative_external_runon_mm += runon_mm
+            run.cumulative_native_management_effective_irrigation_mm += effective_management_mm
         run.cumulative_irrigation_mm += inputs["irrigation_mm"]
         run.cumulative_fertilizer_kg += inputs["fertilizer_kg"]
         run.cumulative_n_kg_ha += inputs["n_kg_ha"]
@@ -500,6 +763,15 @@ class WofostBackend:
         if self._last_day is not None and day != self._last_day + timedelta(days=1):
             raise ValueError("WOFOST requires consecutive daily forcing; no weather interpolation is performed")
         self.bind_physics(physics)
+        # Validate every newly sown ridge before creating or advancing any
+        # native model. An unsupported failed stand must not leave half a field
+        # integrated and make a retry apply different forcing dates.
+        specifications = {
+            rid: self._specification(physics, rid, day, (density_by_ridge or {}).get(
+                rid, self.config.reference_density_plants_m2))
+            for rid, phen in physics.phenology.states.items()
+            if rid not in self._runs and phen.planted
+        }
         self.queue_actions(actions_by_ridge or {}, ridge_area_m2)
         values = {name: getattr(weather, name) for name in ("air_temp_min_c", "air_temp_max_c",
                   "air_temp_mean_c", "rain_mm", "solar_rad_mj_m2", "wind_ms")}
@@ -507,15 +779,23 @@ class WofostBackend:
         for rid, phen in physics.phenology.states.items():
             run = self._runs.get(rid)
             if run is None and phen.planted:
-                spec = self._specification(physics, rid, day, (density_by_ridge or {}).get(
-                    rid, self.config.reference_density_plants_m2))
-                run = self._create_run(spec, values, humidity)
+                run = self._create_run(specifications[rid], values, humidity)
                 self._runs[rid] = run
             if run is None:
                 inputs = self._pending.pop(rid, self._empty_inputs())
                 totals = self._preplant_totals.setdefault(rid, self._empty_inputs())
                 for key, value in inputs.items():
                     totals[key] += value
+                if self.config.allow_external_runon:
+                    capture = physics.soil.params_for_ridge(rid).rainfall_capture_efficiency
+                    declaration = self._external_runon_declaration(rid, capture)
+                    if declaration is not None:
+                        self._preplant_external_runon_inputs.setdefault(rid, []).append({
+                            "day": day.isoformat(), "rain_mm": values["rain_mm"],
+                            "external_runon_mm": declaration["external_runon_per_rain_mm"] * values["rain_mm"],
+                            "source": declaration["source"],
+                            "transport": "preplant auxiliary soil; included in initial native WAV, not applied twice",
+                        })
                 # Explicit auxiliary bare-soil physics before native sowing;
                 # never run it alongside an active native CWB balance.
                 physics.soil._update_ridge_day(physics.soil.states[rid], weather,
@@ -527,12 +807,23 @@ class WofostBackend:
             if phen.planted and _json_safe(phen.planting_date) != run.specification["planting_date"]:
                 raise ValueError("WOFOST rotations/replanting require a new native season; this adapter does not silently reuse a crop")
             biotic = physics.biotic.states[rid]
-            factor = (max(0.35, 1 - 0.28 * biotic.weed_pressure - 0.32 * biotic.insect_pressure
-                          - 0.45 * biotic.disease_pressure) if self.config.external_biotic_coupling else 1.0)
+            factor = (physics.biotic.growth_stress_multiplier(rid)
+                      if self.config.external_biotic_coupling else 1.0)
             entry = {"day": day.isoformat(), "weather": values, "humidity_pct": humidity,
                      "inputs": self._pending.pop(rid, self._empty_inputs()),
-                     "external_growth_factor": factor, "harvested": not phen.planted}
-            self._advance_native(run, entry)
+                     "external_growth_factor": factor, "harvested": not phen.planted,
+                     "biotic_pressure": {name: float(getattr(biotic, name)) for name in (
+                         "weed_pressure", "insect_pressure", "disease_pressure")}}
+            nitrogen_events = self._pending_soil_nitrogen.pop(rid, [])
+            if nitrogen_events:
+                entry["soil_nitrogen_events"] = [record["event"] for record in nitrogen_events]
+                entry["soil_nitrogen_changes"] = [record["change"] for record in nitrogen_events]
+            if self.config.allow_external_runon:
+                declaration = run.specification.get("external_runon")
+                entry["external_runon_mm"] = (declaration["external_runon_per_rain_mm"] * values["rain_mm"]
+                                               if declaration is not None else 0.0)
+                entry["external_runon_source"] = declaration["source"] if declaration is not None else None
+            self._advance_native(run, entry, soil_nitrogen_preapplied=bool(nitrogen_events))
             self._mirror(physics, rid, run, day, values)
         self._last_day = day
         return self._soil_results(physics, day)
@@ -625,21 +916,41 @@ class WofostBackend:
                       "calibration": "uncalibrated", "external_biotic_coupling": "PGASS multiplier before respiration"}
         if self._cultivar_profile is not None:
             provenance["cultivar_profile"] = self._cultivar_profile.provenance()
+        if self._cultivar_profiles:
+            provenance["cultivar_profiles"] = {
+                seed: profile.provenance() for seed, profile in sorted(self._cultivar_profiles.items())}
+        if self.config.allow_external_runon:
+            provenance["external_runon"] = {
+                "source": self.config.external_runon_source,
+                "rule": "external_runon_mm=(legacy rainfall_capture_efficiency-1)*unchanged local rain_mm for gains>1",
+                "local_rainfall": "native RAIN unchanged; NOTINF=0 for the split ridges",
+                "native_TOTIRR": "effective Agent irrigation plus external run-on; do not label all TOTIRR as Agent irrigation",
+                "agent_quota": "external run-on never enters management action queues or irrigation quota counters",
+                "preplant": "auxiliary-soil external water enters initial SM/WAV; not reapplied as native irrigation",
+                "calibration": "unvalidated legacy capture transfer; no spatial catchment hydrology",
+            }
         provenance["config_fingerprint"] = hashlib.sha256(json.dumps(provenance, sort_keys=True,
                                                                       separators=(",", ":")).encode()).hexdigest()
         return _json_safe({"backend": "wofost", "config": config, "provenance": provenance,
                            "assumptions": [("Selected cultivar profile is an unvalidated literature transfer; "
                                             "local cultivar calibration has not been established"
-                                            if self._cultivar_profile is not None else
+                                            if self._cultivar_profile is not None or self._cultivar_profiles else
                                             "European soybean defaults; Chinese seed labels uncalibrated unless explicitly configured"),
                              "Density changes TDWI initial biomass only; no individual plants or row geometry",
+                             "A zero stand cannot initialize PCSE; failed stands require replanting before native growth",
                              "DVS-to-VE/R-stage mapping is approximate; DVSEND=2 is required",
                              "CWB root-zone SM is also exposed as top_vwc; no native seed-zone moisture",
                              "Preplant soil/temperature use labeled auxiliary models; preplant N enters native pool at sowing",
                              "Fertilizer defaults to 46% N and 70% recovery; configure actual product",
                              "Biotic stress empirically scales native PGASS before carbon allocation",
+                             "Biotic treatment has no separate direct native LAI deletion; LAI responds through native growth",
+                             "Scouting changes observations and time, not native crop health",
+                             "Residue incorporation is an audit action; soil organic carbon and residue-N mineralization are not modeled",
+                             "Replanting and rotation after native sowing require a new native season",
                              "Native crop yield freezes at maturity; FAIRY late-harvest/storage losses remain downstream",
-                             "Events are exposed on completed forcing day; PCSE integration boundary is the next day"],
+                             "Events are exposed on completed forcing day; PCSE integration boundary is the next day",
+                             *(["Explicit external run-on is a declared external water source, not extra rainfall or Agent irrigation"]
+                               if self.config.allow_external_runon else [])],
                            "last_day": self._last_day,
                            "ridges": {rid: {"dvs": run.pcse.get("DVS"), "pcse": run.pcse,
                              "specification": run.specification, "last_day": run.last_day,
@@ -647,9 +958,22 @@ class WofostBackend:
                              "maturity_snapshot": run.maturity_snapshot, "last_native_inputs": run.last_native_inputs,
                              "cumulative_irrigation_mm": run.cumulative_irrigation_mm,
                              "cumulative_fertilizer_kg": run.cumulative_fertilizer_kg,
-                             "cumulative_n_kg_ha": run.cumulative_n_kg_ha}
+                             "cumulative_n_kg_ha": run.cumulative_n_kg_ha,
+                             **({"cumulative_external_soil_n_delta_kg_ha": run.cumulative_external_soil_n_delta_kg_ha,
+                                 "soil_nitrogen_changes": [change for entry in run.journal
+                                     for change in entry.get("soil_nitrogen_changes", [])]
+                                     + [record["change"] for record in self._pending_soil_nitrogen.get(rid, [])],
+                                 "soil_nitrogen": self.native_soil_nitrogen([rid])[rid]}
+                                if self._soil_nitrogen_events else {}),
+                             **({"cumulative_external_runon_mm": run.cumulative_external_runon_mm,
+                                 "cumulative_native_management_effective_irrigation_mm": run.cumulative_native_management_effective_irrigation_mm,
+                                 "native_TOTIRR_balance_error_mm": (float(run.pcse.get("TOTIRR") or 0) * 10
+                                     - run.cumulative_native_management_effective_irrigation_mm - run.cumulative_external_runon_mm)}
+                                if self.config.allow_external_runon else {})}
                              for rid, run in self._runs.items()}, "pending_native_inputs": self._pending,
-                           "preplant_inputs": self._preplant_totals})
+                           "preplant_inputs": self._preplant_totals,
+                           **({"preplant_external_runon_inputs": self._preplant_external_runon_inputs}
+                              if self.config.allow_external_runon else {})})
 
     def export_state(self) -> dict[str, Any]:
         state = {"schema": 1, "pcse_version": self._runtime["pcse"].__version__,
@@ -661,6 +985,14 @@ class WofostBackend:
                                     for rid, run in self._runs.items()}}
         if self._cultivar_profile is not None:
             state["cultivar_profile"] = self._cultivar_profile.provenance()
+        if self._cultivar_profiles:
+            state["cultivar_profiles"] = {
+                seed: profile.provenance() for seed, profile in sorted(self._cultivar_profiles.items())}
+        if self.config.allow_external_runon:
+            state["preplant_external_runon_inputs"] = self._preplant_external_runon_inputs
+        if self._soil_nitrogen_events:
+            state["soil_nitrogen_events"] = self._soil_nitrogen_events
+            state["pending_soil_nitrogen"] = self._pending_soil_nitrogen
         return _json_safe(state)
 
     @classmethod
@@ -676,6 +1008,9 @@ class WofostBackend:
         if payload.get("cultivar_profile") != profile:
             raise ValueError("WOFOST checkpoint cultivar profile does not match the bundled version "
                              "and research provenance")
+        profiles = {seed: profile.provenance() for seed, profile in sorted(backend._cultivar_profiles.items())}
+        if payload.get("cultivar_profiles", {}) != profiles:
+            raise ValueError("WOFOST checkpoint per-seed cultivar profiles do not match bundled research provenance")
         backend._soil_signature = copy.deepcopy(payload.get("soil_signature", {}))
         for rid, saved in payload.get("runs", {}).items():
             journal = saved["journal"]
@@ -686,7 +1021,28 @@ class WofostBackend:
                 backend._advance_native(run, entry)
             backend._runs[int(rid)] = run
         backend._pending = {int(rid): dict(values) for rid, values in payload.get("pending", {}).items()}
+        backend._soil_nitrogen_events = copy.deepcopy(payload.get("soil_nitrogen_events", {}))
+        backend._pending_soil_nitrogen = {
+            int(rid): copy.deepcopy(events) for rid, events in payload.get("pending_soil_nitrogen", {}).items()
+        }
+        # A checkpoint can fall after an event became publicly observable but
+        # before its physical day was integrated. Restore those live pool edits
+        # now; the next growth call must not apply them a second time.
+        for rid, records in backend._pending_soil_nitrogen.items():
+            run = backend._runs[rid]
+            entry = dict(day=run.model.day.isoformat(),
+                soil_nitrogen_events=[record["event"] for record in records],
+                soil_nitrogen_changes=[record["change"] for record in records])
+            changes = backend._apply_soil_nitrogen_events(run, entry)
+            run.pcse["NAVAIL"] = run.model.soil.nutrientbalance.states.NAVAIL
+            run.cumulative_external_soil_n_delta_kg_ha += sum(change["external_n_delta_kg_ha"] for change in changes)
+            run.last_soil_nitrogen_event_day = run.model.day
         backend._preplant_totals = {int(rid): dict(values) for rid, values in payload.get("preplant_totals", {}).items()}
+        backend._preplant_external_runon_inputs = {
+            int(rid): copy.deepcopy(rows) for rid, rows in payload.get("preplant_external_runon_inputs", {}).items()
+        }
+        if backend._preplant_external_runon_inputs and not backend.config.allow_external_runon:
+            raise ValueError("Preplant external run-on checkpoint requires explicit source permission")
         backend._last_day = date.fromisoformat(payload["last_day"]) if payload.get("last_day") else None
         return backend
 

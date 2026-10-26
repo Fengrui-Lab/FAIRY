@@ -45,6 +45,7 @@ def test_complete_profile_rejects_missing_value_instead_of_inheriting_upstream()
     backend = object.__new__(WofostBackend)
     backend.config = WofostConfig(cultivar_profile=PROFILE)
     backend._cultivar_profile = Incomplete()
+    backend._cultivar_profiles = {}
     backend._varieties = {"Soybean_901": {key: [value] for key,value in profile.parameter_overrides.items()}}
     with pytest.raises(ValueError, match="missing native parameters.*TSUM2"):
         backend._crop_parameters("Soybean_901", "HEINONG84")

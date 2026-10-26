@@ -439,6 +439,17 @@ class WeatherGenerator:
             if event.duration_days <= 0:
                 raise ValueError("WeatherEvent.duration_days must be positive")
 
+            daily_rain = None
+            if event.event_type == "rain_event":
+                if event.total_rain_mm is None:
+                    raise ValueError("rain_event requires total_rain_mm")
+                # Allocate the whole event before selecting a query window.
+                # Daily physics and forecasts often request just one date.
+                daily_rain = self._split_rain_event(
+                    event.total_rain_mm, event.duration_days,
+                    start_date=event.start_date,
+                )
+
             affected_days = [
                 event.start_date + timedelta(days=i)
                 for i in range(event.duration_days)
@@ -450,12 +461,8 @@ class WeatherGenerator:
             tag = event.label or event.event_type
 
             if event.event_type == "rain_event":
-                if event.total_rain_mm is None:
-                    raise ValueError("rain_event requires total_rain_mm")
-                daily_amounts = self._split_rain_event(
-                    event.total_rain_mm, len(affected_days)
-                )
-                for d, rain in zip(affected_days, daily_amounts):
+                for d in affected_days:
+                    rain = daily_rain[(d - event.start_date).days]
                     w = by_day[d]
                     w.rain_mm = round(w.rain_mm + rain, 2)
                     w.is_raining = w.rain_mm > 0.1
@@ -500,20 +507,37 @@ class WeatherGenerator:
             else:
                 raise ValueError(f"Unsupported event_type: {event.event_type}")
 
-    def _split_rain_event(self, total_rain_mm: float, n_days: int) -> list[float]:
+    def _split_rain_event(
+        self, total_rain_mm: float, n_days: int, *, start_date: date
+    ) -> list[float]:
         """
-        Split programmed rainfall across event days.
+        Split a complete event independently of background RNG and queries.
 
-        A one-day event receives the full amount. Multi-day events are split
-        using a Dirichlet draw so total rainfall is preserved while daily
-        amounts vary.
+        The date and duration identify a stable Dirichlet draw, so forecasts,
+        daily slices and checkpoint restores select the same daily amounts
+        without storing another RNG state. Largest remainders allocate whole
+        hundredths of a millimetre without rounding away or adding water.
         """
+        total = float(total_rain_mm)
+        if not isfinite(total) or total < 0:
+            raise ValueError("rain_event total_rain_mm must be finite and nonnegative")
         if n_days == 1:
-            return [round(float(total_rain_mm), 2)]
+            return [round(total, 2)]
 
-        weights = self.rng.dirichlet(np.ones(n_days))
-        amounts = weights * total_rain_mm
-        return [round(float(x), 2) for x in amounts]
+        event_rng = np.random.default_rng(
+            np.random.SeedSequence([start_date.toordinal(), n_days])
+        )
+        weights = event_rng.dirichlet(np.ones(n_days))
+        total_cents = int(round(round(total, 2) * 100))
+        unrounded = weights * total_cents
+        cents = [int(amount) for amount in unrounded]
+        remaining = total_cents - sum(cents)
+        order = sorted(
+            range(n_days), key=lambda i: (-(unrounded[i] - cents[i]), i)
+        )
+        for i in order[:remaining]:
+            cents[i] += 1
+        return [amount / 100 for amount in cents]
 
     def _shift_temperature(self, w: WeatherDay, delta_c: float) -> None:
         """Shift daily mean/min/max temperature by the same delta."""

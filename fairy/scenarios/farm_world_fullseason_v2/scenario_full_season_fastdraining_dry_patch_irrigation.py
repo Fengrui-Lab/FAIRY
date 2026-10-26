@@ -446,7 +446,8 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_emergence_canopy, delay_seconds=1)
             )
             o_emergence_all = (
-                robot.inspect_emergence(0, 63)
+                # Four-ridge sample; retain the historical ID, not a whole-field claim.
+                robot.inspect_emergence(0, 3)
                 .oracle()
                 .with_id("o_whole_field_emergence_check")
                 .depends_on(o_robot_status_emergence, delay_seconds=2)
@@ -492,7 +493,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_early_ndvi, delay_seconds=1)
             )
             o_early_health = (
-                robot.inspect_crop_health(0, 63)
+                robot.inspect_crop_health(0, 3)
                 .oracle()
                 .with_id("o_early_nutrient_health_check")
                 .depends_on(o_robot_status_early, delay_seconds=2)
@@ -532,7 +533,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_r1_ndvi, delay_seconds=1)
             )
             o_r1_health = (
-                robot.inspect_crop_health(0, 63)
+                robot.inspect_crop_health(0, 3)
                 .oracle()
                 .with_id("o_r1_ground_nutrient_check")
                 .depends_on(o_robot_status_r1, delay_seconds=2)
@@ -589,7 +590,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_mid_ndvi, delay_seconds=1)
             )
             o_mid_pests = (
-                robot.inspect_pests(0, 63)
+                robot.inspect_pests(0, 3)
                 .oracle()
                 .with_id("o_midseason_pest_check")
                 .depends_on(o_mid_robot_status, delay_seconds=2)
@@ -671,13 +672,13 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_reference_thermal, delay_seconds=1)
             )
             o_affected_health = (
-                robot.inspect_crop_health(AFFECTED_START, AFFECTED_END)
+                robot.inspect_crop_health(AFFECTED_START, min(AFFECTED_END, AFFECTED_START + 3))
                 .oracle()
                 .with_id("o_affected_patch_health_check")
                 .depends_on(o_robot_status_dry_patch, delay_seconds=2)
             )
             o_affected_pests = (
-                robot.inspect_pests(AFFECTED_START, AFFECTED_END)
+                robot.inspect_pests(AFFECTED_START, min(AFFECTED_END, AFFECTED_START + 3))
                 .oracle()
                 .with_id("o_affected_patch_rule_out_pests")
                 .depends_on(o_affected_health, delay_seconds=2)

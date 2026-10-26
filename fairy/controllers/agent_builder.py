@@ -315,11 +315,15 @@ class AppAgentBuilder:
         llm: Any,
         app: Any,
     ) -> Agent:
+        tools = [app, FinalAnswerApp()]
+        runtime = getattr(app, "runtime", None)
+        if runtime is not None:
+            tools.extend(service for service in runtime.apps if service.name == "World" and service is not app)
         return Agent(
             name=app_agent_config.agent_name,
             llm=llm,
             system_message=app_agent_config.system_prompt,
-            toolsets=[app, FinalAnswerApp()],
+            toolsets=tools,
         )
 
 

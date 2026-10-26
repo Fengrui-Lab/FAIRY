@@ -354,21 +354,42 @@ def test_system_advance_time_triggers_physics() -> None:
 
 
 def test_weather_event_rain_event_is_physics_input_not_framework_event() -> None:
+    from copy import deepcopy
+    from datetime import timedelta
+
     scenario_cls = get_scenario_class("scenario_full_season_hb_wetjune_short_spray_window")
     scenario = scenario_cls()
     scenario.setup()
     farm_world = scenario.get_typed_app(FarmWorldApp)
     weather = scenario.get_typed_app(WeatherApp)
 
-    inputs = _build_weather_inputs(weather, date(2026, 6, 15), farm_world.physics)
-    current_weather = weather.get_current_weather()
-
     assert farm_world.physics.profile.name == "harbin_l3_wetjune_short_spray_window_seed_1521"
-    assert inputs["soil"].rain_mm > 80.0
-    assert current_weather["date"] == "2026-06-15"
-    assert current_weather["rainfall_mm"] == round(inputs["soil"].rain_mm, 2)
-    assert "weather_tags" not in current_weather
-    assert "rain_event" not in current_weather
+    profile_events = farm_world.physics.profile.weather_events
+    storm, = [event for event in profile_events if event.label == "wet_june_rain"]
+    assert (storm.start_date, storm.duration_days, storm.total_rain_mm) == (date(2026, 6, 15), 4, 82.)
+    generator = farm_world.physics.weather_generator
+    control = deepcopy(generator)
+    assert control.rng.bit_generator.state == generator.rng.bit_generator.state
+    control_events = [event for event in profile_events if event is not storm]
+    injected_cents = []
+    for offset in range(storm.duration_days):
+        day = storm.start_date + timedelta(days=offset)
+        inputs = _build_weather_inputs(weather, day, farm_world.physics)
+        rng_after_actual = deepcopy(generator.rng.bit_generator.state)
+        background = control.generate(day, day, events=control_events)[0]
+        assert generator.rng.bit_generator.state == rng_after_actual
+        injected_cents.append(round(100 * (inputs["soil"].rain_mm - background.rain_mm)))
+        current_weather = weather.get_current_weather()
+        assert current_weather["date"] == day.isoformat()
+        assert current_weather["rainfall_mm"] == round(inputs["soil"].rain_mm, 2)
+        assert "weather_tags" not in current_weather
+        assert "rain_event" not in current_weather
+        # Forecast construction fills the generator's future-day cache. Reading
+        # that public forecast must not consume additional background weather.
+        assert weather.get_forecast(days=7) == weather.get_forecast(days=7)
+        assert generator.rng.bit_generator.state == rng_after_actual
+    # 82 mm belongs to the entire four-day event, not every single-day query.
+    assert sum(injected_cents) == round(100 * storm.total_rain_mm)
 
 
 def test_end_to_end_oracle_replay_evaluate(tmp_path: Path, monkeypatch) -> None:
@@ -501,8 +522,10 @@ def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() ->
     config = AgentConfigBuilder().build("farm_baseline_react")
     prompt = config.base_agent_config.system_prompt
 
-    assert "soybean farm in Harbin, Heilongjiang" in prompt
-    assert "64 ridges across a 268m x 71m field" in prompt
+    assert "farms configured in this scenario" in prompt
+    assert "Ridge IDs are local to the selected farm" in prompt
+    assert "explicit farm_id and asset_id" in prompt
+    assert "one simulation clock" in prompt
     assert "provided function tools" in prompt
     assert "do not hand-write JSON action blobs" in prompt
     assert "Don't call tools unnecessarily" not in prompt

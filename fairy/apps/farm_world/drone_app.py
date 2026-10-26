@@ -49,6 +49,13 @@ class DroneApp(App):
         )
     """
 
+    def _advance_operation_time(self, seconds: float) -> None:
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            environment.advance_time(seconds)
+        else:
+            self.time_manager.add_offset(seconds)
+
     def __init__(
         self,
         farm_world_app: FarmWorldApp,
@@ -105,6 +112,7 @@ class DroneApp(App):
                 "battery_pct_per_ridge": self.battery_pct_per_ridge,
             },
             "mission_log": list(self._mission_log),
+            "rng_state": self.rng.getstate(),
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
@@ -115,6 +123,9 @@ class DroneApp(App):
         self._charge_complete_at = charge_session.get("complete_at")
         self._charge_start_battery_pct = charge_session.get("start_battery_pct")
         self._mission_log = [dict(item) for item in state_dict.get("mission_log", [])]
+        if "rng_state" in state_dict:
+            from fairy.apps.farm_world.assets import tuple_tree
+            self.rng.setstate(tuple_tree(state_dict["rng_state"]))
 
     def reset(self) -> None:
         super().reset()
@@ -176,7 +187,7 @@ class DroneApp(App):
                 break
 
             # Fly this pass
-            pass_duration = int(FIELD_LENGTH_M / self.speed_ms)
+            pass_duration = int(self._farm_world_app.field_length_m / self.speed_ms)
             self._battery_pct = round(self._battery_pct - pass_battery, 1)
             total_battery_used = round(total_battery_used + pass_battery, 1)
             total_duration += pass_duration
@@ -195,7 +206,7 @@ class DroneApp(App):
                 observations.append(obs)
                 surveyed_ridges.append(ridge_id)
 
-        self.time_manager.add_offset(total_duration)
+        self._advance_operation_time(total_duration)
 
         mission_id = str(uuid.uuid4())[:8]
         self._mission_log.append(
@@ -383,9 +394,7 @@ class DroneApp(App):
         physics = self._farm_world_app.physics
         weather_snapshot = self._weather_app.get_current_weather_snapshot()
         air_temp = float(weather_snapshot["temp_c"])
-        today = datetime.fromtimestamp(
-            float(self.time_manager.time()), tz=timezone.utc
-        ).date()
+        today = self._farm_world_app.simulation_date()
 
         truth_by_ridge = {}
         for rid in pass_ridges:

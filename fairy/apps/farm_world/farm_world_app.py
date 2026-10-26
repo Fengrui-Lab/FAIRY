@@ -4,16 +4,18 @@ FarmWorldApp — central ridge-state store.
 All other apps write ridge data via @env_tool methods.
 The agent reads via @app_tool methods.
 
-Farm layout: 268 m × 71 m, 64 ridges (ID 0-63), ridge width 1.1 m. [PDF-p1]
+Legacy default layout: 268 m × 71 m, 64 ridges, ridge width 1.1 m. [PDF-p1]
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+import math
+from datetime import date, datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any
 
 from fairy.apps.app import App
+from fairy.apps.farm_world.crop_profiles import get_crop_profile, seed_crop_type
 from fairy.apps.farm_world.models import (
     GrowthStage,
     InventoryState,
@@ -21,6 +23,7 @@ from fairy.apps.farm_world.models import (
     PostHarvestMarketPreset,
     RidgeState,
     SeasonPhase,
+    SeedType,
 )
 from fairy.tool_utils import OperationType, app_tool, data_tool
 from fairy.types import event_registered
@@ -40,6 +43,7 @@ DEFAULT_NUM_RIDGES = 64
 FIELD_LENGTH_M = 268.0  # ridge length (y-axis)
 FIELD_WIDTH_M = 71.0  # total field width (x-axis)
 DEFAULT_RIDGE_WIDTH_M = 1.1  # single ridge width
+DEFAULT_REQUIRED_FIELD_PREPARATION_OPS = ("level", "base_fertilize", "form_ridges")
 ROWS_PER_RIDGE = 2  # two soybean rows per ridge [PDF-p6]
 ROW_SPACING_M = 0.4  # spacing between the two planted rows within a ridge [PDF-p1]
 
@@ -142,6 +146,22 @@ def _grain_moisture_for_stage(stage: str, days_in_r6_plus: int) -> float:
     return round(moisture, 2)
 
 
+def validate_required_field_preparation_ops(operations) -> tuple[str, ...]:
+    """Validate this field's explicit preparation contract.
+
+    Leveling and ridge formation remain mandatory. A scenario may omit base
+    fertilizer when its soil/crop management does not call for that operation.
+    The legacy three-operation requirement remains the default.
+    """
+    if not isinstance(operations, (tuple, list)) or any(not isinstance(op, str) for op in operations):
+        raise ValueError("required_field_preparation_ops must be an ordered list or tuple of operation names")
+    value = tuple(operations)
+    if (not {"level", "form_ridges"}.issubset(value)
+            or value != tuple(op for op in DEFAULT_REQUIRED_FIELD_PREPARATION_OPS if op in value)):
+        raise ValueError("required_field_preparation_ops must contain level and form_ridges in order, with optional base_fertilize between them")
+    return value
+
+
 def plants_per_ridge_from_spacing(seed_spacing_cm: float) -> int:
     """
     Convert in-row seed spacing to the realized plant count for one ridge.
@@ -155,26 +175,36 @@ class FarmWorldApp(App):
     """
     Central ridge-state store for the Farm-World simulation.
 
-    Maintains the state of all 64 ridges and the farm inventory.
+    Maintains configured ridge geometry, crop identity, and farm inventory.
     Other device apps write ridge data via env_tool calls.
     The agent reads via app_tool calls.
     """
 
-    def __init__(self) -> None:
-        super().__init__(name="FarmWorldApp")
-        self.ridge_width_m = DEFAULT_RIDGE_WIDTH_M
-        self.num_ridges = DEFAULT_NUM_RIDGES
+    def __init__(
+        self, *, farm_id: str = "default", name: str | None = None,
+        num_ridges: int = DEFAULT_NUM_RIDGES, field_length_m: float = FIELD_LENGTH_M,
+        ridge_width_m: float = DEFAULT_RIDGE_WIDTH_M, crop_type: str = "soybean",
+        required_field_preparation_ops: tuple[str, ...] = DEFAULT_REQUIRED_FIELD_PREPARATION_OPS,
+    ) -> None:
+        super().__init__(name=name or "FarmWorldApp")
+        self.farm_environment = None
+        self.simulation_timezone = timezone.utc
+        self._set_configuration(farm_id=farm_id, num_ridges=num_ridges,
+                                field_length_m=field_length_m,
+                                ridge_width_m=ridge_width_m, crop_type=crop_type)
         self._ridges: list[RidgeState] = [
             RidgeState.default(i) for i in range(self.num_ridges)
         ]
         self._inventory: InventoryState = InventoryState.default()
         self._management_regime: ManagementRegimeState = ManagementRegimeState()
-        self._postharvest_market: PostHarvestMarketPreset = PostHarvestMarketPreset()
+        self._postharvest_market: PostHarvestMarketPreset = self._default_postharvest_market()
         self._planting_windows: list[dict[str, Any]] = []
         self._sim_date: str = "2026-04-25"
         self._season_phase: str = SeasonPhase.PREP.value
         self._pending_irrigation: dict[int, list[dict[str, float]]] = {}
         self._pending_bin_grain_ridge_ids: list[int] = []
+        self._field_preparation_ops: list[str] = []
+        self._required_field_preparation_ops = validate_required_field_preparation_ops(required_field_preparation_ops)
         self._pending_bin_grain_moistures_pct: list[float] = []
         self._trailer_grain_ridge_ids: list[int] = []
         self._trailer_grain_moistures_pct: list[float] = []
@@ -187,21 +217,183 @@ class FarmWorldApp(App):
         # so the orchestrator can read daily weather without env discovery.
         self._weather_app: WeatherApp | None = None
 
+    @property
+    def shared_warehouse(self):
+        """The scene's stock ledger, when explicitly configured by the scenario."""
+        return self.farm_environment.warehouse if self.farm_environment is not None else None
+
+
+    @property
+    def _inventory(self) -> InventoryState:
+        """Compatibility state for old single-farm scenarios only."""
+        if self.shared_warehouse is not None:
+            raise RuntimeError("Shared supplies belong to Warehouse.stock, not to a farm")
+        return self._legacy_inventory
+
+
+    @_inventory.setter
+    def _inventory(self, value: InventoryState) -> None:
+        if self.shared_warehouse is not None:
+            raise RuntimeError("Configure common stock on Warehouse, not on a farm")
+        self._legacy_inventory = value
+
+
+    def simulation_date(self, timestamp: float | None = None) -> date:
+        """Return a business date using this farm's explicitly bound timezone."""
+        timestamp = self.time_manager.time() if timestamp is None else timestamp
+        return datetime.fromtimestamp(timestamp, tz=self.simulation_timezone).date()
+
+
+    @type_check
+    @app_tool()
+    @data_tool()
+    @event_registered(operation_type=OperationType.READ)
+    def get_management_status(self) -> dict[str, Any]:
+        """Read this farm's water quota and actual field management usage.
+
+        Returns:
+            farm_id, common warehouse reference and local management limits
+            and usage. Fertilizer usage counts application to this field;
+            loading a machine from Warehouse does not consume field quota.
+        """
+        if self.farm_environment is not None:
+            self.farm_environment.before_tool()
+        return {"farm_id": self.farm_id,
+                "warehouse_id": self.shared_warehouse.warehouse_id if self.shared_warehouse else None,
+                "management_regime": self._management_regime.to_dict()}
+
+
+    def check_fertilizer_use(self, kg: float) -> str | None:
+        """Check a target field's actual application allowance, not stock ownership."""
+        from math import isfinite
+
+        if not isfinite(kg) or kg <= 0:
+            return "Fertilizer application must be finite and positive"
+        regime = self._management_regime
+        if (regime.fertilizer_quota_kg is not None
+                and regime.fertilizer_used_kg + kg > regime.fertilizer_quota_kg + 1e-9):
+            return "Target farm fertilizer application quota exceeded"
+        return None
+
+
+    def record_fertilizer_use(self, kg: float) -> None:
+        """Record fertilizer actually applied to this field after a successful operation."""
+        self._management_regime.fertilizer_used_kg += float(kg)
+        self.is_state_modified = True
+
+
+    @property
+    def required_field_preparation_ops(self) -> tuple[str, ...]:
+        """Scenario configuration; actual completed work is tracked separately."""
+        return self._required_field_preparation_ops
+
+    @property
+    def completed_prep_ops(self) -> list[str]:
+        return self._field_preparation_ops
+
+    @completed_prep_ops.setter
+    def completed_prep_ops(self, values: list[str]) -> None:
+        self._field_preparation_ops = list(values)
+
+    @property
+    def crop_id(self) -> str:
+        return self.crop_type
+
+    @property
+    def cultivar_id(self) -> None:
+        return None
+
+    @property
+    def crop_definition(self):
+        from types import SimpleNamespace
+        return SimpleNamespace(seed_types=tuple(seed.value for seed in SeedType
+                                                if seed_crop_type(seed.value) == self.crop_type))
+
+    def get_tools(self):
+        tools = super().get_tools()
+        if self.shared_warehouse is not None:
+            return [tool for tool in tools if tool.name not in {
+                "get_inventory", "dry_grain", "store_grain"}]
+        return [tool for tool in tools if tool.name != "get_management_status"]
+
+
+    def _set_configuration(self, *, farm_id: str, num_ridges: int,
+                           field_length_m: float, ridge_width_m: float,
+                           crop_type: str) -> None:
+        if not isinstance(farm_id, str) or not farm_id.strip():
+            raise ValueError("farm_id must be a nonempty string")
+        if isinstance(num_ridges, bool) or not isinstance(num_ridges, int) or num_ridges <= 0:
+            raise ValueError("num_ridges must be a positive integer")
+        for label, value in (("field_length_m", field_length_m), ("ridge_width_m", ridge_width_m)):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError(f"{label} must be finite and positive")
+        self.crop_profile = get_crop_profile(crop_type)
+        self.farm_id = farm_id
+        self.crop_type = crop_type
+        self.num_ridges = num_ridges
+        self.field_length_m = float(field_length_m)
+        self.ridge_width_m = float(ridge_width_m)
+
+    @property
+    def field_width_m(self) -> float:
+        return self.num_ridges * self.ridge_width_m
+
+    @property
+    def ridge_area_m2(self) -> float:
+        return self.field_length_m * self.ridge_width_m
+
+    @property
+    def field_area_m2(self) -> float:
+        return self.ridge_area_m2 * self.num_ridges
+
+    @property
+    def grain_kg_per_ridge(self) -> float:
+        return self.crop_profile.yield_kg_m2 * self.ridge_area_m2
+
+    def plants_per_ridge_from_spacing(self, seed_spacing_cm: float) -> int:
+        spacing = float(seed_spacing_cm)
+        if not math.isfinite(spacing) or spacing <= 0:
+            raise ValueError("seed_spacing_cm must be finite and positive")
+        return int(round(self.field_length_m * self.crop_profile.rows_per_ridge * 100.0 / spacing))
+
+    def configuration(self) -> dict[str, Any]:
+        return {"farm_id": self.farm_id, "num_ridges": self.num_ridges,
+                "field_length_m": self.field_length_m, "ridge_width_m": self.ridge_width_m,
+                "crop_type": self.crop_type}
+
+    def _default_postharvest_market(self) -> PostHarvestMarketPreset:
+        market = PostHarvestMarketPreset()
+        market.max_storage_moisture_pct = self.crop_profile.storage_moisture_max_pct
+        return market
+
+    def _model_assumptions(self) -> list[str]:
+        assumptions = list(self.crop_profile.model_assumptions)
+        if self._physics is not None and self._physics.crop_backend is not None:
+            assumptions.extend(self._physics.crop_backend.snapshot().get("assumptions", []))
+        return assumptions
+
     # ------------------------------------------------------------------
     # App interface
     # ------------------------------------------------------------------
 
     def get_state(self) -> dict[str, Any]:
         self._apply_due_irrigation()
-        return {
+        state = {
             "app_name": self.name,
+            "farm_config": self.configuration(),
+            **self.configuration(),
+            "field_width_m": self.field_width_m,
+            "field_area_m2": self.field_area_m2,
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
+            "field_preparation_ops": list(self._field_preparation_ops),
+            "required_field_preparation_ops": list(self.required_field_preparation_ops),
+            "model_assumptions": self._model_assumptions(),
             **({"crop_backend": self._physics.crop_backend.snapshot()["provenance"]}
                if self._physics is not None and self._physics.crop_backend is not None
                else {}),
             "ridges": [r.to_dict() for r in self._ridges],
-            "inventory": self._inventory.to_dict(),
+            "inventory": self._inventory.to_dict() if self.shared_warehouse is None else {"warehouse_id": self.shared_warehouse.warehouse_id},
             "management_regime": self._management_regime.to_dict(),
             "postharvest_market": self._postharvest_market.to_dict(),
             "planting_windows": [dict(window) for window in self._planting_windows],
@@ -217,16 +409,66 @@ class FarmWorldApp(App):
             "trailer_grain_moistures_pct": list(self._trailer_grain_moistures_pct),
         }
 
+        if self.shared_warehouse is not None:
+            for key in ("inventory", "pending_bin_grain_ridge_ids", "pending_bin_grain_moistures_pct",
+                        "trailer_grain_ridge_ids", "trailer_grain_moistures_pct"):
+                state.pop(key, None)
+            state["warehouse_id"] = self.shared_warehouse.warehouse_id
+            state["resource_schema_version"] = 2
+        return state
+
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        """Restore a flat operational view only when no native history is needed.
+
+        Native model history is intentionally absent from get_state(). Use the
+        complete physics checkpoint codec to restore native crops and queues.
+        """
+        incoming_backend = state_dict.get("crop_backend") or {}
+        current_native = (
+            self._physics is not None
+            and self._physics.crop_backend_name == "wofost"
+        )
+        if current_native or incoming_backend.get("backend") == "wofost":
+            raise ValueError(
+                "A flat farm state is not a native physics checkpoint; use "
+                "restore_farm_checkpoint_state with full physics checkpoint history"
+            )
+        self._load_field_state(state_dict)
+
+    def _load_field_state(self, state_dict: dict[str, Any]) -> None:
+        """Restore field views; only the full checkpoint codec may bypass the native guard."""
+        required_prep = validate_required_field_preparation_ops(state_dict.get(
+            "required_field_preparation_ops", DEFAULT_REQUIRED_FIELD_PREPARATION_OPS))
+        if self.shared_warehouse is not None:
+            if (state_dict.get("warehouse_id") != self.shared_warehouse.warehouse_id
+                    or state_dict.get("resource_schema_version") != 2
+                    or any(key in state_dict for key in ("inventory", "pending_bin_grain_ridge_ids", "pending_bin_grain_moistures_pct", "trailer_grain_ridge_ids", "trailer_grain_moistures_pct"))
+                    or state_dict.get("farm_config") != self.configuration()
+                    or required_prep != self.required_field_preparation_ops):
+                raise ValueError("Shared field snapshot must match its complete farm/warehouse configuration and exclude legacy grain/stock")
+        elif "warehouse_id" in state_dict:
+            raise ValueError("Cannot restore shared field state into a legacy farm")
+        config = state_dict.get("farm_config", {**self.configuration(), "num_ridges": len(state_dict["ridges"])})
+        if len(state_dict["ridges"]) != config["num_ridges"]:
+            raise ValueError("Farm configuration num_ridges does not match ridge state count")
+        if [row["ridge_id"] for row in state_dict["ridges"]] != list(range(config["num_ridges"])):
+            raise ValueError("Ridge IDs must be contiguous within their farm")
+        changed = config != self.configuration()
+        self._set_configuration(**config)
+        if changed:
+            self._physics = None
         self._sim_date = state_dict["sim_date"]
         self._season_phase = state_dict["season_phase"]
+        self._field_preparation_ops = list(state_dict.get("field_preparation_ops", []))
+        self._required_field_preparation_ops = required_prep
         self._ridges = [RidgeState.from_dict(d) for d in state_dict["ridges"]]
-        self._inventory = InventoryState.from_dict(state_dict["inventory"])
+        if self.shared_warehouse is None:
+            self._inventory = InventoryState.from_dict(state_dict["inventory"])
         self._management_regime = ManagementRegimeState.from_dict(
             state_dict.get("management_regime", {})
         )
         self._postharvest_market = PostHarvestMarketPreset.from_dict(
-            state_dict.get("postharvest_market", {})
+            state_dict.get("postharvest_market", self._default_postharvest_market().to_dict())
         )
         self._planting_windows = [
             dict(window) for window in state_dict.get("planting_windows", [])
@@ -260,19 +502,22 @@ class FarmWorldApp(App):
         )
         super().reset()
         self._ridges = [RidgeState.default(i) for i in range(self.num_ridges)]
-        self._inventory = InventoryState.default()
+        if self.shared_warehouse is None:
+            self._inventory = InventoryState.default()
         self._management_regime = ManagementRegimeState()
-        self._postharvest_market = PostHarvestMarketPreset()
+        self._postharvest_market = self._default_postharvest_market()
         self._planting_windows = []
         self._sim_date = "2026-04-25"
         self._season_phase = SeasonPhase.PREP.value
+        self._field_preparation_ops = []
+        # Reset completed work while preserving the declared field contract.
         self._pending_irrigation = {}
         self._pending_bin_grain_ridge_ids = []
         self._pending_bin_grain_moistures_pct = []
         self._trailer_grain_ridge_ids = []
         self._trailer_grain_moistures_pct = []
+        self._physics = None
         if backend_options is not None:
-            self._physics = None
             self.configure_crop_backend("wofost", **backend_options)
 
     # ------------------------------------------------------------------
@@ -286,6 +531,7 @@ class FarmWorldApp(App):
     def get_farm_overview(self) -> dict[str, Any]:
         """
         Return a concise farm summary: current date, season phase, inventory,
+        required_field_preparation_ops and actual completed preparation,
         and a per-ridge overview (key fields only, not full detail).
 
         season_phase indicates the current stage of the agricultural calendar:
@@ -310,13 +556,17 @@ class FarmWorldApp(App):
                 }
             )
         return {
+            **self.configuration(),
+            "field_width_m": self.field_width_m,
+            "field_area_m2": self.field_area_m2,
+            "crop_profile": self.crop_profile.to_dict(),
+            "required_field_preparation_ops": list(self.required_field_preparation_ops),
+            "completed_field_preparation_ops": list(self.completed_prep_ops),
             "sim_date": self._sim_date,
             "season_phase": self._season_phase,
-            "inventory": self._inventory.to_dict(),
+            "inventory": self._inventory.to_dict() if self.shared_warehouse is None else {"warehouse_id": self.shared_warehouse.warehouse_id},
             "ridges_overview": overview,
-            **({"model_assumptions": self._physics.crop_backend.snapshot().get("assumptions", [])}
-               if self._physics is not None and self._physics.crop_backend is not None
-               else {}),
+            "model_assumptions": self._model_assumptions(),
         }
 
     @type_check
@@ -330,8 +580,12 @@ class FarmWorldApp(App):
         Includes planting status, seed type, growth stage, days since planting,
         grain moisture, yield-potential proxy, and days since pesticide application.
 
+        Under WOFOST, nutrient_index is mapped from the juvenile exponential
+        leaf-area growth factor RFRGRL. It is not a general nitrogen-sufficiency
+        measurement; a low value at flowering alone does not justify fertilizing.
+
         Args:
-            ridge_id: Ridge identifier, 0-63.
+            ridge_id: Ridge identifier within the configured farm.
         """
         if not 0 <= ridge_id < self.num_ridges:
             return {
@@ -405,7 +659,10 @@ class FarmWorldApp(App):
     def configure_planting_windows(
         self, windows: list[dict[str, Any]] | tuple[dict[str, Any], ...]
     ) -> dict[str, Any]:
-        """Configure scenario-level earliest planting dates by ridge range."""
+        """Configure inclusive planting date windows by ridge range.
+
+        ``latest_date`` is optional, preserving existing earliest-only rules.
+        """
         normalized: list[dict[str, Any]] = []
         for raw in windows:
             start = int(raw["start"])
@@ -415,6 +672,12 @@ class FarmWorldApp(App):
                     f"Invalid planting window ridge range [{start}, {end}]"
                 )
             earliest_date = str(raw["earliest_date"])
+            earliest_day = date.fromisoformat(earliest_date)
+            latest_date = raw.get("latest_date")
+            if latest_date is not None:
+                latest_date = str(latest_date)
+                if date.fromisoformat(latest_date) < earliest_day:
+                    raise ValueError("latest_date must be on or after earliest_date")
             normalized.append(
                 {
                     "label": str(raw.get("label", f"ridges_{start}_{end}")),
@@ -422,6 +685,7 @@ class FarmWorldApp(App):
                     "end": end,
                     "seed_type": raw.get("seed_type"),
                     "earliest_date": earliest_date,
+                    **({"latest_date": latest_date} if latest_date is not None else {}),
                 }
             )
         self._planting_windows = normalized
@@ -459,6 +723,13 @@ class FarmWorldApp(App):
                         "Planting window not open for "
                         f"{window['label']} ridges {window['start']}-{window['end']}: "
                         f"earliest_date={earliest}, today={today_iso}"
+                    )
+                latest = window.get("latest_date")
+                if latest is not None and today_iso > str(latest):
+                    return (
+                        "Planting window has closed for "
+                        f"{window['label']} ridges {window['start']}-{window['end']}: "
+                        f"latest_date={latest}, today={today_iso}"
                     )
         return None
 
@@ -533,13 +804,15 @@ class FarmWorldApp(App):
         Mark a ridge as planted. Called by TractorApp after plant_seeds completes.
 
         Args:
-            ridge_id:         Ridge ID (0-63).
+            ridge_id:         Ridge ID (within the configured farm).
             seed_type:        SeedType value string.
             seed_spacing_cm:  In-row spacing in centimetres.
             seeds_planted:    Realized plant count for the ridge.
         """
         if not 0 <= ridge_id < self.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
+        if seed_crop_type(seed_type) != self.crop_type:
+            raise ValueError(f"Seed {seed_type} does not match farm crop {self.crop_type}")
         r = self._ridges[ridge_id]
         r.planted = True
         r.harvested = False
@@ -548,7 +821,7 @@ class FarmWorldApp(App):
         r.seeds_planted = seeds_planted or 0
         r.planted_at_sim_time = float(self.time_manager.time())
         r.days_since_planted = 0
-        r.growth_stage = GrowthStage.VE.value
+        r.growth_stage = self.crop_profile.emergence_stage
         r.grain_moisture_pct = 0.0
         self.is_state_modified = True
         return {
@@ -566,13 +839,13 @@ class FarmWorldApp(App):
         into warehouse inventory when `tractor.unload_grain()` is called. [PDF-p11]
 
         Args:
-            ridge_id: Ridge ID (0-63).
+            ridge_id: Ridge ID (within the configured farm).
         """
         if not 0 <= ridge_id < self.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
         r = self._ridges[ridge_id]
         # Yield scales with yield_potential [设计]
-        grain = round(GRAIN_KG_PER_RIDGE * r.yield_potential, 2)
+        grain = round(self.grain_kg_per_ridge * r.yield_potential, 2)
         r.planted = False
         r.harvested = True
         r.seed_type = None
@@ -592,7 +865,7 @@ class FarmWorldApp(App):
         Update NDVI observation for a ridge. Called by DroneApp after survey. [PDF-p7]
 
         Args:
-            ridge_id: Ridge ID (0-63).
+            ridge_id: Ridge ID (within the configured farm).
             ndvi:     NDVI value (0.0-1.0).
         """
         if not 0 <= ridge_id < self.num_ridges:
@@ -607,7 +880,7 @@ class FarmWorldApp(App):
         Called by DroneApp after thermal inspection. [PDF-p7]
 
         Args:
-            ridge_id: Ridge ID (0-63).
+            ridge_id: Ridge ID (within the configured farm).
             temp_c:   Canopy temperature in °C.
         """
         if not 0 <= ridge_id < self.num_ridges:
@@ -623,7 +896,7 @@ class FarmWorldApp(App):
         a worsen → plateau → recover trajectory driven by simulation time. [PDF-p9]
 
         Args:
-            ridge_id: Ridge ID (0-63).
+            ridge_id: Ridge ID (within the configured farm).
         """
         if not 0 <= ridge_id < self.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
@@ -649,7 +922,7 @@ class FarmWorldApp(App):
         Queue or apply irrigation effect for a ridge (called by FieldOpsApp).
 
         Args:
-            ridge_id: Ridge ID (0-63).
+            ridge_id: Ridge ID (within the configured farm).
             add_vwc:  Volumetric water content increment from the irrigation duration.
             effect_ready_at:
                 Absolute simulation timestamp when the effect should become visible.
@@ -724,7 +997,9 @@ class FarmWorldApp(App):
                 FarmPhysicsState,
             )
 
-            self._physics = FarmPhysicsState(num_ridges=self.num_ridges)
+            self._physics = FarmPhysicsState(num_ridges=self.num_ridges, crop_type=self.crop_type,
+                                             field_length_m=self.field_length_m,
+                                             ridge_width_m=self.ridge_width_m)
         return self._physics
 
     @property
@@ -748,6 +1023,8 @@ class FarmWorldApp(App):
         """
         if backend not in {"legacy", "wofost"}:
             raise ValueError("crop backend must be 'legacy' or 'wofost'")
+        if backend == "wofost" and self.crop_type != "soybean":
+            raise ValueError(f"WOFOST supports soybean only; crop_type={self.crop_type!r} has no calibrated backend")
         if backend == "legacy" and options:
             raise ValueError("WOFOST options require the 'wofost' crop backend")
         physics = self.physics
@@ -928,8 +1205,8 @@ class FarmWorldApp(App):
         irrigation quota and enters the soil water balance.
 
         Args:
-            start_ridge:     First ridge (0-63).
-            end_ridge:       Last ridge (0-63, inclusive, >= start_ridge).
+            start_ridge:     First ridge (within the configured farm).
+            end_ridge:       Last ridge (within the configured farm, inclusive, >= start_ridge).
             nutrient_amount: Normalized nutrient input (>0); typical 0.5-1.5.
             water_mm:        Carrier-water metadata in millimetres (>=0).
         """
@@ -1224,10 +1501,42 @@ class FarmWorldApp(App):
             if target_sim_time is not None
             else float(self.time_manager.time())
         )
-        self._sim_date = datetime.fromtimestamp(current_time, tz=timezone.utc).strftime(
+        self._sim_date = datetime.fromtimestamp(current_time, tz=self.simulation_timezone).strftime(
             "%Y-%m-%d"
         )
-        return _advance(self, current_time)
+        if self.farm_environment is not None and not self.farm_environment._syncing:
+            self.farm_environment.sync(current_time)
+            return {"status": "synchronized", "last_physics_sim_time": current_time}
+        result = _advance(self, current_time,
+                          weather_inputs_provider=(self.farm_environment.weather_inputs
+                                                   if self.farm_environment is not None else None))
+        self._refresh_auto_season_phase()
+        return result
+
+    def _advance_physics_time_local(self, target_sim_time: float):
+        return self.advance_physics_time(target_sim_time)
+
+    def _refresh_auto_season_phase(self, *, field_prepared: bool = False) -> None:
+        """Derive the calendar label for opt-in seasons from actual crop state.
+
+        Legacy scenarios author the phase explicitly, so automatic transitions
+        are enabled only by ``configure_physics_profile(auto_season_phase=True)``.
+        A farm enters harvest when its first ridge matures; the label remains
+        harvest while its grain is being dried and stored after the field clears.
+        """
+        physics = self._physics
+        if physics is None or not getattr(physics, "scenario_metadata", {}).get(
+            "auto_season_phase", False
+        ):
+            return
+        mature_stage = self.crop_profile.mature_stage.upper()
+        if any(r.harvested or (r.planted and r.growth_stage.upper() == mature_stage)
+               for r in self._ridges):
+            self._season_phase = SeasonPhase.HARVEST.value
+        elif any(state.emerged for state in physics.phenology.states.values()):
+            self._season_phase = SeasonPhase.GROWING.value
+        elif any(r.planted for r in self._ridges) or field_prepared:
+            self._season_phase = SeasonPhase.PLANTING.value
 
     def sync_initial_physics_state(
         self,
@@ -1284,9 +1593,10 @@ class FarmWorldApp(App):
         """Return ridge dict with observation fields stripped for agent tools."""
         self._refresh_ridge_dynamics(ridge)
         return {
-            k: v
-            for k, v in ridge.to_dict().items()
-            if k not in self._OBSERVATION_FIELDS
+            "farm_id": self.farm_id,
+            "crop_type": self.crop_type,
+            **{k: v for k, v in ridge.to_dict().items()
+               if k not in self._OBSERVATION_FIELDS},
         }
 
     # ------------------------------------------------------------------
@@ -1336,14 +1646,8 @@ class FarmWorldApp(App):
             elapsed_s = max(0.0, now_t - ridge.planted_at_sim_time)
             days = int(elapsed_s // _SECONDS_PER_DAY)
             ridge.days_since_planted = days
-            ridge.growth_stage = _stage_for_days(days)
-            r6_threshold = next(
-                (t for t, s in _STAGE_THRESHOLDS if s == GrowthStage.R6.value), 110
-            )
-            days_in_r6_plus = max(0, days - r6_threshold)
-            ridge.grain_moisture_pct = _grain_moisture_for_stage(
-                ridge.growth_stage, days_in_r6_plus
-            )
+            ridge.growth_stage = self.crop_profile.stage_for_days(days)
+            ridge.grain_moisture_pct = self.crop_profile.grain_moisture_for_days(days)
 
     def get_ridge(self, ridge_id: int) -> RidgeState:
         """Direct access for device apps that hold a reference to this app."""
@@ -1390,6 +1694,8 @@ class FarmWorldApp(App):
 
     def consume_seeds(self, seed_type: str, count: int) -> bool:
         """Deduct seeds from warehouse. Returns False if insufficient."""
+        if self.shared_warehouse is not None:
+            return self.shared_warehouse.consume_seeds(seed_type, count)
         current = self._inventory.seed_stock.get(seed_type, 0)
         if current < count:
             return False
@@ -1399,11 +1705,13 @@ class FarmWorldApp(App):
 
     def consume_pesticide(self, liters: float) -> bool:
         """Deduct pesticide from warehouse. Returns False if insufficient."""
+        if type(liters) not in (int, float) or not math.isfinite(liters) or liters <= 0:
+            return False
+        if self.shared_warehouse is not None:
+            return self.shared_warehouse.consume_pesticide(liters)
         if self._inventory.pesticide_liters < liters:
             return False
-        self._inventory.pesticide_liters = round(
-            self._inventory.pesticide_liters - liters, 2
-        )
+        self._inventory.pesticide_liters -= liters
         self.is_state_modified = True
         return True
 
@@ -1532,16 +1840,22 @@ class FarmWorldApp(App):
         return None
 
     def record_irrigation_use(self, water_mm_field_equivalent: float) -> dict[str, Any]:
-        self._management_regime.irrigation_used_mm_total = round(
-            self._management_regime.irrigation_used_mm_total
-            + float(water_mm_field_equivalent),
-            6,
-        )
+        # Keep accounting precision between operations. Rounding every entry
+        # accumulates errors larger than check_irrigation_quota's tolerance,
+        # rejecting a split application that fits the same total allowance.
+        self._management_regime.irrigation_used_mm_total += float(water_mm_field_equivalent)
         self.is_state_modified = True
         return self._management_regime.to_dict()
 
     def consume_fertilizer(self, kg: float) -> bool:
         """Deduct fertilizer from warehouse. Returns False if insufficient."""
+        if type(kg) not in (int, float) or not math.isfinite(kg) or kg <= 0:
+            return False
+        if self.shared_warehouse is not None:
+            if self.check_fertilizer_use(kg) is not None or not self.shared_warehouse.consume_fertilizer(kg):
+                return False
+            self.record_fertilizer_use(kg)
+            return True
         if (
             self._management_regime.fertilizer_quota_kg is not None
             and self._management_regime.fertilizer_used_kg + float(kg)
@@ -1550,19 +1864,32 @@ class FarmWorldApp(App):
             return False
         if self._inventory.fertilizer_kg < kg:
             return False
-        self._inventory.fertilizer_kg = round(self._inventory.fertilizer_kg - kg, 2)
-        self._management_regime.fertilizer_used_kg = round(
-            self._management_regime.fertilizer_used_kg + float(kg),
-            4,
-        )
+        self._inventory.fertilizer_kg -= kg
+        self.record_fertilizer_use(kg)
+        self.is_state_modified = True
+        return True
+
+    def withdraw_fertilizer(self, kg: float) -> bool:
+        """Move stock to a machine without charging a field application quota."""
+        if type(kg) not in (int, float) or not math.isfinite(kg) or kg <= 0:
+            return False
+        if self.shared_warehouse is not None:
+            return self.shared_warehouse.consume_fertilizer(kg)
+        if self._inventory.fertilizer_kg < kg:
+            return False
+        self._inventory.fertilizer_kg -= kg
         self.is_state_modified = True
         return True
 
     def consume_fuel(self, liters: float) -> bool:
         """Deduct fuel from warehouse. Returns False if insufficient."""
+        if type(liters) not in (int, float) or not math.isfinite(liters) or liters <= 0:
+            return False
+        if self.shared_warehouse is not None:
+            return self.shared_warehouse.consume_fuel(liters)
         if self._inventory.fuel_liters < liters:
             return False
-        self._inventory.fuel_liters = round(self._inventory.fuel_liters - liters, 2)
+        self._inventory.fuel_liters -= liters
         self.is_state_modified = True
         return True
 

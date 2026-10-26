@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
 from math import acos, pi, radians, sin, tan
@@ -56,6 +56,16 @@ class SeedType(str, Enum):
     HEINONG60 = "HEINONG60"
     HEINONG84 = "HEINONG84"
     HEIKE71 = "HEIKE71"
+    MAIZE_STANDARD = "MAIZE_STANDARD"
+    RICE_STANDARD = "RICE_STANDARD"
+    SUINONG42 = "SUINONG42"
+    KENDOU40 = "KENDOU40"
+    HEINONG44 = "HEINONG44"
+    HEINONG65 = "HEINONG65"
+    SOYBEAN_901 = "SOYBEAN_901"
+    SOYBEAN_902 = "SOYBEAN_902"
+    SOYBEAN_903 = "SOYBEAN_903"
+    SOYBEAN_905 = "SOYBEAN_905"
 
 
 @dataclass
@@ -90,6 +100,10 @@ class SeedTypeParameters:
 
 
 DEFAULT_SEED_TYPE_PARAMS: dict[SeedType, SeedTypeParameters] = {
+    # Reduced crop proxies, configured with their own stage/soil response by
+    # FarmPhysicsState. These are benchmark assumptions, not cultivar fits.
+    SeedType.MAIZE_STANDARD: SeedTypeParameters(1500.0, 80.0, 1.0, 0.0, 1.0),
+    SeedType.RICE_STANDARD: SeedTypeParameters(1400.0, 65.0, 1.2, 0.10, 1.1),
     # Earlier type: shorter season, better near cool planting thresholds.
     # gdd_to_r8 calibrated for Harbin May-Sep cumulative GDD; baseline
     # thresholds had been too high so phenology stuck at R3 in late season.
@@ -190,6 +204,22 @@ DEFAULT_SEED_TYPE_PARAMS: dict[SeedType, SeedTypeParameters] = {
         stress_sensitivity=0.90,
     ),
 }
+
+
+# These named contrasts have separate, explicitly uncalibrated WOFOST profiles.
+# The legacy engine gets its existing neutral baseline, not invented cultivar GDD.
+for _reference_seed in (SeedType.SUINONG42, SeedType.KENDOU40,
+                        SeedType.HEINONG44, SeedType.HEINONG65):
+    DEFAULT_SEED_TYPE_PARAMS[_reference_seed] = replace(DEFAULT_SEED_TYPE_PARAMS[SeedType.STANDARD])
+del _reference_seed
+
+# Native-only seed identities still pass through the compatibility planting
+# initializer. These neutral placeholders do not describe their maturity or
+# stress traixts; native WOFOST owns their daily growth and phenology.
+for _official_seed in (SeedType.SOYBEAN_901, SeedType.SOYBEAN_902,
+                       SeedType.SOYBEAN_903, SeedType.SOYBEAN_905):
+    DEFAULT_SEED_TYPE_PARAMS[_official_seed] = replace(DEFAULT_SEED_TYPE_PARAMS[SeedType.STANDARD])
+del _official_seed
 
 
 @dataclass

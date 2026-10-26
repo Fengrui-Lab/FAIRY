@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from typing import Any, Callable
 
-from fairy.tool_utils import agent_tool
+from fairy.tool_utils import agent_tool, parameters_schema
 
 
 def agent_toolset(obj: Any) -> list[Callable[..., Any]]:
@@ -22,25 +22,12 @@ def agent_toolset(obj: Any) -> list[Callable[..., Any]]:
 def build_tool_schema(tool: Any) -> dict[str, Any]:
     if hasattr(tool, "to_open_ai"):
         return tool.to_open_ai()
-    sig = inspect.signature(tool)
-    properties: dict[str, dict[str, str]] = {}
-    required: list[str] = []
-    for name, param in sig.parameters.items():
-        if name == "self":
-            continue
-        properties[name] = {"type": "string", "description": None}
-        if param.default is inspect._empty:
-            required.append(name)
     return {
         "type": "function",
         "function": {
             "name": tool.__name__,
             "description": inspect.getdoc(tool) or "",
-            "parameters": {
-                "type": "object",
-                "properties": properties,
-                "required": required,
-            },
+            "parameters": parameters_schema(tool),
         },
     }
 
@@ -61,6 +48,11 @@ def build_toolset(
             name = schema["function"]["name"]
             if name in excluded_tool_names:
                 continue
+            if name in tools_map:
+                raise ValueError(
+                    f"Duplicate tool name {name!r}. Give every app a unique name "
+                    "when composing multiple farms or devices."
+                )
             tool_schemas.append(schema)
             tools_map[name] = tool
             tools.append(tool)

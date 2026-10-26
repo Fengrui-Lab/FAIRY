@@ -1,0 +1,672 @@
+{
+  "schema_version": 1,
+  "profile_id": "soybean_suinong42_cold_reference_v1",
+  "profile_version": "1.0.0",
+  "title": "SUINONG42: published cold-tolerant contrast, uncalibrated engineering reference",
+  "crop_name": "soybean",
+  "supported_seed_types": [
+    "SUINONG42"
+  ],
+  "base_variety": "Soybean_901",
+  "native_variety_name": "SUINONG42_TraitReference_v1",
+  "parameter_set_kind": "complete_native_parameters",
+  "transfer_status": "literature_transfer",
+  "validation_status": "unvalidated",
+  "parameter_overrides": {
+    "CO2EFFTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.11,
+      1000.0,
+      1.11,
+      2000.0,
+      1.11
+    ],
+    "CO2TRATB": [
+      40.0,
+      1.0,
+      360.0,
+      1.0,
+      720.0,
+      0.9,
+      1000.0,
+      0.9,
+      2000.0,
+      0.9
+    ],
+    "CO2AMAXTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.6,
+      1000.0,
+      1.9,
+      2000.0,
+      1.9
+    ],
+    "AMAX_SLP": 3.24,
+    "AMAX_LNB": 0.0,
+    "TBASEM": 7.0,
+    "TEFFMX": 22.0,
+    "TSUMEM": 70,
+    "IDSL": 0,
+    "DLO": -99.0,
+    "DLC": -99.0,
+    "TSUM1": 350,
+    "TSUM2": 850,
+    "DTSMTB": [
+      0.0,
+      0.0,
+      7.0,
+      0.0,
+      30.0,
+      23.0,
+      45.0,
+      38.0
+    ],
+    "DVSI": 0.0,
+    "DVSEND": 2.0,
+    "VERNBASE": 14.0,
+    "VERNSAT": 70.0,
+    "VERNDVS": 0.3,
+    "VERNRTB": [
+      -8.0,
+      0.0,
+      -4.0,
+      0.0,
+      3.0,
+      1.0,
+      10.0,
+      1.0,
+      17.0,
+      0.0,
+      20.0,
+      0.0
+    ],
+    "TDWI": 120.0,
+    "RGRLAI": 0.01,
+    "SLATB": [
+      0.0,
+      0.0014,
+      0.45,
+      0.0025,
+      0.9,
+      0.0025,
+      2.0,
+      0.0007
+    ],
+    "SPA": 0.0,
+    "SSATB": [
+      0.0,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "SPAN": 23.0,
+    "TBASE": 7.0,
+    "KDIFTB": [
+      0.0,
+      0.8,
+      2.0,
+      0.8
+    ],
+    "EFFTB": [
+      0.0,
+      0.4,
+      40.0,
+      0.4
+    ],
+    "AMAX_REF": 29.0,
+    "KN": 0.4,
+    "REFCO2L": 360,
+    "TMPFTB": [
+      0.0,
+      0.0,
+      10.0,
+      0.3,
+      20.0,
+      0.6,
+      25.0,
+      0.8,
+      30.0,
+      1.0,
+      35.0,
+      1.0
+    ],
+    "TMNFTB": [
+      0.0,
+      0.0,
+      4.0,
+      0.65276,
+      12.0,
+      1.0
+    ],
+    "CVL": 0.72,
+    "CVO": 0.48,
+    "CVR": 0.72,
+    "CVS": 0.69,
+    "Q10": 2.0,
+    "RML": 0.03,
+    "RMO": 0.017,
+    "RMR": 0.01,
+    "RMS": 0.015,
+    "RFSETB": [
+      0.0,
+      1.0,
+      2.0,
+      1.0
+    ],
+    "FRTB": [
+      0.0,
+      0.65,
+      0.75,
+      0.35,
+      1.0,
+      0.15,
+      1.5,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "FLTB": [
+      0.0,
+      0.7,
+      1.0,
+      0.7,
+      1.15,
+      0.6,
+      1.3,
+      0.43,
+      1.5,
+      0.15,
+      2.0,
+      0.0
+    ],
+    "FSTB": [
+      0.0,
+      0.3,
+      1.0,
+      0.3,
+      1.15,
+      0.25,
+      1.3,
+      0.1,
+      1.5,
+      0.1,
+      2.0,
+      0.0
+    ],
+    "FOTB": [
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.15,
+      0.15,
+      1.3,
+      0.47,
+      1.5,
+      0.75,
+      2.0,
+      1.0
+    ],
+    "PERDL": 0.03,
+    "RDRRTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "RDRSTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "CFET": 1.0,
+    "DEPNR": 5.0,
+    "IAIRDU": 0,
+    "IOX": 0,
+    "RDI": 10.0,
+    "RRI": 1.2,
+    "RDMCR": 120.0,
+    "NMAXLV_TB": [
+      0.0,
+      0.06,
+      0.4,
+      0.04,
+      0.7,
+      0.035,
+      1.0,
+      0.03,
+      2.0,
+      0.0293,
+      2.1,
+      0.0293
+    ],
+    "NMAXRT_FR": 0.5,
+    "NMAXST_FR": 0.5,
+    "NMAXSO": 0.056,
+    "NCRIT_FR": 1.0,
+    "NRESIDLV": 0.00933,
+    "NRESIDST": 0.00467,
+    "NRESIDRT": 0.00467,
+    "TCNT": 10,
+    "NFIX_FR": 0.8,
+    "RNUPTAKEMAX": 7.2,
+    "DVS_N_TRANSL": 0.8,
+    "NSLLV_TB": [
+      0.0,
+      1.0,
+      1.1,
+      1.0,
+      1.5,
+      1.4,
+      2.0,
+      1.5,
+      2.5,
+      1.5
+    ],
+    "RGRLAI_MIN": 0.004,
+    "REALLOC_DVS": 3.0,
+    "REALLOC_STEM_FRACTION": 0.2,
+    "REALLOC_LEAF_FRACTION": 0.0,
+    "REALLOC_STEM_RATE": 0.0415,
+    "REALLOC_LEAF_RATE": 0.0,
+    "REALLOC_EFFICIENCY": 0.95
+  },
+  "trait_reference": {
+    "trait": "cold",
+    "classification": "tolerant",
+    "mapping_status": "engineering_assumption",
+    "evidence_source_ids": [
+      "wang2023_cold",
+      "pcse6_assimilation"
+    ],
+    "scope": "Seedling chilling contrast supported by a 72-hour 4C chamber experiment. Native TMNFTB acts at all crop stages; that extension is an unvalidated engineering assumption. No frost survival, cold germination or mature-crop tolerance claim.",
+    "native_response": {
+      "parameter": "TMNFTB",
+      "input": "mean of up to seven daily minimum air temperatures, degC",
+      "output": "native gross-assimilation reduction factor [0,1]",
+      "knots": [
+        0.0,
+        0.0,
+        4.0,
+        0.65276,
+        12.0,
+        1.0
+      ],
+      "mapping": "factor_at_4C = 0.2 + 0.6 * published_Table4_D; 0C -> 0 and 12C -> 1",
+      "assumed_constants": {
+        "intercept": 0.2,
+        "slope": 0.6,
+        "zero_at_c": 0.0,
+        "full_at_c": 12.0
+      },
+      "observed_D": 0.7546,
+      "assumption": "The affine mapping, endpoint temperatures and extension beyond the seedling experiment are engineering assumptions. D is not a measured photosynthesis multiplier. No fitting to FAIRY yields."
+    }
+  },
+  "parameter_evidence": {
+    "CO2EFFTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CO2TRATB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CO2AMAXTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "AMAX_SLP": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "AMAX_LNB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TBASEM": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TEFFMX": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TSUMEM": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "IDSL": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DLO": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DLC": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TSUM1": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TSUM2": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DTSMTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DVSI": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DVSEND": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "VERNBASE": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "VERNSAT": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "VERNDVS": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "VERNRTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TDWI": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RGRLAI": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "SLATB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "SPA": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "SSATB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "SPAN": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TBASE": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "KDIFTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "EFFTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "AMAX_REF": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "KN": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REFCO2L": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TMPFTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TMNFTB": {
+      "source": [
+        "wang2023_cold",
+        "pcse6_assimilation"
+      ],
+      "role": "Explicit engineering mapping of experimental contrast to an existing bounded native response; not fitted",
+      "observations_file": "soybean_cold_contrasts_wang2023_v1.json"
+    },
+    "CVL": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CVO": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CVR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CVS": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "Q10": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RML": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RMO": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RMR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RMS": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RFSETB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "FRTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "FLTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "FSTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "FOTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "PERDL": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RDRRTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RDRSTB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "CFET": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DEPNR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "IAIRDU": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "IOX": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RDI": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RRI": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RDMCR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NMAXLV_TB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NMAXRT_FR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NMAXST_FR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NMAXSO": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NCRIT_FR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NRESIDLV": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NRESIDST": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NRESIDRT": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "TCNT": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NFIX_FR": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RNUPTAKEMAX": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "DVS_N_TRANSL": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "NSLLV_TB": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "RGRLAI_MIN": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_DVS": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_STEM_FRACTION": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_LEAF_FRACTION": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_STEM_RATE": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_LEAF_RATE": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    },
+    "REALLOC_EFFICIENCY": {
+      "source": "bundled_wofost81",
+      "role": "Unmodified common native baseline; no cultivar-specific phenology or yield calibration"
+    }
+  },
+  "sources": [
+    {
+      "id": "wang2023_cold",
+      "title": "Wang et al. (2023), Comparison and Evaluation of Low-Temperature Tolerance of Different Soybean Cultivars during the Early-Growth Stage",
+      "url": "https://www.mdpi.com/2073-4395/13/7/1716",
+      "doi": "10.3390/agronomy13071716",
+      "license": "CC BY 4.0",
+      "pdf_url": "https://res.mdpi.com/d_attachment/agronomy/agronomy-13-01716/article_deploy/agronomy-13-01716.pdf",
+      "pdf_sha256": "9d20021154466568e8ab30d1f0eb33878169e4c34223feddcb19343a160e6e1c"
+    },
+    {
+      "id": "pcse6_assimilation",
+      "title": "PCSE 6 native WOFOST 8.1 assimilation source",
+      "url": "https://pcse.readthedocs.io/en/stable/_modules/pcse/crop/assimilation.html",
+      "locator": "WOFOST81_Assimilation.__call__: seven-day TMINRA and TMNFTB"
+    },
+    {
+      "id": "bundled_wofost81",
+      "title": "Pinned upstream WOFOST 8.1 Soybean_901 native parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml",
+      "sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+      "license": "EUPL as declared upstream; version unspecified"
+    }
+  ],
+  "limitations": [
+    "This is a complete executable native parameter set, not a published or locally validated WOFOST cultivar fit.",
+    "All non-trait parameters are copied from the pinned Northern-France Soybean_901 baseline, including thermal time, nitrogen, carbon allocation and rooting.",
+    "No conversion of active accumulated temperatures into TSUM, forced maturity, yield multiplication or harvest-gate bypass.",
+    "Quantitative trait mapping is an explicit engineering assumption; literature establishes experimental identity and ordering, not native parameter identification.",
+    "Legacy reduced-engine compatibility uses the unchanged STANDARD baseline and does not reproduce these native contrasts."
+  ]
+}

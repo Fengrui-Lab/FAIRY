@@ -139,6 +139,17 @@ class BaseAgent:
             add_to_history=rejection_reason is None,
         )
         self._record_llm_response(response, message, elapsed_time, rejection_reason)
+        if rejection_reason == "empty_response":
+            self.log(
+                "empty_response reasoning fields: "
+                + json.dumps(
+                    {
+                        "reasoning": getattr(raw_message, "reasoning", None),
+                        "reasoning_content": getattr(raw_message, "reasoning_content", None),
+                    },
+                    ensure_ascii=False,
+                )
+            )
         if rejection_reason:
             raise RetryableLLMResponseError(rejection_reason, finish_reason)
         return message

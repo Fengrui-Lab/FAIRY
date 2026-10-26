@@ -1,0 +1,37 @@
+{
+  "phase": "wofost_v2_35b",
+  "output_root": "validation_runs/wofost_v2_35b_all",
+  "families": [
+    "farm_baseline_react"
+  ],
+  "scenarios": [
+    "scenario_full_season_hb_base_hn84_std_normal_V2",
+    "scenario_full_season_hb_dryr5r6_hn84_water_limit_V2",
+    "scenario_full_season_hb_high_weed_seedbank_mechanical_only_baseline_V2",
+    "scenario_full_season_hb_r5_leaf_feeder_defoliation_V2",
+    "scenario_full_season_hb_limited_spray_budget_season_V2",
+    "scenario_full_season_hb_wetjune_short_spray_window_V2",
+    "scenario_full_season_hb_disease_then_drought_recovery_tradeoff_V2",
+    "scenario_full_season_hb_weed_then_disease_canopy_confusion_V2",
+    "scenario_full_season_hb_herbicide_window_missed_rain_delay_V2",
+    "scenario_full_season_fastdraining_dry_patch_irrigation_V2",
+    "scenario_full_season_hb_two_dry_patches_one_irrigation_V2",
+    "scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2",
+    "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2"
+  ],
+  "repeats": 1,
+  "provider": "vllm",
+  "model": "Qwen3.6-35B-A3B-FP8",
+  "endpoint": "http://100.115.106.71:8000/v1",
+  "detail": true,
+  "max_concurrent": 1,
+  "a2a": false,
+  "agent_max_iterations": 600,
+  "cell_timeout_s": 3600,
+  "cell_timeout_grace_s": 60,
+  "max_output_tokens": 8192,
+  "parallel_tool_calls": false,
+  "system_prompt_mode": "fairy",
+  "progress_interval_s": 30.0,
+  "cost_cap_dollars": 9999.0
+}

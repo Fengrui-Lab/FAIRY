@@ -58,6 +58,26 @@ class AppAgent(App):
         self.wrapped_app.register_time_manager(time_manager)
         self.app_agent.set_time_manager(time_manager)
 
+    def get_tools(self):
+        tools = super().get_tools()
+        for tool in tools:
+            tool.metadata.update(response_format="text", may_modify_state=True)
+        runtime = getattr(self.wrapped_app, "runtime", None)
+        if runtime is not None:
+            import json
+            catalog = runtime.describe_environment()
+            capabilities = {
+                "service": self.wrapped_app.name,
+                "tools": [tool.to_open_ai()["function"] for tool in self.wrapped_app.get_tools()],
+                "farms": [{"farm_id": item["farm_id"], "crop_type": item["crop_type"],
+                           "ridge_range": item["ridge_range"]} for item in catalog["farms"]],
+                "assets": catalog["assets"],
+            }
+            for tool in tools:
+                tool.function_description = (tool.function_description or "") + "\nDelegate only these actual capabilities and specify target IDs:\n" + json.dumps(capabilities, ensure_ascii=False)
+                tool.metadata["delegated_tools"] = [item["name"] for item in capabilities["tools"]]
+        return tools
+
     def register_to_env(self, key: str, add_event) -> None:
         super().register_to_env(key, add_event)
         self.wrapped_app.register_to_env(key, add_event)
@@ -67,13 +87,15 @@ class AppAgent(App):
         self.wrapped_app.register_event_scheduler(key, schedule_event)
 
     @app_tool()
-    @event_registered(operation_type=OperationType.READ)
+    @event_registered(operation_type=OperationType.WRITE)
     def expert_agent(self, task: str) -> str:
         """
         Ask the expert agent for this app to complete a specific task.
 
-        The expert can call the wrapped app's tools and should answer with a
-        concise completion summary or call `FinalAnswerTool__final_answer`.
+        The expert may read or modify application state through its assigned
+        tools. Returns a plain-text summary, including partial completion when
+        a limit is reached. Inspect current state before retrying side effects.
+        This delegation does not return the agricultural tool receipt.
         """
         self.app_agent.set_time_manager(self.time_manager)
         self.app_agent.messages = Messages(
@@ -120,6 +142,18 @@ class AppAgent(App):
         )
 
 
+def _export_trace_value(value: Any) -> Any:
+    """Create a JSON trace without altering the provider's message history."""
+    if hasattr(value, "model_dump"):
+        value = value.model_dump()
+    if isinstance(value, dict):
+        return {key: _export_trace_value(item) for key, item in value.items()
+                if key not in {"reasoning", "reasoning_content"}}
+    if isinstance(value, (list, tuple)):
+        return [_export_trace_value(item) for item in value]
+    return value
+
+
 def collect_a2a_traces(apps: list[Any]) -> list[dict[str, Any]]:
     traces: list[dict[str, Any]] = []
     for app in apps:
@@ -141,7 +175,7 @@ def collect_a2a_traces(apps: list[Any]) -> list[dict[str, Any]]:
                 "workflow": app.app_agent.workflow.to_dict(),
             }
         )
-    return traces
+    return _export_trace_value(traces)
 
 
 _A2A_TYPED_APP_AGENT_BY_CLASS: dict[str, str] = {
@@ -161,6 +195,11 @@ def resolve_a2a_agent_name_for_app(
     policy: str = "generic",
     fallback_app_agent: str = "default_app_agent",
 ) -> str:
+    service = getattr(app, "service_kind", None)
+    if service is not None and policy == "typed_experts":
+        return {"weather": "weather_expert_app_agent", "sensor": "sensor_expert_app_agent",
+                "tractor": "machinery_expert_app_agent", "field_ops": "machinery_expert_app_agent"}.get(
+                    service, "operations_expert_app_agent")
     if policy == "typed_experts":
         return _A2A_TYPED_APP_AGENT_BY_CLASS.get(
             app.__class__.__name__,
@@ -196,7 +235,8 @@ def apply_a2a_to_apps(
     filtered_apps = [
         app
         for app in apps
-        if getattr(app, "name", "") not in {"InternalContacts", "AgentUserInterface", "SystemApp"}
+        if not getattr(app, "is_infrastructure", False)
+        and getattr(app, "name", "") not in {"InternalContacts", "AgentUserInterface", "SystemApp"}
         and not isinstance(app, (AgentUserInterface, SystemApp))
     ]
     if not filtered_apps:

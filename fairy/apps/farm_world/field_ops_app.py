@@ -9,6 +9,7 @@ follow-up delay, similar to the async charging notification flow.
 from __future__ import annotations
 
 from typing import Any
+from math import isfinite
 
 from fairy.apps.app import App
 from fairy.apps.farm_world.farm_world_app import (
@@ -19,6 +20,7 @@ from fairy.apps.farm_world.weather_app import WeatherApp
 from fairy.tool_utils import OperationType, app_tool, data_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
+from fairy.physics.biotic_pressure_engine import TreatmentType, chemical_dose_efficacy
 
 # Irrigation setup time per ridge (s) — valve open/close, hose connection
 _IRRIGATION_SETUP_S = 300
@@ -29,21 +31,20 @@ _IRRIGATION_EFFECT_DELAY_S = 2 * 60 * 60
 # Manual backpack sprayer speed (m/s) — operator walking pace
 _MANUAL_SPRAY_SPEED_MS = 0.8
 _MANUAL_SPRAY_SETUP_S = 15  # fill/prepare sprayer
-# Pesticide drawn from warehouse per manual ridge spray (L) — backpack
-# is more thorough/targeted than the tractor boom (8 L/ridge).
+# Method-specific simulation working-fluid reference, not a pesticide label.
 _MANUAL_PESTICIDE_L_PER_RIDGE = 3.0
 
 
-def _manual_spray_duration() -> int:
+def _manual_spray_duration(field_length_m: float = FIELD_LENGTH_M) -> int:
     """Time in seconds to walk one ridge with a backpack sprayer."""
-    return int(FIELD_LENGTH_M / _MANUAL_SPRAY_SPEED_MS) + _MANUAL_SPRAY_SETUP_S
+    return int(field_length_m / _MANUAL_SPRAY_SPEED_MS) + _MANUAL_SPRAY_SETUP_S
 
 
 class FieldOpsApp(App):
     """Ridge-level irrigation and manual spot spraying."""
 
-    def __init__(self, farm_world_app: FarmWorldApp, weather_app: WeatherApp) -> None:
-        super().__init__(name="FieldOpsApp")
+    def __init__(self, farm_world_app: FarmWorldApp, weather_app: WeatherApp, name: str | None = None) -> None:
+        super().__init__(name=name or "FieldOpsApp")
         self._farm_world_app = farm_world_app
         self._weather_app = weather_app
         self._irrigation_log: list[dict[str, Any]] = []
@@ -84,7 +85,7 @@ class FieldOpsApp(App):
         Irrigate a single ridge.
 
         Args:
-            ridge_id:       Ridge to irrigate (0-63).
+            ridge_id:       Ridge to irrigate (within the configured farm).
             duration_hours: Irrigation run time in hours.
         """
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
@@ -92,9 +93,9 @@ class FieldOpsApp(App):
         if float(duration_hours) <= 0:
             return {"error": "duration_hours must be positive"}
         current_vwc = self._irrigation_check_vwc(ridge_id)
-        if current_vwc >= 0.30:
+        if current_vwc >= self._farm_world_app.crop_profile.irrigation_stop_vwc:
             return {
-                "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self._farm_world_app.crop_profile.irrigation_stop_vwc:.2f}"
             }
         return self._start_irrigation([ridge_id], float(duration_hours))
 
@@ -111,8 +112,8 @@ class FieldOpsApp(App):
         the more concise name.
 
         Args:
-            start: First ridge to irrigate (0-63).
-            end:   Last ridge to irrigate (0-63, >= start).
+            start: First ridge to irrigate (within the configured farm).
+            end:   Last ridge to irrigate (valid farm ridge, >= start).
             hours: Irrigation run time per ridge in hours.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:
@@ -121,9 +122,9 @@ class FieldOpsApp(App):
             return {"error": "hours must be positive"}
         for ridge_id in range(start, end + 1):
             current_vwc = self._irrigation_check_vwc(ridge_id)
-            if current_vwc >= 0.30:
+            if current_vwc >= self._farm_world_app.crop_profile.irrigation_stop_vwc:
                 return {
-                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self._farm_world_app.crop_profile.irrigation_stop_vwc:.2f}"
                 }
         return self._start_irrigation(list(range(start, end + 1)), float(hours))
 
@@ -137,8 +138,8 @@ class FieldOpsApp(App):
         Irrigate a contiguous range of ridges.
 
         Args:
-            start:          First ridge to irrigate (0-63).
-            end:            Last ridge to irrigate (0-63, >= start).
+            start:          First ridge to irrigate (within the configured farm).
+            end:            Last ridge to irrigate (valid farm ridge, >= start).
             duration_hours: Irrigation run time per ridge in hours.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:
@@ -147,9 +148,9 @@ class FieldOpsApp(App):
             return {"error": "duration_hours must be positive"}
         for ridge_id in range(start, end + 1):
             current_vwc = self._irrigation_check_vwc(ridge_id)
-            if current_vwc >= 0.30:
+            if current_vwc >= self._farm_world_app.crop_profile.irrigation_stop_vwc:
                 return {
-                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self._farm_world_app.crop_profile.irrigation_stop_vwc:.2f}"
                 }
         return self._start_irrigation(
             list(range(start, end + 1)), float(duration_hours)
@@ -180,8 +181,9 @@ class FieldOpsApp(App):
         tractor spray boom instead.
 
         Args:
-            ridge_id: Ridge to spray (0-63).
-            liters_per_ridge: Pesticide volume to apply on this ridge.
+            ridge_id: Ridge to spray (within the configured farm).
+            liters_per_ridge: Positive working-fluid volume per ridge. The simulation's
+                backpack reference is 3 L/ridge; lower volumes reduce treatment strength.
             advance_time: Whether to advance the simulation clock for one operator pass.
             ridge_count: Number of contiguous ridges to spray, max 2.
         """
@@ -194,7 +196,7 @@ class FieldOpsApp(App):
         if end_ridge >= self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge range [{ridge_id}, {end_ridge}]"}
         liters = float(liters_per_ridge)
-        if liters <= 0:
+        if isinstance(liters_per_ridge, bool) or not isfinite(liters) or liters <= 0:
             return {"error": "liters_per_ridge must be positive"}
         total_liters = liters * count
         if not self._weather_app.is_sprayable:
@@ -215,7 +217,7 @@ class FieldOpsApp(App):
             }
 
         if advance_time:
-            self.time_manager.add_offset(_manual_spray_duration() * count)
+            self._advance_linked_time(_manual_spray_duration(self._farm_world_app.field_length_m) * count)
         ridge_ids = list(range(ridge_id, end_ridge + 1))
         for sprayed_ridge_id in ridge_ids:
             self._farm_world_app.update_ridge_pesticide(sprayed_ridge_id)
@@ -224,7 +226,7 @@ class FieldOpsApp(App):
         )
 
         for sprayed_ridge_id in ridge_ids:
-            self._register_manual_spray_with_physics(ridge_id=sprayed_ridge_id)
+            self._register_manual_spray_with_physics(ridge_id=sprayed_ridge_id, liters_per_ridge=liters)
 
         self._manual_spray_log.append(
             {
@@ -233,7 +235,7 @@ class FieldOpsApp(App):
                 "date": self._farm_world_app.get_state()["sim_date"],
                 "method": "manual_backpack",
                 "pesticide_used_liters": total_liters,
-                "duration_s": _manual_spray_duration() * count,
+                "duration_s": _manual_spray_duration(self._farm_world_app.field_length_m) * count,
             }
         )
         self.is_state_modified = True
@@ -340,6 +342,11 @@ class FieldOpsApp(App):
         In tests these apps often share references without being registered into
         an Environment, so they do not automatically share the same TimeManager.
         """
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            self.register_time_manager(environment.time_manager)
+            environment.advance_time(offset_seconds)
+            return
         self.time_manager.add_offset(offset_seconds)
         for app in (self._farm_world_app, self._weather_app):
             if app.time_manager is self.time_manager:
@@ -414,7 +421,9 @@ class FieldOpsApp(App):
         # the daily cycle will pick up cumulative effects.
         self._farm_world_app.advance_physics_time()
 
-    def _register_manual_spray_with_physics(self, ridge_id: int) -> None:
+    def _register_manual_spray_with_physics(
+        self, ridge_id: int, liters_per_ridge: float = _MANUAL_PESTICIDE_L_PER_RIDGE,
+    ) -> None:
         if not self._farm_world_app.physics_active:
             return
 
@@ -429,20 +438,24 @@ class FieldOpsApp(App):
         )
 
         physics = self._farm_world_app.physics
+        efficacy = chemical_dose_efficacy(
+            TreatmentType.INSECTICIDE, liters_per_ridge,
+            reference_liters_per_ridge=_MANUAL_PESTICIDE_L_PER_RIDGE,
+        )
         physics.queue_treatment(
             ridge_id,
             TreatmentApplication(
                 treatment_type=TreatmentType.INSECTICIDE,
-                efficacy_multiplier=1.0,
+                efficacy_multiplier=efficacy,
             ),
         )
         physics.queue_management_action(
             ridge_id,
             ManagementAction(
                 action_type=ManagementActionType.INSECTICIDE,
-                amount=1.0,
-                quality=1.0,
-                metadata={"method": "manual_backpack"},
+                amount=liters_per_ridge,
+                quality=efficacy,
+                metadata={"method": "manual_backpack", "working_fluid_reference_l_per_ridge": _MANUAL_PESTICIDE_L_PER_RIDGE},
             ),
         )
         self._farm_world_app.record_action(

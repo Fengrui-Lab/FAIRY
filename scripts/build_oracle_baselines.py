@@ -218,6 +218,27 @@ class BaselineResult:
     crop_backend_provenance: dict[str, Any] = field(
         default_factory=lambda: {"backend": "legacy"}
     )
+    ridge_area_m2: float = 268.0 * 1.1
+
+
+def _require_single_farm_baseline(scenario: Any) -> Any:
+    """The FOS cache format identifies a ridge only by its local integer ID.
+
+    Reject a fleet rather than silently publishing the first site's yield as
+    the whole scenario. Fleet scenarios use per-farm oracle workflow/state
+    validation and Engine.evaluation_report instead of this legacy FOS cache.
+    """
+    from fairy.apps.farm_world.multi_farm import farm_world_apps
+
+    farms = farm_world_apps(scenario.apps or [])
+    if len(farms) > 1:
+        raise ValueError(
+            f"Scenario {scenario.scenario_id} contains {len(farms)} farms. "
+            "The legacy FOS baseline schema has no farm-qualified ridge IDs. "
+            "Use the scenario's oracle workflow and per-farm evaluation report; "
+            "no single-farm yield baseline will be written."
+        )
+    return farms[0] if farms else None
 
 
 def _require_wofost_maturity(
@@ -263,13 +284,8 @@ def _build_donothing_biological_kg(
         recovered_yield_kg_total, recovered_yield_g_m2_per_ridge,
         ridges_planted, ridges_r8, ridges_harvested, extrapolation, duration_s
     """
-    from fairy.apps.farm_world.farm_world_app import (
-        DEFAULT_RIDGE_WIDTH_M,
-        FIELD_LENGTH_M,
-    )
     from fairy.scenarios.fos.evaluation import (
         _extrapolate_physics_to_maturity,
-        _try_get_farm_world,
     )
     from fairy.controllers.engine import Engine
     from fairy.scenarios.registry import registry
@@ -283,7 +299,7 @@ def _build_donothing_biological_kg(
     scenario.initialize()  # apps + physics init, NO oracle events run
     Engine(agent=None, scenario=scenario)
 
-    farm_world = _try_get_farm_world(scenario)
+    farm_world = _require_single_farm_baseline(scenario)
     if farm_world is None:
         return {"error": "no_farm_world"}
 
@@ -309,7 +325,7 @@ def _build_donothing_biological_kg(
             "crop_backend_provenance": crop_backend_provenance(physics),
         }
 
-    ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+    ridge_area_m2 = farm_world.field_length_m * farm_world.ridge_width_m
     bio_per: list[float] = []
     rec_per: list[float] = []
     n_planted = 0
@@ -354,7 +370,6 @@ def _build_one_baseline(
     from fairy.controllers.engine import Engine
     from fairy.scenarios.fos.evaluation import (
         _extrapolate_physics_to_maturity,
-        _try_get_farm_world,
     )
     from fairy.scenarios.registry import registry
 
@@ -376,7 +391,7 @@ def _build_one_baseline(
             len(tool_errors),
         )
 
-    farm_world = _try_get_farm_world(scenario)
+    farm_world = _require_single_farm_baseline(scenario)
     if farm_world is None:
         raise RuntimeError(
             f"Scenario {scenario_id} has no FarmWorldApp — cannot build baseline"
@@ -387,11 +402,6 @@ def _build_one_baseline(
     )
 
     # Read per-ridge biological + recovered, compute totals in kg.
-    from fairy.apps.farm_world.farm_world_app import (
-        DEFAULT_RIDGE_WIDTH_M,
-        FIELD_LENGTH_M,
-    )
-
     physics = getattr(farm_world, "_physics", None)
     if physics is None or not getattr(physics, "engines_active", False):
         raise RuntimeError(
@@ -399,7 +409,7 @@ def _build_one_baseline(
         )
     _require_wofost_maturity(physics, extrap, scenario_id)
 
-    ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+    ridge_area_m2 = farm_world.field_length_m * farm_world.ridge_width_m
 
     bio_per: list[float] = []
     rec_per: list[float] = []
@@ -455,6 +465,7 @@ def _build_one_baseline(
         donothing=donothing,
         tool_errors=tool_errors,
         crop_backend_provenance=crop_backend_provenance(physics),
+        ridge_area_m2=ridge_area_m2,
     )
 
 
@@ -478,17 +489,12 @@ def _workflow_error_returns(workflow) -> list[dict[str, str]]:
 
 
 def _baseline_to_dict(b: BaselineResult) -> dict[str, Any]:
-    from fairy.apps.farm_world.farm_world_app import (
-        DEFAULT_RIDGE_WIDTH_M,
-        FIELD_LENGTH_M,
-    )
-
     d: dict[str, Any] = {
         "scenario_id": b.scenario_id,
         "schema_version": 3,
         "crop_backend_provenance": b.crop_backend_provenance,
         "built_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "ridge_area_m2": round(FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M, 4),
+        "ridge_area_m2": round(b.ridge_area_m2, 4),
         "ridges_total": len(b.biological_yield_g_m2_per_ridge),
         "ridges_planted": b.ridges_planted,
         "ridges_r8": b.ridges_r8,

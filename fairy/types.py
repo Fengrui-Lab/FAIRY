@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
+import inspect
 from typing import Any, Callable
 
 from fairy.tool_utils import OperationType
@@ -27,6 +28,10 @@ class CapturedEvent:
     dependencies: list[Any] = field(default_factory=list)
     successors: list[Any] = field(default_factory=list)
     delay_seconds: float = 0.0
+    # Feedback-derived graphs may retain their observation rationale and use
+    # tool execution time instead of the legacy estimated graph timestamps.
+    workflow_metadata: dict[str, Any] = field(default_factory=dict)
+    record_runtime_timing: bool = False
 
     def oracle(self):
         self.is_oracle = True
@@ -47,6 +52,9 @@ class CapturedEvent:
         return self
 
     def execute(self) -> Any:
+        if getattr(inspect.unwrap(self.function), "_legacy_type_checked", False):
+            from fairy.utils.type_utils import legacy_tool_call
+            return legacy_tool_call(self.app, self.function, self.args, self.kwargs, captured=True)
         return self.function(self.app, *self.args, **self.kwargs)
 
 
@@ -80,7 +88,8 @@ def event_registered(operation_type: Any = None):
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(self, *args: Any, **kwargs: Any) -> Any:
-            if EventRegisterer.is_capturing():
+            from fairy.tool_execution import inside_tool_execution
+            if EventRegisterer.is_capturing() and not inside_tool_execution():
                 return EventRegisterer.add(
                     CapturedEvent(
                         app=self,

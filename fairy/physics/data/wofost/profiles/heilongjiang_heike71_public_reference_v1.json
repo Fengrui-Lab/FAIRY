@@ -1,0 +1,409 @@
+{
+  "schema_version": 1,
+  "profile_id": "heilongjiang_heike71_public_reference_v1",
+  "profile_version": "1.0.0",
+  "title": "黑科71公开成熟期约束工程参考品种 v1",
+  "crop_name": "soybean",
+  "supported_seed_types": [
+    "HEIKE71"
+  ],
+  "base_variety": "Soybean_901",
+  "native_variety_name": "Heike71_AggregateReference_v1",
+  "parameter_set_kind": "complete_native_parameters",
+  "parameter_overrides": {
+    "CO2EFFTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.11,
+      1000.0,
+      1.11,
+      2000.0,
+      1.11
+    ],
+    "CO2TRATB": [
+      40.0,
+      1.0,
+      360.0,
+      1.0,
+      720.0,
+      0.9,
+      1000.0,
+      0.9,
+      2000.0,
+      0.9
+    ],
+    "CO2AMAXTB": [
+      40.0,
+      0.0,
+      360.0,
+      1.0,
+      720.0,
+      1.6,
+      1000.0,
+      1.9,
+      2000.0,
+      1.9
+    ],
+    "AMAX_SLP": 3.24,
+    "AMAX_LNB": 0.0,
+    "TBASEM": 8.0,
+    "TEFFMX": 22.0,
+    "TSUMEM": 70.0,
+    "IDSL": 0,
+    "DLO": -99.0,
+    "DLC": -99.0,
+    "TSUM1": 462.5,
+    "TSUM2": 1017.5,
+    "DTSMTB": [
+      0.0,
+      0.0,
+      7.0,
+      0.0,
+      30.0,
+      23.0,
+      45.0,
+      38.0
+    ],
+    "DVSI": 0.0,
+    "DVSEND": 2.0,
+    "VERNBASE": 14.0,
+    "VERNSAT": 70.0,
+    "VERNDVS": 0.3,
+    "VERNRTB": [
+      -8.0,
+      0.0,
+      -4.0,
+      0.0,
+      3.0,
+      1.0,
+      10.0,
+      1.0,
+      17.0,
+      0.0,
+      20.0,
+      0.0
+    ],
+    "TDWI": 120.0,
+    "RGRLAI": 0.01,
+    "SLATB": [
+      0.0,
+      0.0014,
+      0.45,
+      0.0025,
+      0.9,
+      0.0025,
+      2.0,
+      0.0007
+    ],
+    "SPA": 0.0,
+    "SSATB": [
+      0.0,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "SPAN": 23.0,
+    "TBASE": 7.0,
+    "KDIFTB": [
+      0.0,
+      0.8,
+      2.0,
+      0.8
+    ],
+    "EFFTB": [
+      0.0,
+      0.4,
+      40.0,
+      0.4
+    ],
+    "AMAX_REF": 29.0,
+    "KN": 0.4,
+    "REFCO2L": 360,
+    "TMPFTB": [
+      0.0,
+      0.0,
+      10.0,
+      0.3,
+      20.0,
+      0.6,
+      25.0,
+      0.8,
+      30.0,
+      1.0,
+      35.0,
+      1.0
+    ],
+    "TMNFTB": [
+      0.0,
+      0.0,
+      3.0,
+      1.0
+    ],
+    "CVL": 0.72,
+    "CVO": 0.48,
+    "CVR": 0.72,
+    "CVS": 0.69,
+    "Q10": 2.0,
+    "RML": 0.03,
+    "RMO": 0.017,
+    "RMR": 0.01,
+    "RMS": 0.015,
+    "RFSETB": [
+      0.0,
+      1.0,
+      2.0,
+      1.0
+    ],
+    "FRTB": [
+      0.0,
+      0.65,
+      0.75,
+      0.35,
+      1.0,
+      0.15,
+      1.5,
+      0.0,
+      2.0,
+      0.0
+    ],
+    "FLTB": [
+      0.0,
+      0.7,
+      1.0,
+      0.7,
+      1.15,
+      0.6,
+      1.3,
+      0.43,
+      1.5,
+      0.15,
+      2.0,
+      0.0
+    ],
+    "FSTB": [
+      0.0,
+      0.3,
+      1.0,
+      0.3,
+      1.15,
+      0.25,
+      1.3,
+      0.1,
+      1.5,
+      0.1,
+      2.0,
+      0.0
+    ],
+    "FOTB": [
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.15,
+      0.15,
+      1.3,
+      0.47,
+      1.5,
+      0.75,
+      2.0,
+      1.0
+    ],
+    "PERDL": 0.03,
+    "RDRRTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "RDRSTB": [
+      0.0,
+      0.0,
+      1.5,
+      0.0,
+      1.51,
+      0.02,
+      2.0,
+      0.02
+    ],
+    "CFET": 1.0,
+    "DEPNR": 5.0,
+    "IAIRDU": 0,
+    "IOX": 0,
+    "RDI": 10.0,
+    "RRI": 1.2,
+    "RDMCR": 120.0,
+    "NMAXLV_TB": [
+      0.0,
+      0.06,
+      0.4,
+      0.04,
+      0.7,
+      0.035,
+      1.0,
+      0.03,
+      2.0,
+      0.0293,
+      2.1,
+      0.0293
+    ],
+    "NMAXRT_FR": 0.5,
+    "NMAXST_FR": 0.5,
+    "NMAXSO": 0.056,
+    "NCRIT_FR": 1.0,
+    "NRESIDLV": 0.00933,
+    "NRESIDST": 0.00467,
+    "NRESIDRT": 0.00467,
+    "TCNT": 10,
+    "NFIX_FR": 0.8,
+    "RNUPTAKEMAX": 7.2,
+    "DVS_N_TRANSL": 0.8,
+    "NSLLV_TB": [
+      0.0,
+      1.0,
+      1.1,
+      1.0,
+      1.5,
+      1.4,
+      2.0,
+      1.5,
+      2.5,
+      1.5
+    ],
+    "RGRLAI_MIN": 0.004,
+    "REALLOC_DVS": 3.0,
+    "REALLOC_STEM_FRACTION": 0.2,
+    "REALLOC_LEAF_FRACTION": 0.0,
+    "REALLOC_STEM_RATE": 0.0415,
+    "REALLOC_LEAF_RATE": 0.0,
+    "REALLOC_EFFICIENCY": 0.95
+  },
+  "transfer_status": "literature_transfer",
+  "validation_status": "unvalidated",
+  "engineering_status": "public_aggregate_maturity_constraint_on_common_regional_background_not_field_calibrated",
+  "calibration": {
+    "status": "public_aggregate_reference_constrained",
+    "method": "Screen one common TSUM1/TSUM2 scale on unchanged Harbin2017 forcing; retain the 5:11 phase ratio; choose by aggregate emergence-to-maturity duration only; then lock before Oracle calibration.",
+    "target_aggregate_duration_days": 108,
+    "target_source_url": "https://www.aeeisp.com/ddkx/article/id/fccbd5ae-c8a3-40b0-abc8-f938972d8c33",
+    "target_is_approximate": true,
+    "native_DOM_mapping": "Approximate endpoint for the public emergence-to-maturity description; no exact Fehr R7/R8 equivalence established.",
+    "training_forcing_year": 2017,
+    "selection_uses_yield": false,
+    "selection_uses_oracle_or_risk_windows": false,
+    "TSUM1_and_TSUM2_independently_identified": false,
+    "fixed_TSUM1_to_TSUM2_ratio": [
+      5,
+      11
+    ],
+    "selected_common_scale": 0.925,
+    "selected_native_phase_durations": {
+      "scale": 0.925,
+      "forcing_year": 2017,
+      "TSUM1": 462.5,
+      "TSUM2": 1017.5,
+      "native_DOE": "2017-05-18",
+      "native_DOA": "2017-06-30",
+      "native_DOM": "2017-09-03",
+      "DOE_to_DOM_days": 108,
+      "DOE_to_DOA_days": 43,
+      "DOA_to_DOM_days": 65,
+      "weather_sha256": "2e9810cc3f57dc6e2380b72388515b3e0b043b996afbf0119f9aca9eac6b53d0"
+    },
+    "unfitted_forcing_diagnostics": [
+      {
+        "scale": 0.925,
+        "forcing_year": 2018,
+        "TSUM1": 462.5,
+        "TSUM2": 1017.5,
+        "native_DOE": "2018-05-16",
+        "native_DOA": "2018-06-24",
+        "native_DOM": "2018-08-29",
+        "DOE_to_DOM_days": 105,
+        "DOE_to_DOA_days": 39,
+        "DOA_to_DOM_days": 66,
+        "weather_sha256": "0a7f56217b049b6cbeb98423bea092524e0976987f322acfa15df1f5522156ea"
+      },
+      {
+        "scale": 0.925,
+        "forcing_year": 2019,
+        "TSUM1": 462.5,
+        "TSUM2": 1017.5,
+        "native_DOE": "2019-05-16",
+        "native_DOA": "2019-06-29",
+        "native_DOM": "2019-09-07",
+        "DOE_to_DOM_days": 114,
+        "DOE_to_DOA_days": 44,
+        "DOA_to_DOM_days": 70,
+        "weather_sha256": "d3390fc7f5209d4b908e3c0b0bbb8ed2e702a824dcf8c5c1c523957448a30137"
+      }
+    ],
+    "field_observation_validation": false,
+    "source_evidence": "validation_runs/formal90_oracle_recalibration_20261024/cultivars/phenology_screen.json",
+    "screen_sha256": "d963861012382bc0184927ebae35e785f361ef2c51e84b062b5e335ec14c585d"
+  },
+  "density": {
+    "reference_plants_m2": 23.0,
+    "TDWI_kg_ha_at_reference": 120.0,
+    "method": "Retained common reference for initial TDWI scaling. Published planting recommendations are recorded below, not a fitted density response.",
+    "published_recommendation_plants_m2": null,
+    "recommendation_source_url": "https://www.aeeisp.com/ddkx/article/id/fccbd5ae-c8a3-40b0-abc8-f938972d8c33"
+  },
+  "sources": [
+    {
+      "title": "鹿文成等（2022）：极早熟高产高油大豆新品种黑科71的选育及栽培技术",
+      "url": "https://www.aeeisp.com/ddkx/article/id/fccbd5ae-c8a3-40b0-abc8-f938972d8c33",
+      "locator": "摘要：适应区出苗至成熟108d左右；大豆科学41(3):371–376，DOI10.11861/j.issn.1000-9841.2022.03.0371"
+    },
+    {
+      "title": "HAAS Heinong84 cultivar description:119days,22–24plants/m2,regional yields",
+      "url": "https://www.haas.cn/cgcyc/info/1231/2141.htm"
+    },
+    {
+      "title": "Xu2026 TableA1:emergence thresholds,TDWI120 and general soybean physiology",
+      "url": "https://essd.copernicus.org/articles/18/2413/2026/essd-18-2413-2026.html"
+    },
+    {
+      "title": "Pinned native WOFOST8.1 soybean physiological parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml"
+    },
+    {
+      "title": "农业农村部2023国审品种简介，国审豆20231009（地方农业主管部门公开附件）",
+      "url": "https://nyncw.cq.gov.cn/ztzl_161/rdzt/xczx/zcwj_249776/bw_257461/202311/P020231122596182031265.pdf",
+      "scope": "Alternative regional mean114d; not selected in this reference screen."
+    }
+  ],
+  "parameter_groups": {
+    "changed_from_complete_HN84": [
+      "TSUM1",
+      "TSUM2"
+    ],
+    "retained_from_complete_HN84": "All other76native parameters, including temperature/photoperiod response,assimilation,N fixation,DEPNR,partitioning,SLA,rooting and respiration; no cultivar-specific yield multiplier.",
+    "background_profile_id": "heilongjiang_heinong84_complete_v1",
+    "background_profile_sha256": "6a70a0aaa9bd7ed5c2b83a74163b938211c720fe3d496edccd4e5512cf22705a"
+  },
+  "limitations": [
+    "The selected 108d value is the 2022 breeder-paper adaptive-area reference. The national 2023 notice reports a different regional mean (114d); both are regional evidence, not interchangeable observations. The 108d reference does not guarantee safe late planting at Harbin.",
+    "Complete executable native parameters are a public-reference transfer; cultivar physiology and yield are not locally validated.",
+    "An aggregate total duration cannot identify flowering and reproductive thermal requirements independently; their ratio is inherited, not observed.",
+    "Using Harbin gridded2017 weather with an adaptive-area aggregate duration is an explicitly approximate transfer, not a field experiment.",
+    "No Oracle yield,drought escape,harvest date or target production is used to select native parameters.",
+    "No genotype-specific density competition,cold germination survival,pathogen response or nodulation response is established by this profile."
+  ],
+  "public_cultivar_evidence": {
+    "identity_preserved": true,
+    "name_zh": "黑科71",
+    "adaptation_region": "黑龙江第五积温带；育种论文讨论南部迟播救灾用途",
+    "qualitative_traits": [
+      "early_maturity",
+      "late_sowing_use"
+    ],
+    "native_trait_response_fitted": false
+  }
+}

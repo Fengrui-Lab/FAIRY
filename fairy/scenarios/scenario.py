@@ -61,12 +61,24 @@ class Scenario:
         else:
             self.init_and_populate_apps(*args, **kwargs)
         if self.crop_backend != "legacy" or self.crop_backend_options:
-            from fairy.apps.farm_world.farm_world_app import FarmWorldApp
+            from fairy.apps.farm_world.multi_farm import farm_world_apps
 
-            farm_world = self.get_typed_app(FarmWorldApp)
-            farm_world.configure_crop_backend(
-                self.crop_backend, **self.crop_backend_options
-            )
+            farms = farm_world_apps(self.apps or [])
+            if not farms:
+                raise ValueError("Crop backend configured for a scenario without a FarmWorldApp")
+            if self.crop_backend == "wofost":
+                from zoneinfo import ZoneInfo
+                # Native day boundaries must follow the scene's forcing calendar.
+                # Historical scenes default to China; explicit locations override it.
+                calendar = ZoneInfo(getattr(self, "timezone_name", "Asia/Shanghai"))
+                for farm_world in farms:
+                    farm_world.simulation_timezone = calendar
+                    if farm_world._weather_app is not None:
+                        farm_world._weather_app.simulation_timezone = calendar
+            for farm_world in farms:
+                farm_world.configure_crop_backend(
+                    self.crop_backend, **self.crop_backend_options
+                )
         if hasattr(self, "build_events_flow") and not self.events:
             result = self.build_events_flow()
             if result is not None and not self.events:
@@ -89,11 +101,19 @@ class Scenario:
         raise NotImplementedError("Scenario must implement oracle_solution or build_events_flow.")
 
     def get_typed_app(self, app_type: Type[T], app_name: str | None = None) -> T:
-        name = app_name or app_type.__name__
-        for app in self.apps or []:
-            if isinstance(app, app_type) and app.name == name:
-                return cast(T, app)
-        raise ValueError(f"App {name} of type {app_type.__name__} not found in scenario.")
+        from fairy.apps.farm_world.multi_farm import iter_apps_of_type
+
+        candidates = iter_apps_of_type(self.apps or [], app_type)
+        if app_name is not None:
+            candidates = [app for app in candidates if app.name == app_name]
+        if len(candidates) == 1:
+            return cast(T, candidates[0])
+        if len(candidates) > 1:
+            raise ValueError(
+                f"Ambiguous app type {app_type.__name__}: "
+                f"{[app.name for app in candidates]}. Pass an explicit app_name."
+            )
+        raise ValueError(f"App {app_name or app_type.__name__} of type {app_type.__name__} not found in scenario.")
 
     def validate(self):
         return None

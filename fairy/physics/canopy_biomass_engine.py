@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
 from math import exp
@@ -42,6 +42,16 @@ class SeedType(str, Enum):
     HEINONG60 = "HEINONG60"
     HEINONG84 = "HEINONG84"
     HEIKE71 = "HEIKE71"
+    MAIZE_STANDARD = "MAIZE_STANDARD"
+    RICE_STANDARD = "RICE_STANDARD"
+    SUINONG42 = "SUINONG42"
+    KENDOU40 = "KENDOU40"
+    HEINONG44 = "HEINONG44"
+    HEINONG65 = "HEINONG65"
+    SOYBEAN_901 = "SOYBEAN_901"
+    SOYBEAN_902 = "SOYBEAN_902"
+    SOYBEAN_903 = "SOYBEAN_903"
+    SOYBEAN_905 = "SOYBEAN_905"
 
 
 @dataclass
@@ -70,6 +80,9 @@ class SeedGrowthParameters:
 
 
 DEFAULT_SEED_GROWTH_PARAMS: dict[SeedType, SeedGrowthParameters] = {
+    # Crop-specific reduced proxies; not measured cultivar coefficients.
+    SeedType.MAIZE_STANDARD: SeedGrowthParameters(5.8, 0.080, 3.4, 0.50, 1.0, 7.0, 0.8),
+    SeedType.RICE_STANDARD: SeedGrowthParameters(6.0, 0.075, 2.8, 0.48, 1.1, 40.0, 0.7),
     SeedType.EARLY_COLD: SeedGrowthParameters(
         max_lai=4.6,
         canopy_growth_rate=0.055,
@@ -177,6 +190,21 @@ DEFAULT_SEED_GROWTH_PARAMS: dict[SeedType, SeedGrowthParameters] = {
 }
 
 
+# These labels' reference contrasts live in native WOFOST parameter files.
+# The optional legacy path retains a neutral baseline rather than fabricated fits.
+for _reference_seed in (SeedType.SUINONG42, SeedType.KENDOU40,
+                        SeedType.HEINONG44, SeedType.HEINONG65):
+    DEFAULT_SEED_GROWTH_PARAMS[_reference_seed] = replace(DEFAULT_SEED_GROWTH_PARAMS[SeedType.STANDARD])
+del _reference_seed
+
+# Compatibility initialization only. Official seed labels obtain their actual
+# biomass and stress responses from native WOFOST, never these placeholders.
+for _official_seed in (SeedType.SOYBEAN_901, SeedType.SOYBEAN_902,
+                       SeedType.SOYBEAN_903, SeedType.SOYBEAN_905):
+    DEFAULT_SEED_GROWTH_PARAMS[_official_seed] = replace(DEFAULT_SEED_GROWTH_PARAMS[SeedType.STANDARD])
+del _official_seed
+
+
 @dataclass
 class CanopyBiomassParameters:
     """
@@ -218,6 +246,9 @@ class CanopyBiomassParameters:
     initial_biomass_g_m2_at_emergence: float = 2.0
     max_daily_biomass_g_m2: float = 35.0
     productivity_multiplier: float = 1.0
+    seed_fill_points: tuple[tuple[float, float], ...] = (
+        (0.68, 0.35), (0.80, 0.70), (0.92, 0.90), (1.00, 1.00)
+    )
 
     # Stress multipliers.
     min_daily_growth_multiplier: float = 0.0
@@ -676,12 +707,7 @@ class CanopyBiomassGrowthEngine:
 
     def _seed_fill_fraction(self, phen: PhenologyInput) -> float:
         progress = self._clip(phen.development_fraction, 0.0, 1.0)
-        fill_points = (
-            (0.68, 0.35),
-            (0.80, 0.70),
-            (0.92, 0.90),
-            (1.00, 1.00),
-        )
+        fill_points = self.params.seed_fill_points
 
         prev_progress, prev_fill = fill_points[0]
         if progress <= prev_progress:

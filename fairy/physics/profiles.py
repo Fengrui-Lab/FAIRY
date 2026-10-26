@@ -740,58 +740,9 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
         outbreaks: list[BioticOutbreak] | None = None,
         start: date = date(2026, 5, 5),
     ) -> None:
+        # The seed selects the random stream only. Weather challenges must be
+        # explicit profile data, never added to accommodate an Oracle calendar.
         profile_events = list(events or [])
-        if seed >= 1700:
-            # Additional generated L3 scenarios use fixed expert-oracle action
-            # windows. Keep those windows workable while preserving the named
-            # stress events outside the operation dates.
-            profile_events.extend(
-                [
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 5, 30),
-                        7,
-                        label="l3_early_operation_window",
-                    ),
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 6, 12),
-                        9,
-                        label="l3_flowering_check_window",
-                    ),
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 7, 5),
-                        7,
-                        label="l3_midseason_operation_window",
-                    ),
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 7, 20),
-                        13,
-                        label="l3_r5_operation_window",
-                    ),
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 8, 1),
-                        25,
-                        label="l3_podfill_operation_window",
-                    ),
-                    WeatherEvent(
-                        "heat_wave",
-                        date(2026, 8, 18),
-                        35,
-                        temp_delta_c=4.0,
-                        label="l3_warm_maturity_finish",
-                    ),
-                    WeatherEvent(
-                        "dry_spell",
-                        date(2026, 9, 20),
-                        55,
-                        label="l3_harvest_operation_window",
-                    ),
-                ]
-            )
         profiles[name] = PhysicsProfile(
             name=name,
             location="Harbin/Heilongjiang",

@@ -85,6 +85,8 @@ def _one_ridge_farm() -> FarmWorldApp:
     physics.phenology.plant_ridges(
         [0], PlantingConfig(planting_date=SOWING_DAY, seed_type=SeedType.STANDARD)
     )
+    physics.management.states[0].planted = True
+    physics.management.states[0].stand_fraction = 1.0
     ridge = farm._ridges[0]
     ridge.planted = True
     ridge.seed_type = SeedType.STANDARD.value
@@ -440,6 +442,32 @@ def test_density_changes_initial_crop_canopy(wofost_api) -> None:
         dense_physics.canopy.states[0].lai
         > sparse_physics.canopy.states[0].lai
     )
+
+
+def test_explicit_zero_stand_does_not_become_a_full_native_crop(wofost_api) -> None:
+    backend_type, config_type = wofost_api
+    failed = FarmPhysicsState(num_ridges=2)
+    failed.phenology.plant_ridges(
+        [0, 1], PlantingConfig(planting_date=SOWING_DAY, seed_type=SeedType.STANDARD))
+    for state in failed.management.states.values():
+        state.planted, state.stand_fraction = True, 1.0
+    failed.management.states[1].stand_fraction = 0.0
+    backend = backend_type(config_type())
+    with pytest.raises(ValueError, match="failed stand.*positive biomass"):
+        _advance(backend, failed, SOWING_DAY)
+    assert not backend.has_started
+    assert failed.management.states[1].stand_fraction == 0
+
+
+@pytest.mark.parametrize("stand", [-0.1, 1.1, float("nan"), float("inf")])
+def test_invalid_stand_is_rejected_before_native_model_creation(wofost_api, stand) -> None:
+    backend_type, config_type = wofost_api
+    physics = _planted_physics()
+    physics.management.states[0].stand_fraction = stand
+    backend = backend_type(config_type())
+    with pytest.raises(ValueError, match="initial_stand_fraction"):
+        _advance(backend, physics, SOWING_DAY)
+    assert not backend.has_started
 
 
 def test_explicit_cultivar_map_changes_native_maturity(wofost_api) -> None:

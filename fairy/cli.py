@@ -30,6 +30,7 @@ from fairy.controllers.run_artifacts import (
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.fos.provenance import crop_backend_provenance
 from fairy.scenarios.workflow import Workflow
+from fairy.tool_execution import WorkflowBundle
 
 _LEGACY_ARTIFACT_SUFFIXES = (
     ".events.jsonl",
@@ -42,12 +43,32 @@ _LEGACY_ARTIFACT_SUFFIXES = (
 )
 
 
+def _save_workflow_artifact(workflow: Workflow, path: Path, engine: Engine) -> Path | None:
+    """Save steps unchanged, with the producing runtime's manifest when present."""
+    if engine.run_manifest is None:
+        workflow.save_workflow(str(path))
+        return None
+    manifest = getattr(workflow, "manifest", None) or engine.run_manifest
+    WorkflowBundle(workflow, manifest).save(path)
+    return WorkflowBundle.manifest_path(path)
+
+
 def _scenario_crop_backend_provenance(scenario: Any) -> dict[str, Any]:
-    for app in scenario.apps or []:
-        candidate = getattr(app, "wrapped_app", app)
-        if hasattr(candidate, "_physics"):
-            return crop_backend_provenance(candidate)
-    return crop_backend_provenance(None)
+    from fairy.apps.farm_world.multi_farm import farm_world_apps
+
+    farms = farm_world_apps(scenario.apps or [])
+    if len(farms) < 2:
+        return crop_backend_provenance(farms[0] if farms else None)
+    return {
+        "backend": "multi_farm",
+        "farms": {
+            getattr(farm, "farm_id", farm.name): {
+                "crop_type": getattr(farm, "crop_type", "soybean"),
+                **crop_backend_provenance(farm),
+            }
+            for farm in farms
+        },
+    }
 
 
 def _cleanup_legacy_artifacts(output_dir: Path, scenario_id: str) -> None:
@@ -221,6 +242,7 @@ def main() -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         _cleanup_legacy_artifacts(output_dir, args.scenario)
         source_workflow: Workflow | None = None
+        source_bundle: WorkflowBundle | None = None
         active_engine: Engine | None = None
         active_workflow: Workflow | None = None
         artifacts: dict[str, str] = {}
@@ -231,20 +253,28 @@ def main() -> None:
                 run_oracle=args.run_oracle_tools,
                 **init_kwargs,
             )
-            source_workflow.save_workflow(str(workflow_path))
+            manifest_path = _save_workflow_artifact(source_workflow, workflow_path, build_engine)
             artifacts["oracle_workflow"] = str(workflow_path)
+            if manifest_path is not None:
+                artifacts["oracle_manifest"] = str(manifest_path)
             print(f"oracle_workflow={workflow_path}")
 
         if args.replay or args.evaluate:
             if source_workflow is None:
-                source_workflow = Workflow.load_workflow(str(workflow_path))
+                if WorkflowBundle.manifest_path(workflow_path).exists():
+                    source_bundle = WorkflowBundle.load(workflow_path)
+                    source_workflow = source_bundle.workflow
+                else:
+                    source_workflow = Workflow.load_workflow(str(workflow_path))
             active_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
             active_workflow = active_engine.replay_workflow(
-                source_workflow, **init_kwargs
+                source_bundle if source_bundle is not None else source_workflow, **init_kwargs
             )
             replay_path = output_dir / f"{args.scenario}.replay.json"
-            active_workflow.save_workflow(str(replay_path))
+            manifest_path = _save_workflow_artifact(active_workflow, replay_path, active_engine)
             artifacts["replay_workflow"] = str(replay_path)
+            if manifest_path is not None:
+                artifacts["replay_manifest"] = str(manifest_path)
             print(f"replay_workflow={replay_path}")
 
         report = None
@@ -289,6 +319,8 @@ def main() -> None:
             init_kwargs=init_kwargs,
             crop_backend_provenance=_scenario_crop_backend_provenance(log_engine.scenario),
         )
+        if log_engine.run_manifest is not None:
+            run_report["tool_manifest"] = log_engine.run_manifest
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
         print(f"runtime_log={runtime_log_path}")
@@ -397,8 +429,10 @@ def main() -> None:
         artifacts["progress_log"] = str(progress_log_path)
 
         workflow_path = output_dir / f"{args.scenario}.agent_workflow.json"
-        workflow.save_workflow(str(workflow_path))
+        manifest_path = _save_workflow_artifact(workflow, workflow_path, engine)
         artifacts["agent_workflow"] = str(workflow_path)
+        if manifest_path is not None:
+            artifacts["agent_manifest"] = str(manifest_path)
 
         runtime_log_path = output_dir / f"{args.scenario}.runtime_log.jsonl"
         write_jsonl(runtime_log_path, _runtime_log_rows(agent.runtime_events))
@@ -458,6 +492,8 @@ def main() -> None:
             init_kwargs=init_kwargs,
             crop_backend_provenance=_scenario_crop_backend_provenance(scenario),
         )
+        if engine.run_manifest is not None:
+            run_report["tool_manifest"] = engine.run_manifest
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
         print(f"agent_workflow={workflow_path}")

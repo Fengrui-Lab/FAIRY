@@ -56,6 +56,8 @@ class FarmPhysicsState:
     """
 
     num_ridges: int = 64
+    crop_type: str = "soybean"
+    field_length_m: float = 268.0
 
     # Scenario configuration. Set via FarmWorldApp.configure_physics_profile().
     profile_name: str | None = None
@@ -103,12 +105,19 @@ class FarmPhysicsState:
     engines_active: bool = False
 
     def __post_init__(self) -> None:
+        from fairy.apps.farm_world.crop_profiles import get_crop_profile
+        from fairy.physics.crop_physiology import configure_crop_physics
+
+        if self.num_ridges < 1:
+            raise ValueError("num_ridges must be positive")
+        self.crop_profile = get_crop_profile(self.crop_type)
         self.soil = SoilEngine(num_ridges=self.num_ridges)
         self.phenology = ThermalTimePhenologyEngine(num_ridges=self.num_ridges)
         self.canopy = CanopyBiomassGrowthEngine(num_ridges=self.num_ridges)
         self.biotic = BioticPressureEngine(num_ridges=self.num_ridges)
         self.management = ManagementEffectEngine(num_ridges=self.num_ridges)
         self.yield_recovery = YieldRecoveryEngine(num_ridges=self.num_ridges)
+        configure_crop_physics(self, self.crop_profile)
         self.observation_model = ObservationModel(
             params=ObservationModelParameters(random_seed=self.random_seed)
         )
@@ -121,7 +130,7 @@ class FarmPhysicsState:
     def _install_default_sensor_assets(self) -> None:
         from fairy.physics import ObservationModality
 
-        for asset_idx, ridge_id in enumerate(_DEFAULT_SOIL_SENSOR_RIDGES):
+        for asset_idx, ridge_id in enumerate(self.soil_sensor_ridges):
             self.observation_model.add_asset(
                 SensorAsset(
                     asset_id=f"soil_sensor_{asset_idx}",
@@ -130,7 +139,7 @@ class FarmPhysicsState:
                     support_radius_ridges=2,
                 )
             )
-        for asset_idx, ridge_id in enumerate(_DEFAULT_CANOPY_SENSOR_RIDGES):
+        for asset_idx, ridge_id in enumerate(self.canopy_sensor_ridges):
             self.observation_model.add_asset(
                 SensorAsset(
                     asset_id=f"canopy_sensor_{asset_idx}",
@@ -142,11 +151,15 @@ class FarmPhysicsState:
 
     @property
     def soil_sensor_ridges(self) -> tuple[int, ...]:
-        return _DEFAULT_SOIL_SENSOR_RIDGES
+        if self.num_ridges == 64:
+            return _DEFAULT_SOIL_SENSOR_RIDGES
+        count = min(6, self.num_ridges)
+        return tuple(min(self.num_ridges - 1, int((idx + 0.5) * self.num_ridges / count))
+                     for idx in range(count))
 
     @property
     def canopy_sensor_ridges(self) -> tuple[int, ...]:
-        return _DEFAULT_CANOPY_SENSOR_RIDGES
+        return self.soil_sensor_ridges
 
     # ------------------------------------------------------------------
     # Action recording and queue management
@@ -223,6 +236,10 @@ class FarmPhysicsState:
         """Lightweight read-only view; used in tests and GUI debug overlays."""
         return {
             "engines_active": self.engines_active,
+            "crop_type": self.crop_type,
+            "field_length_m": self.field_length_m,
+            "ridge_width_m": self.ridge_width_m,
+            "model_assumptions": list(self.crop_profile.model_assumptions),
             "crop_backend_name": self.crop_backend_name,
             "crop_backend": (
                 self.crop_backend.snapshot() if self.crop_backend is not None else None

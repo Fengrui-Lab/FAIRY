@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "runtime_adaptations_are_scenario_variants": true,
+  "native_cultivar_parameters_remain_frozen": true,
+  "rows": [
+    {
+      "scenario_id": "scenario_full_season_hb_cool_august_lategrain_laterain",
+      "variant_id": "cool_august_pre_sowing_heinong58_adaptation_v1",
+      "seed_replacements": {
+        "HEINONG84": "HEINONG58"
+      },
+      "reason": "原黑农84参考配方在凉八月气象下到固定期限仍未成熟。以黑农58作为播种前较短熟期的区域适应候选：黑龙江省农业科学院品种资料给出黑农58生育日数118天、需活动积温2400℃，适应黑龙江第二积温带和第三积温带上限；黑农84主源给出约119天、2400℃和第二积温带。较短熟期与接近的适应区支持先试黑农58，但不保证本模拟季能在期限内成熟。",
+      "sources": [
+        {
+          "title": "黑龙江省农业科学院：大豆所专家、品种简介",
+          "url": "https://www.haas.cn/info/1051/80431.htm",
+          "locator": "黑农58段落：118天，活动积温2400℃；适于黑龙江第二积温带、第三积温带上限；保苗20–22万株/公顷。",
+          "supports": [
+            "replacement_identity",
+            "approximate_regional_duration",
+            "regional_adaptation",
+            "density_reference"
+          ],
+          "does_not_establish": [
+            "Harbin_virtual_field_site_specific_suitability",
+            "maturity_guarantee_in_this_cool_August",
+            "native_temperature_or_drought_response_calibration"
+          ]
+        },
+        {
+          "title": "黑龙江省农业科学院成果产业处：黑农84",
+          "url": "https://www.haas.cn/cgcyc/info/1231/2141.htm",
+          "locator": "特征特性与适应区域：出苗至成熟约119天、需≥10℃活动积温2400℃左右、黑龙江第二积温带；保苗22–24万株/公顷。",
+          "supports": [
+            "original_cultivar_duration_and_region_comparison"
+          ]
+        }
+      ],
+      "original_goal_change": {
+        "type": "pre_sowing_cultivar_adaptation",
+        "changes_original_cultivar": true,
+        "original_cultivar": "HEINONG84",
+        "adapted_cultivar": "HEINONG58",
+        "preserved_challenge": "凉八月、晚雨、固定全季期限、成熟及籽粒水分门控、分批收获和安全入库。",
+        "changed_question": "从固定黑农84的季内管理，改为播种前允许选择有区域依据的替代品种，再进行同一气象与资源约束下的全季管理。",
+        "count_as_original_heinong84_success": false,
+        "retain_original_unmatured_reference": true,
+        "report_variant_separately_from_original": true
+      },
+      "scope": {
+        "application_time": "before_first_native_sowing_or_advance_of_a_planted_crop",
+        "farm": "single_original_farm",
+        "ridge_ranges": [
+          [
+            0,
+            63
+          ]
+        ],
+        "replace_consistently": [
+          "warehouse_seed_identity",
+          "initial_tractor_hopper_seed_identity",
+          "unplanted_field_seed_plan",
+          "exported_workflow_load_seeds_arguments",
+          "agent_visible_cultivar_plan"
+        ],
+        "preserve": [
+          "total_available_seed_count",
+          "original_soil",
+          "weather_profile_and_weather_seed",
+          "original_sowing_window_and_gate_checks",
+          "180_day_scenario_deadline",
+          "ridge_geometry",
+          "water_fertilizer_chemical_and_equipment_budgets",
+          "maturity_moisture_trafficability_and_storage_checks",
+          "frozen_native_profiles"
+        ],
+        "prohibited_shortcuts": [
+          "change_TSUM_or_other_native_coefficients_to_force_completion",
+          "replace_weather",
+          "extend_deadline",
+          "force_DVS_or_maturity",
+          "change_the_genotype_of_an_already_growing_native_crop"
+        ]
+      },
+      "sowing_density_caveat": {
+        "source_spacing_cm": 7.9,
+        "source_nominal_plants_m2_at_full_establishment": 23.01495972382048,
+        "replacement_source_established_density_plants_m2": [
+          20,
+          22
+        ],
+        "primary_cultivar_counterfactual_preserves_spacing": true,
+        "reason": "先保留原播距隔离品种替换；该播距略高于黑农58公开保苗参考。若另试8.66cm约21株/m²，应单列品种和密度同时改变的方案，不将全部结果归因于品种。",
+        "secondary_density_candidate_spacing_cm": 8.66
+      },
+      "fallback_candidates": [
+        {
+          "seed_type": "HEIHE43",
+          "native_profile_id": "heilongjiang_heihe43_public_reference_v1",
+          "automatically_apply": false,
+          "reason": "黑河43有较短熟期和较低积温要求，可作为进一步早熟逃避风险的候选；但其主源适应区是第四积温带，与原黑农84第二积温带目标不同。本虚拟地块没有测定积温带，不能直接宣称更适地或保证成熟。",
+          "source": {
+            "title": "黑龙江省农业科学院成果产业处：黑河43",
+            "url": "https://www.haas.cn/cgcyc/info/1231/8621.htm",
+            "locator": "出苗至成熟约115天、需≥10℃活动积温2150℃左右；适应区域为黑龙江第四积温带；保苗约30万株/公顷。"
+          },
+          "requires": [
+            "separate_declared_cultivar_adaptation_variant",
+            "fresh_fullseason_replay_under_unchanged_weather_and_deadline",
+            "retained_original_and_heinong58_comparison_evidence",
+            "separate_density_review"
+          ]
+        }
+      ],
+      "evidence_status": "public_sources_support_a_candidate_not_a_site_specific_maturity_or_yield_guarantee"
+    },
+    {
+      "scenario_id": "scenario_full_season_hb_poordrainage_wetjune_disease_trafficability",
+      "variant_id": "poor_drainage_declared_external_runon_boundary_v1",
+      "seed_replacements": {},
+      "config_overrides": {
+        "allow_external_runon": true,
+        "external_runon_source": "Declared legacy 1.02 rainfall capture on ridges44-53; 2% of daily local rainfall supplied as explicitly accounted external run-on from an unspecified contributing area; an uncalibrated scenario assumption."
+      },
+      "reason": "源场景44–53垄声明rainfall_capture_efficiency=1.02。超过1的值不能作为本地降雨入渗比例或映射成负NOTINF；本变体仅将超出本地雨量的2%单列为有来源标签的外来边界水，保留本地天气雨量和原场景经验增水量，不把增水静默裁掉或混入用户实际灌溉。",
+      "sources": [
+        {
+          "title": "源场景的局部土壤水文经验声明",
+          "path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_poordrainage_wetjune_disease_trafficability.py",
+          "locator": "AFFECTED_START=44、AFFECTED_END=53；_configure_initial_state中局部SoilHydraulicModifier的rainfall_capture_efficiency=1.02。",
+          "source_kind": "legacy_scenario_assumption_not_field_measurement",
+          "supports": [
+            "location_and_magnitude_of_original_empirical_water_gain"
+          ],
+          "does_not_establish": [
+            "contributing_catchment_area",
+            "physical_runoff_generation_or_routing",
+            "observed_external_runon",
+            "field_calibrated_poor_drainage_hydrology"
+          ]
+        }
+      ],
+      "original_goal_change": {
+        "type": "explicit_external_water_boundary_mapping",
+        "changes_original_cultivar": false,
+        "preserved_challenge": "保留44–53垄湿润/排水与通行性风险及原经验增水量；其他地块不启用外来水。",
+        "changed_assumption": "把原未解释的102%降雨捕获拆为本地降雨与外来边界水；外来水来源面积未识别，仍是场景假设。",
+        "count_as_field_validated_catchment_hydrology": false,
+        "retain_default_rejection_without_explicit_opt_in": true,
+        "report_boundary_assumption_in_provenance": true
+      },
+      "scope": {
+        "application_time": "configure_before_first_native_ridge_is_created",
+        "farm": "single_original_farm",
+        "ridge_ranges": [
+          [
+            44,
+            53
+          ]
+        ],
+        "external_runon_equivalent_mm": "0.02 * local_daily_rainfall_mm on each affected ridge",
+        "native_mapping_is_opt_in_only_for_this_scenario_id": true,
+        "preserve": [
+          "original_weather_rainfall",
+          "original_ridge_soil_modifiers",
+          "original_native_cultivar_profiles",
+          "original_deadline",
+          "actual_tool_irrigation_budget_and_receipts"
+        ],
+        "required_separate_accounting": [
+          "local_weather_rainfall",
+          "actual_management_irrigation",
+          "declared_external_runon",
+          "native_water_inputs_outputs_and_storage_change"
+        ],
+        "prohibited_shortcuts": [
+          "negative_NOTINF",
+          "silently_clip_1.02_and_discard_external_water",
+          "silently_change_local_weather_rainfall",
+          "label_external_runon_as_actual_tool_irrigation",
+          "claim_a_calibrated_catchment_without_source_data"
+        ]
+      },
+      "evidence_status": "source_code_documents_an_empirical_water_gain; external_boundary_interpretation_is_explicit_and_uncalibrated"
+    }
+  ]
+}

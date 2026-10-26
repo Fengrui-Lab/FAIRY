@@ -1,0 +1,15 @@
+{
+  "cultivar_profiles": {
+    "HEINONG84": "heilongjiang_heinong84_complete_v1",
+    "HEINONG58": "heilongjiang_heinong58_public_reference_v1",
+    "HEINONG60": "heilongjiang_heinong60_public_reference_v1",
+    "HEIHE50": "heilongjiang_heihe50_public_reference_v1",
+    "HEIHE43": "heilongjiang_heihe43_public_reference_v1",
+    "HEIKE71": "heilongjiang_heike71_public_reference_v1"
+  },
+  "require_explicit_cultivar_parameters": true,
+  "reference_density_plants_m2": 23.0,
+  "latitude_deg": 45.7,
+  "longitude_deg": 126.6,
+  "external_biotic_coupling": true
+}

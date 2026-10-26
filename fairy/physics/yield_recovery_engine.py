@@ -3,7 +3,54 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
+from math import exp, isfinite
 from typing import Mapping
+
+
+# Wet-basis soybean EMC (%), published by NDSU Extension agricultural engineer
+# Ken Hellevang, reproduced by University of Minnesota Extension (Table 1):
+# https://blog-crop-news.extension.umn.edu/2022/10/ndsu-addresses-conditioning-too-dry.html
+# These are equilibrium observations, not a field drying-rate calibration.
+_SOYBEAN_EMC_TEMPERATURE_F = (32.0, 40.0, 50.0, 60.0, 70.0, 80.0)
+_SOYBEAN_EMC_RH_PCT = (50.0, 60.0, 70.0, 80.0, 90.0)
+_SOYBEAN_EMC_WET_BASIS_PCT = (
+    (10.0, 11.8, 13.7, 16.2, 19.8),
+    (9.8, 11.5, 13.5, 16.0, 19.6),
+    (9.5, 11.2, 13.2, 15.7, 19.4),
+    (9.2, 11.0, 13.0, 15.4, 19.1),
+    (8.9, 10.7, 12.7, 15.2, 18.9),
+    (8.6, 10.4, 12.5, 15.0, 18.7),
+)
+
+
+def soybean_equilibrium_moisture_frac(
+    air_temp_mean_c: float, relative_humidity_pct: float,
+) -> float:
+    """Bilinearly interpolate the published soybean wet-basis EMC table.
+
+    The table covers 0--26.67 C and 50--90% RH. Outside that domain the nearest
+    boundary is used, rather than claiming an unsupported extrapolation. The
+    daily engine adds a diagnostic tag when it has to use a boundary value.
+    """
+    if not isfinite(air_temp_mean_c):
+        raise ValueError("Soybean EMC requires finite air temperature")
+    if not isfinite(relative_humidity_pct) or not 0 <= relative_humidity_pct <= 100:
+        raise ValueError("Soybean EMC requires relative humidity in [0, 100]")
+
+    def bracket(knots: tuple[float, ...], value: float) -> tuple[int, float]:
+        value = max(knots[0], min(knots[-1], value))
+        for index in range(len(knots) - 1):
+            if value <= knots[index + 1]:
+                return index, (value - knots[index]) / (knots[index + 1] - knots[index])
+        raise AssertionError("Clamped interpolation input has no bracket")
+
+    ti, tw = bracket(_SOYBEAN_EMC_TEMPERATURE_F, air_temp_mean_c * 1.8 + 32.0)
+    hi, hw = bracket(_SOYBEAN_EMC_RH_PCT, relative_humidity_pct)
+    lower = _SOYBEAN_EMC_WET_BASIS_PCT[ti]
+    upper = _SOYBEAN_EMC_WET_BASIS_PCT[ti + 1]
+    lower_rh = lower[hi] + hw * (lower[hi + 1] - lower[hi])
+    upper_rh = upper[hi] + hw * (upper[hi + 1] - upper[hi])
+    return (lower_rh + tw * (upper_rh - lower_rh)) / 100.0
 
 
 class GrowthStage(str, Enum):
@@ -82,6 +129,16 @@ class YieldRecoveryParameters:
     rain_rewetting_per_mm: float = 0.0015
     max_daily_rewetting: float = 0.035
 
+    # Explicit opt-in: historic scenarios retain their exact drydown equation.
+    grain_moisture_mode: str = "legacy"
+    # First-order water/dry-matter-ratio relaxation toward the EMC table above.
+    # Five days is an engineering time constant, NOT a calibrated local field
+    # coefficient. ISU field observations support rapid initial drying and
+    # slowing near equilibrium (about 3.2 percentage points/day in the first
+    # 12 days after maturity), not this particular constant:
+    # https://crops.extension.iastate.edu/cropnews/2017/09/how-fast-do-soybeans-dry-down-field
+    soybean_equilibrium_time_constant_days: float = 5.0
+
     # Delayed harvest and shattering.
     shatter_delay_grace_days: int = 7
     shatter_loss_per_day_after_grace: float = 0.003
@@ -112,10 +169,19 @@ class YieldRecoveryParameters:
     # Unit conversion.
     # 1 bushel soybean = 60 lb at 13% moisture.
     kg_per_bushel_soybean: float = 27.2155
+    bushel_reporting_enabled: bool = True
 
-    # Native crop models output dry matter. Legacy scenarios historically
-    # supplied an empirical as-harvested yield proxy, so keep their old basis.
+    # WOFOST TWSO is dry matter, unlike the old empirical wet-yield proxy.
     biological_yield_is_dry_matter: bool = False
+
+    def __post_init__(self) -> None:
+        if self.grain_moisture_mode not in {"legacy", "soybean_equilibrium"}:
+            raise ValueError("Unknown grain_moisture_mode")
+        if (
+            not isfinite(self.soybean_equilibrium_time_constant_days)
+            or self.soybean_equilibrium_time_constant_days <= 0
+        ):
+            raise ValueError("soybean_equilibrium_time_constant_days must be positive and finite")
 
 
 @dataclass
@@ -125,6 +191,9 @@ class YieldWeatherInput:
     rain_mm: float
     solar_rad_mj_m2: float
     wind_ms: float
+    # None preserves callers that predate humidity-aware grain moisture. It is
+    # accepted by the legacy mode, but never fabricated in the opt-in mode.
+    relative_humidity_pct: float | None = None
 
 
 @dataclass
@@ -204,6 +273,8 @@ class YieldRecoveryState:
     harvest_date: date | None = None
     drying_required: bool = False
     quality_discount_fraction: float = 0.0
+    # A harvest settlement does not consume or replace a daily weather tick.
+    last_daily_update_day: date | None = None
 
     tags: list[str] = field(default_factory=list)
 
@@ -265,7 +336,7 @@ class YieldRecoveryEngine:
         harvest_actions_by_ridge: Mapping[int, HarvestAction] | None = None,
     ) -> list[YieldRecoveryDayResult]:
         """
-        Advance yield/recovery state by one day.
+        Advance yield/recovery state at most once per date.
 
         Harvest actions are optional. If no harvest action is provided, the
         model only updates biological potential, grain moisture, and losses.
@@ -301,6 +372,30 @@ class YieldRecoveryEngine:
             for ridge_id, state in self.states.items()
         }
 
+    def settle_harvest(
+        self,
+        weather: YieldWeatherInput,
+        phenology_by_ridge: Mapping[int, YieldPhenologyInput],
+        growth_by_ridge: Mapping[int, YieldGrowthInput],
+        harvest_actions_by_ridge: Mapping[int, HarvestAction],
+        stress_by_ridge: Mapping[int, YieldStressInput] | None = None,
+    ) -> list[YieldRecoveryDayResult]:
+        """Settle only the selected ridges at their current moisture and losses.
+
+        Harvest consumes no extra day of drying or weather exposure. The normal
+        orchestrator tick remains responsible for daily evolution.
+        """
+        stress_by_ridge = stress_by_ridge or {}
+        return [
+            self._update_ridge_day(
+                self.states[ridge_id], weather, phenology_by_ridge[ridge_id],
+                growth_by_ridge[ridge_id],
+                stress_by_ridge.get(ridge_id, YieldStressInput()), action,
+                advance_daily=False,
+            )
+            for ridge_id, action in harvest_actions_by_ridge.items()
+        ]
+
     def _update_ridge_day(
         self,
         state: YieldRecoveryState,
@@ -309,9 +404,17 @@ class YieldRecoveryEngine:
         growth: YieldGrowthInput,
         stress: YieldStressInput,
         harvest_action: HarvestAction | None,
+        *,
+        advance_daily: bool = True,
     ) -> YieldRecoveryDayResult:
         p = self.params
         tags: list[str] = []
+        if (
+            state.last_daily_update_day is not None
+            and weather.day < state.last_daily_update_day
+        ):
+            raise ValueError("Yield recovery cannot move backwards in date")
+        evolve_daily = advance_daily and state.last_daily_update_day != weather.day
 
         # Biological yield potential is updated from the growth engine until
         # first R8 maturity. After R8, only moisture/loss/recovery terms move.
@@ -330,11 +433,13 @@ class YieldRecoveryEngine:
             tags.append("r8_maturity_reached")
 
         # Update grain moisture and field loss only after R8 and before harvest.
-        if state.r8_reached and not state.harvested:
+        if state.r8_reached and not state.harvested and evolve_daily:
             self._update_grain_moisture(state, weather, tags)
             state.field_loss_fraction = self._field_loss_fraction(
                 state, weather, stress, tags
             )
+        if evolve_daily:
+            state.last_daily_update_day = weather.day
 
         # Harvest if action is provided and pass is completed.
         if harvest_action is not None:
@@ -387,7 +492,9 @@ class YieldRecoveryEngine:
                 state.recovered_yield_g_m2_at_market_moisture, 3
             ),
             recovered_yield_kg_ha_at_market_moisture=round(recovered_kg_ha, 1),
-            recovered_yield_bu_ac_at_market_moisture=round(recovered_bu_ac, 1),
+            recovered_yield_bu_ac_at_market_moisture=(
+                round(recovered_bu_ac, 1) if recovered_bu_ac is not None else None
+            ),
             harvested=state.harvested,
             drying_required=state.drying_required,
             quality_discount_fraction=round(state.quality_discount_fraction, 4),
@@ -403,6 +510,11 @@ class YieldRecoveryEngine:
     ) -> None:
         p = self.params
         assert state.grain_moisture_frac is not None
+        if p.grain_moisture_mode == "soybean_equilibrium":
+            self._update_equilibrium_grain_moisture(state, weather, tags)
+            return
+        if p.grain_moisture_mode != "legacy":
+            raise ValueError("Unknown grain_moisture_mode")
 
         # Daily dry-down increases with solar radiation and wind, and slows with
         # rain/cloudy wet conditions. Rain can rewet mature grain/pods.
@@ -429,6 +541,75 @@ class YieldRecoveryEngine:
         )
 
         rewet = rewetting > 0.002
+        if state.r8_reached:
+            if rewet and not state.last_rain_or_rewetting:
+                state.wet_dry_cycles_after_r8 += 1
+                tags.append("wet_dry_cycle_after_r8")
+            state.last_rain_or_rewetting = rewet
+
+    def _update_equilibrium_grain_moisture(
+        self,
+        state: YieldRecoveryState,
+        weather: YieldWeatherInput,
+        tags: list[str],
+    ) -> None:
+        """Relax toward soybean EMC, with bounded liquid-rain water uptake.
+
+        Air exchange is first order in water per unit dry matter. It never
+        jumps immediately to EMC and cannot overshoot the day's EMC. Rain
+        uptake retains the legacy *engineering* uptake/cap parameters, but is
+        also bounded by actual incoming rainwater (1 mm = 1000 g/m2). Neither
+        the EMC lookup nor water exchange changes seed dry matter or native
+        WOFOST growth. This is a daily approximation; it has no hourly pod,
+        dew, radiation-heating, or canopy-aerodynamics calibration.
+        """
+        p = self.params
+        rh = weather.relative_humidity_pct
+        if rh is None:
+            raise ValueError("soybean_equilibrium grain moisture requires observed relative_humidity_pct")
+        tau = p.soybean_equilibrium_time_constant_days
+        if not isfinite(tau) or tau <= 0:
+            raise ValueError("soybean_equilibrium_time_constant_days must be positive and finite")
+        emc = soybean_equilibrium_moisture_frac(weather.air_temp_mean_c, rh)
+        temp_f = weather.air_temp_mean_c * 1.8 + 32.0
+        if not 32.0 <= temp_f <= 80.0 or not 50.0 <= rh <= 90.0:
+            tags.append("soybean_emc_input_clamped_to_published_table")
+        tags.append("soybean_equilibrium_moisture")
+
+        previous = state.grain_moisture_frac
+        assert previous is not None
+        previous_water_ratio = previous / (1.0 - previous)
+        equilibrium_water_ratio = emc / (1.0 - emc)
+        air_water_ratio = equilibrium_water_ratio + (
+            previous_water_ratio - equilibrium_water_ratio
+        ) * exp(-1.0 / tau)
+        air_moisture = air_water_ratio / (1.0 + air_water_ratio)
+
+        # Rain is an external water input, not a reset to an arbitrary wet
+        # moisture. Limit both the requested wet-basis rise and water mass.
+        rain_mm = max(0.0, weather.rain_mm)
+        requested_rise = min(p.max_daily_rewetting, p.rain_rewetting_per_mm * rain_mm)
+        requested_moisture = min(p.max_field_grain_moisture, air_moisture + requested_rise)
+        dry_mass = max(0.0, state.biological_yield_g_m2)
+        if not p.biological_yield_is_dry_matter:
+            dry_mass *= 1.0 - p.market_moisture_frac
+        if dry_mass > 0 and requested_moisture > air_moisture:
+            requested_water = dry_mass * (
+                requested_moisture / (1.0 - requested_moisture) - air_water_ratio
+            )
+            rain_water = min(requested_water, rain_mm * 1000.0)
+            if rain_water < requested_water:
+                tags.append("rain_rewetting_limited_by_incoming_water")
+            air_water_ratio += rain_water / dry_mass
+        state.grain_moisture_frac = self._clip(
+            air_water_ratio / (1.0 + air_water_ratio),
+            p.min_field_grain_moisture,
+            p.max_field_grain_moisture,
+        )
+
+        # Humid air can also rewet grain. Count the observed net wetting, not
+        # every rainy day regardless of whether the grain actually got wetter.
+        rewet = state.grain_moisture_frac - previous > 0.002
         if state.r8_reached:
             if rewet and not state.last_rain_or_rewetting:
                 state.wet_dry_cycles_after_r8 += 1
@@ -512,9 +693,10 @@ class YieldRecoveryEngine:
 
         recovered_as_harvested = harvestable_g_m2 * (1.0 - machine_loss)
 
-        # Native biological mass is already dry matter; convert it directly
-        # to grain at market moisture. Legacy proxies retain their historical
-        # wet-grain discount and below-market dry-down behavior.
+        # Convert recovered mass to the scenario's effective market yield basis.
+        # Wet grain is discounted to market moisture. Grain already drier than
+        # market moisture is not "rewetted" for a bonus; the model keeps the
+        # in-field dry-down as effective weight loss.
         field_moisture = state.grain_moisture_frac
         if p.biological_yield_is_dry_matter:
             market_mass = recovered_as_harvested / (1.0 - p.market_moisture_frac)
@@ -545,7 +727,9 @@ class YieldRecoveryEngine:
 
         tags.append("harvest_completed")
 
-    def _kg_ha_to_bu_ac(self, kg_ha: float) -> float:
+    def _kg_ha_to_bu_ac(self, kg_ha: float) -> float | None:
+        if not self.params.bushel_reporting_enabled:
+            return None
         # 1 ha = 2.47105 acres.
         # bu/ac = kg/ha / kg_per_bushel / 2.47105
         return kg_ha / self.params.kg_per_bushel_soybean / 2.47105

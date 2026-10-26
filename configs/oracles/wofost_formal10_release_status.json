@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "scope": "Ten selected original tasks, with independent _V2 WOFOST files. Nine are calibrated; flowering nutrition remains uncalibrated. Original IDs are restored legacy scenes.",
+  "revised_scenario_numbers": [
+    1,
+    2,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "retained_uncalibrated": {
+    "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2": {
+      "number": 3,
+      "source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py",
+      "source_sha256_before_this_revision": "52881b3807ffc2a54f9962f0cb087266bf5758cfbf234fe7eb9a2a516bc90869",
+      "core_task": "Low nutrient carryover, weak flowering-stage growth, and need-based nutritional management.",
+      "status": "retained_uncalibrated",
+      "reason": "With the official soybean nitrogen fixation fraction0.8 retained, controlled flowering-stage nitrogen applications changed final native grain yield by at most0.072%. RFRGRL is a juvenile exponential leaf-area growth factor, and its mapped nutrient_index cannot alone diagnose flowering-stage nitrogen deficiency.",
+      "user_decision": "Do not add a nutrition or nitrogen-fixation limitation mechanism this round. Keep the original scenario file unchanged and mark it uncalibrated.",
+      "legacy_executable_is_not_new_calibration_acceptance": true,
+      "original_scenario_id": "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition",
+      "current_source_sha256": "373e3406abb2fc365797c4a52d595c46da87854b348cc6981fce3449e77f30f8",
+      "version_split_note": "Only identity and explicit calibration-status metadata changed; the uncalibrated WOFOST farming plan is not counted as accepted.",
+      "source_sha256_before_agent_detail": "d00daac0ef897e314b20b50335a4d9cd91dbb204b77cda300bdf0b2bde76e56b",
+      "agent_detail_note": "Authorized public Agent task instructions added; the uncalibrated world, mechanisms and fixed farming plan are unchanged."
+    }
+  },
+  "version_manifest": "configs/oracles/wofost_scenario_versions.json"
+}

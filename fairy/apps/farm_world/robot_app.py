@@ -32,9 +32,9 @@ _BATTERY_PER_INSPECTION = 20.0  # % per ridge inspection
 _CHARGE_DURATION_S = 60 * 60  # 60 minutes to full charge
 
 
-def _inspect_duration() -> int:
+def _inspect_duration(field_length_m: float = FIELD_LENGTH_M) -> int:
     """Round-trip walk time for one ridge inspection (out and back)."""
-    return int(FIELD_LENGTH_M * 2 / _ROBOT_SPEED_MS) + _ROBOT_SETUP_S
+    return int(field_length_m * 2 / _ROBOT_SPEED_MS) + _ROBOT_SETUP_S
 
 
 class RobotApp(App):
@@ -50,6 +50,13 @@ class RobotApp(App):
             description="Zhiyuan D1 Max #1 — ground-level pest/disease inspection robot",
         )
     """
+
+    def _advance_operation_time(self, seconds: float) -> None:
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            environment.advance_time(seconds)
+        else:
+            self.time_manager.add_offset(seconds)
 
     def __init__(
         self,
@@ -84,6 +91,7 @@ class RobotApp(App):
             "charging": self._charging,
             "charge_session": self._serialize_charge_session(),
             "inspection_log": list(self._inspection_log),
+            "rng_state": self.rng.getstate(),
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
@@ -96,6 +104,9 @@ class RobotApp(App):
         self._inspection_log = [
             dict(item) for item in state_dict.get("inspection_log", [])
         ]
+        if "rng_state" in state_dict:
+            from fairy.apps.farm_world.assets import tuple_tree
+            self.rng.setstate(tuple_tree(state_dict["rng_state"]))
 
     def reset(self) -> None:
         super().reset()
@@ -121,13 +132,13 @@ class RobotApp(App):
         Use this to ground-truth anomalies flagged by drone surveys.
 
         Args:
-            ridge_id:  Ridge to inspect (0-63).
+            ridge_id:  Ridge to inspect (within the configured farm).
         """
         self._sync_charge_state()
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
-        if self._battery_pct < 15.0:
-            return {"error": f"Battery {self._battery_pct}% below minimum 15%"}
+        if self._battery_pct < _BATTERY_PER_INSPECTION:
+            return {"error": f"Battery {self._battery_pct}% below required {_BATTERY_PER_INSPECTION}%"}
         if self._charging:
             return {"error": "Robot is currently charging"}
 
@@ -135,8 +146,8 @@ class RobotApp(App):
 
         # Execute
         self._battery_pct = round(self._battery_pct - _BATTERY_PER_INSPECTION, 1)
-        duration = _inspect_duration()
-        self.time_manager.add_offset(duration)
+        duration = _inspect_duration(self._farm_world_app.field_length_m)
+        self._advance_operation_time(duration)
         ridge = self._farm_world_app.get_ridge(ridge_id)
         result = {
             "ridge_id": ridge_id,
@@ -185,7 +196,7 @@ class RobotApp(App):
         an aerial drone survey flagged an anomaly to confirm cause.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
+            start_ridge: First ridge of the range (within the configured farm).
             end_ridge:   Last ridge (inclusive, >= start_ridge).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="pest")
@@ -203,7 +214,7 @@ class RobotApp(App):
         and disease confidence scores per ridge in one pass.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
+            start_ridge: First ridge of the range (within the configured farm).
             end_ridge:   Last ridge (inclusive, >= start_ridge).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="crop_health")
@@ -220,7 +231,7 @@ class RobotApp(App):
         0.7 typically indicates a replant decision.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
+            start_ridge: First ridge of the range (within the configured farm).
             end_ridge:   Last ridge (inclusive, >= start_ridge).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="emergence")
@@ -361,18 +372,19 @@ class RobotApp(App):
 
         wet_ground = self._weather_app.rainfall_mm > 0.0
         ridges = list(range(start_ridge, end_ridge + 1))
-        # Coverage cap (typical ~5 ridges per pass on this scale of robot).
+        # The physical observation device may inspect fewer ridges than the
+        # travelling robot. Never charge/report coverage the model cannot sample.
         max_covered = 8
-        covered_ridges = ridges[:max_covered]
-        battery_used = round(_BATTERY_PER_INSPECTION * len(covered_ridges) / 4.0, 1)
-        if self._battery_pct - battery_used < 10.0:
-            covered_ridges = covered_ridges[
-                : max(1, int(self._battery_pct / battery_used * len(covered_ridges)))
-            ]
-            battery_used = round(_BATTERY_PER_INSPECTION * len(covered_ridges) / 4.0, 1)
+        if self._farm_world_app.physics_active:
+            max_covered = min(max_covered, self._farm_world_app.physics.observation_model.params.ground_inspection_max_ridges)
+        available_ridges = max(0, int((self._battery_pct - 10.0) // 5.0))
+        covered_ridges = ridges[:min(max_covered, available_ridges)]
+        if not covered_ridges:
+            return {"error": "Battery cannot inspect one ridge and retain return reserve"}
+        battery_used = 5.0 * len(covered_ridges)
         self._battery_pct = round(self._battery_pct - battery_used, 1)
-        duration = _inspect_duration() * len(covered_ridges)
-        self.time_manager.add_offset(duration)
+        duration = _inspect_duration(self._farm_world_app.field_length_m) * len(covered_ridges)
+        self._advance_operation_time(duration)
 
         # Build per-ridge observations.
         per_ridge: dict[int, dict[str, Any]] = {}
@@ -381,9 +393,7 @@ class RobotApp(App):
             physics = self._farm_world_app.physics
             from fairy.physics import HiddenRidgeTruth
 
-            today = datetime.fromtimestamp(
-                float(self.time_manager.time()), tz=timezone.utc
-            ).date()
+            today = self._farm_world_app.simulation_date()
             truth_by_ridge = {}
             for rid in covered_ridges:
                 soil = physics.soil.states[rid]
@@ -434,25 +444,37 @@ class RobotApp(App):
                     "weed_pressure_band": weed.get("weed_pressure_band", "unknown"),
                     "stand_fraction": round(float(stand_fraction), 3),
                 }
+                if modality == "crop_health":
+                    # Noisy ordinal leaf-color diagnosis; expose a simulated
+                    # scouting observation rather than the nutrient truth.
+                    nutrition_signal = physics.management.states[rid].nutrient_index + self.rng.uniform(-0.04, 0.04)
+                    per_ridge[rid]["leaf_nutrition_band"] = (
+                        "unavailable" if not physics.canopy.states[rid].initialized else
+                        "deficient" if nutrition_signal < 0.78 else "adequate")
         else:
             # Legacy fallback: read hidden ridge fields directly with mock confidence.
             for rid in covered_ridges:
                 ridge = self._farm_world_app.get_ridge(rid)
+                # Legacy RidgeState models pest/disease pressure, but has no
+                # weed state. Missing evidence must not imply weed absence.
+                weed_pressure = getattr(ridge, "weed_pressure", None)
                 per_ridge[rid] = {
                     "ridge_id": rid,
                     "pest_present": ridge.pest_pressure >= 0.2,
                     "pest_confidence": 0.8 if ridge.pest_pressure >= 0.2 else 0.4,
                     "disease_present": ridge.disease_pressure >= 0.2,
                     "disease_confidence": 0.8 if ridge.disease_pressure >= 0.2 else 0.4,
-                    "weed_present": ridge.weed_pressure >= 0.2,
-                    "weed_confidence": 0.8 if ridge.weed_pressure >= 0.2 else 0.4,
-                    "weed_pressure_band": self._pressure_band(ridge.weed_pressure),
+                    "weed_present": None if weed_pressure is None else weed_pressure >= 0.2,
+                    "weed_confidence": (0.0 if weed_pressure is None else
+                                        0.8 if weed_pressure >= 0.2 else 0.4),
+                    "weed_pressure_band": ("unknown" if weed_pressure is None else
+                                           self._pressure_band(weed_pressure)),
                     "stand_fraction": 1.0 if ridge.planted else 0.0,
                 }
 
         # Trim per-modality summary returned to the agent.
         result: dict[str, Any] = {
-            "status": "ok",
+            "status": "partial" if len(covered_ridges) < len(ridges) else "ok",
             "modality": modality,
             "covered_ridges": covered_ridges,
             "uncovered_ridges": ridges[len(covered_ridges) :],

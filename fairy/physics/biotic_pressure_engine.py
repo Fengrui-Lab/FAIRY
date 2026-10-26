@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from math import exp
+from math import exp, isfinite
 from typing import Mapping
 
 
@@ -36,6 +36,33 @@ class TreatmentType(str, Enum):
     MECHANICAL_WEED = "MECHANICAL_WEED"
     INSECTICIDE = "INSECTICIDE"
     FUNGICIDE = "FUNGICIDE"
+
+
+# Simulation working-fluid references inherited from FAIRY's tool scenarios.
+# These are not product labels, active-ingredient rates or agronomic advice.
+REFERENCE_WORKING_FLUID_L_PER_RIDGE = {
+    TreatmentType.HERBICIDE: 8.0,
+    TreatmentType.INSECTICIDE: 8.0,
+    TreatmentType.FUNGICIDE: 3.8,
+}
+
+
+def chemical_dose_efficacy(
+    treatment_type: TreatmentType | str, liters_per_ridge: float, *,
+    reference_liters_per_ridge: float | None = None,
+) -> float:
+    """Scale simulated treatment strength to its declared working-fluid reference."""
+    kind = TreatmentType(treatment_type)
+    if kind not in REFERENCE_WORKING_FLUID_L_PER_RIDGE:
+        raise ValueError("Mechanical weed control has no chemical working-fluid dose")
+    if (type(liters_per_ridge) not in (int, float) or not isfinite(liters_per_ridge)
+            or liters_per_ridge < 0):
+        raise ValueError("Chemical working-fluid dose must be finite and non-negative")
+    reference = (REFERENCE_WORKING_FLUID_L_PER_RIDGE[kind]
+                 if reference_liters_per_ridge is None else reference_liters_per_ridge)
+    if type(reference) not in (int, float) or not isfinite(reference) or reference <= 0:
+        raise ValueError("Chemical working-fluid reference must be finite and positive")
+    return min(1.0, liters_per_ridge / reference)
 
 
 @dataclass
@@ -78,6 +105,11 @@ class BioticPressureParameters:
     weed_base_growth: float = 0.035
     insect_base_growth: float = 0.025
     disease_base_growth: float = 0.020
+
+    # Background immigration/seedbank input. Zero gives closed scenario worlds:
+    # favorable weather alone cannot create pressure without a declared source.
+    # The historical0.01 default preserves existing scenario trajectories.
+    recruitment_fraction: float = 0.01
 
     # Natural daily decay when conditions are unfavorable.
     weed_decay: float = 0.010
@@ -131,6 +163,12 @@ class BioticPressureParameters:
     # Aphid-equivalent diagnostic mapping.
     # severity 0.5 maps near 250 aphids/plant.
     aphid_equiv_at_severity_half: float = 250.0
+
+    def __post_init__(self) -> None:
+        if (type(self.recruitment_fraction) not in (int, float)
+                or not isfinite(self.recruitment_fraction)
+                or not 0 <= self.recruitment_fraction <= 1):
+            raise ValueError("recruitment_fraction must be finite in[0,1]")
 
 
 @dataclass
@@ -189,9 +227,15 @@ class BioticSoilInput:
 
 @dataclass
 class BioticCropInput:
-    stage: GrowthStage
+    stage: GrowthStage | str
     canopy_cover: float = 0.0
     seed_type: str | None = None
+    # Explicit crop responses bypass soybean stage assumptions. None keeps
+    # the existing soybean response and its original diagnostic semantics.
+    weed_stage_multiplier: float | None = None
+    insect_stage_multiplier: float | None = None
+    disease_stage_multiplier: float | None = None
+    aphid_diagnostics_enabled: bool = True
 
 
 @dataclass
@@ -206,6 +250,12 @@ class TreatmentApplication:
 
     treatment_type: TreatmentType
     efficacy_multiplier: float = 1.0
+
+    def __post_init__(self) -> None:
+        self.treatment_type = TreatmentType(self.treatment_type)
+        if (type(self.efficacy_multiplier) not in (int, float)
+                or not isfinite(self.efficacy_multiplier) or self.efficacy_multiplier < 0):
+            raise ValueError("Treatment efficacy must be finite and non-negative")
 
 
 @dataclass
@@ -222,8 +272,24 @@ class BioticPressureState:
     cumulative_weed_pressure: float = 0.0
     cumulative_insect_pressure: float = 0.0
     cumulative_disease_pressure: float = 0.0
+    # Sub-daily treatments leave this unchanged; only a real daily tick sets it.
+    last_daily_update_day: date | None = None
+    # None restores historical snapshots with an active full-strength window.
+    herbicide_residual_strength: float | None = None
+    insecticide_residual_strength: float | None = None
+    fungicide_residual_strength: float | None = None
 
     tags: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        for kind in ("herbicide", "insecticide", "fungicide"):
+            days = getattr(self, f"{kind}_residual_days_left")
+            strength = getattr(self, f"{kind}_residual_strength")
+            if strength is None:
+                strength = float(days > 0)
+            if not isfinite(strength) or not 0 <= strength <= 1:
+                raise ValueError("Residual strength must be finite and in [0, 1]")
+            setattr(self, f"{kind}_residual_strength", float(strength) if days > 0 else 0.0)
 
 
 @dataclass
@@ -290,9 +356,14 @@ class BioticPressureEngine:
         crop_by_ridge: Mapping[int, BioticCropInput],
         soil_by_ridge: Mapping[int, BioticSoilInput] | None = None,
         treatments_by_ridge: Mapping[int, list[TreatmentApplication]] | None = None,
+        *,
+        advance_daily: bool = True,
     ) -> list[BioticPressureDayResult]:
         """
-        Advance all ridge biotic-pressure states by one day.
+        Apply treatments; evolve pressure at most once per date.
+
+        ``advance_daily=False`` applies new treatments without any daily growth,
+        cumulative exposure, or residual aging.
         """
         soil_by_ridge = soil_by_ridge or {}
         treatments_by_ridge = treatments_by_ridge or {}
@@ -306,7 +377,10 @@ class BioticPressureEngine:
             soil = soil_by_ridge.get(ridge_id, BioticSoilInput())
             treatments = treatments_by_ridge.get(ridge_id, [])
             results.append(
-                self._update_ridge_day(state, weather, crop, soil, treatments)
+                self._update_ridge_day(
+                    state, weather, crop, soil, treatments,
+                    advance_daily=advance_daily,
+                )
             )
 
         return results
@@ -343,9 +417,17 @@ class BioticPressureEngine:
         crop: BioticCropInput,
         soil: BioticSoilInput,
         treatments: list[TreatmentApplication],
+        *,
+        advance_daily: bool = True,
     ) -> BioticPressureDayResult:
         p = self.params
         tags: list[str] = []
+        if (
+            state.last_daily_update_day is not None
+            and weather.day < state.last_daily_update_day
+        ):
+            raise ValueError("Biotic pressure cannot move backwards in date")
+        evolve_daily = advance_daily and state.last_daily_update_day != weather.day
 
         # Apply treatments at the start of the day. If it rains enough on the
         # same day, reduce efficacy to represent wash-off / poor application.
@@ -357,11 +439,14 @@ class BioticPressureEngine:
             ):
                 efficacy *= 1.0 - p.wash_off_penalty
                 tags.append("treatment_washoff_risk")
+            if efficacy <= 0.0:
+                tags.append("treatment_without_effect")
+                continue
 
             if treatment.treatment_type == TreatmentType.HERBICIDE:
                 reduction = p.herbicide_initial_reduction * efficacy
                 state.weed_pressure *= 1.0 - reduction
-                state.herbicide_residual_days_left = p.herbicide_residual_days
+                self._open_residual(state, "herbicide", p.herbicide_residual_days, efficacy)
                 tags.append("herbicide_applied")
 
             elif treatment.treatment_type == TreatmentType.MECHANICAL_WEED:
@@ -372,13 +457,13 @@ class BioticPressureEngine:
             elif treatment.treatment_type == TreatmentType.INSECTICIDE:
                 reduction = p.insecticide_initial_reduction * efficacy
                 state.insect_pressure *= 1.0 - reduction
-                state.insecticide_residual_days_left = p.insecticide_residual_days
+                self._open_residual(state, "insecticide", p.insecticide_residual_days, efficacy)
                 tags.append("insecticide_applied")
 
             elif treatment.treatment_type == TreatmentType.FUNGICIDE:
                 reduction = p.fungicide_initial_reduction * efficacy
                 state.disease_pressure *= 1.0 - reduction
-                state.fungicide_residual_days_left = p.fungicide_residual_days
+                self._open_residual(state, "fungicide", p.fungicide_residual_days, efficacy)
                 tags.append("fungicide_applied")
 
             else:
@@ -400,44 +485,55 @@ class BioticPressureEngine:
 
         # Residual treatments suppress new growth pressure for a limited time.
         if state.herbicide_residual_days_left > 0:
-            weed_suitability *= 1.0 - p.herbicide_residual_suppression
-            state.herbicide_residual_days_left -= 1
+            weed_suitability *= 1.0 - p.herbicide_residual_suppression * state.herbicide_residual_strength
+            if evolve_daily:
+                state.herbicide_residual_days_left -= 1
+                if state.herbicide_residual_days_left == 0:
+                    state.herbicide_residual_strength = 0.0
             tags.append("herbicide_residual_active")
 
         if state.insecticide_residual_days_left > 0:
-            insect_suitability *= 1.0 - p.insecticide_residual_suppression
-            state.insecticide_residual_days_left -= 1
+            insect_suitability *= 1.0 - p.insecticide_residual_suppression * state.insecticide_residual_strength
+            if evolve_daily:
+                state.insecticide_residual_days_left -= 1
+                if state.insecticide_residual_days_left == 0:
+                    state.insecticide_residual_strength = 0.0
             tags.append("insecticide_residual_active")
 
         if state.fungicide_residual_days_left > 0:
-            disease_suitability *= 1.0 - p.fungicide_residual_suppression
-            state.fungicide_residual_days_left -= 1
+            disease_suitability *= 1.0 - p.fungicide_residual_suppression * state.fungicide_residual_strength
+            if evolve_daily:
+                state.fungicide_residual_days_left -= 1
+                if state.fungicide_residual_days_left == 0:
+                    state.fungicide_residual_strength = 0.0
             tags.append("fungicide_residual_active")
 
         # Logistic-like pressure growth under favorable conditions; decay under
         # unfavorable conditions. Pressures remain in [0, 1].
-        state.weed_pressure = self._update_pressure(
-            pressure=state.weed_pressure,
-            suitability=weed_suitability,
-            growth_rate=p.weed_base_growth,
-            decay_rate=p.weed_decay,
-        )
-        state.insect_pressure = self._update_pressure(
-            pressure=state.insect_pressure,
-            suitability=insect_suitability,
-            growth_rate=p.insect_base_growth,
-            decay_rate=p.insect_decay,
-        )
-        state.disease_pressure = self._update_pressure(
-            pressure=state.disease_pressure,
-            suitability=disease_suitability,
-            growth_rate=p.disease_base_growth,
-            decay_rate=p.disease_decay,
-        )
+        if evolve_daily:
+            state.weed_pressure = self._update_pressure(
+                pressure=state.weed_pressure,
+                suitability=weed_suitability,
+                growth_rate=p.weed_base_growth,
+                decay_rate=p.weed_decay,
+            )
+            state.insect_pressure = self._update_pressure(
+                pressure=state.insect_pressure,
+                suitability=insect_suitability,
+                growth_rate=p.insect_base_growth,
+                decay_rate=p.insect_decay,
+            )
+            state.disease_pressure = self._update_pressure(
+                pressure=state.disease_pressure,
+                suitability=disease_suitability,
+                growth_rate=p.disease_base_growth,
+                decay_rate=p.disease_decay,
+            )
 
-        state.cumulative_weed_pressure += state.weed_pressure
-        state.cumulative_insect_pressure += state.insect_pressure
-        state.cumulative_disease_pressure += state.disease_pressure
+            state.cumulative_weed_pressure += state.weed_pressure
+            state.cumulative_insect_pressure += state.insect_pressure
+            state.cumulative_disease_pressure += state.disease_pressure
+            state.last_daily_update_day = weather.day
 
         if state.weed_pressure > 0.35:
             tags.append("weed_pressure_high")
@@ -447,11 +543,12 @@ class BioticPressureEngine:
             tags.append("disease_pressure_high")
 
         biotic_stress = self._biotic_stress_multiplier(state)
-        aphid_equiv = self._aphid_equivalent(state.insect_pressure)
+        aphid_equiv = (self._aphid_equivalent(state.insect_pressure)
+                       if crop.aphid_diagnostics_enabled else 0.0)
 
         # Treatment threshold diagnostic. This is not an automatic treatment rule.
         # The agent/oracle should still verify scouting, stage, weather, and trend.
-        insect_treatment_recommended = aphid_equiv >= 250.0 and crop.stage in {
+        insect_treatment_recommended = crop.aphid_diagnostics_enabled and aphid_equiv >= 250.0 and crop.stage in {
             GrowthStage.V4_PLUS,
             GrowthStage.R1,
             GrowthStage.R3,
@@ -477,6 +574,24 @@ class BioticPressureEngine:
             tags=tags,
         )
 
+    @staticmethod
+    def _open_residual(state: BioticPressureState, kind: str, days: int, strength: float) -> None:
+        """A weak top-up must not extend an existing stronger protection window."""
+        old_days = getattr(state, f"{kind}_residual_days_left")
+        old_strength = getattr(state, f"{kind}_residual_strength")
+        if old_days <= 0 or strength >= old_strength:
+            setattr(state, f"{kind}_residual_days_left", days)
+            setattr(state, f"{kind}_residual_strength", strength)
+
+    def growth_stress_multiplier(self, ridge_id: int) -> float:
+        """Validated pressure-to-assimilation signal shared with native crop backends."""
+        state = self.states[ridge_id]
+        for name in ("weed_pressure", "insect_pressure", "disease_pressure"):
+            value = getattr(state, name)
+            if not isfinite(value) or not 0 <= value <= 1:
+                raise ValueError(f"Biotic {name} must be finite and in [0, 1]")
+        return self._biotic_stress_multiplier(state)
+
     def _seed_resistance(self, seed_type: str | None) -> SeedBioticResistanceParameters:
         if seed_type is None:
             return SeedBioticResistanceParameters()
@@ -491,6 +606,10 @@ class BioticPressureEngine:
 
     def _weed_suitability(self, crop: BioticCropInput) -> float:
         p = self.params
+
+        if crop.weed_stage_multiplier is not None:
+            canopy_suppression = 1.0 - p.weed_canopy_suppression_strength * self._clip(crop.canopy_cover)
+            return self._clip(crop.weed_stage_multiplier * canopy_suppression, 0.0, 1.5)
 
         if crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
             return 0.6
@@ -519,7 +638,9 @@ class BioticPressureEngine:
     ) -> float:
         p = self.params
 
-        if crop.stage in {
+        if crop.insect_stage_multiplier is not None:
+            stage_factor = crop.insect_stage_multiplier
+        elif crop.stage in {
             GrowthStage.NOT_PLANTED,
             GrowthStage.PLANTED_PRE_EMERGENCE,
             GrowthStage.VE,
@@ -560,7 +681,9 @@ class BioticPressureEngine:
     ) -> float:
         p = self.params
 
-        if crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
+        if crop.disease_stage_multiplier is not None:
+            stage_factor = crop.disease_stage_multiplier
+        elif crop.stage in {GrowthStage.NOT_PLANTED, GrowthStage.PLANTED_PRE_EMERGENCE}:
             stage_factor = 0.45
         elif crop.stage in {
             GrowthStage.VE,
@@ -602,9 +725,9 @@ class BioticPressureEngine:
         if suitability > 0.35:
             # Logistic-like growth. Suitability modulates growth rate.
             pressure += growth_rate * suitability * pressure * (1.0 - pressure)
-            # Low initial pressure should still be able to increase under favorable
-            # conditions, so add a small recruitment term.
-            pressure += 0.01 * growth_rate * suitability
+            # Background recruitment is explicit; a closed world can require
+            # scenario inoculation instead of creating pressure from zero.
+            pressure += self.params.recruitment_fraction * growth_rate * suitability
         else:
             pressure -= decay_rate * (1.0 - suitability) * pressure
 

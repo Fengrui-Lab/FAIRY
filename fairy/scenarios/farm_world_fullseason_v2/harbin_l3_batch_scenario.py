@@ -337,6 +337,8 @@ def build_batch_events(scenario: Scenario, spec: ScenarioSpec) -> None:
                     zone_wait_days,
                     f"o_wait_{label}_harvest_zone",
                 )
+            # Leaf workflows may add a fixed compatibility wait; default no-op.
+            prev = _after_named_step(scenario, prev, f"before_{label}_harvest_checks")
             prev = _harvest_checks(weather, sensor, farm_world, prev, label, start, end)
             prev = harvest_range(
                 tractor,
@@ -556,14 +558,15 @@ def _wait_check_window(
     )
     if window == "emergence":
         prev = (
-            robot.inspect_emergence(0, 15)
+            # A representative sample within the current four-ridge capacity.
+            robot.inspect_emergence(0, 3)
             .oracle()
             .with_id(f"o_{window}_routine_ground_emergence_sample")
             .depends_on(prev, delay_seconds=2)
         )
     else:
         prev = (
-            robot.inspect_crop_health(0, 15)
+            robot.inspect_crop_health(0, 3)
             .oracle()
             .with_id(f"o_{window}_routine_ground_health_sample")
             .depends_on(prev, delay_seconds=2)
@@ -803,14 +806,14 @@ def _diagnose_target(
     )
     if action.kind in {"insecticide"}:
         prev = (
-            robot.inspect_pests(action.start, action.end)
+            robot.inspect_pests(action.start, min(action.end, action.start + 3))
             .oracle()
             .with_id(f"{prefix}_routine_ground_pest_confirmation")
             .depends_on(prev, delay_seconds=2)
         )
     elif action.kind == "replant":
         prev = (
-            robot.inspect_emergence(action.start, action.end)
+            robot.inspect_emergence(action.start, min(action.end, action.start + 3))
             .oracle()
             .with_id(f"{prefix}_routine_ground_emergence_confirmation")
             .depends_on(prev, delay_seconds=2)
@@ -839,7 +842,7 @@ def _diagnose_target(
             )
     else:
         prev = (
-            robot.inspect_crop_health(action.start, action.end)
+            robot.inspect_crop_health(action.start, min(action.end, action.start + 3))
             .oracle()
             .with_id(f"{prefix}_routine_ground_health_confirmation")
             .depends_on(prev, delay_seconds=2)

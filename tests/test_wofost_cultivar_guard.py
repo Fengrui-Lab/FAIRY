@@ -16,6 +16,7 @@ def _parameter_backend(config: WofostConfig) -> WofostBackend:
     """Exercise real parameter resolution without the optional PCSE runtime."""
     backend = object.__new__(WofostBackend)
     backend.config = config
+    backend._cultivar_profiles = {}
     backend._cultivar_profile = (
         load_cultivar_profile(config.cultivar_profile)
         if config.cultivar_profile else None

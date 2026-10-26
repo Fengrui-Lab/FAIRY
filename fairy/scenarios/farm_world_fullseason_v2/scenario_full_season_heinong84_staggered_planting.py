@@ -16,6 +16,9 @@ from fairy.apps.farm_world import (
 )
 from fairy.apps.system import SystemApp
 from fairy.scenarios.scenario import Scenario
+from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_scenario_helpers import (
+    initialize_tractor_fuel,
+)
 from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_detailed_briefings import (
     get_detailed_briefing,
 )
@@ -179,7 +182,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
         farm_world._inventory.pesticide_liters = 2000.0
         farm_world._inventory.fuel_liters = 1000.0
 
-        tractor._fuel_tank_l = 120.0
+        initialize_tractor_fuel(self, farm_world, tractor, 120.0)
         tractor._seed_hopper = 0
         tractor._fertilizer_spreader_kg = 0.0
         tractor._pesticide_tank_l = 0.0

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "evidence_package_id": "soybean_drought_contrasts_wang2022_v1",
+  "source": {
+    "id": "wang2022_drought",
+    "title": "Wang et al. (2022), Physiological Response of Soybean Plants to Water Deficit",
+    "url": "https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2021.809692/full",
+    "doi": "10.3389/fpls.2021.809692",
+    "license": "CC BY",
+    "html_sha256": "cf555c85e1f48590063c35522225538010bf806511323d9cf5448b0a5d0e7e60"
+  },
+  "cultivar_classification": {
+    "HEINONG44": "drought tolerant",
+    "HEINONG65": "drought susceptible"
+  },
+  "method": {
+    "development_stage": "R1 flowering",
+    "soil_kg_per_pot": 13,
+    "plants_per_pot": 3,
+    "field_capacity_pct": 42.8,
+    "comparison_after_days": 7,
+    "replicates": 5,
+    "water_withholding_days": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "table_header_observations": {
+    "reported_soil_moisture_pct": [
+      31.5,
+      24.1,
+      22.3,
+      20.8,
+      20.1,
+      15.5,
+      14.7,
+      14.5
+    ],
+    "locator": "Tables2-9 column headings",
+    "method_narrative_conflict": "Narrative swaps the day3/day4 moisture labels (20.1 and20.8). Preserve table order and flag conflict; do not silently repair."
+  },
+  "use_for_fit": false,
+  "caveats": [
+    "Pot water deficits do not identify native DEPNR, root-depth parameters or whole-season field yield.",
+    "No field-soil parameters are replaced by the pot soil field capacity.",
+    "The engineered groups 5/2 are separate assumptions in the profile documents."
+  ]
+}

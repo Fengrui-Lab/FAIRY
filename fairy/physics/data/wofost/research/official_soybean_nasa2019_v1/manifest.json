@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "bundle_id": "official_soybean_nasa2019_v1",
+  "reference_kind": "reproducible_official_model_reference_not_field_trial_replication",
+  "description": "Original official Soybean_901/902/903/905 parameters with pinned public NASA POWER daily weather for four representative regional locations. No cultivar fitting, renaming, yield scaling, or imposed weather perturbation.",
+  "crop_source": {
+    "path": "../../soybean.yaml",
+    "sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+    "upstream_repository": "https://github.com/ajwdewit/WOFOST_crop_parameters",
+    "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+    "upstream_branch": "wofost81",
+    "source_report": "https://edepot.wur.nl/308997",
+    "license": "EUPL as declared by the upstream YAML",
+    "identity_policy": "Keep exact official variety IDs; regional parameter identities are not commercial cultivar names."
+  },
+  "weather_period": {
+    "start_date": "2019-03-01",
+    "end_date": "2019-11-30",
+    "day_count": 275,
+    "time_standard": "LST"
+  },
+  "weather_provider": "NASA POWER daily point API; AG community",
+  "weather_evidence_type": "Public gridded meteorological product, not field-station observations from the original crop calibration trial.",
+  "weather_normalization": {
+    "parameter_mapping": {
+      "T2M_MIN": "tmin_c",
+      "T2M_MAX": "tmax_c",
+      "RH2M": "relative_humidity_pct",
+      "WS2M": "wind_2m_m_s",
+      "PRECTOTCORR": "rain_mm",
+      "ALLSKY_SFC_SW_DWN": "shortwave_mj_m2_day"
+    },
+    "multipliers": {
+      "T2M_MIN": 1.0,
+      "T2M_MAX": 1.0,
+      "RH2M": 1.0,
+      "WS2M": 1.0,
+      "PRECTOTCORR": 1.0,
+      "ALLSKY_SFC_SW_DWN": 1.0
+    },
+    "rounding": null,
+    "missing_value_fill": null,
+    "rainfall_redistribution": null,
+    "radiation_adjustment": null,
+    "mean_temperature": "If required, derive (tmin_c + tmax_c) / 2; this is a declared model input derivation, not an independently measured mean."
+  },
+  "soil_and_initial_nitrogen": {
+    "field_observed": false,
+    "status": "Defined separately and explicitly by the formal model-reference world; no measured trial soil or initial nitrogen is claimed here."
+  },
+  "acceptance_scope": [
+    "Native WOFOST parity under identical crop, weather, soil, site, calendar and management inputs.",
+    "Full-season tool workflow execution in the formal world."
+  ],
+  "excluded_claims": [
+    "Reproduction of the original 1993 field trials.",
+    "A measured yield observation for these exact 2019 location-management combinations.",
+    "Validation that model predictions equal real farm yields."
+  ],
+  "rows": [
+    {
+      "id": "lille",
+      "variety": "Soybean_901",
+      "crop_name": "soybean",
+      "official_coverage_region": "Northern-France",
+      "official_metadata": {
+        "Creator": "Allard de Wit",
+        "Contact": "allard.dewit@wur.nl",
+        "Publisher": "Wageningen Environmental Research",
+        "Title": "Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating soybean",
+        "Date": "2022-02-13",
+        "Language": "EN",
+        "Format": "YAML",
+        "Subject": "WOFOST parameters for soybean",
+        "Description": "This file provides parameters for a soybean variety calibrated for Northern France with a sowing date on 28 April, a flowering date on 25 June and a mean date of harvest on 25 September",
+        "Coverage": {
+          "Region": "Northern-France"
+        },
+        "Rights": "European Union Public License (EUPL)",
+        "Keyword": "soybean; Glycine max",
+        "Contributor": "E.R. Boons-Prins, G.H.J. de Koning, CA. van Diepen, F.W.T. Penning de Vries",
+        "Source": "https://edepot.wur.nl/308997",
+        "Type": "Report"
+      },
+      "sowing_date": "2019-04-28",
+      "sowing_date_basis": "Official variety metadata month/day; 2019 is a model-reference year, not the original calibration trial.",
+      "location": {
+        "name": "Lille",
+        "latitude": 50.63,
+        "longitude": 3.06,
+        "elevation_m": 41.86,
+        "elevation_source": "NASA POWER response geometry, not a measured trial elevation"
+      },
+      "weather_path": "weather/lille_2019.json",
+      "weather_sha256": "b0322825ef8140d714a9724b3933f18954d51541877459d3f9dd48cf7c80a675",
+      "source_path": "raw/nasa_power_lille_20190301_20191130.original.json",
+      "source_sha256": "be349256619eda0c7d33203c9f29fddafc392cc4063bad976a04019c8509d7b6",
+      "source_bytes": 27974,
+      "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CRH2M%2CWS2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&community=AG&longitude=3.06&latitude=50.63&start=20190301&end=20191130&format=JSON",
+      "source_api": {
+        "version": "v2.10.1",
+        "name": "POWER Daily API"
+      },
+      "source_products": [
+        "MERRA2",
+        "SYN1DEG",
+        "POWER"
+      ],
+      "source_units": {
+        "T2M_MIN": "C",
+        "T2M_MAX": "C",
+        "RH2M": "%",
+        "WS2M": "m/s",
+        "PRECTOTCORR": "mm/day",
+        "ALLSKY_SFC_SW_DWN": "MJ/m^2/day"
+      },
+      "row_count": 275,
+      "native_parameters_sha256": "a9534701dae5af6dca63e32f2c03e29666c4f6e23b7f2ff05f20d6188968c6ac",
+      "native_parameter_count": 78,
+      "parameter_overrides": {},
+      "observed_yield": null,
+      "field_validation_available": false
+    },
+    {
+      "id": "clermont_ferrand",
+      "variety": "Soybean_902",
+      "crop_name": "soybean",
+      "official_coverage_region": "Central-France",
+      "official_metadata": {
+        "Creator": "Allard de Wit",
+        "Contact": "allard.dewit@wur.nl",
+        "Publisher": "Wageningen Environmental Research",
+        "Title": "Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating soybean",
+        "Date": "2022-02-13",
+        "Language": "EN",
+        "Format": "YAML",
+        "Subject": "WOFOST parameters for soybean",
+        "Description": "This file provides parameters for a soybean variety calibrated for Central France with a sowing date on 28 April, a flowering date on 25 June and a mean date of harvest on 25 September",
+        "Coverage": {
+          "Region": "Central-France"
+        },
+        "Rights": "European Union Public License (EUPL)",
+        "Keyword": "soybean; Glycine max",
+        "Contributor": "E.R. Boons-Prins, G.H.J. de Koning, CA. van Diepen, F.W.T. Penning de Vries",
+        "Source": "https://edepot.wur.nl/308997",
+        "Type": "Report"
+      },
+      "sowing_date": "2019-04-28",
+      "sowing_date_basis": "Official variety metadata month/day; 2019 is a model-reference year, not the original calibration trial.",
+      "location": {
+        "name": "Clermont-Ferrand",
+        "latitude": 45.78,
+        "longitude": 3.08,
+        "elevation_m": 495.38,
+        "elevation_source": "NASA POWER response geometry, not a measured trial elevation"
+      },
+      "weather_path": "weather/clermont_ferrand_2019.json",
+      "weather_sha256": "3c4266484b0c06d8656ecf021c09506bec4a35302a7e18f86ade9748e795c87f",
+      "source_path": "raw/nasa_power_clermont_ferrand_20190301_20191130.original.json",
+      "source_sha256": "76623ac0679f5aefc5fad0338adbe921d7cb0a9aedaa48e784ed4148497daab9",
+      "source_bytes": 27975,
+      "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CRH2M%2CWS2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&community=AG&longitude=3.08&latitude=45.78&start=20190301&end=20191130&format=JSON",
+      "source_api": {
+        "version": "v2.10.1",
+        "name": "POWER Daily API"
+      },
+      "source_products": [
+        "MERRA2",
+        "SYN1DEG",
+        "POWER"
+      ],
+      "source_units": {
+        "T2M_MIN": "C",
+        "T2M_MAX": "C",
+        "RH2M": "%",
+        "WS2M": "m/s",
+        "PRECTOTCORR": "mm/day",
+        "ALLSKY_SFC_SW_DWN": "MJ/m^2/day"
+      },
+      "row_count": 275,
+      "native_parameters_sha256": "362d200c238f8b9d009ecaab9851dda9e0dad08d35dc9c70920ae03304b03547",
+      "native_parameter_count": 78,
+      "parameter_overrides": {},
+      "observed_yield": null,
+      "field_validation_available": false
+    },
+    {
+      "id": "valladolid",
+      "variety": "Soybean_903",
+      "crop_name": "soybean",
+      "official_coverage_region": "Northern-Spain",
+      "official_metadata": {
+        "Creator": "Allard de Wit",
+        "Contact": "allard.dewit@wur.nl",
+        "Publisher": "Wageningen Environmental Research",
+        "Title": "Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating soybean",
+        "Date": "2022-02-13",
+        "Language": "EN",
+        "Format": "YAML",
+        "Subject": "WOFOST parameters for soybean",
+        "Description": "This file provides parameters for a soybean variety calibrated for Northern Spain with a sowing date on 30 April, a flowering date on 15 June and a mean date of harvest on 5 September",
+        "Coverage": {
+          "Region": "Northern-Spain"
+        },
+        "Rights": "European Union Public License (EUPL)",
+        "Keyword": "soybean; Glycine max",
+        "Contributor": "E.R. Boons-Prins, G.H.J. de Koning, CA. van Diepen, F.W.T. Penning de Vries",
+        "Source": "https://edepot.wur.nl/308997",
+        "Type": "Report"
+      },
+      "sowing_date": "2019-04-30",
+      "sowing_date_basis": "Official variety metadata month/day; 2019 is a model-reference year, not the original calibration trial.",
+      "location": {
+        "name": "Valladolid",
+        "latitude": 41.65,
+        "longitude": -4.72,
+        "elevation_m": 763.82,
+        "elevation_source": "NASA POWER response geometry, not a measured trial elevation"
+      },
+      "weather_path": "weather/valladolid_2019.json",
+      "weather_sha256": "516d3bf4b6f74524f66e3634f6f077fb3d97ad64eb1da9ed9f5d4f6df8eb3627",
+      "source_path": "raw/nasa_power_valladolid_20190301_20191130.original.json",
+      "source_sha256": "8f7ae15319f9028059a05620f4aa2f38071d65bccd365063e6d8e6320329c03a",
+      "source_bytes": 27946,
+      "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CRH2M%2CWS2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&community=AG&longitude=-4.72&latitude=41.65&start=20190301&end=20191130&format=JSON",
+      "source_api": {
+        "version": "v2.10.1",
+        "name": "POWER Daily API"
+      },
+      "source_products": [
+        "MERRA2",
+        "SYN1DEG",
+        "POWER"
+      ],
+      "source_units": {
+        "T2M_MIN": "C",
+        "T2M_MAX": "C",
+        "RH2M": "%",
+        "WS2M": "m/s",
+        "PRECTOTCORR": "mm/day",
+        "ALLSKY_SFC_SW_DWN": "MJ/m^2/day"
+      },
+      "row_count": 275,
+      "native_parameters_sha256": "cd4012d8d6d5bca6f6b17d92b83c2981aa0601acf8b322a73487cfbf94c0e29a",
+      "native_parameter_count": 78,
+      "parameter_overrides": {},
+      "observed_yield": null,
+      "field_validation_available": false
+    },
+    {
+      "id": "bologna",
+      "variety": "Soybean_905",
+      "crop_name": "soybean",
+      "official_coverage_region": "Italy",
+      "official_metadata": {
+        "Creator": "Allard de Wit",
+        "Contact": "allard.dewit@wur.nl",
+        "Publisher": "Wageningen Environmental Research",
+        "Title": "Parameter sets for the WOFOST7.2/WOFOST8.0 model for simulating soybean",
+        "Date": "2022-02-13",
+        "Language": "EN",
+        "Format": "YAML",
+        "Subject": "WOFOST parameters for soybean",
+        "Description": "This file provides parameters for a soybean variety calibrated for Italy with a sowing date on 30 April, a flowering date on 15 June and a mean date of harvest on 25 August.",
+        "Coverage": {
+          "Region": "Italy"
+        },
+        "Rights": "European Union Public License (EUPL)",
+        "Keyword": "soybean; Glycine max",
+        "Contributor": "E.R. Boons-Prins, G.H.J. de Koning, CA. van Diepen, F.W.T. Penning de Vries",
+        "Source": "https://edepot.wur.nl/308997",
+        "Type": "Report"
+      },
+      "sowing_date": "2019-04-30",
+      "sowing_date_basis": "Official variety metadata month/day; 2019 is a model-reference year, not the original calibration trial.",
+      "location": {
+        "name": "Bologna",
+        "latitude": 44.49,
+        "longitude": 11.34,
+        "elevation_m": 198.28,
+        "elevation_source": "NASA POWER response geometry, not a measured trial elevation"
+      },
+      "weather_path": "weather/bologna_2019.json",
+      "weather_sha256": "0a4df1380afa7db1b1f6980adafafb3be754c4a6d28ccf7457e749f16e4495a4",
+      "source_path": "raw/nasa_power_bologna_20190301_20191130.original.json",
+      "source_sha256": "508fc027cdb091d24a9774f824be9fa87fdb7ca9e36fc1d60c25fbf17938bb48",
+      "source_bytes": 28027,
+      "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CRH2M%2CWS2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN&community=AG&longitude=11.34&latitude=44.49&start=20190301&end=20191130&format=JSON",
+      "source_api": {
+        "version": "v2.10.1",
+        "name": "POWER Daily API"
+      },
+      "source_products": [
+        "MERRA2",
+        "SYN1DEG",
+        "POWER"
+      ],
+      "source_units": {
+        "T2M_MIN": "C",
+        "T2M_MAX": "C",
+        "RH2M": "%",
+        "WS2M": "m/s",
+        "PRECTOTCORR": "mm/day",
+        "ALLSKY_SFC_SW_DWN": "MJ/m^2/day"
+      },
+      "row_count": 275,
+      "native_parameters_sha256": "60901fd4d918a3e5f8cbac466901ecdfe63f9293770844996d2e2d4e7a136b3e",
+      "native_parameter_count": 78,
+      "parameter_overrides": {},
+      "observed_yield": null,
+      "field_validation_available": false
+    }
+  ]
+}

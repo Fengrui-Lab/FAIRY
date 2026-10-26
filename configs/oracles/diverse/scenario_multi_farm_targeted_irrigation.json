@@ -1,0 +1,246 @@
+{
+  "step0": {
+    "name": "step0",
+    "content": {
+      "oracle_reason": "Identify local crop, geometry, phase and inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [],
+    "time": null
+  },
+  "step1": {
+    "name": "step1",
+    "content": {
+      "oracle_reason": "Check the station belonging to this farm."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_current_weather",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step0"
+    ],
+    "time": null
+  },
+  "step2": {
+    "name": "step2",
+    "content": {
+      "oracle_reason": "Check complete sensor coverage for this farm's actual ridge count."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step1"
+    ],
+    "time": null
+  },
+  "step3": {
+    "name": "step3",
+    "content": {
+      "oracle_reason": "Check local fuel, hopper and bin capacity."
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step2"
+    ],
+    "time": null
+  },
+  "step4": {
+    "name": "step4",
+    "content": {
+      "oracle_reason": "Target only the deficient ridges within this farm's quota."
+    },
+    "op_type": "WRITE",
+    "tool_name": "FieldOps__irrigate",
+    "tool_args": {
+      "start": 2,
+      "end": 4,
+      "hours": 2.0,
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step3"
+    ],
+    "time": null
+  },
+  "step5": {
+    "name": "step5",
+    "content": {
+      "oracle_reason": "Identify local crop, geometry, phase and inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step4"
+    ],
+    "time": null
+  },
+  "step6": {
+    "name": "step6",
+    "content": {
+      "oracle_reason": "Check the station belonging to this farm."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_current_weather",
+    "tool_args": {
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step5"
+    ],
+    "time": null
+  },
+  "step7": {
+    "name": "step7",
+    "content": {
+      "oracle_reason": "Check complete sensor coverage for this farm's actual ridge count."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step6"
+    ],
+    "time": null
+  },
+  "step8": {
+    "name": "step8",
+    "content": {
+      "oracle_reason": "Check local fuel, hopper and bin capacity."
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {
+      "asset_id": "south_tractor"
+    },
+    "depends_on": [
+      "step7"
+    ],
+    "time": null
+  },
+  "step9": {
+    "name": "step9",
+    "content": {
+      "oracle_reason": "Target only the deficient ridges within this farm's quota."
+    },
+    "op_type": "WRITE",
+    "tool_name": "FieldOps__irrigate",
+    "tool_args": {
+      "start": 7,
+      "end": 10,
+      "hours": 1.5,
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step8"
+    ],
+    "time": null
+  },
+  "step10": {
+    "name": "step10",
+    "content": {
+      "oracle_reason": "Wait for all delayed irrigation deliveries to become observable."
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "hours": 2
+    },
+    "depends_on": [
+      "step9"
+    ],
+    "time": null
+  },
+  "step11": {
+    "name": "step11",
+    "content": {
+      "oracle_reason": "Verify the result with local observations."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step10"
+    ],
+    "time": null
+  },
+  "step12": {
+    "name": "step12",
+    "content": {
+      "oracle_reason": "Verify every local ridge, phase and grain inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step11"
+    ],
+    "time": null
+  },
+  "step13": {
+    "name": "step13",
+    "content": {
+      "oracle_reason": "Verify the result with local observations."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step12"
+    ],
+    "time": null
+  },
+  "step14": {
+    "name": "step14",
+    "content": {
+      "oracle_reason": "Verify every local ridge, phase and grain inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "south"
+    },
+    "depends_on": [
+      "step13"
+    ],
+    "time": null
+  },
+  "step15": {
+    "name": "step15",
+    "content": {
+      "oracle_reason": "Report completion and any deliberately deferred rainy field."
+    },
+    "op_type": "WRITE",
+    "tool_name": "AgentUserInterface__send_message_to_user",
+    "tool_args": {
+      "content": "Completed the requested farm-specific operations; checked every site's final state. Rainy hold sites remain untouched."
+    },
+    "depends_on": [
+      "step14"
+    ],
+    "time": null
+  }
+}

@@ -106,6 +106,12 @@ def restore_farm_checkpoint_state(
     """Restore a checkpoint into a FarmWorldApp/WeatherApp pair."""
 
     physics_state = checkpoint_state.get("physics_state") or {}
+    field_state = dict(checkpoint_state["farm_world_state"])
+    native_view = (field_state.get("crop_backend") or {}).get("backend") == "wofost"
+    if ((native_view or physics_state.get("crop_backend_name") == "wofost")
+            and (physics_state.get("crop_backend_name") != "wofost"
+                 or not physics_state.get("crop_backend_state"))):
+        raise ValueError("WOFOST checkpoint is missing native model history")
     profile_name = physics_state.get("profile_name")
     if profile_name:
         farm_world.configure_physics_profile(
@@ -116,7 +122,12 @@ def restore_farm_checkpoint_state(
             random_seed=physics_state.get("random_seed"),
             **dict(physics_state.get("scenario_metadata") or {}),
         )
-    farm_world.load_state(dict(checkpoint_state["farm_world_state"]))
+    if physics_state:
+        # This codec also restores the complete engines, queues and native
+        # history below. Ordinary flat-view loads cannot make that guarantee.
+        farm_world._load_field_state(field_state)
+    else:
+        farm_world.load_state(field_state)
     if weather_app is not None and checkpoint_state.get("weather_app_state"):
         weather_app.load_state(dict(checkpoint_state["weather_app_state"]))
 
@@ -156,6 +167,7 @@ def restore_farm_checkpoint_state(
         physics.biotic.states = _state_map(
             physics_state.get("biotic_states", {}),
             BioticPressureState,
+            date_fields=("last_daily_update_day",),
         )
         physics.management.states = _state_map(
             physics_state.get("management_states", {}),
@@ -165,7 +177,7 @@ def restore_farm_checkpoint_state(
         physics.yield_recovery.states = _state_map(
             physics_state.get("yield_recovery_states", {}),
             YieldRecoveryState,
-            date_fields=("maturity_date", "harvest_date"),
+            date_fields=("maturity_date", "harvest_date", "last_daily_update_day"),
         )
         physics.action_log = [
             FarmActionRecord(**dict(record))

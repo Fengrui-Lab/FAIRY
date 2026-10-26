@@ -88,6 +88,7 @@ def test_profile_scope_and_explicit_override_precedence_without_optional_pcse(pr
         parameter_overrides={"*": {"TSUM1": 800.0}, "HEINONG84": {"TSUM1": 900.0}},
     )
     backend._cultivar_profile = load_cultivar_profile(profile_id)
+    backend._cultivar_profiles = {}
     native = {"TSUMEM": [70.0], "TSUM1": [350.0], "TSUM2": [850.0],
               "TDWI": [10.0], "DVSEND": [2.0]}
     backend._varieties = {"Soybean_901": native}
@@ -109,6 +110,7 @@ def test_profile_fails_on_unknown_native_parameters(profile_file):
     backend = object.__new__(WofostBackend)
     backend.config = WofostConfig(cultivar_profile=profile_id)
     backend._cultivar_profile = load_cultivar_profile(profile_id)
+    backend._cultivar_profiles = {}
     backend._varieties = {"Soybean_901": {"TSUM1": [350.0]}}
     with pytest.raises(ValueError, match="NONEXISTENT_NATIVE_PARAMETER"):
         backend._crop_parameters("Soybean_901", "HEINONG84")

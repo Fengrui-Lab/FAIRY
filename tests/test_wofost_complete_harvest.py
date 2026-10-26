@@ -15,6 +15,23 @@ from fairy.time_manager import TimeManager
 DAY = date(2017, 9, 14)
 
 
+def test_harvest_before_eight_china_time_uses_the_completed_local_day():
+    """A civil-day harvest cannot rewind yesterday's UTC date into recovery."""
+    from zoneinfo import ZoneInfo
+
+    farm, _, tractor = _equipment(moisture=15, native_mass=True)
+    farm.simulation_timezone = ZoneInfo("Asia/Shanghai")
+    farm.time_manager.reset(datetime(2017, 9, 14, 7, tzinfo=farm.simulation_timezone).timestamp())
+    physics = farm.physics
+    physics.last_physics_sim_time = farm.time_manager.time()
+    physics.yield_recovery.states[0].last_daily_update_day = DAY
+    tractor._attached_implement = "harvester"
+    result = tractor.harvest(0, 0)
+    assert result["status"] == "ok"
+    assert physics.yield_recovery.states[0].harvested
+    assert physics.yield_recovery.states[0].last_daily_update_day == DAY
+
+
 def _equipment(*, moisture=24.0, native_mass=False):
     """One mature fixture; only the existing yield/recovery machinery is real."""
     farm = FarmWorldApp()

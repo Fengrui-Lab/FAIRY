@@ -1,5 +1,85 @@
 # FAIRY
 
+Thirteen selected tasks now have separate classic and WOFOST versions. Original
+scenario IDs, files and classes select the classic `legacy` engine; the WOFOST
+IDs, filenames and classes end in `_V2`. The directory name
+`farm_world_fullseason_v2` is historical and does not select the engine. See the
+[13 version pairs and run examples](docs/wofost-scenario-versions.md) and the
+[canonical version manifest](configs/oracles/wofost_scenario_versions.json).
+
+Twelve WOFOST plans are calibrated; scenario 03 retains its flowering-nutrition
+task and remains uncalibrated. The first nine calibrated plans include the normal
+season with seven management windows, two 30 mm irrigations, no routine nitrogen
+fertilizer and 89 tool calls. The three newly completed irrigation tasks each use
+eight management windows and 101 calls, including a real SurveyDrone survey
+followed by targeted robot checks; their warehouse grain is 7097.36, 7005.65 and
+6649.92 kg at 13% moisture. The other seventeen tasks in that expansion are paused.
+These are real-tool Oracle replays, not 35B agent results. See the
+[first-ten farming plans](docs/wofost-farming-plans.md),
+[three additional plans](docs/wofost-next20-farming-plans.md) and
+[run commands and model boundaries](docs/wofost-integration.md).
+
+The restored classic sources come from Git commit `e0a302c3d3de9cf532ea5fd01bc79ebb3e9bb864`.
+Classic workflow compatibility repairs use explicit four-ridge representative
+samples and extend three harvest waits by 3/1/1 days under the original weather.
+They do not change the original world, crop physics, apps, Engine or TimeManager.
+All thirteen classic workflows and all thirteen `_V2` workflows pass ordinary
+CLI build/replay/evaluate. Each classic run harvests all 64 ridges into safe
+storage, and all thirteen initial worlds match the original Git definitions.
+The twelve calibrated WOFOST yields exactly match their pre-rename references;
+03 runs to 8229.50 kg but remains uncalibrated. See the
+[version verification evidence](docs/wofost-scenario-versions.md#当前完成与核验边界).
+The current related regression suite passes 644 tests with zero failures,
+errors or skips. It covers native models, version/source contracts, classic
+workflow compatibility and app/shared runtime; this is not a whole-repository
+test claim. Evidence and the single corrected weather-test assertion are linked
+in the [version verification notes](docs/wofost-scenario-versions.md#当前完成与核验边界).
+
+Scenario authors can now declare replayable edits to real WOFOST soil nitrogen
+pools, with same-day model telemetry and checkpoint support. Its separate
+529-test regression record predates this version split. This does not resolve scenario 03's weak
+fertilizer response under the official soybean fixation parameters; see the
+[soil nitrogen event contract and controlled results](docs/wofost-soil-nitrogen-events.md).
+
+Configurable farms support soybean, maize, and direct-seeded non-flooded rice.
+Use `scenario_multi_crop_full_season_mixed` to manage three farms together from
+unprepared land through real crop growth, harvest, and local storage in one
+continuous season. See the [full-season guide and oracles](docs/multi-farm-full-season.md),
+or run `uv run python scripts/validate_diverse_oracles.py --suite full-season`
+to validate eight full-season configurations. The earlier eight operational
+episodes remain available in the [episode guide](docs/multi-farm-multi-crop-oracles.md).
+Each full-season scenario keeps its inputs, objectives, local configuration
+types, initialization, `build_events_flow()`, Oracle, and validation in its own source file; start with the
+[mixed-crop scene definition](fairy/scenarios/farm_world_diverse/scenario_multi_crop_full_season_mixed.py).
+Read `build_events_flow()` before `oracle_solution()`: setup captures the briefing
+and full-season tool DAG using an isolated rollout, preserving the original farm
+state. Oracle mode exports that graph or runs the local manager dynamically.
+
+Farm state, tool services, and equipment assets are separate. All eight multi-farm
+full-season scenes explicitly share one tractor, one robot, and one drone across
+their farms; the earlier operational episodes declare dedicated assets per farm.
+Both use one shared tool surface with explicit `farm_id` and `asset_id` selectors.
+For example, `Tractor__plant_seeds` selects a farm and tractor, while
+`Tractor__get_status` selects only an asset. A device keeps the same fuel,
+battery, payload, implement, and charging state when its target changes.
+
+`World__describe_environment` lists actual targets and bindings;
+`World__get_capabilities` supplies crop constraints and equipment capacities.
+The schemas sent to the model and the execution gate use the same tool contracts.
+The default mixed full-season FARM agent receives 47 function schemas (48 registered
+tools including the hidden task-injection tool), rather than one tool copy per farm.
+Unused tractor seed, fertilizer, and chemicals must return to their recorded origin
+through `Tractor__return_supplies` before another farm is served; grain must first
+be unloaded at its origin. Road travel and transport costs are not modeled.
+See the [shared-tool and asset design](docs/multi-farm-shared-tools-design.md).
+
+Public tools are ordinary methods in eight [service classes](fairy/apps/farm_world/services/).
+For example, [DroneService.fly_survey](fairy/apps/farm_world/services/drone.py) declares
+all four target/range arguments directly and documents battery, timing, and partial
+coverage. Schemas compile from those real signatures, types, defaults, and argument
+descriptions; registration rejects missing/stale argument documentation and signature
+overrides. See the [official framework research](docs/tool-framework-research.md).
+
 [中文说明](README.zh-CN.md) | [End-to-end experiment replication](docs/replication/README.md) | [WOFOST integration and no-LLM demo](docs/wofost-integration.md)
 
 FAIRY is a farm-agent simulation runtime for running FARM scenarios, exposing farm operations as OpenAI-compatible function-calling tools, advancing weather/soil/crop/yield physics, and producing compact run bundles for workflow inspection, replay, and FOS/yield-loss evaluation.
@@ -30,11 +110,19 @@ The primary output is a run bundle. The default entry point is:
 | Mode | CLI flags | Input | Output | Purpose |
 |---|---|---|---|---|
 | Agent run | `--agent` | Scenario, controller, model | `run_report.json`, `runtime_log.jsonl`, `agent_workflow.json` | Execute a real function-calling agent. |
-| Oracle build | `--build-oracle` | Scenario | `oracle.json` | Export the scenario's reference workflow. |
-| Workflow replay | `--replay --workflow <file>` | Any workflow JSON | `replay.json`, `runtime_log.jsonl`, `run_report.json` | Re-execute a workflow in a fresh scenario state. |
-| Evaluation | `--replay --evaluate --workflow <file>` | Any workflow JSON | `run_report.json` | Validate the replayed workflow and resulting farm state. |
+| Oracle build | `--build-oracle` | Scenario | `oracle.json`, plus manifest for shared tools | Export the scenario's reference workflow. |
+| Workflow replay | `--replay --workflow <file>` | Workflow JSON and matching manifest for shared tools | `replay.json`, `runtime_log.jsonl`, `run_report.json` | Re-execute a workflow in a fresh scenario state. |
+| Evaluation | `--replay --evaluate --workflow <file>` | Workflow JSON and matching manifest for shared tools | `run_report.json` | Validate the replayed workflow and resulting farm state. |
 | Batch run | `scripts/iclr_validation_runner.py` | Controller set, scenario set | `results.csv` plus per-cell run bundles | Execute a controller × scenario matrix. |
 | FOS rebatch | `scripts/rebatch_fos_from_traces.py` | FAIRY agent run bundles, oracle baselines | `summary_v2.csv` | Recompute FOS, yield loss, and error columns from existing `agent_workflow.json` runs. |
+
+Shared-tool runs preserve the existing step JSON and add a matching `.manifest.json`
+sidecar. For example, `oracle.json` requires `oracle.manifest.json`; keep both when
+copying a reference workflow. The manifest binds the tool catalog, scenario
+configuration, and saved workflow contents. Replay checks them and the full argument
+and dependency graph before executing target tools. Legacy single-farm workflows keep
+their existing compatibility path. A model receiving an accurate schema is not a
+claim that it will choose a successful management policy.
 
 ## Installation
 
@@ -802,9 +890,16 @@ Step 1: `--build-oracle`
 
 ```text
 <scenario>.oracle.json
+<scenario>.oracle.manifest.json   # shared-tool scenes
 ```
 
 This is the standard-answer workflow. It records the oracle's tool names, arguments, dependencies, and environment times. Use it as a baseline, as replay input, and as the reference path when comparing agent workflows.
+
+For shared tools, the sidecar records the catalog version, scenario configuration
+fingerprint, and workflow fingerprint. Keep it with the workflow; changing farms,
+assets, crop backend, season deadline, or monitoring requirements requires a newly
+generated matching reference. Farm-prefixed legacy traces need explicit migration
+instead of guessing which farm or asset a call should use.
 
 Step 2: `--replay`
 
@@ -938,6 +1033,9 @@ scenario_full_season_balanced_v2
 ## Full-Season Detail/Context Modes
 
 Set these through `--scenario-kwargs '{"detailed_briefing": ...}'` or `iclr_validation_runner.py --detail`.
+The examples in this section use the original classic `legacy` IDs and context
+library. For the thirteen independent WOFOST scenarios, use their `_V2` IDs and
+the [version-specific instructions](docs/wofost-scenario-versions.md).
 
 `fairy-run` example:
 

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "evidence_package_id": "soybean_cold_contrasts_wang2023_v1",
+  "source": {
+    "id": "wang2023_cold",
+    "title": "Wang et al. (2023), Comparison and Evaluation of Low-Temperature Tolerance of Different Soybean Cultivars during the Early-Growth Stage",
+    "url": "https://www.mdpi.com/2073-4395/13/7/1716",
+    "doi": "10.3390/agronomy13071716",
+    "license": "CC BY 4.0",
+    "pdf_url": "https://res.mdpi.com/d_attachment/agronomy/agronomy-13-01716/article_deploy/agronomy-13-01716.pdf",
+    "pdf_sha256": "9d20021154466568e8ab30d1f0eb33878169e4c34223feddcb19343a160e6e1c"
+  },
+  "method": {
+    "seedling_stage": "first compound leaf expanded",
+    "treatment_temperature_c": 4.0,
+    "control_temperature_c": 25.0,
+    "treatment_hours": 72,
+    "recovery_temperature_c": 25.0,
+    "recovery_days": 3,
+    "replicates": 3,
+    "substrate": "vermiculite:perlite 4:1",
+    "nutrient_solution_ml_per_day": 200,
+    "locator": "PDF p.4, section 2.1; Table4 PDF p.11; cultivar IDs Table1 pp.2-3"
+  },
+  "records": [
+    {
+      "cultivar": "SUINONG42",
+      "source_cultivar_id": 31,
+      "table4_mu": [
+        0.5851,
+        0.9494,
+        0.7235
+      ],
+      "table4_D": 0.7546,
+      "classification": "seedling chilling tolerant"
+    },
+    {
+      "cultivar": "KENDOU40",
+      "source_cultivar_id": 49,
+      "table4_mu": [
+        0.0426,
+        0.489,
+        0.0
+      ],
+      "table4_D": 0.2025,
+      "classification": "seedling chilling sensitive"
+    }
+  ],
+  "use_for_fit": false,
+  "caveats": [
+    "D is a composite membership-function score, not a measured assimilation factor.",
+    "Paper reports no germination/seedling correlation; do not infer earlier safe sowing from seedling resistance.",
+    "No survival-rate values digitized from figures. Engineering response mappings are stored separately in profiles."
+  ]
+}

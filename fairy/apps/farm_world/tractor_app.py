@@ -18,16 +18,16 @@ Resources must be loaded from the farm warehouse before use:
 from __future__ import annotations
 
 import uuid
+import math
 from typing import Any
 
 from fairy.apps.app import App
+from fairy.apps.farm_world.crop_profiles import official_seed_backend_error, seed_crop_type
 from fairy.apps.farm_world.farm_world_app import (
     FIELD_LENGTH_M,
     FIELD_WIDTH_M,
-    GRAIN_KG_PER_RIDGE,
     PESTICIDE_L_PER_RIDGE,
     FarmWorldApp,
-    plants_per_ridge_from_spacing,
 )
 from fairy.apps.farm_world.models import (
     GrowthStage,
@@ -38,6 +38,7 @@ from fairy.apps.farm_world.weather_app import WeatherApp, _MAX_VWC_TRAFFIC
 from fairy.tool_utils import OperationType, app_tool, data_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
+from fairy.physics.biotic_pressure_engine import TreatmentType, chemical_dose_efficacy
 
 
 def split_pass(
@@ -111,7 +112,6 @@ _GRAIN_BIN_MAX_KG = 2000.0
 _GRAIN_UNLOAD_DURATION_S = 480
 
 # Prep steps that must be completed before planting
-_FIELD_PREP_SEQUENCE = ["level", "base_fertilize", "form_ridges"]
 
 
 def _full_field_duration(working_width_m: float, speed_ms: float) -> int:
@@ -152,18 +152,34 @@ class TractorApp(App):
         self._seed_hopper: int = 0
         self._grain_bin_kg: float = 0.0
         self._operation_log: list[dict[str, Any]] = []
-        self._completed_prep_ops: list[str] = []
+        # Preparation belongs to the land, so a second machine sees the same
+        # completed operations and a shared machine never carries them away.
+        if not hasattr(farm_world_app, "_field_preparation_ops"):
+            farm_world_app._field_preparation_ops = []
         self._attached_implement: str | None = None  # currently mounted attachment
-        self._harvest_moisture_limit_pct: float = 18.0
+        self._harvest_moisture_limit_pct: float = farm_world_app.crop_profile.harvest_moisture_max_pct
+
+    @property
+    def _completed_prep_ops(self) -> list[str]:
+        farm = self._farm_world_app
+        if not hasattr(farm, "_field_preparation_ops"):
+            farm._field_preparation_ops = []
+        return farm._field_preparation_ops
+
+    @_completed_prep_ops.setter
+    def _completed_prep_ops(self, operations: list[str]) -> None:
+        self._farm_world_app._field_preparation_ops = list(operations)
 
     def get_state(self) -> dict[str, Any]:
         return {
             "app_name": self.name,
-            "fuel_tank_l": round(self._fuel_tank_l, 1),
-            "pesticide_tank_l": round(self._pesticide_tank_l, 1),
-            "fertilizer_spreader_kg": round(self._fertilizer_spreader_kg, 1),
+            "fuel_tank_l": self._fuel_tank_l,
+            "pesticide_tank_l": self._pesticide_tank_l,
+            "fungicide_tank_l": self._fungicide_tank_l,
+            "fertilizer_spreader_kg": self._fertilizer_spreader_kg,
+            "seed_type": self.seed_type,
             "seed_hopper": self._seed_hopper,
-            "grain_bin_kg": round(self._grain_bin_kg, 1),
+            "grain_bin_kg": self._grain_bin_kg,
             "grain_bin_max_kg": _GRAIN_BIN_MAX_KG,
             "harvest_moisture_limit_pct": self._harvest_moisture_limit_pct,
             "available_implements": ATTACHMENTS,
@@ -174,34 +190,101 @@ class TractorApp(App):
             # would silently revert to "no prep" after a reset.
             "completed_prep_ops": list(self._completed_prep_ops),
             "operation_log": list(self._operation_log),
+            "rng_state": self.rng.getstate(),
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
         self.configure_harvest(
-            max_grain_moisture_pct=state_dict.get("harvest_moisture_limit_pct", 18.0)
+            max_grain_moisture_pct=state_dict.get("harvest_moisture_limit_pct", self._farm_world_app.crop_profile.harvest_moisture_max_pct)
         )
         self._fuel_tank_l = state_dict.get("fuel_tank_l", _FUEL_TANK_MAX_L)
         self._pesticide_tank_l = state_dict.get("pesticide_tank_l", 0.0)
+        self._fungicide_tank_l = state_dict.get("fungicide_tank_l", 0.0)
         self._fertilizer_spreader_kg = state_dict.get("fertilizer_spreader_kg", 0.0)
         self._seed_hopper = state_dict.get("seed_hopper", 0)
+        self.seed_type = state_dict.get("seed_type")
         self._grain_bin_kg = state_dict.get("grain_bin_kg", 0.0)
         self._operation_log = [
             dict(item) for item in state_dict.get("operation_log", [])
         ]
-        self._completed_prep_ops = list(state_dict.get("completed_prep_ops", []))
+        if "completed_prep_ops" in state_dict:
+            self._completed_prep_ops = list(state_dict["completed_prep_ops"])
         self._attached_implement = state_dict.get("attached_implement", None)
+        if "rng_state" in state_dict:
+            from fairy.apps.farm_world.assets import tuple_tree
+            self.rng.setstate(tuple_tree(state_dict["rng_state"]))
 
     def reset(self) -> None:
         super().reset()
         self._fuel_tank_l = _FUEL_TANK_MAX_L
         self._pesticide_tank_l = 0.0
+        self._fungicide_tank_l = 0.0
         self._fertilizer_spreader_kg = 0.0
         self._seed_hopper = 0
         self._grain_bin_kg = 0.0
         self._operation_log = []
-        self._completed_prep_ops = []
         self._attached_implement = None
-        self._harvest_moisture_limit_pct = 18.0
+        self._harvest_moisture_limit_pct = self._farm_world_app.crop_profile.harvest_moisture_max_pct
+        self.seed_type = None
+
+    @property
+    def _fuel_per_pass(self) -> float:
+        return _FUEL_PER_PASS * self._farm_world_app.field_length_m / FIELD_LENGTH_M
+
+    @property
+    def _fuel_per_prep_op(self) -> float:
+        return _FUEL_PER_PREP_OP * self._farm_world_app.field_area_m2 / (268.0 * 64 * 1.1)
+
+    @property
+    def _base_fertilize_kg(self) -> float:
+        return _BASE_FERTILIZE_KG * self._farm_world_app.field_area_m2 / (268.0 * 64 * 1.1)
+
+    def _shared_fertilizer_quota_error(self, kg: float) -> str | None:
+        regime = self._farm_world_app._management_regime
+        if (regime.fertilizer_quota_kg is not None
+                and regime.fertilizer_used_kg + float(kg) > regime.fertilizer_quota_kg + 1e-9):
+            return "Fertilizer application would exceed this farm's remaining quota"
+        return None
+
+    def _advance_operation_time(self, seconds: float) -> None:
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            self.register_time_manager(environment.time_manager)
+            environment.advance_time(seconds)
+        else:
+            self.time_manager.add_offset(seconds)
+
+    def _record_shared_fertilizer_use(self, kg: float) -> None:
+        self._farm_world_app.record_fertilizer_use(kg)
+
+    def _pass_duration(self, speed_ms: float) -> int:
+        return int(self._farm_world_app.field_length_m / speed_ms) + _HEADLAND_TURN_S
+
+    def _full_field_duration(self, working_width_m: float, speed_ms: float) -> int:
+        farm = self._farm_world_app
+        # Retain historical travel time for the original 64-ridge farm.
+        width = FIELD_WIDTH_M if (farm.num_ridges == 64 and farm.ridge_width_m == 1.1 and farm.field_length_m == 268.0) else farm.field_width_m
+        passes = width / working_width_m
+        return int(passes * farm.field_length_m / speed_ms + passes * _HEADLAND_TURN_S)
+
+    def _planting_parameters_error(self, depth_cm: float, spacing_cm: float) -> str | None:
+        profile = self._farm_world_app.crop_profile
+        if self.seed_type is None:
+            return "Load compatible seeds before planting"
+        if seed_crop_type(self.seed_type) != profile.crop_type:
+            return f"Seed {self.seed_type} does not match farm crop {profile.crop_type}"
+        native_seed_error = official_seed_backend_error(self.seed_type, self._farm_world_app._physics)
+        if native_seed_error:
+            return native_seed_error
+        depth = float(depth_cm)
+        spacing = float(spacing_cm)
+        lo, hi = profile.planting_depth_range_cm
+        if not math.isfinite(depth) or not lo <= depth <= hi:
+            return f"depth_cm must be within {lo:g}–{hi:g} cm for {profile.crop_type}"
+        lo, hi = profile.seed_spacing_range_cm
+        if not math.isfinite(spacing) or spacing <= 0 or not lo <= spacing <= hi:
+            return f"seed_spacing_cm outside the supported {profile.crop_type} range ({lo:g}–{hi:g} cm)"
+        return None
 
     def configure_harvest(self, *, max_grain_moisture_pct: float = 18.0) -> None:
         """Configure scenario equipment capability; keep legacy's 18% default.
@@ -267,17 +350,17 @@ class TractorApp(App):
             liters: Amount to transfer .
         """
         liters = float(liters)
-        if liters <= 0:
+        if not math.isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
-        space = round(_FUEL_TANK_MAX_L - self._fuel_tank_l, 2)
+        space = _FUEL_TANK_MAX_L - self._fuel_tank_l
         if space <= 0:
             return {"msg": "Fuel tank is already full"}
         to_transfer = min(liters, space)
         if not self._farm_world_app.consume_fuel(to_transfer):
             return {"error": "Insufficient fuel in warehouse"}
-        self._fuel_tank_l = round(self._fuel_tank_l + to_transfer, 2)
+        self._fuel_tank_l = self._fuel_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "fuel_tank_l": round(self._fuel_tank_l, 1)}
+        return {"status": "ok", "fuel_tank_l": self._fuel_tank_l}
 
     @type_check
     @app_tool()
@@ -290,17 +373,17 @@ class TractorApp(App):
             liters: Amount to transfer
         """
         liters = float(liters)
-        if liters <= 0:
+        if not math.isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
-        space = round(_PESTICIDE_TANK_MAX_L - self._pesticide_tank_l, 2)
+        space = _PESTICIDE_TANK_MAX_L - self._pesticide_tank_l
         if space <= 0:
             return {"msg": "Pesticide tank is already full"}
         to_transfer = min(liters, space)
         if not self._farm_world_app.consume_pesticide(to_transfer):
             return {"error": "Insufficient pesticide in warehouse"}
-        self._pesticide_tank_l = round(self._pesticide_tank_l + to_transfer, 2)
+        self._pesticide_tank_l = self._pesticide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "pesticide_tank_l": round(self._pesticide_tank_l, 1)}
+        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l}
 
     @type_check
     @app_tool()
@@ -312,21 +395,19 @@ class TractorApp(App):
             kg: Amount to transfer.
         """
         kg = float(kg)
-        if kg <= 0:
+        if not math.isfinite(kg) or kg <= 0:
             return {"error": "kg must be positive"}
-        space = round(_FERTILIZER_SPREADER_MAX_KG - self._fertilizer_spreader_kg, 2)
+        space = _FERTILIZER_SPREADER_MAX_KG - self._fertilizer_spreader_kg
         if space <= 0:
             return {"msg": "Fertilizer spreader is already full"}
         to_transfer = min(kg, space)
-        if not self._farm_world_app.consume_fertilizer(to_transfer):
+        if not self._farm_world_app.withdraw_fertilizer(to_transfer):
             return {"error": "Insufficient fertilizer in warehouse"}
-        self._fertilizer_spreader_kg = round(
-            self._fertilizer_spreader_kg + to_transfer, 2
-        )
+        self._fertilizer_spreader_kg = self._fertilizer_spreader_kg + to_transfer
         self.is_state_modified = True
         return {
             "status": "ok",
-            "fertilizer_spreader_kg": round(self._fertilizer_spreader_kg, 1),
+            "fertilizer_spreader_kg": self._fertilizer_spreader_kg,
         }
 
     @type_check
@@ -340,12 +421,19 @@ class TractorApp(App):
         Args:
             seed_type: One of STANDARD, EARLY_COLD, HIGH_DENSITY,
                     STRESS_TOLERANT, HEIHE43, HEIHE50, HEINONG60,
-                    HEINONG84, HEIKE71.
+                    HEINONG84, HEIKE71 for soybean; SOYBEAN_901, SOYBEAN_902,
+                    SOYBEAN_903, SOYBEAN_905 require their matching native WOFOST
+                    parameter sets. MAIZE_STANDARD for maize;
+                    RICE_STANDARD for direct-seeded non-flooded rice. The seed
+                    must match the target farm's crop profile.
             count:     Number of plants to load (must be positive).
         """
         if seed_type not in {m.value for m in SeedType}:
             return {"error": f"Unknown seed_type '{seed_type}'"}
-        self.seed_type = seed_type
+        if seed_crop_type(seed_type) != self._farm_world_app.crop_type:
+            return {"error": f"Seed {seed_type} does not match farm crop {self._farm_world_app.crop_type}"}
+        if self._seed_hopper > 0 and self.seed_type != seed_type:
+            return {"error": "Seed hopper contains a different seed type; finish it before changing seeds"}
         count = int(count)
         if count <= 0:
             return {"error": "count must be positive"}
@@ -358,6 +446,7 @@ class TractorApp(App):
             return {
                 "error": f"Insufficient {seed_type} seeds in warehouse: need {to_transfer}"
             }
+        self.seed_type = seed_type
         self._seed_hopper = current + to_transfer
         self.is_state_modified = True
         return {
@@ -379,9 +468,10 @@ class TractorApp(App):
         Return tractor resource levels, implement status, and available implements.
         """
         return {
-            "fuel_tank_l": round(self._fuel_tank_l, 1),
-            "fertilizer_spreader_kg": round(self._fertilizer_spreader_kg, 1),
-            "pesticide_tank_l": round(self._pesticide_tank_l, 1),
+            "fuel_tank_l": self._fuel_tank_l,
+            "fertilizer_spreader_kg": self._fertilizer_spreader_kg,
+            "pesticide_tank_l": self._pesticide_tank_l,
+            "fungicide_tank_l": self._fungicide_tank_l,
             "seed_type": self.seed_type,
             "seed_hopper": self._seed_hopper,
             "grain_bin_kg": round(self._grain_bin_kg, 1),
@@ -407,14 +497,14 @@ class TractorApp(App):
         traffic_error = self._trafficability_error("tractor operation")
         if traffic_error:
             return {"error": traffic_error}
-        if self._fuel_tank_l < _FUEL_PER_PREP_OP:
-            return {"error": f"Insufficient fuel: need {_FUEL_PER_PREP_OP} L"}
+        if self._fuel_tank_l < self._fuel_per_prep_op:
+            return {"error": f"Insufficient fuel: need {self._fuel_per_prep_op} L"}
 
         implement = self._attached_implement
         width_m = _ATTACH_WIDTH_M[implement]
-        duration = _full_field_duration(width_m, _SPEED_TILL_MS)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
-        self.time_manager.add_offset(duration)
+        duration = self._full_field_duration(width_m, _SPEED_TILL_MS)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_prep_op
+        self._advance_operation_time(duration)
         self._completed_prep_ops.append("level")
         self._operation_log.append(
             {
@@ -431,35 +521,47 @@ class TractorApp(App):
             "implement": implement,
             "working_width_m": width_m,
             "duration_minutes": round(duration / 60, 1),
-            "fuel_tank_l": round(self._fuel_tank_l, 1),
+            "fuel_tank_l": self._fuel_tank_l,
         }
 
     @type_check
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
-    def base_fertilize(self) -> dict[str, Any]:
+    def base_fertilize(self, total_kg: float | None = None) -> dict[str, Any]:
         """
         Apply base fertilizer across the full field using the tractor spreader.
-        """
 
-        if self._fertilizer_spreader_kg < _BASE_FERTILIZE_KG:
+        Args:
+            total_kg: Explicit fertilizer-product mass for this pass in kg.
+                If omitted, use the historical area-scaled reference rate.
+                This is product mass, not elemental nitrogen; the configured
+                backend records the corresponding actual nitrogen input.
+        """
+        if isinstance(total_kg, bool):
+            return {"error": "total_kg must be a positive finite fertilizer mass"}
+        amount = self._base_fertilize_kg if total_kg is None else float(total_kg)
+        if not math.isfinite(amount) or amount <= 0:
+            return {"error": "total_kg must be a positive finite fertilizer mass"}
+        quota_error = self._shared_fertilizer_quota_error(amount)
+        if quota_error:
+            return {"error": quota_error}
+        if self._fertilizer_spreader_kg < amount:
             return {
-                "error": f"Insufficient fertilizer in spreader: need {_BASE_FERTILIZE_KG} kg, have {self._fertilizer_spreader_kg:.1f} kg"
+                "error": f"Insufficient fertilizer in spreader: need {amount} kg, have {self._fertilizer_spreader_kg:.1f} kg"
             }
-        if self._fuel_tank_l < _FUEL_PER_PREP_OP:
+        if self._fuel_tank_l < self._fuel_per_prep_op:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PREP_OP} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_prep_op} L, have {self._fuel_tank_l:.1f} L"
             }
         traffic_error = self._trafficability_error("tractor operation")
         if traffic_error:
             return {"error": traffic_error}
 
-        self._fertilizer_spreader_kg = round(
-            self._fertilizer_spreader_kg - _BASE_FERTILIZE_KG, 2
-        )
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
-        duration = _full_field_duration(_WIDTH_FERTILIZE_M, _SPEED_FERTILIZE_MS)
-        self.time_manager.add_offset(duration)
+        self._fertilizer_spreader_kg = self._fertilizer_spreader_kg - amount
+        self._record_shared_fertilizer_use(amount)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_prep_op
+        duration = self._full_field_duration(_WIDTH_FERTILIZE_M, _SPEED_FERTILIZE_MS)
+        self._advance_operation_time(duration)
         self._completed_prep_ops.append("base_fertilize")
 
         if self._farm_world_app.physics_active:
@@ -467,23 +569,23 @@ class TractorApp(App):
             # ridges; sets nutrient_index baseline used by canopy/biomass.
             self._register_base_fertilizer_with_physics(
                 ridge_ids=list(range(self._farm_world_app.num_ridges)),
-                total_kg=_BASE_FERTILIZE_KG,
+                total_kg=amount,
             )
 
         self._operation_log.append(
             {
                 "op_id": str(uuid.uuid4())[:8],
                 "operation": "base_fertilize",
-                "fertilizer_used_kg": _BASE_FERTILIZE_KG,
+                "fertilizer_used_kg": amount,
                 "duration_s": duration,
             }
         )
         self.is_state_modified = True
         return {
             "status": "ok",
-            "fertilizer_used_kg": _BASE_FERTILIZE_KG,
+            "fertilizer_used_kg": amount,
             "duration_minutes": round(duration / 60, 1),
-            "fuel_tank_l": round(self._fuel_tank_l, 1),
+            "fuel_tank_l": self._fuel_tank_l,
         }
 
     @type_check
@@ -496,13 +598,13 @@ class TractorApp(App):
         Args:
             ridge_width_m: Width of each ridge in metres.
         """
-        if self._fuel_tank_l < _FUEL_PER_PREP_OP:
+        if self._fuel_tank_l < self._fuel_per_prep_op:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PREP_OP} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_prep_op} L, have {self._fuel_tank_l:.1f} L"
             }
         ridge_width_m = float(ridge_width_m)
-        if ridge_width_m <= 0.0:
-            return {"error": "ridge_width_m must be positive"}
+        if not math.isfinite(ridge_width_m) or ridge_width_m <= 0.0:
+            return {"error": "ridge_width_m must be finite and positive"}
         # Each pass forms 4 ridges side by side
         ridges_per_pass = 4
         working_width_m = ridges_per_pass * ridge_width_m
@@ -510,14 +612,16 @@ class TractorApp(App):
         if traffic_error:
             return {"error": traffic_error}
 
-        duration = _full_field_duration(working_width_m, _SPEED_RIDGE_MS)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PREP_OP, 2)
-        self.time_manager.add_offset(duration)
+        duration = self._full_field_duration(working_width_m, _SPEED_RIDGE_MS)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_prep_op
+        self._advance_operation_time(duration)
 
         # Preserve pre-conditioned soil state (VWC, temp, pressure baselines).
-        # FarmWorld has 64 fixed logical ridge IDs (0-63); ridge_width_m is an
+        # FarmWorld keeps its configured logical ridge IDs; ridge_width_m is an
         # operating setting, not permission to resize the indexed state/engine maps.
         self._farm_world_app.ridge_width_m = ridge_width_m
+        if self._farm_world_app._physics is not None:
+            self._farm_world_app._physics.ridge_width_m = ridge_width_m
         for i, r in enumerate(self._farm_world_app._ridges):
             r.ridge_id = i
             r.planted = False
@@ -534,6 +638,7 @@ class TractorApp(App):
             r.disease_pressure = r.disease_pressure_base
 
         self._completed_prep_ops.append("form_ridges")
+        self._farm_world_app._refresh_auto_season_phase(field_prepared=True)
         self._operation_log.append(
             {
                 "op_id": str(uuid.uuid4())[:8],
@@ -549,7 +654,7 @@ class TractorApp(App):
             "ridge_width_m": ridge_width_m,
             "num_ridges": self._farm_world_app.num_ridges,
             "duration_minutes": round(duration / 60, 1),
-            "fuel_tank_l": round(self._fuel_tank_l, 1),
+            "fuel_tank_l": self._fuel_tank_l,
         }
 
     @type_check
@@ -570,7 +675,7 @@ class TractorApp(App):
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
             return {"error": err}
-        if float(kg_per_ridge) <= 0:
+        if not math.isfinite(float(kg_per_ridge)) or float(kg_per_ridge) <= 0:
             return {"error": "kg_per_ridge must be positive"}
         traffic_error = self._trafficability_error("tractor fertilizing")
         if traffic_error:
@@ -578,21 +683,25 @@ class TractorApp(App):
 
         ridge_count = end_ridge - start_ridge + 1
         required_kg = ridge_count * float(kg_per_ridge)
-        if self._fertilizer_spreader_kg < required_kg:
+        quota_error = self._shared_fertilizer_quota_error(required_kg)
+        if quota_error:
+            return {"error": quota_error}
+        # Relative-only tolerance accepts a last-pass subtraction tail, not missing stock.
+        if not (self._fertilizer_spreader_kg >= required_kg
+                or math.isclose(self._fertilizer_spreader_kg, required_kg, rel_tol=1e-12, abs_tol=0.0)):
             return {
                 "error": f"Insufficient fertilizer in spreader: need {required_kg:.1f} kg, have {self._fertilizer_spreader_kg:.1f} kg"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fertilizer_spreader_kg = round(
-            self._fertilizer_spreader_kg - required_kg, 2
-        )
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_FERTILIZE_MS)
-        self.time_manager.add_offset(duration)
+        self._fertilizer_spreader_kg = max(0.0, self._fertilizer_spreader_kg - required_kg)
+        self._record_shared_fertilizer_use(required_kg)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_FERTILIZE_MS)
+        self._advance_operation_time(duration)
 
         if self._farm_world_app.physics_active:
             # Physics path: queue a FERTIGATION action; nutrient_index rises,
@@ -649,20 +758,16 @@ class TractorApp(App):
         """
         Sow seeds across a contiguous block of ridges (up to 4 per pass).
 
-        Seed types:
-          STANDARD
-          EARLY_COLD
-          HIGH_DENSITY
-          STRESS_TOLERANT
-          HEIHE43
-          HEIHE50
-          HEINONG60
-          HEINONG84
-          HEIKE71
+        Load a seed type compatible with the target crop before sowing:
+        soybean cultivars for soybean, MAIZE_STANDARD for maize, and
+        RICE_STANDARD for rice. Depth and spacing use the target crop profile.
+        Complete this farm's required_field_preparation_ops, published by
+        get_farm_overview. The legacy default includes base_fertilize; a farm
+        explicitly configured without that requirement may sow without it.
 
         Args:
-            start_ridge: First ridge to plant (0-63).
-            end_ridge:   Last ridge to plant (0-63, max 4-ridge span).
+            start_ridge: First ridge to plant (within the configured farm).
+            end_ridge:   Last ridge to plant (valid farm ridge, max 4-ridge span).
             depth_cm:    Sowing depth in centimetres.
             seed_spacing_cm:
                 In-row seed spacing in centimetres.
@@ -670,28 +775,21 @@ class TractorApp(App):
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
         if err:
             return {"error": err}
-        if not 3.0 <= float(depth_cm) <= 5.0:
-            return {"error": "depth_cm must be within 3–5 cm"}
-        if float(seed_spacing_cm) <= 0:
-            return {"error": "seed_spacing_cm must be positive"}
+        parameter_error = self._planting_parameters_error(depth_cm, seed_spacing_cm)
+        if parameter_error:
+            return {"error": parameter_error}
 
-        # Prep validity is defined by *coverage* (each step has been done at
-        # least once) rather than *exact-sequence equality*. Agents that
-        # redundantly redo prep — a common LLM behaviour, "be safe, prep
-        # again before planting" — used to trip a bogus "prep incomplete"
-        # error here because the strict-equality check broke as soon as
-        # the list grew beyond the canonical 3-tuple. The required
-        # ordering is still enforced inside each prep tool's own guards
-        # (form_ridges only runs after base_fertilize, etc.), so a set
-        # check here is sufficient.
+        # Preserve legacy coverage semantics for repeated real preparation.
+        # Requirements belong to the target field, not to the tractor.
+        required = self._farm_world_app.required_field_preparation_ops
         missing = [
-            op for op in _FIELD_PREP_SEQUENCE if op not in self._completed_prep_ops
+            op for op in required if op not in self._completed_prep_ops
         ]
         if missing:
             return {
                 "error": (
                     "Field preparation incomplete: must finish "
-                    "level -> base_fertilize -> form_ridges before planting"
+                    + " -> ".join(required) + " before planting"
                     f" (missing: {missing})"
                 )
             }
@@ -710,35 +808,33 @@ class TractorApp(App):
 
         avg_vwc = sum(r.soil_vwc for r in ridges) / len(ridges)
         avg_temp = sum(r.soil_temp_c for r in ridges) / len(ridges)
-        if not 0.20 <= avg_vwc <= 0.35:
-            return {
-                "error": f"Soil VWC {avg_vwc:.3f} must be within 0.20–0.30 for planting"
-            }
+        profile = self._farm_world_app.crop_profile
+        min_vwc, max_vwc = profile.planting_vwc_range
+        if not min_vwc <= avg_vwc <= max_vwc:
+            return {"error": f"Soil VWC {avg_vwc:.3f} must be within {min_vwc:.2f}–{max_vwc:.2f} for {profile.crop_type} planting"}
         if self.seed_type == SeedType.EARLY_COLD.value:
             if avg_temp < 8.0:
                 return {
                     "error": f"Soil temperature {avg_temp:.1f}°C too low for EARLY_COLD (min 8°C)"
                 }
-        elif avg_temp <= 10.0:
-            return {
-                "error": f"Soil temperature {avg_temp:.1f}°C must exceed 10°C for planting"
-            }
+        elif avg_temp <= profile.planting_min_temp_c:
+            return {"error": f"Soil temperature {avg_temp:.1f}°C must exceed {profile.planting_min_temp_c:g}°C for {profile.crop_type} planting"}
 
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
+        seeds_per_ridge = self._farm_world_app.plants_per_ridge_from_spacing(seed_spacing_cm)
         seed_count = len(ridges) * seeds_per_ridge
         if self._seed_hopper < seed_count:
             return {
                 "error": f"Insufficient {self.seed_type} seeds in hopper: need {seed_count}, have {self._seed_hopper}"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
         self._seed_hopper = self._seed_hopper - seed_count
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_PLANT_MS)
-        self.time_manager.add_offset(duration)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_PLANT_MS)
+        self._advance_operation_time(duration)
         for r in ridges:
             self._farm_world_app.set_ridge_planted(
                 r.ridge_id,
@@ -791,8 +887,8 @@ class TractorApp(App):
         spray boom (up to 10 ridges per pass).
 
         Args:
-            start_ridge: First ridge to spray (0-63).
-            end_ridge:   Last ridge to spray (0-63, max 10-ridge span).
+            start_ridge: First ridge to spray (within the configured farm).
+            end_ridge:   Last ridge to spray (within the configured farm, max 10-ridge span).
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -816,15 +912,15 @@ class TractorApp(App):
             return {
                 "error": f"Insufficient pesticide in tank: need {required_liters:.1f} L, have {self._pesticide_tank_l:.1f} L"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
-        self.time_manager.add_offset(duration)
+        self._pesticide_tank_l = self._pesticide_tank_l - required_liters
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_SPRAY_MS)
+        self._advance_operation_time(duration)
         for ridge_id in range(start_ridge, end_ridge + 1):
             self._farm_world_app.update_ridge_pesticide(ridge_id)
 
@@ -871,17 +967,17 @@ class TractorApp(App):
                     warehouse to the tractor's onboard pesticide tank.
         """
         liters = float(liters)
-        if liters <= 0:
+        if not math.isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
-        space = round(_PESTICIDE_TANK_MAX_L - self._pesticide_tank_l, 2)
+        space = _PESTICIDE_TANK_MAX_L - self._pesticide_tank_l
         if space <= 0:
             return {"msg": "Pesticide tank is already full"}
         to_transfer = min(liters, space)
         if not self._farm_world_app.consume_pesticide(to_transfer):
             return {"error": "Insufficient pesticide in warehouse"}
-        self._pesticide_tank_l = round(self._pesticide_tank_l + to_transfer, 2)
+        self._pesticide_tank_l = self._pesticide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "pesticide_tank_l": round(self._pesticide_tank_l, 1)}
+        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l}
 
     @type_check
     @app_tool()
@@ -903,14 +999,15 @@ class TractorApp(App):
         hardcoded 8.0 L/ridge so existing scenarios stay calibrated.
 
         Args:
-            start_ridge:      First ridge (0-63).
+            start_ridge:      First ridge (within the configured farm).
             end_ridge:        Last ridge (max 10-ridge span).
-            liters_per_ridge: Insecticide application rate (>0).
+            liters_per_ridge: Positive working-fluid liters per ridge. The simulation
+                reference is 8 L/ridge; lower volumes reduce treatment strength.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
             return {"error": err}
-        if float(liters_per_ridge) <= 0:
+        if not math.isfinite(float(liters_per_ridge)) or float(liters_per_ridge) <= 0:
             return {"error": "liters_per_ridge must be positive"}
         if not self._weather_app.is_sprayable:
             return {
@@ -927,26 +1024,28 @@ class TractorApp(App):
         )
         if regime_error:
             return {"error": regime_error}
-        if self._pesticide_tank_l < required_liters:
+        # Relative-only tolerance accepts subtraction roundoff, never an empty tank.
+        if not (self._pesticide_tank_l >= required_liters
+                or math.isclose(self._pesticide_tank_l, required_liters, rel_tol=1e-12, abs_tol=0.0)):
             return {
                 "error": f"Insufficient pesticide in tank: need {required_liters:.1f} L, have {self._pesticide_tank_l:.1f} L"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
-        self.time_manager.add_offset(duration)
+        self._pesticide_tank_l = max(0.0, self._pesticide_tank_l - required_liters)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_SPRAY_MS)
+        self._advance_operation_time(duration)
         for ridge_id in range(start_ridge, end_ridge + 1):
             self._farm_world_app.update_ridge_pesticide(ridge_id)
 
         self._register_spray_with_physics(
             ridge_ids=list(range(start_ridge, end_ridge + 1)),
             method="boom",
-            efficacy_multiplier=1.0,
+            efficacy_multiplier=chemical_dose_efficacy(TreatmentType.INSECTICIDE, float(liters_per_ridge)),
         )
         regime_status = self._farm_world_app.record_chemical_application(
             "insecticide", required_liters
@@ -985,17 +1084,17 @@ class TractorApp(App):
             liters: Amount to transfer.
         """
         liters = float(liters)
-        if liters <= 0:
+        if not math.isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
-        space = round(_PESTICIDE_TANK_MAX_L - self._fungicide_tank_l, 2)
+        space = _PESTICIDE_TANK_MAX_L - self._fungicide_tank_l
         if space <= 0:
             return {"msg": "Fungicide tank is already full"}
         to_transfer = min(liters, space)
         if not self._farm_world_app.consume_pesticide(to_transfer):
             return {"error": "Insufficient chemical in warehouse"}
-        self._fungicide_tank_l = round(self._fungicide_tank_l + to_transfer, 2)
+        self._fungicide_tank_l = self._fungicide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "fungicide_tank_l": round(self._fungicide_tank_l, 1)}
+        return {"status": "ok", "fungicide_tank_l": self._fungicide_tank_l}
 
     @type_check
     @app_tool()
@@ -1012,14 +1111,15 @@ class TractorApp(App):
         constraints apply (no rain, wind below the spray limit).
 
         Args:
-            start_ridge:      First ridge to spray (0-63).
-            end_ridge:        Last ridge to spray (0-63, max 10-ridge span).
-            liters_per_ridge: Fungicide application rate (>0).
+            start_ridge:      First ridge to spray (within the configured farm).
+            end_ridge:        Last ridge to spray (within the configured farm, max 10-ridge span).
+            liters_per_ridge: Positive working-fluid liters per ridge. The simulation
+                reference is 3.8 L/ridge; lower volumes reduce treatment strength.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
             return {"error": err}
-        if float(liters_per_ridge) <= 0:
+        if not math.isfinite(float(liters_per_ridge)) or float(liters_per_ridge) <= 0:
             return {"error": "liters_per_ridge must be positive"}
         if not self._weather_app.is_sprayable:
             return {
@@ -1036,19 +1136,21 @@ class TractorApp(App):
         )
         if regime_error:
             return {"error": regime_error}
-        if self._fungicide_tank_l < required_liters:
+        # Relative-only tolerance accepts subtraction roundoff, never an empty tank.
+        if not (self._fungicide_tank_l >= required_liters
+                or math.isclose(self._fungicide_tank_l, required_liters, rel_tol=1e-12, abs_tol=0.0)):
             return {
                 "error": f"Insufficient fungicide in tank: need {required_liters:.1f} L, have {self._fungicide_tank_l:.1f} L"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fungicide_tank_l = round(self._fungicide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
-        self.time_manager.add_offset(duration)
+        self._fungicide_tank_l = max(0.0, self._fungicide_tank_l - required_liters)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_SPRAY_MS)
+        self._advance_operation_time(duration)
 
         # Physics integration: queue FUNGICIDE treatment + management residual.
         if self._farm_world_app.physics_active:
@@ -1093,14 +1195,15 @@ class TractorApp(App):
         and the chemical residual window.
 
         Args:
-            start_ridge:      First ridge to treat (0-63).
-            end_ridge:        Last ridge to treat (0-63, max 10-ridge span).
-            liters_per_ridge: Herbicide application rate (>0).
+            start_ridge:      First ridge to treat (within the configured farm).
+            end_ridge:        Last ridge to treat (within the configured farm, max 10-ridge span).
+            liters_per_ridge: Positive working-fluid liters per ridge. The simulation
+                reference is 8 L/ridge; lower volumes reduce treatment strength.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
             return {"error": err}
-        if float(liters_per_ridge) <= 0:
+        if not math.isfinite(float(liters_per_ridge)) or float(liters_per_ridge) <= 0:
             return {"error": "liters_per_ridge must be positive"}
         if not self._weather_app.is_sprayable:
             return {
@@ -1117,24 +1220,26 @@ class TractorApp(App):
         )
         if regime_error:
             return {"error": regime_error}
-        if self._pesticide_tank_l < required_liters:
+        # Relative-only tolerance accepts subtraction roundoff, never an empty tank.
+        if not (self._pesticide_tank_l >= required_liters
+                or math.isclose(self._pesticide_tank_l, required_liters, rel_tol=1e-12, abs_tol=0.0)):
             return {
                 "error": f"Insufficient chemical in tank: need {required_liters:.1f} L, have {self._pesticide_tank_l:.1f} L"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._pesticide_tank_l = round(self._pesticide_tank_l - required_liters, 2)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_SPRAY_MS)
-        self.time_manager.add_offset(duration)
+        self._pesticide_tank_l = max(0.0, self._pesticide_tank_l - required_liters)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_SPRAY_MS)
+        self._advance_operation_time(duration)
         self._register_weed_control_with_physics(
             ridge_ids=list(range(start_ridge, end_ridge + 1)),
             action_type="herbicide",
             method="boom",
-            efficacy_multiplier=1.0,
+            efficacy_multiplier=chemical_dose_efficacy(TreatmentType.HERBICIDE, float(liters_per_ridge)),
         )
         regime_status = self._farm_world_app.record_chemical_application(
             "herbicide", required_liters
@@ -1171,8 +1276,8 @@ class TractorApp(App):
         no herbicide residual, and no pesticide application count.
 
         Args:
-            start_ridge: First ridge to cultivate (0-63).
-            end_ridge:   Last ridge to cultivate (0-63, max 10-ridge span).
+            start_ridge: First ridge to cultivate (within the configured farm).
+            end_ridge:   Last ridge to cultivate (within the configured farm, max 10-ridge span).
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -1189,14 +1294,14 @@ class TractorApp(App):
         )
         if ridge_cap_error:
             return {"error": ridge_cap_error}
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_TILL_MS)
-        self.time_manager.add_offset(duration)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_TILL_MS)
+        self._advance_operation_time(duration)
         self._register_weed_control_with_physics(
             ridge_ids=list(range(start_ridge, end_ridge + 1)),
             action_type="mechanical_weed_control",
@@ -1242,38 +1347,45 @@ class TractorApp(App):
         failed badly enough that the farm decision is to re-sow the ridge and
         accept a later maturity window.
 
+        With WOFOST, any started native crop rejects both replacement and gap
+        filling before consuming resources; a new native season is required.
+
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth (3-5 cm).
-            spacing_cm:  In-row seed spacing (>0).
+            start_ridge: First ridge (within the configured farm).
+            end_ridge:   Last ridge (valid farm ridge, max 4-ridge span).
+            depth_cm:    Sowing depth in centimetres within the target crop's range.
+            spacing_cm:  In-row seed spacing in centimetres within the target crop's range.
             full_replant: Whether this pass resets the ridge phenology.
         """
         seed_spacing_cm = float(spacing_cm)
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
         if err:
             return {"error": err}
-        if not 3.0 <= float(depth_cm) <= 5.0:
-            return {"error": "depth_cm must be within 3–5 cm"}
-        if float(seed_spacing_cm) <= 0:
-            return {"error": "seed_spacing_cm must be positive"}
+        backend = getattr(self._farm_world_app._physics, "crop_backend", None)
+        if backend is not None:
+            error = backend.check_replant(range(start_ridge, end_ridge + 1))
+            if error:
+                return {"error": error}
+        parameter_error = self._planting_parameters_error(depth_cm, seed_spacing_cm)
+        if parameter_error:
+            return {"error": parameter_error}
 
         ridges = [
             self._farm_world_app.get_ridge(r) for r in range(start_ridge, end_ridge + 1)
         ]
-        seeds_per_ridge = plants_per_ridge_from_spacing(seed_spacing_cm)
+        seeds_per_ridge = self._farm_world_app.plants_per_ridge_from_spacing(seed_spacing_cm)
         seed_count = len(ridges) * seeds_per_ridge
         if self._seed_hopper < seed_count:
             return {
                 "error": f"Insufficient {self.seed_type} seeds in hopper: need {seed_count}"
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
-            return {"error": f"Insufficient fuel: need {_FUEL_PER_PASS} L"}
+        if self._fuel_tank_l < self._fuel_per_pass:
+            return {"error": f"Insufficient fuel: need {self._fuel_per_pass} L"}
 
         self._seed_hopper -= seed_count
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_PLANT_MS)
-        self.time_manager.add_offset(duration)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_PLANT_MS)
+        self._advance_operation_time(duration)
 
         stand_fraction_before: dict[int, float] = {}
         stand_fraction_overrides: dict[int, float] = {}
@@ -1434,18 +1546,18 @@ class TractorApp(App):
         agent followed the right post-harvest sequence.
 
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 10-ridge span).
+            start_ridge: First ridge (within the configured farm).
+            end_ridge:   Last ridge (within the configured farm, max 10-ridge span).
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
             return {"error": err}
-        if self._fuel_tank_l < _FUEL_PER_PASS:
-            return {"error": f"Insufficient fuel: need {_FUEL_PER_PASS} L"}
+        if self._fuel_tank_l < self._fuel_per_pass:
+            return {"error": f"Insufficient fuel: need {self._fuel_per_pass} L"}
 
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_TILL_MS)
-        self.time_manager.add_offset(duration)
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_TILL_MS)
+        self._advance_operation_time(duration)
 
         if self._farm_world_app.physics_active:
             self._register_residue_incorporation_with_physics(
@@ -1475,8 +1587,8 @@ class TractorApp(App):
         Harvest a contiguous block of ridges (up to 4 per pass).
 
         Args:
-            start_ridge: First ridge to harvest (0-63).
-            end_ridge:   Last ridge to harvest (0-63, max 4-ridge span).
+            start_ridge: First ridge to harvest (within the configured farm).
+            end_ridge:   Last ridge to harvest (valid farm ridge, max 4-ridge span).
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
         if err:
@@ -1496,7 +1608,9 @@ class TractorApp(App):
             r.ridge_id
             for r in ridges
             if str(r.growth_stage).upper()
-            not in {GrowthStage.R8.value.upper(), "R8_FULL_MATURITY"}
+            not in ({self._farm_world_app.crop_profile.mature_stage.upper(), "R8_FULL_MATURITY"}
+                    if self._farm_world_app.crop_type == "soybean"
+                    else {self._farm_world_app.crop_profile.mature_stage.upper()})
         ]
         if immature_ridges:
             return {
@@ -1511,14 +1625,15 @@ class TractorApp(App):
                     f"{bad_moisture}"
                 )
             }
-        if self._fuel_tank_l < _FUEL_PER_PASS:
+        if self._fuel_tank_l < self._fuel_per_pass:
             return {
-                "error": f"Insufficient fuel: need {_FUEL_PER_PASS} L, have {self._fuel_tank_l:.1f} L"
+                "error": f"Insufficient fuel: need {self._fuel_per_pass} L, have {self._fuel_tank_l:.1f} L"
             }
 
-        # Check that grain bin can hold this pass worst-case (yield_potential ≤ 1.0).
-        ridge_count = end_ridge - start_ridge + 1
-        worst_case_grain = ridge_count * GRAIN_KG_PER_RIDGE
+        from fairy.apps.farm_world.tractor_operations import harvest_grain_upper_bound_kg
+
+        worst_case_grain = harvest_grain_upper_bound_kg(
+            self._farm_world_app, list(range(start_ridge, end_ridge + 1)))
         if self._grain_bin_kg + worst_case_grain > _GRAIN_BIN_MAX_KG:
             return {
                 "error": (
@@ -1529,10 +1644,20 @@ class TractorApp(App):
             }
 
         ridge_ids = list(range(start_ridge, end_ridge + 1))
-        self._farm_world_app.record_grain_bin_moisture(ridge_ids)
-        self._fuel_tank_l = round(self._fuel_tank_l - _FUEL_PER_PASS, 2)
-        duration = _pass_duration(_SPEED_HARVEST_MS)
-        self.time_manager.add_offset(duration)
+        shared_asset = getattr(self, "_shared_asset_state", None)
+        if shared_asset is None:
+            self._farm_world_app.record_grain_bin_moisture(ridge_ids)
+            grain_moistures = []
+        else:
+            # A farm-wide pending list cannot distinguish two combines working
+            # on the same land. Keep each pass's provenance on its own asset.
+            grain_moistures = [
+                self._farm_world_app._ridge_harvest_moisture_pct(ridge_id)
+                for ridge_id in ridge_ids
+            ]
+        self._fuel_tank_l = self._fuel_tank_l - self._fuel_per_pass
+        duration = self._pass_duration(_SPEED_HARVEST_MS)
+        self._advance_operation_time(duration)
         grain_added = 0.0
 
         if self._farm_world_app.physics_active:
@@ -1548,6 +1673,17 @@ class TractorApp(App):
                 grain_added += float(result.get("grain_kg_added", 0.0))
             grain_added = round(grain_added, 2)
         self._grain_bin_kg = round(self._grain_bin_kg + grain_added, 2)
+        if shared_asset is not None and grain_added > 0:
+            moistures = [float(value) for value in grain_moistures if value is not None]
+            shared_asset.grain_lots.append({
+                "farm_id": self._farm_world_app.farm_id,
+                "crop_type": self._farm_world_app.crop_type,
+                "ridge_ids": list(ridge_ids),
+                "grain_kg": round(grain_added, 2),
+                "moisture_pct": max(moistures) if moistures else 0.0,
+                "moistures_pct": moistures,
+                "harvested_at": float(self.time_manager.time()),
+            })
 
         op_id = str(uuid.uuid4())[:8]
         self._operation_log.append(
@@ -1581,8 +1717,24 @@ class TractorApp(App):
         if self._grain_bin_kg <= 0.0:
             return {"error": "Grain bin is already empty"}
         unloaded = round(self._grain_bin_kg, 2)
-        self.time_manager.add_offset(_GRAIN_UNLOAD_DURATION_S)
-        self._farm_world_app.add_grain_to_inventory(unloaded)
+        shared_asset = getattr(self, "_shared_asset_state", None)
+        if shared_asset is not None:
+            lots = shared_asset.grain_lots
+            if (not lots or any(lot["farm_id"] != self._farm_world_app.farm_id for lot in lots)
+                    or abs(sum(float(lot["grain_kg"]) for lot in lots) - unloaded) > 0.011):
+                return {"error": "Grain lots must match this asset's bin and origin farm"}
+        self._advance_operation_time(_GRAIN_UNLOAD_DURATION_S)
+        if shared_asset is None:
+            self._farm_world_app.add_grain_to_inventory(unloaded)
+        else:
+            farm = self._farm_world_app
+            farm._inventory.harvest_grain_kg = round(farm._inventory.harvest_grain_kg + unloaded, 2)
+            farm._inventory.grain_dried = False
+            for lot in shared_asset.grain_lots:
+                farm._trailer_grain_ridge_ids.extend(lot["ridge_ids"])
+                farm._trailer_grain_moistures_pct.extend(lot.get("moistures_pct") or [lot["moisture_pct"]])
+            shared_asset.grain_lots = []
+            farm.is_state_modified = True
         self._grain_bin_kg = 0.0
 
         op_id = str(uuid.uuid4())[:8]
@@ -1622,7 +1774,6 @@ class TractorApp(App):
         ):
             self._farm_world_app.advance_physics_time()
         avg_vwc = self._farm_world_app.get_avg_vwc()
-        self._weather_app.set_avg_soil_vwc(avg_vwc)
         if avg_vwc > _MAX_VWC_TRAFFIC:
             return (
                 f"Soil too wet for {operation} "
@@ -1658,14 +1809,11 @@ class TractorApp(App):
 
         physics = self._farm_world_app.physics
         ridge_ids = [r.ridge_id for r in ridges]
-        seed_type_value = self.seed_type or SeedType.STANDARD.value
-        try:
-            physics_seed_type = PhysicsSeedType(seed_type_value)
-        except ValueError:
-            physics_seed_type = PhysicsSeedType.STANDARD
+        seed_type_value = self.seed_type or self._farm_world_app.crop_profile.seed_type
+        physics_seed_type = PhysicsSeedType(seed_type_value)
 
         now_t = float(self.time_manager.time())
-        today = datetime.fromtimestamp(now_t, tz=timezone.utc).date()
+        today = self._farm_world_app.simulation_date()
 
         physics.phenology.plant_ridges(
             ridge_ids,
@@ -1751,10 +1899,6 @@ class TractorApp(App):
         used in the legacy path.
         """
         from fairy.apps.farm_world.farm_action_record import FarmActionRecord
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
         from fairy.physics import HarvestAction
 
         physics = self._farm_world_app.physics
@@ -1772,9 +1916,7 @@ class TractorApp(App):
         # back to running yield directly so the agent sees recovered yield.
         from datetime import datetime, timezone
 
-        today = datetime.fromtimestamp(
-            float(self.time_manager.time()), tz=timezone.utc
-        ).date()
+        today = self._farm_world_app.simulation_date()
         from fairy.apps.farm_world.physics_orchestrator import (
             _build_weather_inputs,
         )
@@ -1830,7 +1972,7 @@ class TractorApp(App):
             for rid, state in physics.yield_recovery.states.items()
             if rid not in harvested_ridge_set
         }
-        results = physics.yield_recovery.update_day(
+        results = physics.yield_recovery.settle_harvest(
             weather=weather["yield"],
             phenology_by_ridge=yield_phenology,
             growth_by_ridge=yield_growth,
@@ -1841,7 +1983,7 @@ class TractorApp(App):
 
         # Convert recovered yield from g/m² to kg per ridge: each ridge is
         # FIELD_LENGTH_M × DEFAULT_RIDGE_WIDTH_M m².
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = self._farm_world_app.ridge_area_m2
         total_kg = 0.0
         for result in results:
             if result.ridge_id in ridge_ids and result.harvested:
@@ -1982,7 +2124,7 @@ class TractorApp(App):
                 ridge_id,
                 TreatmentApplication(
                     treatment_type=TreatmentType.FUNGICIDE,
-                    efficacy_multiplier=1.0,
+                    efficacy_multiplier=chemical_dose_efficacy(TreatmentType.FUNGICIDE, float(liters_per_ridge)),
                 ),
             )
             physics.queue_management_action(
@@ -1990,7 +2132,7 @@ class TractorApp(App):
                 ManagementAction(
                     action_type=ManagementActionType.FUNGICIDE,
                     amount=float(liters_per_ridge),
-                    quality=1.0,
+                    quality=chemical_dose_efficacy(TreatmentType.FUNGICIDE, float(liters_per_ridge)),
                     metadata={"method": "boom"},
                 ),
             )

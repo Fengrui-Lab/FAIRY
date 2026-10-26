@@ -26,10 +26,15 @@ class SystemApp(App):
         self.wait_for_notification_timeout: WaitForNotificationTimeout | None = None
         self.wait_for_next_notification: Callable[[], None] = lambda: None
         self._farm_world_app = None
+        self._farm_world_apps: list = []
+        self.farm_environment = None
 
     def wait(self, time: int = 0) -> None:
         assert time >= 0, "Time must be non-negative"
-        self.time_manager.add_offset(time)
+        if self.farm_environment is not None:
+            self.farm_environment.advance_time(time)
+        else:
+            self.time_manager.add_offset(time)
 
     @type_check
     @app_tool()
@@ -43,7 +48,9 @@ class SystemApp(App):
         "current_weekday" (Monday, Tuesday, etc.).
         """
         timestamp = self.time_manager.time()
-        date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        date = datetime.fromtimestamp(timestamp, tz=(self.farm_environment.simulation_timezone
+                                      if self.farm_environment is not None else
+                                      getattr(self._farm_world_app, "simulation_timezone", timezone.utc)))
         return {
             "current_timestamp": timestamp,
             "current_datetime": date.strftime("%Y-%m-%d %H:%M:%S"),
@@ -54,7 +61,17 @@ class SystemApp(App):
         self.wait_for_notification_timeout = None
 
     def attach_farm_world_app(self, farm_world_app) -> None:
+        """Compatibility helper for existing single-farm callers."""
         self._farm_world_app = farm_world_app
+        self._farm_world_apps = [farm_world_app] if farm_world_app is not None else []
+
+    def attach_farm_world_apps(self, farm_world_apps) -> None:
+        self._farm_world_apps = list(farm_world_apps)
+        self._farm_world_app = self._farm_world_apps[0] if self._farm_world_apps else None
+
+    def attach_farm_environment(self, environment) -> None:
+        """Bind explicit farm membership, shared warehouse and scene calendar."""
+        self.farm_environment = environment
 
     @type_check
     @app_tool()
@@ -88,21 +105,27 @@ class SystemApp(App):
         )
         if total_seconds <= 0:
             return {"error": "advance_time amount must be > 0"}
-        farm_world_app = self._farm_world_app
-        if farm_world_app is not None:
+        if self.farm_environment is not None:
+            self.farm_environment.advance_time(total_seconds)
+            return {"status": "ok", "advanced_seconds": total_seconds, **self.get_current_time()}
+        farms = self._farm_world_apps
+        for farm_world_app in farms:
             prepare = getattr(farm_world_app, "prepare_for_time_advance", None)
             if callable(prepare):
                 prepare(float(self.time_manager.time()))
         self.time_manager.add_offset(total_seconds)
-        if farm_world_app is not None:
+        advanced_clocks = {id(self.time_manager)}
+        for farm_world_app in farms:
             fw_tm = getattr(farm_world_app, "time_manager", None)
-            if fw_tm is not None and fw_tm is not self.time_manager:
+            if fw_tm is not None and id(fw_tm) not in advanced_clocks:
                 fw_tm.add_offset(total_seconds)
+                advanced_clocks.add(id(fw_tm))
             weather_app = getattr(farm_world_app, "_weather_app", None)
             if weather_app is not None:
                 w_tm = getattr(weather_app, "time_manager", None)
-                if w_tm is not None and w_tm is not self.time_manager and w_tm is not fw_tm:
+                if w_tm is not None and id(w_tm) not in advanced_clocks:
                     w_tm.add_offset(total_seconds)
+                    advanced_clocks.add(id(w_tm))
             advance = getattr(farm_world_app, "advance_physics_time", None)
             if callable(advance):
                 advance()
@@ -111,9 +134,7 @@ class SystemApp(App):
             "status": "ok",
             "advanced_seconds": total_seconds,
             "current_timestamp": timestamp,
-            "current_datetime": datetime.fromtimestamp(timestamp, tz=timezone.utc).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "current_datetime": self.get_current_time()["current_datetime"],
         }
 
     @app_tool()

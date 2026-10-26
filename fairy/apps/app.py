@@ -30,6 +30,7 @@ class App:
         self.add_event_callbacks: dict[str, Callable[[Any], None]] = {}
         self.schedule_event_callbacks: dict[str, Callable[[Any], None]] = {}
         self.failure_probability: float | None = None
+        self.tool_allowlist: set[str] | None = None
         self.time_manager = TimeManager()
         self.set_seed(0)
 
@@ -94,7 +95,18 @@ class App:
         return tools
 
     def get_tools(self) -> list[AppTool]:
-        return self.get_tools_with_attribute(ToolAttributeName.APP, ToolType.APP)
+        tools = self.get_tools_with_attribute(ToolAttributeName.APP, ToolType.APP)
+        if getattr(self, "require_explicit_tool_docs", False):
+            arguments = {arg.name for tool in tools for arg in tool.args}
+            unknown_choices = set(getattr(self, "tool_parameter_choices", {})) - arguments
+            if unknown_choices:
+                raise ValueError(f"Tool choices refer to unknown arguments: {sorted(unknown_choices)}")
+        if self.tool_allowlist is None:
+            return tools
+        unknown = self.tool_allowlist - {tool.name for tool in tools}
+        if unknown:
+            raise ValueError(f"Unknown exposed tools for {self.name}: {sorted(unknown)}")
+        return [tool for tool in tools if tool.name in self.tool_allowlist]
 
     def get_user_tools(self) -> list[AppTool]:
         return self.get_tools_with_attribute(ToolAttributeName.USER, ToolType.USER)

@@ -19,8 +19,10 @@ from typing import Any
 
 
 class SeedType(str, Enum):
-    """Soybean seed types available for planting. [PDF-p5]"""
+    """Supported soybean cultivars and explicit maize/rice simulation seeds."""
 
+    MAIZE_STANDARD = "MAIZE_STANDARD"
+    RICE_STANDARD = "RICE_STANDARD"
     EARLY_COLD = "EARLY_COLD"  # 早熟耐寒, 100-110 days, tolerates <10°C
     STANDARD = "STANDARD"  # 标准型,   110-115 days, typical window
     HIGH_DENSITY = "HIGH_DENSITY"  # 高密度紧凑型, sensitive to uneven moisture
@@ -31,6 +33,15 @@ class SeedType(str, Enum):
     HEINONG60 = "HEINONG60"  # 黑农60, high-density Harbin baseline cultivar
     HEINONG84 = "HEINONG84"  # 黑农84, Harbin/Heilongjiang standard-density cultivar
     HEIKE71 = "HEIKE71"  # 黑科71, early-maturity Heilongjiang cultivar
+    SUINONG42 = "SUINONG42"  # Published seedling chilling-tolerant contrast.
+    KENDOU40 = "KENDOU40"  # Published seedling chilling-sensitive contrast.
+    HEINONG44 = "HEINONG44"  # Published drought-tolerant contrast.
+    HEINONG65 = "HEINONG65"  # Published drought-sensitive contrast.
+    # Official WOFOST parameter-set identities, restricted to a native backend.
+    SOYBEAN_901 = "SOYBEAN_901"
+    SOYBEAN_902 = "SOYBEAN_902"
+    SOYBEAN_903 = "SOYBEAN_903"
+    SOYBEAN_905 = "SOYBEAN_905"
 
 
 class GrowthStage(str, Enum):
@@ -73,12 +84,12 @@ class SeasonPhase(str, Enum):
 @dataclass
 class RidgeState:
     """
-    State of a single ridge (垄). The farm has 64 ridges, ID 0-63. [PDF-p1]
+    State of a single local ridge (垄); IDs run from 0 to the farm's num_ridges - 1.
 
-    Coordinates: x = ridge_id (0-63), y = length direction (0-268 m). [PDF-p2]
+    Coordinates: x = local ridge_id, y follows the configured field length.
     """
 
-    ridge_id: int  # 0-63 [PDF-p1]
+    ridge_id: int  # local to one configured farm
     soil_vwc: float  # volumetric water content 0.0-1.0 [PDF-p3]
     soil_temp_c: float  # soil temperature at 5 cm depth (°C) [PDF-p3]
     growth_stage: str  # GrowthStage value [PDF-p6]
@@ -264,7 +275,9 @@ class ManagementRegimeState:
             "last_insecticide_application_day": self.last_insecticide_application_day,
             "last_fungicide_application_day": self.last_fungicide_application_day,
             "active_ingredient_used_kg": round(self.active_ingredient_used_kg, 4),
-            "irrigation_used_mm_total": round(self.irrigation_used_mm_total, 4),
+            # This dictionary is also the checkpoint representation. Retain
+            # the ledger so restoring a world cannot change its water budget.
+            "irrigation_used_mm_total": self.irrigation_used_mm_total,
             "fertilizer_used_kg": round(self.fertilizer_used_kg, 4),
             "machine_passes_used": self.machine_passes_used,
             "mechanical_weed_ridges_treated": self.mechanical_weed_ridges_treated,
@@ -419,9 +432,11 @@ class InventoryState:
     def to_dict(self) -> dict[str, Any]:
         return {
             "seed_stock": dict(self.seed_stock),
-            "pesticide_liters": round(self.pesticide_liters, 2),
-            "fertilizer_kg": round(self.fertilizer_kg, 2),
-            "fuel_liters": round(self.fuel_liters, 2),
+            # Snapshots and tools share this representation. Rounding a small
+            # withdrawal away here would recreate stock on checkpoint restore.
+            "pesticide_liters": self.pesticide_liters,
+            "fertilizer_kg": self.fertilizer_kg,
+            "fuel_liters": self.fuel_liters,
             "harvest_grain_kg": round(self.harvest_grain_kg, 2),
             "warehouse_grain_kg": round(self.warehouse_grain_kg, 2),
             "grain_dried": self.grain_dried,
@@ -443,6 +458,8 @@ class InventoryState:
     def default(cls) -> "InventoryState":
         return cls(
             seed_stock={
+                SeedType.MAIZE_STANDARD.value: 1000000,
+                SeedType.RICE_STANDARD.value: 1000000,
                 SeedType.STANDARD.value: 1000000,
                 SeedType.EARLY_COLD.value: 1000000,
                 SeedType.HIGH_DENSITY.value: 1000000,

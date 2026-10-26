@@ -117,6 +117,57 @@ def install_common_farm_apps(
     farm_world.attach_system_app(system)
 
 
+def initialize_tractor_fuel(
+    scenario: Scenario,
+    farm_world: FarmWorldApp,
+    tractor: TractorApp,
+    declared_onboard_liters: float,
+) -> None:
+    """Keep a native fixture's fuel in a real tank and its declared warehouse.
+
+    Older L3 fixtures declared 180/190 L aboard a 100 L tractor. Native runs
+    retain that total starting fuel budget by putting the excess in storage.
+    This is initial placement, recorded for audit; the agent must still call
+    refuel to move stored fuel into the tractor during the season.
+    Compatibility scenarios retain their original fixture exactly.
+    """
+    from math import isfinite
+
+    from fairy.apps.farm_world.tractor_app import _FUEL_TANK_MAX_L
+
+    declared = float(declared_onboard_liters)
+    if not isfinite(declared) or declared < 0:
+        raise ValueError("Initial tractor fuel must be finite and nonnegative")
+    tractor._fuel_tank_l = declared
+    if scenario.crop_backend != "wofost" or declared <= _FUEL_TANK_MAX_L:
+        return
+
+    excess = declared - _FUEL_TANK_MAX_L
+    warehouse = farm_world.shared_warehouse
+    stock = warehouse.stock if warehouse is not None else farm_world._inventory
+    stored_before = float(stock.fuel_liters)
+    stock.fuel_liters = stored_before + excess
+    tractor._fuel_tank_l = _FUEL_TANK_MAX_L
+    adjustments = list(getattr(scenario, "initial_state_adjustments", []))
+    adjustments.append(
+        {
+            "kind": "native_initial_fuel_placement",
+            "reason": "Declared onboard fuel exceeds the physical tractor tank",
+            "tractor_name": tractor.name,
+            "farm_id": farm_world.farm_id,
+            "warehouse_id": warehouse.warehouse_id if warehouse is not None else None,
+            "declared_onboard_fuel_liters": declared,
+            "onboard_fuel_liters": _FUEL_TANK_MAX_L,
+            "fuel_moved_to_initial_warehouse_liters": excess,
+            "warehouse_fuel_liters_before": stored_before,
+            "warehouse_fuel_liters_after": stock.fuel_liters,
+            "total_initial_fuel_liters": stored_before + declared,
+            "total_fuel_budget_preserved": True,
+        }
+    )
+    scenario.initial_state_adjustments = adjustments
+
+
 def configure_common_field(
     scenario: Scenario,
     *,
@@ -190,7 +241,7 @@ def configure_common_field(
     farm_world._inventory.pesticide_liters = pesticide_liters
     farm_world._inventory.fuel_liters = fuel_liters
 
-    tractor._fuel_tank_l = tractor_fuel_l
+    initialize_tractor_fuel(scenario, farm_world, tractor, tractor_fuel_l)
     tractor._seed_hopper = 0
     tractor._fertilizer_spreader_kg = 0.0
     tractor._pesticide_tank_l = 0.0

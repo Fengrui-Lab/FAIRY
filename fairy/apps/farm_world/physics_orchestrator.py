@@ -28,7 +28,7 @@ Contract:
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone, tzinfo
 from typing import TYPE_CHECKING, Any
 
 from fairy.physics import (
@@ -85,7 +85,7 @@ _W_PER_M2_TO_MJ_PER_M2_PER_DAY: float = 0.0864  # 1 W/m^2 * 86400 s * 1e-6
 
 
 def advance_physics_time(
-    farm_world_app: "FarmWorldApp", target_sim_time: float
+    farm_world_app: "FarmWorldApp", target_sim_time: float, *, weather_inputs_provider=None
 ) -> dict[str, Any]:
     """Advance physics to ``target_sim_time``.
 
@@ -96,8 +96,10 @@ def advance_physics_time(
     if physics is None or not physics.engines_active:
         return {"status": "skipped", "reason": "physics_inactive"}
     physics.ridge_width_m = float(farm_world_app.ridge_width_m)
+    physics.field_length_m = float(farm_world_app.field_length_m)
 
     weather_app = _find_weather_app(farm_world_app)
+    simulation_timezone = farm_world_app.simulation_timezone
 
     # First call seeds engine state from the scenario's initial ridge values.
     if physics.last_physics_sim_time is None:
@@ -109,12 +111,13 @@ def advance_physics_time(
         if (
             physics.pending_management_actions_by_ridge
             or physics.pending_treatments_by_ridge
+            or physics.pending_harvest_actions_by_ridge
         ):
             subdaily_first_call = _run_subdaily_injection(
-                physics, weather_app, target_sim_time
+                physics, weather_app, target_sim_time, weather_inputs_provider, simulation_timezone=simulation_timezone
             )
         sync_compatibility_fields_from_physics(farm_world_app)
-        if weather_app is not None:
+        if weather_app is not None and weather_inputs_provider is None:
             avg_vwc = _avg_top_vwc(physics)
             if avg_vwc is not None:
                 weather_app.set_avg_soil_vwc(avg_vwc)
@@ -126,26 +129,48 @@ def advance_physics_time(
         }
 
     elapsed = target_sim_time - physics.last_physics_sim_time
-    if elapsed <= 0.0:
+    if elapsed < 0:
+        raise ValueError("Physics time cannot move backwards")
+    has_pending = bool(physics.pending_management_actions_by_ridge
+                       or physics.pending_treatments_by_ridge
+                       or physics.pending_harvest_actions_by_ridge)
+    if elapsed == 0 and not has_pending:
         return {"status": "noop", "day_ticks_run": 0, "elapsed_s": elapsed}
 
-    days_to_run = _dates_between(physics.last_physics_sim_time, target_sim_time)
+    days_to_run = _dates_between(physics.last_physics_sim_time, target_sim_time, simulation_timezone=simulation_timezone)
 
     subdaily_irrigation_applied = False
-    if not days_to_run and (
-        physics.pending_management_actions_by_ridge
-        or physics.pending_treatments_by_ridge
-    ):
+    if not days_to_run and has_pending:
         subdaily_irrigation_applied = _run_subdaily_injection(
-            physics, weather_app, target_sim_time
-        )
+            physics, weather_app, target_sim_time, weather_inputs_provider,
+            simulation_timezone=simulation_timezone)
 
-    for tick_day in days_to_run:
-        _run_daily_tick(farm_world_app, physics, weather_app, tick_day)
+    completed_calendar_day = (getattr(physics, "scenario_metadata", None) or {}).get(
+        "daily_settlement"
+    ) == "completed_calendar_day"
+    for boundary_day in days_to_run:
+        # Formal reference worlds settle yesterday only after its local
+        # midnight has passed. Historical scenarios keep their existing
+        # boundary-date convention unless they explicitly opt in.
+        tick_day = boundary_day - timedelta(days=1) if completed_calendar_day else boundary_day
+        inputs = weather_inputs_provider(tick_day, True) if weather_inputs_provider else None
+        _run_daily_tick(farm_world_app, physics, weather_app, tick_day, inputs)
+
+    if completed_calendar_day:
+        current_day = datetime.fromtimestamp(target_sim_time, tz=simulation_timezone).date()
+        if "wofost_scenario_events" in (getattr(physics, "scenario_metadata", None) or {}):
+            from fairy.scenarios.wofost_events import apply_scenario_events_for_day
+
+            apply_scenario_events_for_day(farm_world_app, current_day)
+        # Crop/soil states describe the completed day's boundary, while the
+        # public station and forecast must describe today's working conditions.
+        # Refreshing pinned inputs does not integrate another biological day.
+        if weather_inputs_provider is None:
+            _build_weather_inputs(weather_app, current_day, physics=physics, advance_weather=False)
 
     physics.last_physics_sim_time = target_sim_time
     sync_compatibility_fields_from_physics(farm_world_app)
-    if weather_app is not None:
+    if weather_app is not None and weather_inputs_provider is None:
         avg_vwc = _avg_top_vwc(physics)
         if avg_vwc is not None:
             weather_app.set_avg_soil_vwc(avg_vwc)
@@ -164,7 +189,7 @@ def advance_physics_time(
 # ---------------------------------------------------------------------------
 
 
-def _dates_between(t_from: float, t_to: float) -> list[date]:
+def _dates_between(t_from: float, t_to: float, *, simulation_timezone=timezone.utc) -> list[date]:
     """Return the list of UTC dates strictly after t_from and up to t_to.
 
     For the irrigation scenario starting at 07:00 UTC and waiting 2 hours
@@ -173,8 +198,8 @@ def _dates_between(t_from: float, t_to: float) -> list[date]:
     """
     if t_to <= t_from:
         return []
-    d_from = datetime.fromtimestamp(t_from, tz=timezone.utc).date()
-    d_to = datetime.fromtimestamp(t_to, tz=timezone.utc).date()
+    d_from = datetime.fromtimestamp(t_from, tz=simulation_timezone).date()
+    d_to = datetime.fromtimestamp(t_to, tz=simulation_timezone).date()
     if d_to <= d_from:
         return []
     out: list[date] = []
@@ -204,7 +229,7 @@ def _seed_physics_from_ridges(
     """
     physics = farm_world_app.physics
     physics.last_physics_sim_time = target_sim_time
-    today = datetime.fromtimestamp(target_sim_time, tz=timezone.utc).date()
+    today = datetime.fromtimestamp(target_sim_time, tz=farm_world_app.simulation_timezone).date()
 
     for ridge in farm_world_app._ridges:
         rid = ridge.ridge_id
@@ -227,9 +252,18 @@ def _seed_physics_from_ridges(
             phen_state.planting_date = today - timedelta(
                 days=int(ridge.days_since_planted)
             )
-            phen_state.seed_type = _coerce_seed_type(ridge.seed_type)
+            phen_state.seed_type = _coerce_seed_type(
+                ridge.seed_type or farm_world_app.crop_profile.seed_type
+            )
             phen_state.days_after_planting = int(ridge.days_since_planted)
-            mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
+            if physics.crop_type == "soybean":
+                mapped = _map_legacy_growth_stage_to_soybean_stage(ridge.growth_stage)
+            else:
+                from fairy.physics.crop_physiology import compatibility_stage
+
+                mapped = compatibility_stage(physics.crop_profile, ridge.growth_stage)
+                if mapped is None:
+                    mapped = SoybeanStage.PLANTED_PRE_EMERGENCE
             phen_state.stage = mapped
             phen_state.emerged = mapped not in {
                 SoybeanStage.NOT_PLANTED,
@@ -249,6 +283,12 @@ def _seed_physics_from_ridges(
                 fraction = physics.phenology.params.stage_fraction_thresholds.get(
                     mapped, 0.0
                 )
+                if physics.crop_type != "soybean" and phen_state.emerged:
+                    from fairy.physics.crop_physiology import crop_stage_fraction
+
+                    fraction = max(fraction, crop_stage_fraction(
+                        physics.crop_profile, ridge.growth_stage
+                    ) or 0.0)
                 phen_state.effective_development_gdd = float(
                     seed_params.gdd_to_r8 * fraction
                 )
@@ -257,7 +297,13 @@ def _seed_physics_from_ridges(
                     phen_state.effective_development_gdd,
                 )
                 if mapped == SoybeanStage.R8 and phen_state.maturity_date is None:
-                    phen_state.maturity_date = phen_state.planting_date
+                    phen_state.maturity_date = (
+                        phen_state.planting_date
+                        if physics.crop_type == "soybean" else
+                        min(today, phen_state.planting_date + timedelta(
+                            days=physics.crop_profile.stage_thresholds[-1][0]
+                        ))
+                    )
 
         # Biotic baseline reflects whatever the scenario configured for pest
         # outbreaks via _configure_initial_state (carries through r.pest_pressure_base).
@@ -300,7 +346,9 @@ def _seed_physics_from_ridges(
                 # Engine already at a post-emergence stage (or this ridge had
                 # planted=True from _configure_initial_state and we just set
                 # the engine stage from ridge.growth_stage).
-                seed_type = _coerce_seed_type(ridge.seed_type) or SeedType.STANDARD
+                seed_type = _coerce_seed_type(
+                    ridge.seed_type or farm_world_app.crop_profile.seed_type
+                ) or SeedType.STANDARD
                 physics.canopy.initialize_ridges(
                     [rid],
                     seed_type=CanopySeedType(seed_type.value),
@@ -314,6 +362,33 @@ def _seed_physics_from_ridges(
                 # the soil engine treats the field as bare and high ET cancels
                 # any irrigation gain).
                 _fast_forward_canopy_lai_for_stage(canopy_state, phen_stage)
+                if physics.crop_type != "soybean":
+                    # Mid-season scenario state is a deliberate snapshot.
+                    # Initialize its crop-specific biomass/yield scale rather
+                    # than the historical soybean LAI-to-biomass proxy.
+                    growth_params = physics.canopy.seed_params[CanopySeedType(seed_type.value)]
+                    progress = _phenology_development_fraction(
+                        phen_state, physics.phenology.seed_type_params
+                    )
+                    target_yield = physics.crop_profile.yield_kg_m2 * 1000.0
+                    canopy_state.aboveground_biomass_g_m2 = max(
+                        canopy_state.aboveground_biomass_g_m2,
+                        target_yield * progress / growth_params.harvest_index,
+                    )
+                    fill = physics.phenology.params.stage_fraction_thresholds[SoybeanStage.R5]
+                    canopy_state.yield_potential_g_m2 = target_yield * max(
+                        0.0, min(1.0, (progress - fill) / (1.0 - fill))
+                    )
+                    if phen_stage == SoybeanStage.R8:
+                        yld = physics.yield_recovery.states[rid]
+                        yld.r8_reached = True
+                        yld.maturity_date = phen_state.maturity_date or today
+                        yld.biological_yield_g_m2 = canopy_state.yield_potential_g_m2
+                        yld.grain_moisture_frac = (
+                            float(ridge.grain_moisture_pct) / 100.0
+                            if ridge.grain_moisture_pct > 0.0
+                            else physics.yield_recovery.params.initial_r8_grain_moisture
+                        )
 
         # Canopy NDVI bridge: scenarios that pre-seed an anomaly NDVI via
         # r.ndvi_proxy (>=0) overwrite the engine's default LAI-derived value.
@@ -375,19 +450,18 @@ def _ridge_planting_density_plants_m2(
         return 40.0
 
     if ridge.seeds_planted > 0:
-        from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M
-
-        ridge_area_m2 = FIELD_LENGTH_M * ridge_width_m
+        ridge_area_m2 = farm_world_app.ridge_area_m2
         if ridge_area_m2 > 0.0:
             return max(0.0, float(ridge.seeds_planted) / ridge_area_m2)
 
     if ridge.seed_spacing_cm is not None and ridge.seed_spacing_cm > 0.0:
-        from fairy.apps.farm_world.farm_world_app import ROWS_PER_RIDGE
-
         seed_spacing_m = float(ridge.seed_spacing_cm) / 100.0
-        return max(0.0, ROWS_PER_RIDGE / (ridge_width_m * seed_spacing_m))
+        return max(0.0, farm_world_app.crop_profile.rows_per_ridge / (ridge_width_m * seed_spacing_m))
 
-    return 40.0
+    profile = farm_world_app.crop_profile
+    if profile.crop_type == "soybean":
+        return 40.0
+    return profile.rows_per_ridge / (ridge_width_m * profile.seed_spacing_cm / 100.0)
 
 
 def _coerce_seed_type(seed_value: str | None) -> SeedType | None:
@@ -469,11 +543,15 @@ def _run_daily_tick(
     farm_world_app: "FarmWorldApp",
     physics: "FarmPhysicsState",
     weather_app: "WeatherApp | None",
-    day: date,
+    day: date, weather_inputs=None,
 ) -> None:
     """Run one full daily tick following the integration-guide order."""
-    weather = _build_weather_inputs(weather_app, day, physics=physics)
+    weather = weather_inputs if weather_inputs is not None else _build_weather_inputs(weather_app, day, physics=physics)
     _apply_biotic_outbreaks_for_day(physics, day)
+    if "wofost_scenario_events" in (getattr(physics, "scenario_metadata", None) or {}):
+        from fairy.scenarios.wofost_events import apply_scenario_events_for_day
+
+        apply_scenario_events_for_day(farm_world_app, day)
 
     pending_actions = physics.drain_pending_management_actions()
     pending_treatments = physics.drain_pending_treatments()
@@ -490,8 +568,14 @@ def _run_daily_tick(
     )
 
     if physics.crop_backend is not None:
-        from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M
-
+        # Commit newly queued controls before native daily assimilation. The
+        # regular biotic update below remains the only daily aging/growth step.
+        if pending_treatments:
+            _apply_treatments_now(physics, weather, pending_treatments)
+            pending_treatments = {}
+        for rid, grain in physics.yield_recovery.states.items():
+            if grain.harvested:
+                physics.phenology.states[rid].planted = False
         humidity = weather.get("humidity_pct", 55.0)
         if "humidity_pct" not in weather and weather_app is not None:
             humidity = float(
@@ -506,7 +590,7 @@ def _run_daily_tick(
                 rid: _ridge_planting_density_plants_m2(farm_world_app, rid)
                 for rid in physics.phenology.states
             },
-            ridge_area_m2=FIELD_LENGTH_M * float(farm_world_app.ridge_width_m),
+            ridge_area_m2=farm_world_app.ridge_area_m2,
             humidity_pct=humidity,
         )
     else:
@@ -526,7 +610,7 @@ def _run_daily_tick(
             rid: PhenologySoilInput(
                 top_temp_c=physics.soil.states[rid].top_temp_c,
                 top_vwc=physics.soil.states[rid].top_vwc,
-                water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
+                water_stress=_crop_water_stress(physics, physics.soil.states[rid].root_vwc),
             )
             for rid in physics.soil.states
         }
@@ -570,7 +654,7 @@ def _run_daily_tick(
         }
         canopy_soil_inputs = {
             rid: GrowthSoilInput(
-                water_stress=_compute_water_stress(physics.soil.states[rid].root_vwc),
+                water_stress=_crop_water_stress(physics, physics.soil.states[rid].root_vwc),
                 root_vwc=physics.soil.states[rid].root_vwc,
             )
             for rid in physics.soil.states
@@ -720,6 +804,8 @@ def _build_weather_inputs(
     day: date,
     physics: "FarmPhysicsState | None" = None,
     advance_weather: bool = True,
+    update_soil_vwc: bool = True,
+    align_date_to_tick: bool = False,
 ) -> dict[str, Any]:
     """Translate the day's weather into per-engine inputs.
 
@@ -738,7 +824,10 @@ def _build_weather_inputs(
     underlying day. We approximate min/max temp around the mean when the
     static path is in use.
     """
+    if weather_app is not None and hasattr(weather_app, "daily_inputs"):
+        return weather_app.daily_inputs(day)
     generated_day = None
+    yield_relative_humidity_pct = None
     if physics is not None and getattr(physics, "weather_generator", None) is not None:
         try:
             profile = getattr(physics, "profile", None)
@@ -757,14 +846,15 @@ def _build_weather_inputs(
         wind_ms = float(generated_day.wind_ms)
         solar_mj = float(generated_day.solar_rad_mj_m2)
         solar_w = solar_mj / _W_PER_M2_TO_MJ_PER_M2_PER_DAY
+        humidity_pct = (getattr(generated_day, "relative_humidity_pct", None)
+                        if getattr(generated_day, "relative_humidity_pct", None) is not None else 55.0)
+        yield_relative_humidity_pct = getattr(generated_day, "relative_humidity_pct", None)
         # Push the generated values into WeatherApp so agent reads see them.
         if weather_app is not None:
             weather_app.set_weather(
                 date=day.isoformat(),
                 temp_c=temp_mean,
-                humidity_pct=(getattr(generated_day, "relative_humidity_pct", None)
-                              if getattr(generated_day, "relative_humidity_pct", None) is not None
-                              else 55.0),
+                humidity_pct=humidity_pct,
                 wind_speed_ms=wind_ms,
                 rainfall_mm=rain_mm,
                 solar_radiation=solar_w,
@@ -773,7 +863,7 @@ def _build_weather_inputs(
                     day,
                     profile_events,
                 ),
-                avg_soil_vwc=_avg_top_vwc(physics),
+                avg_soil_vwc=_avg_top_vwc(physics) if update_soil_vwc else None,
             )
     elif weather_app is not None:
         snap = weather_app.get_current_weather_snapshot()
@@ -796,6 +886,11 @@ def _build_weather_inputs(
             current_narrative = date.fromisoformat(snap_date)
             next_narrative_date = (current_narrative + timedelta(days=1)).isoformat()
         except ValueError:
+            next_narrative_date = target_date
+        if align_date_to_tick:
+            # Multi-farm scenes bind every app to one clock. A scenario may
+            # already have installed today's weather, so use the actual tick
+            # date rather than advancing the station for a second time.
             next_narrative_date = target_date
 
         if advance_weather and snap_date != next_narrative_date:
@@ -842,9 +937,12 @@ def _build_weather_inputs(
                 rainfall_mm=rain_new,
                 solar_radiation=solar_new,
                 forecast=forecast,
-                avg_soil_vwc=_avg_top_vwc(physics),
+                avg_soil_vwc=_avg_top_vwc(physics) if update_soil_vwc else None,
             )
             snap = weather_app.get_current_weather_snapshot()
+        humidity_pct = float(snap.get("humidity_pct", 55.0))
+        if snap.get("humidity_pct") is not None:
+            yield_relative_humidity_pct = float(snap["humidity_pct"])
         temp_mean = float(snap.get("temp_c", 18.0))
         rain_mm = float(snap.get("rainfall_mm", 0.0))
         wind_ms = float(snap.get("wind_speed_ms", 1.0))
@@ -853,6 +951,7 @@ def _build_weather_inputs(
         temp_max = temp_mean + _DEFAULT_DIURNAL_RANGE_C
         solar_mj = solar_w * _W_PER_M2_TO_MJ_PER_M2_PER_DAY
     else:
+        humidity_pct = 55.0
         temp_mean = 18.0
         rain_mm = 0.0
         wind_ms = 1.0
@@ -861,15 +960,8 @@ def _build_weather_inputs(
         temp_max = temp_mean + _DEFAULT_DIURNAL_RANGE_C
         solar_mj = solar_w * _W_PER_M2_TO_MJ_PER_M2_PER_DAY
 
-    # Native forcing must retain source precision, independently of the
-    # WeatherApp's rounded agent-facing display snapshot.
-    source_humidity = (getattr(generated_day, "relative_humidity_pct", None)
-                       if generated_day is not None else None)
-    humidity = (float(source_humidity) if source_humidity is not None else
-                float(weather_app.get_current_weather_snapshot().get("humidity_pct", 55.0))
-                if weather_app is not None else 55.0)
     return {
-        "humidity_pct": humidity,
+        "humidity_pct": float(humidity_pct),
         "soil": SoilWeatherInput(
             day=day,
             air_temp_mean_c=temp_mean,
@@ -907,6 +999,7 @@ def _build_weather_inputs(
             rain_mm=rain_mm,
             solar_rad_mj_m2=solar_mj,
             wind_ms=wind_ms,
+            relative_humidity_pct=yield_relative_humidity_pct,
         ),
     }
 
@@ -985,6 +1078,15 @@ def _compute_water_stress(root_vwc: float) -> float:
     if root_vwc <= 0.12:
         return 0.0
     return (root_vwc - 0.12) / (0.18 - 0.12)
+
+
+def _crop_water_stress(physics: "FarmPhysicsState", root_vwc: float) -> float:
+    """Preserve soybean response; use crop-specific moisture demand elsewhere."""
+    if physics.crop_type == "soybean":
+        return _compute_water_stress(root_vwc)
+    params = physics.soil.params
+    return max(0.0, min(1.0, (root_vwc - params.wilting_point_vwc)
+        / max(1e-6, params.water_stress_vwc - params.wilting_point_vwc)))
 
 
 def _compute_biotic_stress(biotic_state: Any) -> float:
@@ -1116,83 +1218,60 @@ def _avg_top_vwc(physics: "FarmPhysicsState | None") -> float | None:
 # ---------------------------------------------------------------------------
 
 
-def _run_subdaily_injection(
-    physics: "FarmPhysicsState",
-    weather_app: "WeatherApp | None",
-    target_sim_time: float,
-) -> bool:
-    """Process pending actions inside a sub-daily lag (no UTC date crossed).
+def _apply_treatments_now(physics, weather, treatments):
+    physics.biotic.update_day(
+        weather=weather["biotic"],
+        crop_by_ridge={rid: BioticCropInput(
+            stage=BioticGrowthStage(phen.stage.value),
+            canopy_cover=physics.canopy.states[rid].canopy_cover,
+            seed_type=phen.seed_type.value if phen.seed_type is not None else None)
+            for rid, phen in physics.phenology.states.items()},
+        soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
+                       for rid, state in physics.soil.states.items()},
+        treatments_by_ridge=treatments, advance_daily=False)
 
-    Feeds pending management actions to the management engine (so
-    cumulative_irrigation_mm / treatment residuals are recorded), pushes
-    irrigation water into soil VWC so sensor reads reflect it, and applies
-    treatments to the biotic engine. Returns True if any irrigation was
-    injected.
-    """
-    today = datetime.fromtimestamp(target_sim_time, tz=timezone.utc).date()
-    weather = _build_weather_inputs(
-        weather_app,
-        today,
-        physics=physics,
-        advance_weather=False,
-    )
+
+def _settle_harvest_now(physics, weather, harvest):
+    if not harvest:
+        return
+    physics.yield_recovery.settle_harvest(
+        weather=weather["yield"],
+        phenology_by_ridge={rid: YieldPhenologyInput(
+            stage=YieldGrowthStage(phen.stage.value), maturity_date=phen.maturity_date)
+            for rid, phen in physics.phenology.states.items()},
+        growth_by_ridge={rid: YieldGrowthInput(yield_potential_g_m2=state.yield_potential_g_m2,
+                                             aboveground_biomass_g_m2=state.aboveground_biomass_g_m2)
+                         for rid, state in physics.canopy.states.items()},
+        stress_by_ridge={rid: YieldStressInput(disease_severity=state.disease_pressure,
+                                              insect_pod_damage=state.insect_pressure)
+                         for rid, state in physics.biotic.states.items()},
+        harvest_actions_by_ridge=harvest)
+
+
+def _run_subdaily_injection(physics, weather_app, target_sim_time,
+                            weather_inputs_provider=None, *, simulation_timezone=timezone.utc):
+    """Commit actions once without introducing another biological day."""
+    today = datetime.fromtimestamp(target_sim_time, tz=simulation_timezone).date()
+    weather = (weather_inputs_provider(today, False) if weather_inputs_provider else
+               _build_weather_inputs(weather_app, today, physics=physics, advance_weather=False))
     actions = physics.drain_pending_management_actions()
     treatments = physics.drain_pending_treatments()
-    physics.drain_pending_harvest_actions()  # harvest is daily-only
-
+    harvest = physics.drain_pending_harvest_actions()
     if actions:
-        physics.management.update_day(
-            weather=weather["management"],
-            actions_by_ridge=actions,
+        physics.management.update_day(weather=weather["management"], actions_by_ridge=actions,
             soil_by_ridge=_build_management_soil_inputs(physics),
-            crop_by_ridge=_build_management_crop_inputs(physics),
-        )
+            crop_by_ridge=_build_management_crop_inputs(physics), advance_daily=False)
     if treatments:
-        physics.biotic.update_day(
-            weather=weather["biotic"],
-            crop_by_ridge={
-                rid: BioticCropInput(
-                    stage=BioticGrowthStage(physics.phenology.states[rid].stage.value),
-                    canopy_cover=physics.canopy.states[rid].canopy_cover,
-                    seed_type=(
-                        physics.phenology.states[rid].seed_type.value
-                        if physics.phenology.states[rid].seed_type is not None
-                        else None
-                    ),
-                )
-                for rid in physics.phenology.states
-            },
-            soil_by_ridge={
-                rid: BioticSoilInput(
-                    top_vwc=physics.soil.states[rid].top_vwc,
-                    root_vwc=physics.soil.states[rid].root_vwc,
-                )
-                for rid in physics.soil.states
-            },
-            treatments_by_ridge=treatments,
-        )
-
+        _apply_treatments_now(physics, weather, treatments)
+    _settle_harvest_now(physics, weather, harvest)
     if physics.crop_backend is not None:
-        # Native PCSE integrates daily. Retain these actions until its next
-        # tick; the legacy immediate injection would count the water twice.
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
-
-        physics.crop_backend.queue_actions(
-            actions,
-            ridge_area_m2=FIELD_LENGTH_M * getattr(
-                physics, "ridge_width_m", DEFAULT_RIDGE_WIDTH_M
-            ),
-        )
+        physics.crop_backend.queue_actions(actions,
+            ridge_area_m2=physics.field_length_m * physics.ridge_width_m)
         return False
-
-    irrigation_mm = physics.management.irrigation_mm_by_ridge(actions)
-    if irrigation_mm:
-        _apply_subdaily_irrigation(physics, irrigation_mm)
-        return True
-    return False
+    irrigation = physics.management.irrigation_mm_by_ridge(actions)
+    if irrigation:
+        _apply_subdaily_irrigation(physics, irrigation)
+    return bool(irrigation)
 
 
 def _apply_subdaily_irrigation(
@@ -1261,12 +1340,23 @@ def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> No
         # (per RidgeState comment); that is the top layer in physics terms.
         ridge.soil_vwc = float(soil.top_vwc)
         ridge.soil_temp_c = float(soil.top_temp_c)
+        # Public management telemetry must reflect committed physical state.
+        # Native daily projection may replace this with its RFRGRL N proxy;
+        # same-timestamp fertilizer injection must also be visible immediately.
+        ridge.nutrient_index = float(physics.management.states[rid].nutrient_index)
 
         phen = physics.phenology.states[rid]
         if phen.planted:
             ridge.planted = True
             ridge.days_since_planted = int(phen.days_after_planting)
-            ridge.growth_stage = _map_soybean_stage_to_legacy(phen.stage)
+            if physics.crop_type == "soybean":
+                ridge.growth_stage = _map_soybean_stage_to_legacy(phen.stage)
+            else:
+                from fairy.physics.crop_physiology import public_crop_stage
+
+                ridge.growth_stage = public_crop_stage(
+                    physics.crop_profile, phen, physics.phenology.seed_type_params
+                )
 
         biotic = physics.biotic.states[rid]
         ridge.pest_pressure = float(biotic.insect_pressure)
@@ -1282,7 +1372,9 @@ def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> No
             # observation populated by drone/sensor tools through
             # ObservationModel. Truth is in canopy.ndvi_proxy and stays
             # behind the observation boundary.
-            ridge.yield_potential = float(canopy.yield_potential_g_m2 / 350.0)
+            yield_scale = (350.0 if physics.crop_type == "soybean" else
+                           physics.crop_profile.yield_kg_m2 * 1000.0)
+            ridge.yield_potential = float(canopy.yield_potential_g_m2 / yield_scale)
             ridge.yield_potential = max(0.0, min(1.0, ridge.yield_potential))
 
         yld = physics.yield_recovery.states[rid]

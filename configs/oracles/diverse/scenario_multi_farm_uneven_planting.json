@@ -1,0 +1,576 @@
+{
+  "step0": {
+    "name": "step0",
+    "content": {
+      "oracle_reason": "Identify local crop, geometry, phase and inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [],
+    "time": null
+  },
+  "step1": {
+    "name": "step1",
+    "content": {
+      "oracle_reason": "Check the station belonging to this farm."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_current_weather",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step0"
+    ],
+    "time": null
+  },
+  "step2": {
+    "name": "step2",
+    "content": {
+      "oracle_reason": "Check complete sensor coverage for this farm's actual ridge count."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step1"
+    ],
+    "time": null
+  },
+  "step3": {
+    "name": "step3",
+    "content": {
+      "oracle_reason": "Check local fuel, hopper and bin capacity."
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step2"
+    ],
+    "time": null
+  },
+  "step4": {
+    "name": "step4",
+    "content": {
+      "oracle_reason": "Confirm the warm, rainy establishment week before committing seed."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_forecast",
+    "tool_args": {
+      "days": 7,
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step3"
+    ],
+    "time": null
+  },
+  "step5": {
+    "name": "step5",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 12000,
+      "farm_id": "north",
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step4"
+    ],
+    "time": null
+  },
+  "step6": {
+    "name": "step6",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 0,
+      "end_ridge": 3,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "north",
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step5"
+    ],
+    "time": null
+  },
+  "step7": {
+    "name": "step7",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 3000,
+      "farm_id": "north",
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step6"
+    ],
+    "time": null
+  },
+  "step8": {
+    "name": "step8",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 4,
+      "end_ridge": 4,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "north",
+      "asset_id": "north_tractor"
+    },
+    "depends_on": [
+      "step7"
+    ],
+    "time": null
+  },
+  "step9": {
+    "name": "step9",
+    "content": {
+      "oracle_reason": "Identify local crop, geometry, phase and inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step8"
+    ],
+    "time": null
+  },
+  "step10": {
+    "name": "step10",
+    "content": {
+      "oracle_reason": "Check the station belonging to this farm."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_current_weather",
+    "tool_args": {
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step9"
+    ],
+    "time": null
+  },
+  "step11": {
+    "name": "step11",
+    "content": {
+      "oracle_reason": "Check complete sensor coverage for this farm's actual ridge count."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step10"
+    ],
+    "time": null
+  },
+  "step12": {
+    "name": "step12",
+    "content": {
+      "oracle_reason": "Check local fuel, hopper and bin capacity."
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step11"
+    ],
+    "time": null
+  },
+  "step13": {
+    "name": "step13",
+    "content": {
+      "oracle_reason": "Confirm the warm, rainy establishment week before committing seed."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_forecast",
+    "tool_args": {
+      "days": 7,
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step12"
+    ],
+    "time": null
+  },
+  "step14": {
+    "name": "step14",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 18000,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step13"
+    ],
+    "time": null
+  },
+  "step15": {
+    "name": "step15",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 0,
+      "end_ridge": 3,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step14"
+    ],
+    "time": null
+  },
+  "step16": {
+    "name": "step16",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 18000,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step15"
+    ],
+    "time": null
+  },
+  "step17": {
+    "name": "step17",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 4,
+      "end_ridge": 7,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step16"
+    ],
+    "time": null
+  },
+  "step18": {
+    "name": "step18",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 4500,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step17"
+    ],
+    "time": null
+  },
+  "step19": {
+    "name": "step19",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 8,
+      "end_ridge": 8,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "east",
+      "asset_id": "east_tractor"
+    },
+    "depends_on": [
+      "step18"
+    ],
+    "time": null
+  },
+  "step20": {
+    "name": "step20",
+    "content": {
+      "oracle_reason": "Identify local crop, geometry, phase and inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step19"
+    ],
+    "time": null
+  },
+  "step21": {
+    "name": "step21",
+    "content": {
+      "oracle_reason": "Check the station belonging to this farm."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_current_weather",
+    "tool_args": {
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step20"
+    ],
+    "time": null
+  },
+  "step22": {
+    "name": "step22",
+    "content": {
+      "oracle_reason": "Check complete sensor coverage for this farm's actual ridge count."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step21"
+    ],
+    "time": null
+  },
+  "step23": {
+    "name": "step23",
+    "content": {
+      "oracle_reason": "Check local fuel, hopper and bin capacity."
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {
+      "asset_id": "west_tractor"
+    },
+    "depends_on": [
+      "step22"
+    ],
+    "time": null
+  },
+  "step24": {
+    "name": "step24",
+    "content": {
+      "oracle_reason": "Confirm the warm, rainy establishment week before committing seed."
+    },
+    "op_type": "READ",
+    "tool_name": "Weather__get_forecast",
+    "tool_args": {
+      "days": 7,
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step23"
+    ],
+    "time": null
+  },
+  "step25": {
+    "name": "step25",
+    "content": {
+      "oracle_reason": "Load the exact pass requirement from this farm's stock."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "STANDARD",
+      "count": 6750,
+      "farm_id": "west",
+      "asset_id": "west_tractor"
+    },
+    "depends_on": [
+      "step24"
+    ],
+    "time": null
+  },
+  "step26": {
+    "name": "step26",
+    "content": {
+      "oracle_reason": "Use crop-specific depth and density; clamp the last partial pass."
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "start_ridge": 0,
+      "end_ridge": 2,
+      "depth_cm": 4.0,
+      "seed_spacing_cm": 8.0,
+      "farm_id": "west",
+      "asset_id": "west_tractor"
+    },
+    "depends_on": [
+      "step25"
+    ],
+    "time": null
+  },
+  "step27": {
+    "name": "step27",
+    "content": {
+      "oracle_reason": "Advance every farm's crop and soil engines through establishment."
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "step26"
+    ],
+    "time": null
+  },
+  "step28": {
+    "name": "step28",
+    "content": {
+      "oracle_reason": "Verify the result with local observations."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step27"
+    ],
+    "time": null
+  },
+  "step29": {
+    "name": "step29",
+    "content": {
+      "oracle_reason": "Verify every local ridge, phase and grain inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "north"
+    },
+    "depends_on": [
+      "step28"
+    ],
+    "time": null
+  },
+  "step30": {
+    "name": "step30",
+    "content": {
+      "oracle_reason": "Verify the result with local observations."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step29"
+    ],
+    "time": null
+  },
+  "step31": {
+    "name": "step31",
+    "content": {
+      "oracle_reason": "Verify every local ridge, phase and grain inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "east"
+    },
+    "depends_on": [
+      "step30"
+    ],
+    "time": null
+  },
+  "step32": {
+    "name": "step32",
+    "content": {
+      "oracle_reason": "Verify the result with local observations."
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step31"
+    ],
+    "time": null
+  },
+  "step33": {
+    "name": "step33",
+    "content": {
+      "oracle_reason": "Verify every local ridge, phase and grain inventory."
+    },
+    "op_type": "READ",
+    "tool_name": "Farm__get_farm_overview",
+    "tool_args": {
+      "farm_id": "west"
+    },
+    "depends_on": [
+      "step32"
+    ],
+    "time": null
+  },
+  "step34": {
+    "name": "step34",
+    "content": {
+      "oracle_reason": "Report completion and any deliberately deferred rainy field."
+    },
+    "op_type": "WRITE",
+    "tool_name": "AgentUserInterface__send_message_to_user",
+    "tool_args": {
+      "content": "Completed the requested farm-specific operations; checked every site's final state. Rainy hold sites remain untouched."
+    },
+    "depends_on": [
+      "step33"
+    ],
+    "time": null
+  }
+}

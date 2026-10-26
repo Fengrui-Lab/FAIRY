@@ -157,7 +157,7 @@ def _instantiate_scenario_for_replay(
     """Look up the scenario class in the registry and prepare it for
     replay (apps + physics initialised, but events flow not driven)."""
     from fairy.scenarios.registry import registry
-    from fairy.time_manager import TimeManager
+    from fairy.time_manager import SimulationTimeManager
 
     cls = registry.get_scenario(scenario_id)
     scenario = cls(**dict(scenario_kwargs or {}))
@@ -177,7 +177,10 @@ def _instantiate_scenario_for_replay(
         # scenario.start_time. Replay calls tool methods directly, so it must
         # mirror that registration step or FARM full-season time jumps replay
         # from wall-clock app construction time.
-        tm = TimeManager()
+        # Engine advances simulated time only through explicit tool durations.
+        # A wall clock would drift past an exact recorded timestamp and make
+        # the next replay alignment move initialized farm physics backwards.
+        tm = SimulationTimeManager()
         tm.reset(float(effective_start_time))
         for app in scenario.apps or []:
             app.register_time_manager(tm)

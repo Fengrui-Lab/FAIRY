@@ -1,5 +1,89 @@
 # WOFOST crop backend
 
+## 当前状态：13对版本共存，12套WOFOST已校准，03未校准
+
+原10个任务及本轮新增3个任务均已拆为独立命名的两个版本：无后缀的原ID、文件、类使用经典`legacy`；WOFOST的ID、文件名、类名均加`_V2`。两套源码共存，不是运行时别名，也不靠同一文件切换workflow。经典版保留原有类和继承组织，`_V2`在自己的文件中声明世界、事件和静态workflow。`farm_world_fullseason_v2`是历史目录名，不能据此判断后端。[版本对应表与运行说明](wofost-scenario-versions.md)及[准确名称清单](../configs/oracles/wofost_scenario_versions.json)列出13对ID、路径和类名。
+
+WOFOST中前9个农艺方案及本轮3个灌溉方案已校准，03仍保留花期营养考点并明确未校准；不把可运行等同于考点有效。后17个扩展任务已暂停。经典版恢复自Git提交`e0a302c3d3de9cf532ea5fd01bc79ebb3e9bb864`；13套经典版及13套`_V2`均已通过普通生产CLI的build→replay→evaluate。经典版每场64垄全部收割并安全入库，初始世界与原Git定义13/13一致；兼容修改只涉及4垄代表性抽样和3场采收分别多等3/1/1天，没有修改题设、物理、App、Engine或TimeManager。[两版本独立核验](wofost-scenario-versions.md#当前完成与核验边界)保存对应证据。
+
+先读[前10场农事计划](wofost-farming-plans.md)与[新增3场计划](wofost-next20-farming-plans.md)，再看工具调用。每个已校准`_V2`文件先写人读的`FARMING_PLAN`，再在`WORLD`、事件与静态`build_events_flow()`里完整写明世界和真实操作；没有运行时优化器、动态Oracle入口或外部轨迹JSON依赖。
+
+新增3场都完成了根水传感器、SurveyDrone全田粗查、Robot重点样本的链路，每场8个管理窗口、101次工具调用，安全入库依次7097.36、7005.65、6649.92kg；用水分别65.625/66、65.625/66、67.5/68mm（实际/额度）。这是实际工具CLI回放与原生对照的结果，未运行35B Agent。前9场此次只做版本名称拆分，不能说13场全部补了无人机。
+
+### 正常季：7个管理窗口，89次工具调用
+
+[正常季WOFOST源文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_base_hn84_std_normal_V2.py)的一季现在可以直接解释：
+
+1. 4月28日检查播床、整地起垄并一次完成全田播种，不例行施氮肥。
+2. 5月13日抽查出苗，正常则不补播。
+3. 5月28日检查冠层和杂草样本，无草害则不除草。
+4. 6月28日R1复核生育、水分和营养，当时无需干预。
+5. 7月20日R3确认亏水，全田一次灌30mm。
+6. 8月8日R5确认再次亏水，全田一次灌30mm。
+7. 9月20日确认成熟与适收条件，完成全田收割和6批收储。
+
+实际用水60mm、氮肥产品0kg，入库9134.24kg。7个管理窗口展开为89次真实工具调用，后者包括播种/收割机趟、装种、卸粮、观察和等待。64垄每次最多播种/收割4垄，所以各有16个机趟；不能把89次调用称为89次农事，也不声称已证明数学上的最少次数。
+
+其他已完成场景分别保留：02限水干旱与优先区；04机械控草；05灌浆期虫害；06有限药剂预算；07雨间短施药窗口；08病后干旱辨因；09草病鉴别；10雨延除草恢复。[逐场短块说明与正式结果](wofost-farming-plans.md)列出原考点、设置变化、合理农事和工具调用数，不再用几十列大表混合它们。
+
+### 题设怎样配合合理管理
+
+9个已更新场景取消正常豆作的例行氮肥；原生`NFIX_FR=0.8`保持，但不冒称有结瘤形成或失效机制。灌溉采用有意义的整轮水量、关键阶段、根区亏缺和预报；允许水量有剩余，不再用每日小水或小数尾水填满额度。
+
+02保留Valladolid天气、干旱及22—43垄分区土壤。参考完整轮灌用260mm，额度设240mm，实际233.75mm，余6.25mm不灌。08保留病后晚旱，20—43垄一次局部30mm折合全田11.25mm。两处参考是正常轮灌量级对照，不能继续沿用旧小脉冲搜索的99%平台说法。
+
+06的药剂额度改为0.24kg：够后期28垄一次全量处理的0.224kg，不够早期和后期两轮合计0.384kg，避免差4克迫使切任意剂量。07在两段雨之间明确安排6月22—24日短窗。10让草害与原定作业确实遭遇连续雨，随后在雨后恢复管理。病虫事件采用一次注入后按现有压力模型演化；分批出草仍按显式时间窗累加，事件结束不自动清掉已有压力。
+
+施底肥是否必做属于逐农场明示要求。旧场景默认保持“整地、底肥、起垄”；新的正常豆作场景可声明只要求整地、起垄后播种，不能伪造完成了施肥。工具仍核查真实覆盖、库存、容量、天气、通行性、耗时和已实现的剂量作用。地面样本不冒充全田逐垄检查，观察置信度也不是严重度。
+
+### 03为什么暂未校准
+
+已增加[可回放的土壤氮状态事件](wofost-soil-nitrogen-events.md)，场景可以在指定本地日对指定农场、指定垄直接设置真实CNB有效氮/储备氮，Agent可读到对应模型状态。事件支持日结前后存档恢复；该独立批次529项相关回归通过，早于当前版本拆分。但官方大豆固氮保留时，提前清氮也没有使03产生显著的追肥收益，不能把接口完成当作考点校准完成。
+
+03的原任务仍是低氮供给后的花期营养管理。[03的WOFOST文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py)沿用既有未校准农艺配置；此次只更改版本身份和明确校准状态。固定作物参数、天气、土壤及水量的5组诊断对照中，花期施氮最大增产仅约0.072%；不足以支持“花期识别缺氮并追肥救产”的出题承诺。`RFRGRL`是特定幼苗阶段叶面积增长的限制因子，不能作为一般花期缺氮诊断。
+
+本轮不扩展新的结瘤或花期氮胁迫机制，不直接修改营养字段制造效果，也不把这个题换成缺水题。不能再说活跃源码“逐字未改”：ID、文件名、类名及状态元数据已调整。03重命名后的[新鲜WOFOST回放](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/wofost_replay/03/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.run_report.json>)仍为233次调用、8229.50kg，说明可执行，仍不算追肥考点校准通过，也不代表经典版产量。[诊断依据](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/flowering_nitrogen_diagnostics/verification.json>)记录模型原因，[发布状态清单](../configs/oracles/wofost_formal10_release_status.json)保存未校准状态和版本信息，不是运行时workflow输入。
+
+### 如何运行写好的Workflow
+
+在包含修改的工作树中：
+
+```bash
+cd /Users/quao/.codex/worktrees/wofost-management-audit/FAIRY
+uv run --extra wofost python -m fairy.cli \
+  --scenario scenario_full_season_hb_base_hn84_std_normal_V2 \
+  --build-oracle --replay --evaluate \
+  --output-dir validation_runs/normal_wofost
+```
+
+`--build-oracle`只捕获已经写好的计划，不执行整地、播种或生长；不需要先运行管理策略，也不需要`--run-oracle-tools`。`--replay`在新初态中执行真实工具，返回作业结果和时钟。计划的`content`为null，真实回执保存到另一个`.replay.json`。
+
+此命令使用`_V2`场景自行声明的WOFOST后端。去掉`_V2`会选择经典版；不能拿历史无后缀的WOFOST轨迹直接重放到今天的经典版。经典版和WOFOST版各自构建Oracle、使用不同产物目录。完整对照命令见[版本运行示例](wofost-scenario-versions.md#如何运行两个版本)。
+
+普通作业名称中的日期是开始日；等待节点的日期是目标日。工作流`time`及回放`time_after`表示完成时刻。作业耗时由工具结算，真实等待是显式`SystemApp.advance_time`；依赖延迟只标预计时间。Engine仍负责事件执行、公共时钟、记录和回放，不负责决定何时灌水或施药。
+
+### 输入、结果与能力边界
+
+每场64垄、每垄268×1.1m，共1.88672ha、28.3008亩；日期按2019年当地日历。901/905当前密度45株/m²，903为40株/m²，03原902配置60株/m²；这些是模型候选，不是官方推荐密度。使用[固定官方参数](https://github.com/ajwdewit/WOFOST_crop_parameters/blob/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml)，原YAML不改；有效TDWI由既有密度适配器缩放，其余77项不变。它们是区域参数组，不冒充黑农84等商业品种。
+
+[NASA POWER2019输入清单](../fairy/physics/data/wofost/research/official_soybean_nasa2019_v1/manifest.json)保存原响应、日数据、URL、单位和哈希。正常季保留原始天气；人工干旱、降雨与低风窗口是各场明确声明的干预，不冒充原始观测。1.2m土层、初始VWC0.26及N50/50等是显式世界假设。分区FC0.31、集水比例0.82和入渗85mm/d按原生支持映射；旧root_drainage_rate及分区灌溉效率没有独立等价原生作用，实际原生灌溉效率仍为0.92。
+
+前9个已校准方案的[版本拆分前回放目录](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/final>)保留当时无后缀ID的WOFOST Oracle、replay和run_report。[该批独立产物核验](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/independent_static_artifact_audit.json>)9/9通过，核对源码纯构建、计划空响应、参数依赖名称与时间、64垄实际收储及额度。这些是历史WOFOST证据，不能据文件名当作当前经典版结果。
+
+重命名后另从新初态完成13套`_V2`的[生产CLI回放](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/wofost_replay_summary.json>)，全部通过；12套已校准方案的入库量与改名前参照完全一致，03为8229.50kg且未校准。经典版另有[13套最终完整回放](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/legacy_compatibility/summary.json>)及[最终初始世界对照](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/legacy_compatibility/original_vs_current_initial_world.json>)：每场64垄全收、安全入库大于0，13个初态与原Git定义一致。此对照在同一当前legacy运行时及既有helper下进行，不是整个运行库回退到e0；兼容修复后的经典源码也并非逐字未变。[6个文件的逐项改动](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/legacy_compatibility/code_change_notes.md>)解释采样和等待的原因。
+
+[该批农艺结果](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/results.json>)中，同9场工具调用合计2388→908，03未校准、不计入比较。[该批相关回归](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/regression.json>)507项通过、0失败、0错误、0跳过；它与后续土壤氮事件529项记录均不能代替当前13对版本的完整回放核验。上一轮484项回归及2621次工具调用也只保留为历史，不是全仓库或35B Agent成绩。
+
+本次版本拆分与经典workflow兼容完成后的[相关广泛回归](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/related_regression.json>)为**644项通过，0失败、0错误、0跳过，耗时50.95秒**；对应[日志](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/related_regression.log>)与[JUnit](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/related_regression.xml>)保留。范围为原生模型、版本／源码契约、经典workflow兼容及App／共享运行时，不是全仓库测试。本轮另修一个天气smoke旧断言：事件是4天合计82mm，不能要求每天82mm；[修正说明](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/weather_smoke_correction.md>)记录原失败及配对背景雨量守恒核验，仅改测试，生产天气未动。
+
+病虫草仍是FAIRY外接总同化胁迫，不是WOFOST原生病理或直接去叶模型。`dry_grain`仍为零耗时、无能源结算的即时处理，不能称为真实连续烘干机。全部入库量按13%商品水分统计，另检查公开水分换算的湿重和2t粮箱；模拟结果不等于田间实测或已证全局最高产。
+
+[上一轮密度与步骤记录](wofost-formal10-refinement.md)保留历史；其中2621次调用、正常季252次调用和320/11.5mm额度不代表本轮已更新场景。[本轮修改前备份](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/before_agronomic_redesign.zip>)保留原文件。此前被撤回的12个另建reference场景及动态入口仍保存在[更早备份](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_formal10_rewrite_20261025/before_rewrite.zip>)，不计入旧任务迁移。
+
+## 以下为兼容入口和历史研究记录
+
+以下保留早期接入、参数研究和迁移实验。历史报告中某个无后缀ID当时运行WOFOST，不表示今天该ID仍选择WOFOST；本次13个任务的当前运行名称以[版本清单](../configs/oracles/wofost_scenario_versions.json)为准。原90名单及其研究记录没有批量改名。
+
 FAIRY can use the optional Python [PCSE](https://github.com/ajwdewit/pcse) implementation of WOFOST while keeping its existing agent tools, farm operations, observation layer, and FOS evaluation. The default backend remains `legacy`; selecting `wofost` never silently falls back when PCSE is unavailable.
 
 The selected native model is `Wofost81_NWLP_CWB_CNB`, with daily crop growth, water limitation, nitrogen limitation, a classic water balance, and a classic nitrogen balance. One independent native simulation runs per planted ridge. [WOFOSTGym](https://github.com/Intelligent-Reliable-Autonomous-Systems/WOFOSTGym) is a useful reference for the action/environment boundary; FAIRY integrates PCSE directly and does not require Gym or an RL agent.

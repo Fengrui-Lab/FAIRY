@@ -107,8 +107,9 @@
   marked truncated. Rejected replies never enter history or execute tools;
   their finish reason, content/tool details and usage remain in
   `llm_call_end` (`status=rejected`),
-  and their token/runtime costs are included in metrics. Successful retries
-  use the same messages/tools, token budget and thinking setting. Retry
+  and their token/runtime costs are included in metrics. Retry token budgets,
+  thinking settings and tools stay unchanged; empty-response correction was
+  added on 2026-10-23 as described below. Retry
   exhaustion fails with `output_truncated` or `empty_response`, rather than
   `agent_finished`. Retry loops check the run deadline before another
   request and cap retry sleep to remaining time; an already-running HTTP
@@ -126,6 +127,22 @@
   subsequent requests. Existing historical logs are not rewritten.
   `llm_call_start.enable_thinking_override=null` means no client override;
   it does not prove whether the server enabled thinking.
+- On 2026-10-20, the user requested full console diagnostics specifically for
+  `empty_response`: `BaseAgent.chat_completion()` prints the returned `reasoning`
+  and `reasoning_content` fields as JSON before raising the existing retryable
+  error. Missing fields print as `null`; text is not truncated. Accepted replies
+  and `output_truncated` replies do not trigger this print. The batch runner
+  captures console output in `stdout.log`, so empty-response reasoning can now
+  appear there. Structured runtime/progress records still exclude both fields,
+  and rejected replies still never enter history. This does not recover the
+  reasoning from historical runs that did not save it.
+  A single saved-context diagnostic on 2026-10-20 reproduced
+  ARE-prompt/GraphMemory/compacted-headland `empty_response` with `stop` and
+  84 completion tokens: `reasoning` contained a `<response>Observation: ...`
+  echo of the preceding successful planting result, while `reasoning_content`
+  was null. This was a new response, not recovered historical reasoning; a
+  CriticRefiner saved-context request returned a valid tool call on retrying
+  it separately. Do not infer that all historical failures share this output.
 - `management_regime.fertilizer_used_kg` is incremented when fertilizer
   is loaded from farm inventory, so it can differ from actual field use.
   For the 2026-10-17 false run, `load_fertilizer(2600)` loaded the 500 kg
@@ -259,3 +276,17 @@
   and `init_kwargs`. Older batch traces recover constructor/setup kwargs from
   their neighboring `results.csv`. Rebatch must instantiate and set up the
   scenario through the same parameter path as the original CLI run.
+
+- 2026-10-23 — Empty-response retries now add the user message
+  `上次未返回可用正文或工具调用，请继续任务并按工具协议输出。`
+  once per retry sequence, after checking the remaining retry/time budget. The
+  correction is appended only after any retry sleep and the next deadline
+  check pass, immediately before the next request. It remains in conversation
+  history; repeated empty replies in that
+  sequence do not append duplicates. A later turn with a new empty-response
+  episode may add its own correction. Truncation and transport failures do not
+  add this feedback. Rejected assistant replies and reasoning stay excluded.
+  `llm_call_retry.retry_feedback` records the planned correction; the next
+  `llm_call_start.messages` records whether it was actually sent. The `response_policy.retry_changes_request` is now true. Use a
+  fresh output directory and distinguish this policy from historical retries
+  that resent unchanged requests. Token/call/tool accounting is unchanged.

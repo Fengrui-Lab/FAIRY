@@ -1,0 +1,14 @@
+{
+  "cultivar_profile": "heilongjiang_heinong84_complete_v1",
+  "cultivar_profiles": {
+    "SUINONG42": "soybean_suinong42_cold_reference_v1",
+    "KENDOU40": "soybean_kendou40_cold_reference_v1",
+    "HEINONG44": "soybean_heinong44_drought_reference_v1",
+    "HEINONG65": "soybean_heinong65_drought_reference_v1"
+  },
+  "require_explicit_cultivar_parameters": true,
+  "reference_density_plants_m2": 23.0,
+  "latitude_deg": 45.7,
+  "longitude_deg": 126.6,
+  "external_biotic_coupling": true
+}

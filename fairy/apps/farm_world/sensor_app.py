@@ -1,8 +1,9 @@
 """
 SensorApp - fixed sensor infrastructure for Farm-World.
 
-Manages 6 soil probes (VWC + temperature) and 6 canopy sensors (NDVI proxy),
-located at ridges 5/15/25/38/48/58. [PDF-p3]
+Manages soil probes (VWC + temperature) and canopy sensors (NDVI proxy).
+The historical 64-ridge layout has six of each, at ridges
+5/15/25/38/48/58. Other layouts partition their actual local ridge range.
 
 Each sensor covers a contiguous range of ridges:
   S1/C1: ridge 0-10   (installed at ridge 5)
@@ -20,6 +21,7 @@ Weather station data is NOT managed here — use WeatherApp.get_current_weather(
 
 from __future__ import annotations
 
+import random
 from typing import Any
 
 from fairy.apps.app import App
@@ -40,11 +42,20 @@ _SENSOR_ZONES: list[tuple[str, int, int, int]] = [
 
 
 class SensorApp(App):
-    """Six soil probes and six canopy sensors, each covering a ridge zone."""
+    """Configured soil and canopy probes, each covering a local ridge zone."""
 
-    def __init__(self, farm_world_app: FarmWorldApp) -> None:
-        super().__init__(name="SensorApp")
+    def get_tools(self):
+        tools = super().get_tools()
+        if self._farm_world_app.farm_environment is not None:
+            # These shared scenes install surface probes, not extra root probes.
+            tools = [tool for tool in tools if tool.name != "read_root_zone_sensors"]
+        return tools
+
+    def __init__(self, farm_world_app: FarmWorldApp, name: str | None = None) -> None:
+        super().__init__(name=name or "SensorApp")
         self._farm_world_app = farm_world_app
+        self.bound_farm_id = farm_world_app.farm_id
+        self._sensor_zones = self._zones_for_ridges(farm_world_app.num_ridges)
         self._soil_sensors = self._default_soil_sensors()
         self._canopy_sensors = self._default_canopy_sensors()
 
@@ -53,20 +64,48 @@ class SensorApp(App):
     # ------------------------------------------------------------------
 
     def get_state(self) -> dict[str, Any]:
+        version, internal, gaussian = self.rng.getstate()
         return {
             "app_name": self.name,
+            "farm_id": self.bound_farm_id,
+            "crop_id": self._farm_world_app.crop_type,
+            "random_state": [version, list(internal), gaussian],
             "soil_sensors": [dict(s) for s in self._soil_sensors],
             "canopy_sensors": [dict(s) for s in self._canopy_sensors],
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
+        if state_dict.get("farm_id", self.bound_farm_id) != self.bound_farm_id:
+            raise ValueError("Sensor snapshot belongs to another farm")
+        if state_dict.get("crop_id", self._farm_world_app.crop_type) != self._farm_world_app.crop_type:
+            raise ValueError("Sensor snapshot belongs to another crop")
+        saved_rng = state_dict.get("random_state")
+        if saved_rng is not None:
+            version, internal, gaussian = saved_rng
+            restored_rng = (version, tuple(internal), gaussian)
+            random.Random().setstate(restored_rng)
+            self.rng.setstate(restored_rng)
         self._soil_sensors = [dict(s) for s in state_dict["soil_sensors"]]
         self._canopy_sensors = [dict(s) for s in state_dict["canopy_sensors"]]
 
     def reset(self) -> None:
         super().reset()
+        self._sensor_zones = self._zones_for_ridges(self._farm_world_app.num_ridges)
         self._soil_sensors = self._default_soil_sensors()
         self._canopy_sensors = self._default_canopy_sensors()
+
+    @staticmethod
+    def _zones_for_ridges(num_ridges: int) -> list[tuple[str, int, int, int]]:
+        """Cover every ridge exactly once, preserving the historical 64-ridge map."""
+        if num_ridges == 64:
+            return list(_SENSOR_ZONES)
+        count = min(6, num_ridges)
+        zones = []
+        for index in range(count):
+            start = index * num_ridges // count
+            end = (index + 1) * num_ridges // count - 1
+            zones.append((str(index + 1), (start + end) // 2, start, end))
+        return zones
 
     # ------------------------------------------------------------------
     # Agent tools
@@ -76,17 +115,79 @@ class SensorApp(App):
     @app_tool()
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
+    def read_root_zone_sensors(self) -> dict[str, Any]:
+        """Read simulated root-zone water telemetry for irrigation decisions.
+
+        This is a separate modeled root-zone probe, not the existing 5 cm
+        surface sensor. Values are zone averages with +/-0.005 VWC noise;
+        use the local crop's irrigation threshold and check again after delivery.
+
+        When WOFOST is active, soil_nitrogen also reports native CNB model
+        telemetry for the same coverage zone: available and reserve nitrogen
+        in kg N/ha, the completed native forcing day, and the latest nitrogen
+        state day (which also includes scenario nitrogen interventions). These are modeled
+        soil pools, not a physical nitrogen probe or a plant nitrogen-deficiency
+        diagnosis. Existing nutrient_index is a separate juvenile growth proxy.
+        Nitrogen values are unavailable until every covered ridge has a native
+        state for the same completed day; missing values are never zero-filled.
+        """
+        self._sync_sensors()
+        farm = self._farm_world_app
+        if not farm.physics_active:
+            return {"error": "Root-zone telemetry requires an active soil physics model"}
+        farm.advance_physics_time()
+        readings = []
+        for sensor in self._soil_sensors:
+            ids = range(sensor["ridge_start"], sensor["ridge_end"]+1)
+            values = [farm.physics.soil.states[ridge_id].root_vwc for ridge_id in ids]
+            reading = {"sensor_id": "R"+sensor["sensor_id"][1:],
+                       "ridge_start": sensor["ridge_start"], "ridge_end": sensor["ridge_end"],
+                       "root_vwc": round(max(0.0, min(1.0, sum(values)/len(values)+self.rng.uniform(-0.005, 0.005))), 4)}
+            nitrogen_reader = getattr(farm.physics.crop_backend, "native_soil_nitrogen", None)
+            if nitrogen_reader is not None:
+                reading["soil_nitrogen"] = self._native_nitrogen_zone(nitrogen_reader(ids))
+            readings.append(reading)
+        return {"root_zone_sensors": readings, "source": "simulated_root_zone_probes",
+                "measurement_noise_vwc": 0.005}
+
+    @staticmethod
+    def _native_nitrogen_zone(records: dict[int, dict[str, Any]]) -> dict[str, Any]:
+        """Average complete native coverage without treating unstarted soil as zero."""
+        native = [record for record in records.values() if record["status"] == "native"]
+        days = {record["native_effective_day"] for record in native}
+        if not native:
+            status = "not_started"
+        elif len(native) != len(records):
+            status = "partial_native_coverage"
+        elif len(days) != 1:
+            status = "mixed_native_days"
+        else:
+            status = "native"
+        reading = {"source": "PCSE_CNB_model_telemetry", "status": status,
+                   "coverage_ridges": len(records), "initialized_ridges": len(native),
+                   "native_effective_day": next(iter(days)) if status == "native" else None,
+                   "nitrogen_state_effective_day": (max(record["nitrogen_state_effective_day"] for record in native)
+                                                     if status == "native" else None)}
+        for field in ("available_n_kg_ha", "reserve_n_kg_ha", "release_reference_n_kg_ha"):
+            reading[field] = (round(sum(record[field] for record in native) / len(native), 4)
+                              if status == "native" else None)
+        return reading
+
+    @type_check
+    @app_tool()
+    @data_tool()
+    @event_registered(operation_type=OperationType.READ)
     def read_soil_sensors(self) -> dict[str, Any]:
         """
-        Return the latest readings from the six fixed soil probes.
+        Return readings and actual coverage of this farm's soil probes.
 
         Each probe reports volumetric water content (vwc) and soil temperature
         (temp_c) at 5 cm depth. The reading represents the average condition
         of the ridges within the sensor's coverage zone.
 
-        Sensor zones:
-          S1: ridges 0-10,  S2: ridges 11-21, S3: ridges 22-32,
-          S4: ridges 33-43, S5: ridges 44-53, S6: ridges 54-63.
+        Probe count and coverage depend on the configured farm layout.
+        Each result includes sensor_id, ridge_start and ridge_end; the
+        environment directory supplies the global IDs for single-probe reads.
         """
         self._sync_sensors()
         readings = []
@@ -98,7 +199,7 @@ class SensorApp(App):
             )
             reading["temp_c"] = round(sensor["temp_c"] + self.rng.uniform(-0.3, 0.3), 2)
             readings.append(reading)
-        return {"soil_sensors": readings}
+        return {"farm_id": self.bound_farm_id, "soil_sensors": readings}
 
     @type_check
     @app_tool()
@@ -106,15 +207,15 @@ class SensorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def read_canopy_sensors(self) -> dict[str, Any]:
         """
-        Return the latest readings from the six fixed canopy sensors.
+        Return readings and actual coverage of this farm's canopy sensors.
 
         Each sensor reports an ndvi_proxy value (0.0-1.0). A value of -1
         means no valid reading yet (pre-emergence). The reading represents
         the average canopy condition within the sensor's coverage zone.
 
-        Sensor zones:
-          C1: ridges 0-10,  C2: ridges 11-21, C3: ridges 22-32,
-          C4: ridges 33-43, C5: ridges 44-53, C6: ridges 54-63.
+        Probe count and coverage depend on the configured farm layout.
+        Each result includes sensor_id, ridge_start and ridge_end; the
+        environment directory supplies the global IDs for single-probe reads.
         """
         self._sync_sensors()
         readings = []
@@ -124,7 +225,7 @@ class SensorApp(App):
                 noisy = sensor["ndvi_proxy"] + self.rng.uniform(-0.02, 0.02)
                 reading["ndvi_proxy"] = round(max(0.0, min(1.0, noisy)), 3)
             readings.append(reading)
-        return {"canopy_sensors": readings}
+        return {"farm_id": self.bound_farm_id, "canopy_sensors": readings}
 
     @type_check
     @app_tool()
@@ -146,6 +247,7 @@ class SensorApp(App):
             max(0.0, min(1.0, sensor["vwc"] + self.rng.uniform(-0.01, 0.01))), 4
         )
         reading["temp_c"] = round(sensor["temp_c"] + self.rng.uniform(-0.3, 0.3), 2)
+        reading["farm_id"] = self.bound_farm_id
         return reading
 
     @type_check
@@ -167,6 +269,7 @@ class SensorApp(App):
         if sensor["ndvi_proxy"] >= 0.0:
             noisy = sensor["ndvi_proxy"] + self.rng.uniform(-0.02, 0.02)
             reading["ndvi_proxy"] = round(max(0.0, min(1.0, noisy)), 3)
+        reading["farm_id"] = self.bound_farm_id
         return reading
 
     def update_soil_sensor(
@@ -229,7 +332,7 @@ class SensorApp(App):
                 "vwc": 0.22,
                 "temp_c": 10.0,
             }
-            for sid, ridge, start, end in _SENSOR_ZONES
+            for sid, ridge, start, end in self._sensor_zones
         ]
 
     def _sync_sensors(self) -> None:
@@ -244,6 +347,14 @@ class SensorApp(App):
 
         Legacy mode: averages RidgeState fields by zone, exactly as before.
         """
+        zones = self._zones_for_ridges(self._farm_world_app.num_ridges)
+        if zones != self._sensor_zones:
+            self._sensor_zones = zones
+            self._soil_sensors = self._default_soil_sensors()
+            self._canopy_sensors = self._default_canopy_sensors()
+        environment = self._farm_world_app.farm_environment
+        if environment is not None:
+            environment.before_tool()
         if self._farm_world_app.physics_active:
             # Sensor reads should report current truth, not initialize physics
             # early. Before the first FARM action has seeded the engines, use
@@ -305,5 +416,5 @@ class SensorApp(App):
                 "ridge_end": end,
                 "ndvi_proxy": -1.0,
             }
-            for sid, ridge, start, end in _SENSOR_ZONES
+            for sid, ridge, start, end in self._sensor_zones
         ]
