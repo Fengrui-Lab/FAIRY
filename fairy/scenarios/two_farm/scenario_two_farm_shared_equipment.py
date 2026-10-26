@@ -28,6 +28,17 @@ from fairy.scenarios.workflow import Workflow, WorkflowStep
 from fairy.types import EventRegisterer
 
 
+BASIC_BRIEFING = """
+管理farm_a/farm_b两个裸地大豆场：各64垄（0–63）、268m×1.1m/垄、双行，面积各1.88672ha。
+目标：两场平地、基肥、起垄、全田播种（STANDARD、播深4cm、株距5cm）；
+分别读土壤，各场固定灌溉0–3垄0.2小时，Mavic3M巡查0–6垄、Robot0检查0–7垄。
+完成后汇报，无需收获。FarmA/FarmB及各自Sensor/Irrigation分场固定，水额度独立；
+Tractor、Mavic3M、Robot0、Warehouse和时钟共用。田间移动工具传farm_id，装卸加油不传；
+跨场油电连续，任一场作业或等待都同时推进两场。
+""".strip()
+
+DETAILED_BRIEFING = '管理 farm_a 和 farm_b 两个大豆农场，各有64垄，沿用现有268米垄长和1.1米垄宽。两个农场均未整地、未播种。FarmA_Sensor/FarmA_Irrigation只服务farm_a，FarmB_Sensor/FarmB_Irrigation只服务farm_b；Tractor、Mavic3M、Robot0跨场共用。先分别读取两场土壤。用各场固定灌溉系统对0–3垄各运行0.2小时，按当地条件完成两场平地、基肥、起垄及全部64垄播种。播种用STANDARD种子，播深4厘米、株距5厘米，机器每次最多4垄。使用同一Mavic3M巡查两场0–6垄、同一Robot0检查两场0–7垄。种子、肥料、农药和燃油只存于一个Warehouse；装卸物料不传farm_id，机上物料可以跨场使用。各场独立管理固定灌溉设施和用水额度；共享设备的油量、电量连续。任一场作业都会让两场一起经过时间。完成两场后汇报。'
+
 @register_scenario("scenario_two_farm_shared_equipment")
 class ScenarioTwoFarmSharedEquipment(Scenario):
     """Manage two separate fixed installations using one mobile fleet."""
@@ -46,18 +57,13 @@ class ScenarioTwoFarmSharedEquipment(Scenario):
         "without farm_id; loaded supplies remain usable on either farm. All tools use one clock. "
         "Finish this preparation and planting task after both farms meet the task; harvest is not required."
     )
-    scenario_input = (
-        "管理 farm_a 和 farm_b 两个大豆农场，各有64垄，沿用现有268米垄长和1.1米垄宽。"
-        "两个农场均未整地、未播种。FarmA_Sensor/FarmA_Irrigation只服务farm_a，"
-        "FarmB_Sensor/FarmB_Irrigation只服务farm_b；Tractor、Mavic3M、Robot0跨场共用。"
-        "先分别读取两场土壤。用各场固定灌溉系统对0–3垄各运行0.2小时，"
-        "按当地条件完成两场平地、基肥、起垄及全部64垄播种。"
-        "播种用STANDARD种子，播深4厘米、株距5厘米，机器每次最多4垄。"
-        "使用同一Mavic3M巡查两场0–6垄、同一Robot0检查两场0–7垄。"
-        "种子、肥料、农药和燃油只存于一个Warehouse；装卸物料不传farm_id，机上物料可以跨场使用。"
-        "各场独立管理固定灌溉设施和用水额度；共享设备的油量、电量连续。"
-        "任一场作业都会让两场一起经过时间。完成两场后汇报。"
-    )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        if not self.scenario_input:
+            self.scenario_input = DETAILED_BRIEFING if self.detailed_briefing else BASIC_BRIEFING
 
     def init_and_populate_apps(self) -> None:
         self.weather = WeatherApp()

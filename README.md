@@ -1,5 +1,9 @@
 # FAIRY
 
+This branch combines `extend_crops`, the Desktop `multi-farm` working changes,
+and the local WOFOST work. See the [integration guide](docs/wofost-multifarm-integration.md)
+for explicit crop/backend selection, shared resources, commands, and validation limits.
+
 Thirteen selected tasks now have separate classic and WOFOST versions. Original
 scenario IDs, files and classes select the classic `legacy` engine; the WOFOST
 IDs, filenames and classes end in `_V2`. The directory name
@@ -29,7 +33,7 @@ storage, and all thirteen initial worlds match the original Git definitions.
 The twelve calibrated WOFOST yields exactly match their pre-rename references;
 03 runs to 8229.50 kg but remains uncalibrated. See the
 [version verification evidence](docs/wofost-scenario-versions.md#当前完成与核验边界).
-The current related regression suite passes 644 tests with zero failures,
+The earlier version-splitting regression suite passed 644 tests with zero failures,
 errors or skips. It covers native models, version/source contracts, classic
 workflow compatibility and app/shared runtime; this is not a whole-repository
 test claim. Evidence and the single corrected weather-test assertion are linked

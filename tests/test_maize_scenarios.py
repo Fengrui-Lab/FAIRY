@@ -24,6 +24,15 @@ from fairy.types import CapturedEvent
 IDS = tuple(spec.scenario_id for spec in SPECS.values())
 
 
+def physical_farm_state(farm):
+    state = farm.get_state()
+    # Complete farm snapshots now include the physical action journal. A new
+    # invocation has a different UUID; retain every action field except that ID.
+    for action in (state.get("physics_state") or {}).get("action_log", []):
+        action.pop("action_id", None)
+    return state
+
+
 def _engine(scenario_id):
     scenario = get_scenario_class(scenario_id)()
     scenario.setup()
@@ -129,7 +138,7 @@ def test_public_tool_workflow_replay_reproduces_crop_inventory_and_resource_stat
     engine.replay_workflow(workflow)
     expected = original.get_typed_app(FarmWorldApp)
     actual = replay.get_typed_app(FarmWorldApp)
-    assert actual.get_state() == expected.get_state()
+    assert physical_farm_state(actual) == physical_farm_state(expected)
     assert actual.physics.crop_backend.export_state() == expected.physics.crop_backend.export_state()
     assert actual.physics.yield_recovery.get_state() == expected.physics.yield_recovery.get_state()
     assert replay.get_typed_app(TractorApp).get_status() == original.get_typed_app(TractorApp).get_status()
@@ -142,36 +151,73 @@ def test_public_tool_workflow_replay_reproduces_crop_inventory_and_resource_stat
 ])
 def test_irrigation_and_topdressing_improve_yield_in_matched_controls(variant, tool, completed):
     scenario_id = f"scenario_maize_l3_{variant}"
-    managed, _, workflow = completed[scenario_id]
-    control = Workflow()
+    _, _, workflow = completed[scenario_id]
+    managed_prefix, control_prefix = Workflow(), Workflow()
+    first_harvest = None
+    ablated_calls = 0
     for step in workflow.dag.values():
+        if step.tool_name == "TractorApp__harvest":
+            first_harvest = step
+            break
+        managed_prefix.add_node(replace(step, depends_on=list(step.depends_on)))
         if step.tool_name == tool:
-            if variant == "water_limit":
-                # Retain irrigation operation time: do not move all later
-                # observations, fertilization or harvest to different dates.
-                seconds = int(round(step.content["total_duration_minutes"] * 60))
-                step = replace(step, tool_name="SystemApp__advance_time", tool_args={"seconds": seconds})
+            ablated_calls += 1
+            assert step.time_before is not None and step.time_after is not None
+            seconds = step.time_after - step.time_before
+            assert seconds >= 0
+            if variant == "nitrogen_limit":
+                # This contrast removes N only, not carrier-water irrigation.
+                assert step.tool_args["water_mm"] == 0
+            if seconds > 0:
+                # Preserve the exact recorded operation duration. Rounded
+                # public minutes would move subsequent inputs across dates.
+                step = replace(step, tool_name="SystemApp__advance_time",
+                               tool_args={"seconds": seconds}, content=None)
             else:
-                step = replace(step, tool_name="FarmWorldApp__get_inventory", tool_args={})
-        control.add_node(step)
-    ablated, engine = _engine(scenario_id)
-    engine.replay_workflow(control)
+                step = replace(step, tool_name="FarmWorldApp__get_inventory",
+                               tool_args={}, content=None)
+        control_prefix.add_node(replace(step, depends_on=list(step.depends_on)))
+    assert first_harvest is not None and first_harvest.time_before is not None
+    assert ablated_calls > 0
+
+    # Both comparisons are fresh real-tool replays at the same pre-harvest
+    # boundary. A drought control may have no recoverable grain; biological
+    # sensitivity must not depend on replaying the managed unloading schedule.
+    managed, managed_engine = _engine(scenario_id)
+    ablated, control_engine = _engine(scenario_id)
+    managed_engine.replay_workflow(managed_prefix)
+    control_engine.replay_workflow(control_prefix)
+    assert managed_engine.time_manager.time() == control_engine.time_manager.time() == first_harvest.time_before
+    for scene in (managed, ablated):
+        farm = scene.get_typed_app(FarmWorldApp)
+        assert not any(ridge.harvested for ridge in farm._ridges)
+        assert not any(state.harvested for state in farm.physics.yield_recovery.states.values())
     native_managed = managed.get_typed_app(FarmWorldApp).physics.crop_backend
     native_control = ablated.get_typed_app(FarmWorldApp).physics.crop_backend
-    managed_yield = sum(run.pcse["TWSO"] for run in native_managed._runs.values())
-    control_yield = sum(run.pcse["TWSO"] for run in native_control._runs.values())
+    assert set(native_managed._runs) == set(native_control._runs) == set(range(64))
+    # TWSO is kg dry matter/ha. These equally sized ridges give an area-weighted
+    # field mean without mixing biological yield with warehouse moisture/losses.
+    managed_yield = sum(run.pcse["TWSO"] for run in native_managed._runs.values()) / 64
+    control_yield = sum(run.pcse["TWSO"] for run in native_control._runs.values()) / 64
     assert managed_yield > control_yield * 1.05
     # Check actual forcing and unchanged non-ablated inputs, not merely seed equality.
     for ridge_id, run in native_managed._runs.items():
         other = native_control._runs[ridge_id]
         assert run.specification == other.specification
-        assert [(row["day"], row["weather"]) for row in run.journal] == [
-            (row["day"], row["weather"]) for row in other.journal
+        assert [(row["day"], row["weather"], row["humidity_pct"], row["external_growth_factor"], row["harvested"])
+                for row in run.journal] == [
+            (row["day"], row["weather"], row["humidity_pct"], row["external_growth_factor"], row["harvested"])
+            for row in other.journal
         ]
-        unchanged = "fertilizer_kg" if variant == "water_limit" else "irrigation_mm"
-        assert [row["inputs"][unchanged] for row in run.journal] == [
-            row["inputs"][unchanged] for row in other.journal
-        ]
+        unchanged = ("fertilizer_kg", "n_kg_ha") if variant == "water_limit" else ("irrigation_mm",)
+        for input_name in unchanged:
+            assert [row["inputs"][input_name] for row in run.journal] == [
+                row["inputs"][input_name] for row in other.journal
+            ]
+        removed = "irrigation_mm" if variant == "water_limit" else "n_kg_ha"
+        assert sum(row["inputs"][removed] for row in run.journal) > sum(
+            row["inputs"][removed] for row in other.journal
+        )
 
 
 @pytest.mark.parametrize("content,op_type", [

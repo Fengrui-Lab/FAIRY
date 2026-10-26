@@ -16,6 +16,9 @@ from random import Random
 from typing import Any, Protocol, TYPE_CHECKING
 
 from fairy.apps.farm_world.assets import AssetState
+from fairy.apps.farm_world.equipment import TractorEquipment
+from fairy.apps.farm_world.farm_environment import FarmContext
+from fairy.apps.farm_world.tractor_tool_contracts import TractorContractContext
 from fairy.apps.farm_world.drone_app import DroneApp
 from fairy.apps.farm_world.robot_app import RobotApp
 from fairy.apps.farm_world.tractor_app import PESTICIDE_L_PER_RIDGE, TractorApp
@@ -199,6 +202,58 @@ class TractorOperations(EquipmentOperations, TractorApp):
     """Tractor rules backed by one asset and one fixed farm context."""
 
     @property
+    def equipment(self) -> TractorEquipment:
+        # Historical runtime AssetSpec owns the fixed standard tractor fleet;
+        # no crop rule or compatibility view creates additional implements.
+        return TractorEquipment()
+
+    @property
+    def _tool_contract_context(self) -> TractorContractContext:
+        world = self._farm_world_app
+        return TractorContractContext(
+            farms=lambda: {} if world is None else {world.farm_id: world},
+            equipment=lambda: self.equipment,
+            seed_types=lambda: () if world is None else world.crop_definition.seed_types,
+            selected_seed_type=lambda: self.seed_type,
+        )
+
+    @property
+    def _farm_context(self) -> FarmContext:
+        world = self._farm_world_app
+        if world is None:
+            raise ValueError("Field work requires an explicit farm context")
+        environment = world.farm_environment
+        if environment is not None:
+            return environment.get_farm(world.farm_id)
+        return FarmContext(world.farm_id, world, self._weather_app,
+                           legacy_clock=self.time_manager)
+
+    def _bind_farm_context(self) -> None:
+        # Dependencies are already frozen in OperationContext; never initialize
+        # a new App or retain a second mutable target/equipment state.
+        pass
+
+    @property
+    def source_farm_id(self) -> str | None:
+        return self._shared_asset_state.payload_origin_farm_id
+
+    @source_farm_id.setter
+    def source_farm_id(self, value: str | None) -> None:
+        self._shared_asset_state.payload_origin_farm_id = value
+
+    @property
+    def grain_origin_farm_id(self) -> str | None:
+        return self._shared_asset_state.payload_origin_farm_id if self._grain_bin_kg > 0 else None
+
+    @grain_origin_farm_id.setter
+    def grain_origin_farm_id(self, value: str | None) -> None:
+        self._shared_asset_state.payload_origin_farm_id = value
+
+    @property
+    def _harvest_limit_configured(self) -> bool:
+        return self._shared_asset_state.data["_harvest_moisture_limit_pct"] is not None
+
+    @property
     def _fuel_tank_l(self) -> float:
         return self._shared_asset_state.data["_fuel_tank_l"]
 
@@ -286,7 +341,7 @@ class TractorOperations(EquipmentOperations, TractorApp):
         override = self._shared_asset_state.data["_harvest_moisture_limit_pct"]
         if self._farm_world_app is None:
             return override
-        crop_limit = self._farm_world_app.crop_profile.harvest_moisture_max_pct
+        crop_limit = self._farm_world_app.default_harvest_moisture_limit_pct
         return crop_limit if override is None else min(crop_limit, float(override))
 
     @_harvest_moisture_limit_pct.setter

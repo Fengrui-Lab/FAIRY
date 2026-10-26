@@ -324,9 +324,16 @@ class AdaptiveManagementCompiler(FrozenWeatherCompiler):
             "response": clean(receipt), "purpose": "seedbed_guard_repair",
             "source_step": source_label})
         ready = receipt.get("effect_ready_at")
-        if ready is None or not isfinite(float(ready)) or float(ready) <= self.engine.time_manager.time():
-            raise RuntimeError("Registered seedbed irrigation lacks a future effect confirmation time")
-        self.advance_until(label + "_effect_confirmation", float(ready), manage=False)
+        if ready is None or not isfinite(float(ready)):
+            raise RuntimeError("Registered seedbed irrigation lacks a valid effect confirmation time")
+        now = self.engine.time_manager.time()
+        if float(ready) < now:
+            raise RuntimeError("Registered seedbed irrigation effect confirmation time is in the past")
+        # Active reduced physics can commit delivery within the tool call.
+        # Native/day-delayed delivery supplies its real future boundary; wait
+        # only for that returned boundary, then take the same public readings.
+        if float(ready) > now:
+            self.advance_until(label + "_effect_confirmation", float(ready), manage=False)
         # Keep the actual post-delivery public readings as evidence; the next
         # attempt also re-runs the ordinary public planting gate.
         self._read(label + "_confirmed_surface", "read_soil_sensors")

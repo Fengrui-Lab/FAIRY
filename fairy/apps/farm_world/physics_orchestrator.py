@@ -103,7 +103,10 @@ def advance_physics_time(
 
     # First call seeds engine state from the scenario's initial ridge values.
     if physics.last_physics_sim_time is None:
-        _seed_physics_from_ridges(farm_world_app, target_sim_time)
+        if _uses_registered_crop(physics):
+            physics.crop.initialize_from_ridges(farm_world_app, target_sim_time)
+        else:
+            _seed_physics_from_ridges(farm_world_app, target_sim_time)
         subdaily_first_call = False
         # If a tool queued actions before the first advance_physics_time call
         # (e.g. plant_seeds calls advance after queuing), apply them now via
@@ -467,7 +470,7 @@ def _ridge_planting_density_plants_m2(
     profile = farm_world_app.crop_profile
     if profile.crop_type == "soybean":
         return 40.0
-    return profile.rows_per_ridge / (ridge_width_m * profile.seed_spacing_cm / 100.0)
+    return farm_world_app.rows_per_ridge / (ridge_width_m * profile.seed_spacing_cm / 100.0)
 
 
 def _coerce_seed_type(seed_value: str | None) -> SeedType | None:
@@ -559,6 +562,10 @@ def _run_daily_tick(
         from fairy.scenarios.wofost_events import apply_scenario_events_for_day
 
         apply_scenario_events_for_day(farm_world_app, day)
+
+    if _uses_registered_crop(physics):
+        _run_registered_crop_daily_tick(farm_world_app, physics, day, weather)
+        return
 
     pending_actions = physics.drain_pending_management_actions()
     pending_treatments = physics.drain_pending_treatments()
@@ -752,6 +759,38 @@ def _run_daily_tick(
 
     # 10. Compatibility-field sync runs once after the loop in the entry
     # point, since multiple daily ticks can happen back-to-back.
+
+
+def _run_registered_crop_daily_tick(farm_world_app, physics, day, weather):
+    """Advance legacy crop dynamics once; PCSE never enters this path."""
+    actions = physics.drain_pending_management_actions()
+    treatments = physics.drain_pending_treatments()
+    harvest = physics.drain_pending_harvest_actions()
+    physics.management.update_day(
+        weather=weather["management"], actions_by_ridge=actions,
+        soil_by_ridge=_build_management_soil_inputs(physics),
+        crop_by_ridge=physics.crop.management_inputs(physics),
+    )
+    living_cover = {}
+    for rid, canopy in physics.canopy.states.items():
+        status = physics.crop.project(rid, physics.management.states[rid])
+        living_cover[rid] = (canopy.canopy_cover
+                             if status.current_planted and status.emerged else 0.0)
+    physics.soil.update_day(
+        weather=weather["soil"],
+        irrigation_mm_by_ridge=physics.management.irrigation_mm_by_ridge(actions),
+        canopy_cover_by_ridge=living_cover,
+    )
+    growth_for_uptake = physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
+    if growth_for_uptake is not None:
+        physics.management.settle_crop_growth(day, growth_for_uptake)
+    physics.biotic.update_day(
+        weather=weather["biotic"], crop_by_ridge=physics.crop.biotic_inputs(physics),
+        soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
+                       for rid, state in physics.soil.states.items()},
+        treatments_by_ridge=treatments,
+    )
+    physics.crop.advance_after_biotics(physics, day, weather, harvest)
 
 
 def _apply_post_planting_cold_stand_penalty(
@@ -1073,10 +1112,15 @@ def _phenology_development_fraction(
     return stage_progress.get(state.stage, 0.0)
 
 
+def _uses_registered_crop(physics: "FarmPhysicsState") -> bool:
+    """A native PCSE backend takes priority over the legacy dynamics registry."""
+    return physics.crop_backend is None and not getattr(physics.crop, "compatibility_proxy", False)
+
+
 def _uses_native_maize(physics: "FarmPhysicsState") -> bool:
     """Keep native maize rules separate from the legacy multi-crop proxy."""
     backend = physics.crop_backend
-    return backend is not None and backend.config.crop_name == "maize"
+    return getattr(getattr(backend, "config", None), "crop_name", None) == "maize"
 
 
 def _compute_water_stress(root_vwc: float) -> float:
@@ -1234,13 +1278,15 @@ def _avg_top_vwc(physics: "FarmPhysicsState | None") -> float | None:
 
 
 def _apply_treatments_now(physics, weather, treatments):
+    crop_inputs = (physics.crop.biotic_inputs(physics) if _uses_registered_crop(physics) else
+                  {rid: BioticCropInput(
+                      stage=BioticGrowthStage(phen.stage.value),
+                      canopy_cover=physics.canopy.states[rid].canopy_cover,
+                      seed_type=phen.seed_type.value if phen.seed_type is not None else None)
+                   for rid, phen in physics.phenology.states.items()})
     physics.biotic.update_day(
         weather=weather["biotic"],
-        crop_by_ridge={rid: BioticCropInput(
-            stage=BioticGrowthStage(phen.stage.value),
-            canopy_cover=physics.canopy.states[rid].canopy_cover,
-            seed_type=phen.seed_type.value if phen.seed_type is not None else None)
-            for rid, phen in physics.phenology.states.items()},
+        crop_by_ridge=crop_inputs,
         soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
                        for rid, state in physics.soil.states.items()},
         treatments_by_ridge=treatments, advance_daily=False)
@@ -1248,6 +1294,9 @@ def _apply_treatments_now(physics, weather, treatments):
 
 def _settle_harvest_now(physics, weather, harvest):
     if not harvest:
+        return
+    if _uses_registered_crop(physics):
+        physics.crop.settle_harvest(physics, weather["yield"].day, weather, harvest)
         return
     physics.yield_recovery.settle_harvest(
         weather=weather["yield"],
@@ -1275,7 +1324,8 @@ def _run_subdaily_injection(physics, weather_app, target_sim_time,
     if actions:
         physics.management.update_day(weather=weather["management"], actions_by_ridge=actions,
             soil_by_ridge=_build_management_soil_inputs(physics),
-            crop_by_ridge=_build_management_crop_inputs(physics), advance_daily=False)
+            crop_by_ridge=(physics.crop.management_inputs(physics) if _uses_registered_crop(physics)
+                           else _build_management_crop_inputs(physics)), advance_daily=False)
     if treatments and not _uses_native_maize(physics):
         _apply_treatments_now(physics, weather, treatments)
     _settle_harvest_now(physics, weather, harvest)
@@ -1346,6 +1396,18 @@ def sync_compatibility_fields_from_physics(farm_world_app: "FarmWorldApp") -> No
     """
     physics = farm_world_app._physics
     if physics is None or not physics.engines_active:
+        return
+
+    if _uses_registered_crop(physics):
+        for ridge in farm_world_app._ridges:
+            rid = ridge.ridge_id
+            soil, biotic = physics.soil.states[rid], physics.biotic.states[rid]
+            ridge.soil_vwc = float(soil.top_vwc)
+            ridge.soil_temp_c = float(soil.top_temp_c)
+            ridge.nutrient_index = float(physics.management.states[rid].nutrient_index)
+            ridge.pest_pressure = ridge.pest_pressure_base = float(biotic.insect_pressure)
+            ridge.disease_pressure = ridge.disease_pressure_base = float(biotic.disease_pressure)
+        physics.crop.sync_public_fields(farm_world_app)
         return
 
     for ridge in farm_world_app._ridges:

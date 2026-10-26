@@ -1,283 +1,243 @@
-"""Crop identity, tool accounting and native maturity on the shared farm apps."""
-import json
-from datetime import date, datetime, timezone
+"""Single-farm maize tools enforce crop rules before spending time/resources."""
+from copy import deepcopy
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
-from fairy.apps.farm_world import FarmWorldApp, WeatherApp
-from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M, plants_per_ridge_from_spacing
-from fairy.apps.farm_world.physics_orchestrator import _ridge_planting_density_plants_m2
-from fairy.apps.farm_world.tractor_app import TractorApp
-from fairy.physics import SoybeanStage
-from fairy.time_manager import SimulationTimeManager
+from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
+from fairy.apps.farm_world.farm_world_app import FarmWorldApp
+from fairy.apps.farm_world.equipment import TractorEquipment, DEFAULT_TRACTOR_IMPLEMENTS
 from fairy.apps.farm_world.models import InventoryState
-from fairy.scenarios.farm_world_fullseason_v2.farm_checkpoint_state import (
-    export_farm_checkpoint_state, restore_farm_checkpoint_state,
-)
+from fairy.apps.farm_world.irrigation_app import IrrigationApp
+from fairy.apps.farm_world.tractor_app import TractorApp
+from fairy.apps.farm_world.weather_app import WeatherApp
+
+
+def call(app, name, **arguments):
+    return next(tool for tool in app.get_tools() if tool.name == name)(**arguments)
 
 
 @pytest.fixture
-def maize_tools():
-    pytest.importorskip("pcse")
-    # The scenario owns geometry and stock; selecting biology creates neither.
-    farm = FarmWorldApp(num_ridges=1, ridge_width_m=.75)
-    farm.configure_crop_backend("wofost", crop_name="maize")
-    farm._inventory.seed_stock = {"MAIZE_201": 1000000}
-    weather = WeatherApp()
-    weather.set_weather(date="2026-05-01", temp_c=22.0, humidity_pct=55.0,
-                        wind_speed_ms=2.0, rainfall_mm=0.0, solar_radiation=240.0)
-    tractor = TractorApp(farm, weather, name="TractorApp")
-    clock = SimulationTimeManager()
-    clock.reset(datetime(2026, 5, 1, 8, tzinfo=timezone.utc).timestamp())
-    for app in (farm, weather, tractor):
-        app.register_time_manager(clock)
-    ridge = farm._ridges[0]
-    ridge.soil_vwc = .27
-    ridge.soil_temp_c = 20.0
-    tractor._completed_prep_ops = ["level", "base_fertilize", "form_ridges"]
-    tractor.configure_harvest(max_grain_moisture_pct=25)
-    return farm, weather, tractor, clock
-
-
-def test_maize_crop_seed_and_backend_guards_do_not_consume_stock(maize_tools):
-    farm, _, tractor, _ = maize_tools
-    before = farm.get_inventory()
-    assert "MAIZE_201" in tractor.load_seeds("STANDARD", 2000)["error"]
-    assert farm.get_inventory() == before
-    assert tractor.seed_type is None
-    with pytest.raises(ValueError, match="requires the WOFOST"):
-        farm.configure_crop_backend("legacy")
-    soybean = FarmWorldApp()
-    other = TractorApp(soybean, WeatherApp())
-    assert "require" in other.load_seeds("MAIZE_201", 2000)["error"]
-
-
-def test_maize_seed_inventory_matches_one_row_density(maize_tools):
-    farm, _, tractor, _ = maize_tools
-    assert "error" not in tractor.load_seeds("MAIZE_201", 2000)
-    result = tractor.plant_seeds(0, 0, depth_cm=4, seed_spacing_cm=20)
-    assert "error" not in result
-    assert result["seeds_used"] == 1340
-    assert tractor._seed_hopper == 660
-    assert farm._inventory.seed_stock["MAIZE_201"] == 998000
-    assert farm._ridges[0].seeds_planted == 1340
-    assert _ridge_planting_density_plants_m2(farm, 0) == pytest.approx(6.6666666667)
-    # Older snapshots without an explicit plant count must use the same geometry.
-    farm._ridges[0].seeds_planted = 0
-    assert _ridge_planting_density_plants_m2(farm, 0) == pytest.approx(6.6666666667)
-    assert plants_per_ridge_from_spacing(20) == 2680  # unchanged soybean default
-    assert farm._ridges[0].growth_stage == "PLANTED_PRE_EMERGENCE"
-
-
-def test_maize_state_records_identity_and_old_state_defaults_to_soybean(maize_tools):
-    farm, weather, _, _ = maize_tools
-    state = farm.get_state()
-    restored = FarmWorldApp()
-    # An operational view cannot reconstruct native PCSE history.
-    with pytest.raises(ValueError, match="native physics checkpoint"):
-        restored.load_state(state)
-    saved = json.loads(json.dumps(export_farm_checkpoint_state(
-        farm_world=farm, weather_app=weather,
-        scenario_id="maize_tools_checkpoint", checkpoint_label="initial",
-    )))
-    restore_farm_checkpoint_state(
-        farm_world=restored, weather_app=WeatherApp(), checkpoint_state=saved,
+def maize():
+    world = FarmWorldApp(crop_id="maize", field_length_m=200.0)
+    world._inventory = InventoryState(
+        seed_stock={"MAIZE_EARLY_2026": 150000}, pesticide_liters=0.0,
+        fertilizer_kg=1000.0, fuel_liters=300.0, harvest_grain_kg=0.0,
     )
-    assert restored.crop_name == "maize"
-    assert restored.variety_name == "Grain_maize_201"
-    assert restored.rows_per_ridge == 1
-    assert restored.ridge_width_m == .75
-    assert restored.physics.crop_backend.snapshot() == farm.physics.crop_backend.snapshot()
-    old_state = FarmWorldApp().get_state()
-    assert "crop_name" not in old_state
-    # Historical flat soybean state still restores through the legacy path.
-    legacy = FarmWorldApp(crop_type="maize", ridge_width_m=.75)
-    legacy.load_state(old_state)
-    assert legacy.crop_name == "soybean"
-    assert legacy.rows_per_ridge == 2
-    assert legacy.ridge_width_m == 1.1
+    weather = WeatherApp()
+    weather.set_weather(date="2026-05-15", temp_c=20.0, humidity_pct=50.0,
+                        wind_speed_ms=1.0, rainfall_mm=0.0,
+                        solar_radiation=350.0, avg_soil_vwc=0.24)
+    for ridge in world._ridges:
+        ridge.soil_vwc = 0.24
+        ridge.soil_temp_c = 18.0
+    world.configure_physics_profile("maize_tool_static_weather")
+    start = datetime(2026, 5, 15, 7, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp()
+    environment = FarmEnvironment([FarmContext("maize", world, weather)], weather,
+                                  start_time=start, timezone_name="Asia/Shanghai")
+    tractor = TractorApp(world, weather, equipment=TractorEquipment(
+        implements=(*DEFAULT_TRACTOR_IMPLEMENTS, "maize_planter", "maize_header"),
+        ridging_implement="furrower",
+    ))
+    tractor.register_time_manager(environment.time_manager)
+    environment.sync()
+    assert call(tractor, "attach_implement", implement="grader")["status"] == "ok"
+    assert call(tractor, "level")["status"] == "ok"
+    assert call(tractor, "detach_implement")["status"] == "ok"
+    assert call(tractor, "load_fertilizer", kg=200.0)["status"] == "ok"
+    assert call(tractor, "base_fertilize")["status"] == "ok"
+    assert call(tractor, "attach_implement", implement="furrower")["status"] == "ok"
+    assert call(tractor, "form_ridges", ridge_width_m=0.65)["status"] == "ok"
+    assert call(tractor, "detach_implement")["status"] == "ok"
+    assert call(tractor, "load_seeds", seed_type="MAIZE_EARLY_2026", count=10000)["status"] == "ok"
+    return environment, world, tractor
 
 
-def test_native_backend_selection_preserves_explicit_geometry_and_stock():
-    farm = FarmWorldApp(num_ridges=3, field_length_m=151., ridge_width_m=.83)
-    stock = farm._inventory.to_dict()
-    farm.configure_crop_backend("wofost", crop_name="maize")
-    assert farm.crop_name == farm.crop_type == "maize"
-    assert farm.physics.crop_type == "maize"
-    assert farm.physics.crop_profile.crop_type == "maize"
-    assert (farm.num_ridges, farm.field_length_m, farm.ridge_width_m) == (3, 151., .83)
-    assert farm.rows_per_ridge == 1
-    assert farm._inventory.to_dict() == stock
+def test_maize_seed_and_implement_catalog_matches_real_tools(maize):
+    _, world, tractor = maize
+    tools = {tool.name: tool for tool in tractor.get_tools()}
+    seed = next(arg for arg in tools["load_seeds"].args if arg.name == "seed_type")
+    assert seed.choices == world.crop_capabilities()["allowed_seed_types"]
+    assert "STANDARD" not in tools["load_seeds"].function_description
+    assert "3–6 cm" in tools["plant_seeds"].function_description
+    assert "R6_MATURITY" in tools["harvest"].function_description
+    assert "30%" in tools["harvest"].function_description
+    assert "maize_header" in tools["harvest"].function_description
+    before = tractor.get_state()
+    assert "error" in tractor.load_seeds("STANDARD", 100)
+    assert tractor.get_state() == before
+    assert "error" in call(tractor, "load_seeds", seed_type="STANDARD", count=100)
+    soy = TractorApp(FarmWorldApp(), WeatherApp())
+    assert "maize_planter" not in soy.get_status()["available_implements"]
+    assert "error" in soy.load_seeds("MAIZE_EARLY_2026", 100)
 
 
-def test_legacy_maize_and_rice_admission_remains_separate_from_native_maize():
-    maize, rice = FarmWorldApp(crop_type="maize"), FarmWorldApp(crop_type="rice")
-    assert maize.validate_seed_for_crop("MAIZE_STANDARD") is None
-    assert rice.validate_seed_for_crop("RICE_STANDARD") is None
-    assert maize.validate_seed_for_crop("MAIZE_201") is not None
-    assert maize.validate_seed_for_crop("RICE_STANDARD") is not None
-    assert not maize.is_native_maize
-    assert FarmWorldApp().validate_seed_for_crop("SOYBEAN_901") is not None
+def test_maize_planting_uses_one_row_actual_length_and_one_clock(maize):
+    environment, world, tractor = maize
+    before = tractor.get_state()
+    now = environment.time_manager.time()
+    missing = call(tractor, "plant_seeds", start_ridge=0, end_ridge=3,
+                   depth_cm=6.0, seed_spacing_cm=20.0)
+    assert "maize_planter" in missing["error"]
+    assert tractor.get_state() == before
+    assert environment.time_manager.time() == now
+    assert call(tractor, "attach_implement", implement="maize_planter")["status"] == "ok"
+    result = call(tractor, "plant_seeds", start_ridge=0, end_ridge=3,
+                  depth_cm=6.0, seed_spacing_cm=20.0)
+    assert result["status"] == "ok"
+    assert result["seeds_per_ridge"] == 1000  # 200m × one row / 0.20m
+    assert result["seeds_used"] == 4000
+    assert tractor.get_status()["seed_hopper"] == 6000
+    assert environment.time_manager.time() - now == int(200 / (5000 / 3600)) + 30
+    assert all(world.physics.phenology.states[rid].seed_type == "MAIZE_EARLY_2026"
+               for rid in range(4))
+    assert all(not world.physics.phenology.states[rid].planted for rid in range(4, 64))
+    assert all(world.get_ridge(rid).seeds_planted == 1000 for rid in range(4))
+    assert all(world.physics.management.states[rid].planted for rid in range(4))
+    assert all(world.physics.management.states[rid].stand_fraction > 0.5 for rid in range(4))
+    assert all(world.physics.canopy.states[rid].stand_fraction == 1.0 for rid in range(4))
 
 
-def _mature_crop(farm, *, moisture=.24):
-    ridge = farm._ridges[0]
-    ridge.planted = True
-    ridge.seed_type = "MAIZE_201"
-    ridge.growth_stage = "MATURE"
-    ridge.grain_moisture_pct = moisture * 100
-    physics = farm.physics
-    phen = physics.phenology.states[0]
-    phen.planted = True
-    phen.emerged = True
-    phen.stage = SoybeanStage.MATURE
-    phen.maturity_date = date(2026, 5, 1)
-    physics.canopy.states[0].yield_potential_g_m2 = 800
-    physics.canopy.states[0].aboveground_biomass_g_m2 = 1600
-    recovery = physics.yield_recovery.states[0]
-    recovery.r8_reached = True  # legacy internal field shared by the recovery engine
-    recovery.maturity_date = phen.maturity_date
-    recovery.grain_moisture_frac = moisture
-    recovery.biological_yield_g_m2 = 800
+@pytest.mark.parametrize("arguments", [
+    {"depth_cm": 2.9, "seed_spacing_cm": 20.0},
+    {"depth_cm": 6.1, "seed_spacing_cm": 20.0},
+    {"depth_cm": float("nan"), "seed_spacing_cm": 20.0},
+    {"depth_cm": 5.0, "seed_spacing_cm": 0.0},
+    {"depth_cm": 5.0, "seed_spacing_cm": 0.1},
+    {"depth_cm": 5.0, "seed_spacing_cm": 1e12},
+])
+def test_invalid_maize_planting_is_rejected_before_effects(maize, arguments):
+    environment, world, tractor = maize
+    call(tractor, "attach_implement", implement="maize_planter")
+    before, now = tractor.get_state(), environment.time_manager.time()
+    assert "error" in call(tractor, "plant_seeds", start_ridge=0, end_ridge=0, **arguments)
+    assert tractor.get_state() == before
+    assert environment.time_manager.time() == now
+    assert not world.physics.phenology.states[0].planted
 
 
-def test_maize_harvest_uses_native_maturity_and_equipment_limit(maize_tools):
-    farm, _, tractor, _ = maize_tools
-    _mature_crop(farm, moisture=.251)
-    assert "moisture too high" in tractor.harvest(0, 0)["error"]
-    farm._ridges[0].grain_moisture_pct = 24
-    farm.physics.phenology.states[0].maturity_date = None
-    # A display label alone cannot bypass native maturity.
-    assert "not mature" in tractor.harvest(0, 0)["error"]
-    assert tractor._grain_bin_kg == 0
+def test_maize_replant_rejects_established_gapfill_before_spending_and_full_reset_works(maize):
+    environment, world, tractor = maize
+    call(tractor, "attach_implement", implement="maize_planter")
+    assert call(tractor, "plant_seeds", start_ridge=0, end_ridge=0,
+                depth_cm=4.5, seed_spacing_cm=20.0)["status"] == "ok"
+    # Reach real emergence through the daily physics path.
+    environment.advance_time(10 * 86400)
+    assert world.physics.phenology.states[0].emerged
+    irrigation = IrrigationApp(world, environment.weather)
+    irrigation.register_time_manager(environment.time_manager)
+    assert call(irrigation, "irrigate", start=0, end=0, hours=2.0)["status"] == "irrigation_started"
+    planting_date = world.physics.phenology.states[0].planting_date
+    before, now = tractor.get_state(), environment.time_manager.time()
+    result = call(tractor, "replant_seeds", start_ridge=0, end_ridge=0,
+                  depth_cm=5.0, spacing_cm=20.0)
+    assert "gap-filling" in result["error"]
+    assert tractor.get_state() == before
+    assert environment.time_manager.time() == now
+    assert world.physics.phenology.states[0].planting_date == planting_date
+    result = call(tractor, "replant_seeds", start_ridge=0, end_ridge=0,
+                  depth_cm=5.0, spacing_cm=20.0, full_replant=True)
+    assert result["status"] == "ok"
+    assert result["phenology_reset_ridges"] == [0]
+    assert world.physics.phenology.states[0].planting_date > planting_date
+    assert not world.physics.phenology.states[0].emerged
 
 
-def test_maize_harvest_and_drying_preserve_dry_matter_at_14_percent_basis(maize_tools):
-    farm, _, tractor, _ = maize_tools
-    _mature_crop(farm)
-    result = tractor.harvest(0, 0)
-    assert "error" not in result
-    recovery = farm.physics.yield_recovery.states[0]
-    dry_g_m2 = (recovery.biological_yield_g_m2
-                * (1-recovery.field_loss_fraction)
-                * (1-recovery.machine_loss_fraction))
-    expected_dry_kg = dry_g_m2 * FIELD_LENGTH_M * .75 / 1000
-    expected_market_kg = expected_dry_kg / .86
-    assert result["grain_kg_added"] == pytest.approx(expected_market_kg, abs=.01)
-    assert "error" not in tractor.unload_grain()
-    before = farm._inventory.harvest_grain_kg
-    assert before * .86 == pytest.approx(expected_dry_kg, abs=.01)
-    assert "error" not in farm.dry_grain(target_moisture_pct=14)
-    assert recovery.grain_moisture_frac == .14
-    assert farm._inventory.harvest_grain_kg == before
-    assert "warning" not in farm.store_grain()
-    assert farm._inventory.warehouse_grain_kg * .86 == pytest.approx(expected_dry_kg, abs=.01)
-    assert farm.get_inventory()["market_moisture_pct"] == pytest.approx(14)
+def test_maize_harvest_accepts_native_maturity_and_30pct_gate_with_actual_area(maize):
+    environment, world, tractor = maize
+    call(tractor, "attach_implement", implement="maize_planter")
+    assert call(tractor, "plant_seeds", start_ridge=0, end_ridge=3,
+                depth_cm=4.5, seed_spacing_cm=20.0)["status"] == "ok"
+    # Constant warm, rainy forcing is a controlled model test, not a climate claim.
+    environment.weather.set_weather(
+        date=world.simulation_date().isoformat(), temp_c=25.0, humidity_pct=50.0,
+        wind_speed_ms=1.0, rainfall_mm=3.0, solar_radiation=350.0, avg_soil_vwc=0.24,
+    )
+    environment.advance_time(120 * 86400)
+    assert world.get_ridge_state(0)["growth_stage"] == "R6_MATURITY"
+    moisture = world.get_ridge_state(0)["grain_moisture_pct"]
+    assert 18.0 < moisture <= 30.0
+    environment.weather.set_weather(
+        date=world.simulation_date().isoformat(), temp_c=25.0, humidity_pct=50.0,
+        wind_speed_ms=1.0, rainfall_mm=0.0, solar_radiation=350.0, avg_soil_vwc=0.24,
+    )
+    assert "maize_header" in call(tractor, "harvest", start_ridge=0, end_ridge=3)["error"]
+    call(tractor, "detach_implement")
+    call(tractor, "attach_implement", implement="maize_header")
+    # A synthetic nearly-full bin must reject against the model's conservative
+    # bound before consuming fuel or time; clear it to exercise real settlement.
+    tractor._grain_bin_kg = 1900.0
+    before, now = tractor.get_state(), environment.time_manager.time()
+    assert "overflow" in call(tractor, "harvest", start_ridge=0, end_ridge=3)["error"]
+    assert tractor.get_state() == before
+    assert environment.time_manager.time() == now
+    tractor._grain_bin_kg = 0.0
+    result = call(tractor, "harvest", start_ridge=0, end_ridge=3)
+    assert result["status"] == "ok"
+    expected = sum(world.physics.yield_recovery.states[rid].recovered_yield_g_m2_at_market_moisture
+                   * 200.0 * 0.65 / 1000.0 for rid in range(4))
+    assert result["grain_kg_added"] == pytest.approx(round(expected, 2))
+    assert environment.time_manager.time() - now == int(200 / (4000 / 3600)) + 30
+    assert all(world.get_ridge_state(rid)["harvested"] for rid in range(4))
+    assert not world.physics.yield_recovery.states[4].harvested
 
 
-def test_maize_native_stage_progression_skips_soybean_biotic_dynamics(maize_tools):
-    farm, _, tractor, clock = maize_tools
-    tractor.load_seeds("MAIZE_201", 2000)
-    assert "error" not in tractor.plant_seeds(0, 0, depth_cm=4, seed_spacing_cm=20)
-    biotic_before = vars(farm.physics.biotic.states[0]).copy()
-    assert biotic_before["insect_pressure"] == 0.0
-    assert biotic_before["disease_pressure"] == 0.0
-    assert biotic_before["weed_pressure"] == 0.0
-    clock.add_offset(20 * 86400)
-    farm.advance_physics_time()
-    ridge = farm._ridges[0]
-    assert ridge.growth_stage == "VEGETATIVE"
-    assert vars(farm.physics.biotic.states[0]) == biotic_before
-    assert farm.physics.canopy.states[0].initialized
-    assert farm.get_farm_overview()["crop_name"] == "maize"
-    assert "oracle" not in {tool.name for tool in tractor.get_tools()}
+def test_tractor_snapshots_cannot_move_between_crop_types(maize):
+    _, _, tractor = maize
+    soybean = TractorApp(FarmWorldApp(), WeatherApp())
+    maize_state, soy_state = deepcopy(tractor.get_state()), deepcopy(soybean.get_state())
+    with pytest.raises(ValueError, match="snapshot crop"):
+        tractor.load_state(soy_state)
+    with pytest.raises(ValueError, match="snapshot crop"):
+        soybean.load_state(maize_state)
+    assert tractor.get_state() == maize_state
+
+    assert soybean.get_state() == soy_state
+    corrupted = deepcopy(maize_state)
+    corrupted["seed_type"] = "STANDARD"
+    with pytest.raises(ValueError, match="incompatible"):
+        tractor.load_state(corrupted)
+    assert tractor.get_state() == maize_state
 
 
-def test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore(maize_tools):
-    farm, _, tractor, clock = maize_tools
-    tractor.load_seeds("MAIZE_201", 2000)
-    tractor.plant_seeds(0, 0, depth_cm=4, seed_spacing_cm=20)
-    clock.add_offset(5 * 86400)
-    farm.advance_physics_time()
-    old_backend = farm.physics.crop_backend
-    farm.reset()
-    tractor.reset()
-    assert farm.crop_name == "maize"
-    assert farm.physics.crop_backend is not old_backend
-    assert farm.physics.crop_backend.last_day is None
-    assert not farm._ridges[0].planted
-    assert not farm.physics.phenology.states[0].planted
-    assert farm._inventory.seed_stock == InventoryState.default().seed_stock
-    assert "MAIZE_201" not in farm._inventory.seed_stock
-    assert farm._postharvest_market.market_moisture_pct == pytest.approx(14)
-    assert tractor._harvest_moisture_limit_pct == 25
-    assert tractor._seed_hopper == 0
-    with pytest.raises(ValueError, match="fresh farm"):
-        farm.configure_crop_backend("wofost", crop_name="soybean")
-    # Reject a partial cross-crop view before mutating native biology or stock.
-    legacy = FarmWorldApp().get_state()
-    before = farm.get_state()
-    backend_before = farm.physics.crop_backend.snapshot()
-    with pytest.raises(ValueError, match="native physics checkpoint"):
-        farm.load_state(legacy)
-    assert farm.get_state() == before
-    assert farm.physics.crop_backend.snapshot() == backend_before
-    assert tractor._seed_hopper == 0
-
-
-def test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled(maize_tools):
-    from fairy.apps.farm_world.robot_app import RobotApp
-
-    farm, weather, tractor, clock = maize_tools
-    robot = RobotApp(farm, weather)
-    robot.register_time_manager(clock)
-    tractor.load_seeds("MAIZE_201", 2000)
-    tractor.plant_seeds(0, 0, depth_cm=4, seed_spacing_cm=20)
-    before = robot.inspect_emergence(0, 0)["observations"][0]
-    assert before["emerged"] is False
-    assert before["growth_stage"] == "PLANTED_PRE_EMERGENCE"
-    assert before["stand_fraction"] == 0
-    assert before["biotic_status"] == "not_simulated"
-    assert before["pest_present"] is None
-    clock.add_offset(20 * 86400)
-    health = robot.inspect_crop_health(0, 0)["observations"][0]
-    assert health["emerged"] is True
-    assert health["growth_stage"] == "VEGETATIVE"
-    assert health["stand_fraction"] > 0
-    assert isinstance(health["spad_proxy"], float)
-    assert "not a calibrated maize" in health["measurement_note"]
-    assert health["disease_present"] is None
-    single = robot.inspect_ridge(0)["result"]
-    assert single["growth_stage"] == "VEGETATIVE"
-    assert single["pest_type"] is None
-    assert single["biotic_status"] == "not_simulated"
-    farm.physics.yield_recovery.states[0].harvested = True
-    harvested = robot.inspect_crop_health(0, 0)["observations"][0]
-    assert harvested["harvested"] is True
-    assert harvested["stand_fraction"] == 0
-    assert harvested["growth_stage"] == "bare"
-    assert harvested["spad_proxy"] is None
-
-
-def test_maize_native_bin_capacity_and_rejected_seed_load_are_atomic(maize_tools):
-    farm, _, tractor, clock = maize_tools
-    assert "error" not in tractor.load_seeds("MAIZE_201", 1000)
-    before_stock = farm._inventory.seed_stock.copy()
-    before_hopper = tractor._seed_hopper
-    before_seed = tractor.seed_type
-    for bad_seed, count in [("STANDARD", 1000), ("MAIZE_201", 0)]:
-        assert "error" in tractor.load_seeds(bad_seed, count)
-        assert farm._inventory.seed_stock == before_stock
-        assert tractor._seed_hopper == before_hopper
-        assert tractor.seed_type == before_seed
-    _mature_crop(farm)
-    # The native crop can exceed the historical soybean 245kg/ridge bound.
-    farm.physics.canopy.states[0].yield_potential_g_m2 = 1600
-    tractor._grain_bin_kg = 1700
-    fuel = tractor._fuel_tank_l
-    now = clock.time()
-    assert "overflow" in tractor.harvest(0, 0)["error"]
-    assert tractor._grain_bin_kg == 1700
-    assert tractor._fuel_tank_l == fuel
-    assert clock.time() == pytest.approx(now, abs=0.01, rel=0)
-    assert farm._ridges[0].planted
+def test_maize_harvest_crossing_rainy_midnight_returns_failure_without_queuing_harvest(maize):
+    environment, world, tractor = maize
+    call(tractor, "attach_implement", implement="maize_planter")
+    assert call(tractor, "plant_seeds", start_ridge=0, end_ridge=0,
+                depth_cm=4.5, seed_spacing_cm=20.0)["status"] == "ok"
+    environment.weather.set_weather(
+        date=world.simulation_date().isoformat(), temp_c=25.0, humidity_pct=50.0,
+        wind_speed_ms=1.0, rainfall_mm=3.0, solar_radiation=350.0, avg_soil_vwc=0.24,
+    )
+    environment.advance_time(120 * 86400)
+    day = world.simulation_date()
+    late = datetime.combine(day, time(23, 59, 30), environment.simulation_timezone).timestamp()
+    environment.advance_time(late - environment.time_manager.time())
+    # Install a real next-day forecast: start is dry and harvestable, while the
+    # daily storm rewets maize during the operation across Beijing midnight.
+    environment.weather.set_weather(
+        date=day.isoformat(), temp_c=25.0, humidity_pct=50.0, wind_speed_ms=1.0,
+        rainfall_mm=0.0, solar_radiation=350.0, avg_soil_vwc=0.24,
+        forecast=[{"date": (day + timedelta(days=1)).isoformat(), "temp_c": 10.0,
+                   "rainfall_mm": 100.0, "wind_speed_ms": 1.0, "solar_radiation": 50.0}],
+    )
+    assert world.get_ridge_state(0)["grain_moisture_pct"] <= 30.0
+    call(tractor, "detach_implement")
+    call(tractor, "attach_implement", implement="maize_header")
+    before = tractor.get_status()
+    start = environment.time_manager.time()
+    result = call(tractor, "harvest", start_ridge=0, end_ridge=0)
+    assert result["status"] == "failed"
+    assert "during the pass" in result["error"]
+    assert result["grain_kg_added"] == 0.0 and result["harvested_ridges"] == []
+    assert result["grain_moisture_pct_by_ridge"]["0"] > 30.0
+    expected_fuel = 2.0 * world.field_length_m / 268.0
+    assert result["fuel_used_l"] == expected_fuel
+    assert tractor.get_status()["fuel_tank_l"] == before["fuel_tank_l"] - expected_fuel
+    assert environment.time_manager.time() - start == result["duration_s"]
+    assert world.get_ridge_state(0)["planted"]
+    assert not world.physics.yield_recovery.states[0].harvested
+    assert not world.physics.pending_harvest_actions_by_ridge
+    assert not world._pending_bin_grain_ridge_ids
+    assert tractor.get_status()["grain_bin_kg"] == before["grain_bin_kg"]

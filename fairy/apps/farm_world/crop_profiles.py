@@ -13,7 +13,6 @@ from dataclasses import asdict, dataclass
 # These IDs preserve the upstream parameter-set identity. They are not named
 # Chinese cultivars or independently established cold/drought tolerance classes.
 OFFICIAL_WOFOST_SEED_VARIETIES = {
-    "MAIZE_201": "Grain_maize_201",
     "SOYBEAN_901": "Soybean_901",
     "SOYBEAN_902": "Soybean_902",
     "SOYBEAN_903": "Soybean_903",
@@ -27,7 +26,8 @@ def official_seed_backend_error(seed_type: str | None, physics) -> str | None:
     Read the already configured backend only; rejecting an unconfigured legacy
     farm must not initialize its physical state as a side effect.
     """
-    variety = OFFICIAL_WOFOST_SEED_VARIETIES.get(seed_type)
+    variety = ("Grain_maize_201" if seed_type == "MAIZE_201" else
+               OFFICIAL_WOFOST_SEED_VARIETIES.get(seed_type))
     if variety is None:
         return None
     backend = getattr(physics, "crop_backend", None)
@@ -94,6 +94,9 @@ class CropProfile:
     def to_dict(self) -> dict:
         result = asdict(self)
         result["model_assumptions"] = list(self.model_assumptions)
+        result["planting_depth_range_cm"] = list(self.planting_depth_range_cm)
+        result["planting_vwc_range"] = list(self.planting_vwc_range)
+        result["stage_thresholds"] = [list(threshold) for threshold in self.stage_thresholds]
         result["seed_spacing_range_cm"] = [value if math.isfinite(value) else None
                                             for value in self.seed_spacing_range_cm]
         return result
@@ -129,7 +132,7 @@ def get_crop_profile(crop_type: str) -> CropProfile:
 
 
 def seed_crop_type(seed_type: str) -> str:
-    if seed_type in {"MAIZE_STANDARD", "MAIZE_201"}:
+    if seed_type in {"MAIZE_STANDARD", "MAIZE_201", "MAIZE_EARLY_2026"}:
         return "maize"
     if seed_type == "RICE_STANDARD":
         return "rice"

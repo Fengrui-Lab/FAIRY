@@ -96,11 +96,10 @@ class App:
 
     def get_tools(self) -> list[AppTool]:
         tools = self.get_tools_with_attribute(ToolAttributeName.APP, ToolType.APP)
-        if getattr(self, "require_explicit_tool_docs", False):
-            arguments = {arg.name for tool in tools for arg in tool.args}
-            unknown_choices = set(getattr(self, "tool_parameter_choices", {})) - arguments
-            if unknown_choices:
-                raise ValueError(f"Tool choices refer to unknown arguments: {sorted(unknown_choices)}")
+        arguments = {arg.name for tool in tools for arg in tool.args}
+        unknown_choices = set(getattr(self, "tool_parameter_choices", {})) - arguments
+        if unknown_choices:
+            raise ValueError(f"Tool choices refer to unknown arguments: {sorted(unknown_choices)}")
         if self.tool_allowlist is None:
             return tools
         unknown = self.tool_allowlist - {tool.name for tool in tools}

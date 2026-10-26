@@ -57,6 +57,13 @@ def export_farm_checkpoint_state(
         else None,
         "physics_state": None,
     }
+    if ("crop_configuration" in payload["farm_world_state"]
+            and "physics_state" in payload["farm_world_state"]):
+        # The World format is authoritative for every crop. Do not export a
+        # second soybean-specific copy of the native models alongside it.
+        payload["schema_version"] = 2
+        payload.pop("physics_state")
+        return payload
     if physics is None:
         return payload
 
@@ -120,9 +127,58 @@ def restore_farm_checkpoint_state(
 ) -> dict[str, Any]:
     """Restore a checkpoint into a FarmWorldApp/WeatherApp pair."""
 
+    world_state = dict(checkpoint_state["farm_world_state"])
     physics_state = checkpoint_state.get("physics_state") or {}
+    embedded = world_state.get("physics_state") or {}
+    native_view = (world_state.get("crop_backend") or {}).get("backend") == "wofost"
+    if native_view or physics_state.get("crop_backend_name") == "wofost":
+        native_history = embedded.get("crop_backend_state") or physics_state.get("crop_backend_state")
+        if not native_history:
+            raise ValueError("WOFOST checkpoint is missing native model history")
+        if (embedded.get("crop_backend_state") is not None
+                and physics_state.get("crop_backend_state") is not None
+                and embedded["crop_backend_state"] != physics_state["crop_backend_state"]):
+            raise ValueError("WOFOST checkpoint contains conflicting native model histories")
+
+    # Modern World snapshots already contain native crop/environment state,
+    # including the scenario's own profile, coefficients and weather stream.
+    # Reconfiguring that profile from the registry would replace saved local
+    # weather overrides and restart its generator before continuation.
+    if "crop_configuration" in world_state and isinstance(world_state.get("physics_state"), Mapping):
+        previous_weather = farm_world._weather_app
+        restored_weather = weather_app if weather_app is not None else previous_weather
+        weather_state = world_state.get("weather_state") or checkpoint_state.get("weather_app_state")
+        if restored_weather is None and weather_state is not None:
+            # The old full-checkpoint API permits weather_app=None. Preserve
+            # an embedded station as detached domain data instead of dropping
+            # its forecast or requiring the caller to construct another App.
+            restored_weather = WeatherApp()
+            restored_weather.load_state(dict(weather_state))
+            restored_weather.name = weather_state.get("app_name", restored_weather.name)
+            restored_weather.register_time_manager(farm_world.time_manager)
+        if restored_weather is not None:
+            farm_world.attach_weather_app(restored_weather)
+        try:
+            farm_world.load_state(world_state)
+        except Exception:
+            # Validate a detached snapshot before making the new station part
+            # of this world. A rejected restore must retain the old binding.
+            farm_world._weather_app = previous_weather
+            raise
+        if (restored_weather is not None and world_state.get("weather_state") is None
+                and checkpoint_state.get("weather_app_state")):
+            restored_weather.load_state(dict(checkpoint_state["weather_app_state"]))
+        if restored_weather is not None:
+            restored_weather.simulation_timezone = farm_world.simulation_timezone
+        physics = farm_world._physics
+        if physics is not None and target_sim_time is not None:
+            physics.last_physics_sim_time = float(target_sim_time)
+        return _checkpoint_restore_result(farm_world, checkpoint_state)
+
+    # Historical checkpoints kept ridge shadows and engine state separately.
+    # Loading the shadows deliberately clears old engines. Create the profile
+    # only afterwards, so its generator exists when RNG/cache are restored.
     field_state = dict(checkpoint_state["farm_world_state"])
-    native_view = (field_state.get("crop_backend") or {}).get("backend") == "wofost"
     if ((native_view or physics_state.get("crop_backend_name") == "wofost")
             and (physics_state.get("crop_backend_name") != "wofost"
                  or not physics_state.get("crop_backend_state"))):
@@ -187,7 +243,7 @@ def restore_farm_checkpoint_state(
         physics.management.states = _state_map(
             physics_state.get("management_states", {}),
             ManagementEffectState,
-            date_fields=("planting_date", "last_nutrient_decay_day"),
+            date_fields=("planting_date", "last_nutrient_decay_day", "last_growth_uptake_day"),
         )
         physics.yield_recovery.states = _state_map(
             physics_state.get("yield_recovery_states", {}),
@@ -244,6 +300,14 @@ def restore_farm_checkpoint_state(
             else _float_or_none(physics_state.get("last_physics_sim_time"))
         )
 
+    return _finish_checkpoint_restore(farm_world, weather_app, checkpoint_state)
+
+
+def _finish_checkpoint_restore(
+    farm_world: FarmWorldApp, weather_app: WeatherApp | None,
+    checkpoint_state: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Refresh public shadows without rebuilding the restored environment."""
     from fairy.apps.farm_world.physics_orchestrator import (
         sync_compatibility_fields_from_physics,
     )
@@ -251,12 +315,18 @@ def restore_farm_checkpoint_state(
     sync_compatibility_fields_from_physics(farm_world)
     if weather_app is not None:
         weather_app.set_avg_soil_vwc(farm_world.get_avg_vwc())
+    return _checkpoint_restore_result(farm_world, checkpoint_state)
+
+
+def _checkpoint_restore_result(
+    farm_world: FarmWorldApp, checkpoint_state: Mapping[str, Any],
+) -> dict[str, Any]:
     return {
         "status": "ok",
         "scenario_id": checkpoint_state.get("scenario_id"),
         "checkpoint_label": checkpoint_state.get("checkpoint_label"),
         "sim_time": farm_world.time_manager.time(),
-        "profile_name": getattr(farm_world.physics, "profile_name", None),
+        "profile_name": getattr(farm_world._physics, "profile_name", None),
     }
 
 

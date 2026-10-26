@@ -65,7 +65,25 @@ RIDGE_WIDTH_M = 1.1
 NUM_RIDGES = 64
 BASE_FERTILIZER_KG = 200.0  # 当前 base_fertilize 工具实际消耗，不沿用旧脚本的 250 kg 装载量。
 
-BRIEFING = """
+BASIC_BRIEFING = """
+管理哈尔滨同一地区farm_a和farm_b的完整黑农84大豆季，从播前裸地管理到收获、安全入库。
+两场初始均未整地、未播种；各有64垄（本地0–63），每垄268m长、垄距1.1m，一垄两行，
+每场18,867.2m²（1.88672ha）。种植HEINONG84，标准密度；按工具公开的作物要求选择适宜播种条件。
+这是正常年基线，两场共享区域天气；管理应根据各场实测情况和预报决定，不预设必须灌溉或施药。
+
+FarmA/FarmB分别提供farm_a/farm_b的田块状态与管理额度。
+FarmA_Sensor/FarmA_Irrigation固定服务farm_a，FarmB_Sensor/FarmB_Irrigation固定服务farm_b。
+Tractor、Mavic3M、Matrice4T、Robot0跨场共用，移动田间工具按其参数指定farm_id；
+Warehouse是唯一共享仓库，存放种子、肥料、农药、燃油及粮食批次。装卸物料与加油不传farm_id，
+机上兼容物料可跨场使用；换场前清空粮箱，粮食批次保留来源场与垄范围。
+两场使用同一北京时间，任何作业或等待都同时推进两场；commit_daily_physics也会消耗一天。
+
+完成两场的整地播种、全季观察与必要管理，并在满足作物成熟、籽粒水分、天气及通行条件后收获全田。
+按共享设备的实际容量、电量和覆盖范围安排作业，处理后复查；把所有粮食批次干燥至安全水分并入库。
+最后分别报告两场的管理依据、实际作业范围和产量，以及共享库存和设备状态。本场景validate暂空。
+""".strip()
+
+DETAILED_BRIEFING = """
 管理哈尔滨同一地区 farm_a 和 farm_b 的完整黑农84大豆季，从播前准备到安全入库。
 每场64垄（各自0–63），每垄268米长、垄距1.1米，一垄两行，每场约1.887公顷。
 品种HEINONG84，标准密度，播深4厘米、株距7.9厘米，两场均未整地、未播种。
@@ -106,6 +124,9 @@ Robot0每次最多检查8垄，不能请求0–63后声称全田检查。Mavic3M
 """.strip()
 
 
+BRIEFING = DETAILED_BRIEFING
+
+
 @register_scenario(SCENARIO_ID)
 class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
     """独立完整场景；只复用领域工具和物理 profile，不复用单场场景流程。"""
@@ -116,7 +137,6 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
     queue_based_loop = True
     time_increment_in_seconds = 60
     expects_agent_harvest = True
-    scenario_input = BRIEFING
     additional_system_prompt = (
         "Manage both farm_a and farm_b through the entire soybean season, including harvest "
         "and storage. Each farm has 64 local ridges, independent field state, water allowances, fixed "
@@ -129,6 +149,13 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
         "Calendar windows in the briefing guide observations; actual field conditions govern actions. "
         "Scenario validation is not implemented yet."
     )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        if not self.scenario_input:
+            self.scenario_input = DETAILED_BRIEFING if self.detailed_briefing else BASIC_BRIEFING
 
     def init_and_populate_apps(self) -> None:
         """两场的固定设施独立创建，四台移动设备各创建一次。"""
@@ -225,7 +252,7 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
             ("farm_b", self.farm_b, self.sensor_b),
         )
         with EventRegisterer.capture_mode() as events:
-            previous = self.aui.send_message_to_agent(content=BRIEFING).with_id("briefing")
+            previous = self.aui.send_message_to_agent(content=self.scenario_input).with_id("briefing")
 
             # 1. 播前准备与播种：先完成A和B，再共同进入出苗等待。
             previous = self.weather.get_current_weather().oracle().with_id(

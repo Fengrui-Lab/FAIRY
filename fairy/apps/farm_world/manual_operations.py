@@ -13,7 +13,7 @@ _MANUAL_SPRAY_SETUP_S = 15
 _MANUAL_PESTICIDE_L_PER_RIDGE = 3.0
 
 
-def _manual_spray_duration(field_length_m: float) -> int:
+def _manual_spray_duration(field_length_m: float = 268.0) -> int:
     return int(field_length_m / _MANUAL_SPRAY_SPEED_MS) + _MANUAL_SPRAY_SETUP_S
 
 
@@ -40,6 +40,8 @@ class ManualOperations:
             advance_time: Whether to advance the simulation clock for one operator pass.
             ridge_count: Number of contiguous ridges to spray, max 2.
         """
+        if farm.world.is_native_maize:
+            return {"error": "Crop protection is not implemented for native maize"}
         if not 0 <= ridge_id < farm.world.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
         count = int(ridge_count)

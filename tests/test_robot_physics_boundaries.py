@@ -1,5 +1,6 @@
 """Battery admission and declared coverage agree with the observation device."""
 from datetime import datetime, timezone
+from unittest.mock import Mock
 
 import pytest
 
@@ -34,11 +35,13 @@ def test_robot_refuses_single_ridge_below_actual_twenty_percent(shared):
 
 
 @pytest.mark.parametrize("shared", [False, True])
-def test_robot_reports_only_ridges_the_physical_observation_model_samples(shared):
+def test_robot_covers_visited_ridges_through_sensor_sized_batches(shared):
     world, weather, clock = FarmWorldApp(), WeatherApp(), SimulationTimeManager()
     clock.reset(datetime(2026, 5, 12, tzinfo=timezone.utc).timestamp())
     weather.set_weather("2026-05-12", 22, 55, 2, 0, 240)
     world.physics.engines_active = True
+    observe = Mock(wraps=world.physics.observation_model.observe_ground_inspection)
+    world.physics.observation_model.observe_ground_inspection = observe
     if shared:
         env = FarmEnvironment([FarmContext("a", world, weather)], weather, clock,
                               warehouse=WarehouseApp(stock=WarehouseStock(seed_stock={}, pesticide_liters=0, fertilizer_kg=0, fuel_liters=0)))
@@ -49,8 +52,9 @@ def test_robot_reports_only_ridges_the_physical_observation_model_samples(shared
         for app in (world, weather, robot):
             app.register_time_manager(clock)
         result = robot.inspect_crop_health(0, 7)
-    assert result["status"] == "partial"
-    assert result["covered_ridges"] == [0, 1, 2, 3]
-    assert result["uncovered_ridges"] == [4, 5, 6, 7]
-    assert set(result["observations"]) == {0, 1, 2, 3}
-    assert robot._battery_pct == 80
+    assert result["status"] == "ok"
+    assert result["covered_ridges"] == list(range(8))
+    assert result["uncovered_ridges"] == []
+    assert set(result["observations"]) == set(range(8))
+    assert [call.kwargs["ridge_ids"] for call in observe.call_args_list] == [list(range(4)), list(range(4, 8))]
+    assert robot._battery_pct == 60

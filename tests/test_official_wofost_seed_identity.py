@@ -26,7 +26,7 @@ SEEDS = tuple(OFFICIAL_WOFOST_SEED_VARIETIES)
 START = datetime(2019, 4, 28, 7, tzinfo=timezone.utc).timestamp()
 
 
-def equipment(seed, *, native=True, cultivar_map=None):
+def equipment(seed, *, native=True, cultivar_map=None, simulate_preloaded=False):
     if native:
         pytest.importorskip("pcse")
     farm = FarmWorldApp(num_ridges=1)
@@ -49,7 +49,18 @@ def equipment(seed, *, native=True, cultivar_map=None):
     # Explicit prepared seedbed fixture; the sowing and inventory transfer
     # themselves use the real registered tractor tools below.
     tractor._completed_prep_ops = ["level", "base_fertilize", "form_ridges"]
-    assert tractor.load_seeds(seed, 20000)["status"] == "ok"
+    before_load = deepcopy((clock.time(), tractor.get_state(), farm.get_state()))
+    loaded = tractor.load_seeds(seed, 20000)
+    if simulate_preloaded:
+        # A fixed-farm loading point now rejects incompatible biology early.
+        # Independently test the planting boundary against a preloaded device,
+        # as could arrive from an old equipment snapshot or a shared depot.
+        assert "error" in loaded
+        assert (clock.time(), tractor.get_state(), farm.get_state()) == before_load
+        tractor.seed_type, tractor._seed_hopper = seed, 20000
+        farm._inventory.seed_stock[seed] -= 20000
+    else:
+        assert loaded["status"] == "ok"
     return farm, weather, tractor, clock
 
 
@@ -105,7 +116,7 @@ def test_real_sowing_keeps_all_78_official_parameters_without_legacy_daily_growt
 
 @pytest.mark.parametrize("seed", SEEDS)
 def test_legacy_planter_rejects_official_seed_before_resource_or_clock_changes(seed):
-    farm, _, tractor, clock = equipment(seed, native=False)
+    farm, _, tractor, clock = equipment(seed, native=False, simulate_preloaded=True)
     before = deepcopy((clock.time(), tractor.get_state(), farm.get_state()))
     receipt = tractor.plant_seeds(0, 0, 4., 100./22.)
     assert "native WOFOST backend" in receipt["error"]
@@ -114,7 +125,8 @@ def test_legacy_planter_rejects_official_seed_before_resource_or_clock_changes(s
 
 
 def test_native_planter_rejects_wrong_official_cultivar_mapping_before_sowing():
-    farm, _, tractor, clock = equipment("SOYBEAN_902", cultivar_map={"SOYBEAN_902": "Soybean_901"})
+    farm, _, tractor, clock = equipment("SOYBEAN_902", cultivar_map={"SOYBEAN_902": "Soybean_901"},
+                                      simulate_preloaded=True)
     before = deepcopy((clock.time(), tractor.get_state(), farm.get_state()))
     receipt = tractor.plant_seeds(0, 0, 4., 100./22.)
     assert "Soybean_902" in receipt["error"]

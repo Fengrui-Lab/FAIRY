@@ -111,7 +111,7 @@ class WofostConfig:
             if any(variety != "Grain_maize_201" for variety in self.cultivar_map.values()):
                 raise ValueError("Maize v1 only supports Grain_maize_201")
         else:
-            other_crop_seeds = {"MAIZE_201", "MAIZE_STANDARD", "RICE_STANDARD"}
+            other_crop_seeds = {"MAIZE_201", "MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"}
             wrong_seeds = other_crop_seeds.intersection(
                 (*self.cultivar_map, *self.parameter_overrides, *self.cultivar_profiles)
             )
@@ -392,6 +392,11 @@ class WofostBackend:
         crop_type = getattr(physics, "crop_type", "soybean")
         if crop_type != self.config.crop_name:
             raise ValueError(f"WOFOST crop {self.config.crop_name!r} does not match farm crop {crop_type!r}")
+        if getattr(physics, "crop_id", None) == "maize":
+            raise ValueError("WOFOST requires compatibility views, not the independent reduced maize crop runtime")
+        bind_views = getattr(physics, "bind_native_crop_views", None)
+        if bind_views is not None:
+            bind_views(self.config.crop_name)
         # Legacy profiles sometimes amplify rainfall as an empirical proxy for
         # run-on/poor drainage. A negative NOTINF would manufacture native
         # rainfall. Retain the rejection unless the caller explicitly declares
@@ -455,7 +460,7 @@ class WofostBackend:
         if seed != "*" and (
             (self.config.crop_name == "maize" and seed != "MAIZE_201")
             or (self.config.crop_name == "soybean"
-                and seed in {"MAIZE_201", "MAIZE_STANDARD", "RICE_STANDARD"})
+                and seed in {"MAIZE_201", "MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"})
         ):
             raise ValueError(f"Seed {seed!r} does not match WOFOST crop {self.config.crop_name!r}")
         self._require_explicit_cultivar(seed)

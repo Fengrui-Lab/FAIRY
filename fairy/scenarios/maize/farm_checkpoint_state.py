@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
 
@@ -15,6 +16,10 @@ from fairy.time_manager import TimeManager
 from .maize_scenario_catalog import SPECS
 
 ROOT = Path(__file__).resolve().parent
+# Keep parameter-code provenance separate from a review/staging artifact root.
+# Tests and offline verification can select unpublished data without disabling
+# source fingerprints or changing the installed scenario package.
+ARTIFACT_ROOT = ROOT
 REBUILD_COMMAND = "python scripts/build_maize_scenario_artifacts.py"
 SCHEMA = 1
 # Public device state rounds values for display and omits the loaded seed type.
@@ -81,7 +86,8 @@ def export_maize_checkpoint(scenario, label):
     return result
 
 
-def load_checkpoint(variant, label, *, root=ROOT):
+def load_checkpoint(variant, label, *, root=None):
+    root = Path(ARTIFACT_ROOT if root is None else root)
     path = checkpoint_path(variant, label)
     try:
         manifest = json.loads((root / "scenario_artifacts.json").read_text())
@@ -118,11 +124,15 @@ def restore_maize_checkpoint(scenario, saved):
         farm_world=farm, weather_app=scenario.get_typed_app(WeatherApp),
         checkpoint_state=saved["farm"],
     )
-    # The shared legacy restore recomputes compatibility fields from latent
-    # physics. At a mid-operation boundary (especially the final harvest pass)
-    # these can differ from the source's last visible state. Restore that exact
-    # surface as well; subsequent public tools update it normally.
-    farm.load_state(copy.deepcopy(saved["farm"]["farm_world_state"]))
+    field_state = saved["farm"]["farm_world_state"]
+    modern = ("crop_configuration" in field_state
+              and isinstance(field_state.get("physics_state"), Mapping))
+    # The legacy codec recomputes public shadows, so its exact visible surface
+    # still needs this overlay. Modern snapshots already restored that surface
+    # and the complete native journal; loading them twice replays every ridge's
+    # entire season a second time.
+    if not modern:
+        farm.load_state(copy.deepcopy(field_state))
     scenario.get_typed_app(WeatherApp).load_state(copy.deepcopy(saved["farm"]["weather_app_state"]))
     if farm.physics.crop_backend.snapshot()["provenance"]["config_fingerprint"] != saved["crop_config_fingerprint"]:
         raise ValueError("Maize native checkpoint configuration mismatch")

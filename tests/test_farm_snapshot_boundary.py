@@ -51,6 +51,9 @@ def test_flat_native_view_restore_rejected_atomically(current_native):
         world.physics.crop_backend_name = "wofost"
     else:
         incoming["crop_backend"] = {"backend": "wofost"}
+    # The manual destination setup above is part of the starting state, not
+    # a mutation caused by the rejected incoming flat snapshot.
+    before, stock_before = world.get_state(), warehouse.get_state()
     physics_before = world._physics
     with pytest.raises(ValueError, match="full physics checkpoint"):
         world.load_state(incoming)

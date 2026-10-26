@@ -20,6 +20,7 @@ from fairy.scenarios.validation_result import ScenarioValidationResult
 from fairy.scenarios.workflow import Workflow, WorkflowStep
 from fairy.time_manager import TimeManager, SimulationTimeManager
 from fairy.tool_execution import ToolExecutionError, ToolResult, WorkflowBundle
+from fairy.tool_utils import ToolArgumentRejection
 
 CST = timezone(timedelta(hours=8))
 
@@ -115,6 +116,7 @@ class Engine:
             self.scenario.workflow = Workflow()
 
     def _register_scenario_apps(self) -> None:
+        previous_environment = getattr(self, "farm_environment", None)
         self.farm_environment = getattr(self.scenario, "farm_environment", None)
         if self.farm_environment is not None:
             environment = self.farm_environment
@@ -128,6 +130,13 @@ class Engine:
             environment.register_time_manager(self.time_manager)
             if self.agent is not None:
                 self.agent.set_time_manager(self.time_manager)
+        self.current_time = self.time_manager.time()
+        if self.agent is not None:
+            self.agent.set_time_manager(self.time_manager)
+            self.agent.simulation_timezone = (
+                self.farm_environment.simulation_timezone if self.farm_environment is not None
+                else getattr(self.scenario, "simulation_timezone", None)
+            )
         farms = farm_world_apps(self.scenario.apps or [])
         other_worlds = [unwrap_app(app) for app in self.scenario.apps or []
                         if getattr(unwrap_app(app), "simulation_world", False)]
@@ -181,6 +190,39 @@ class Engine:
 
             self.time_manager.register_offset_observer("farm_fleet", prepare_all, advance_all)
 
+        if previous_environment is not None and previous_environment is not self.farm_environment:
+            self._rebind_agent_scene_tools()
+        self._registered_apps = list(self.scenario.apps or [])
+
+    def _rebind_agent_scene_tools(self) -> None:
+        """Replace stale scene bindings while retaining visible/custom tools."""
+        tools_map = getattr(self.agent, "tools_map", None)
+        if not tools_map:
+            return
+        previous_apps = {
+            id(candidate)
+            for app in self._registered_apps
+            for candidate in (app, getattr(app, "wrapped_app", app))
+        }
+        _, schemas, fresh_tools = build_toolset(list(self.scenario.apps or []))
+        replacements = {
+            name: fresh_tools[name]
+            for name, tool in tools_map.items()
+            if name in fresh_tools
+            and id(getattr(tool, "class_instance", None)) in previous_apps
+        }
+        by_identity = {id(tools_map[name]): tool for name, tool in replacements.items()}
+        if self.agent.tools is not None:
+            self.agent.tools = [by_identity.get(id(tool), tool) for tool in self.agent.tools]
+        schemas_by_name = {schema["function"]["name"]: schema for schema in schemas}
+        if self.agent.tool_schemas is not None:
+            self.agent.tool_schemas = [
+                schemas_by_name[schema["function"]["name"]]
+                if schema["function"]["name"] in replacements else schema
+                for schema in self.agent.tool_schemas
+            ]
+        tools_map.update(replacements)
+
     def schedule_dynamic_event(self, event: Any) -> None:
         self.scenario.dynamic_events.append(event)
 
@@ -193,8 +235,11 @@ class Engine:
         return self._format_timestamp(t)
 
     def _format_timestamp(self, timestamp: float) -> str:
-        calendar = getattr(self.scenario, "simulation_timezone", CST)
-        return datetime.fromtimestamp(timestamp, tz=calendar).strftime("%Y-%m-%d %H:%M:%S")
+        calendar = (self.farm_environment.simulation_timezone if self.farm_environment is not None
+                    else getattr(self.scenario, "simulation_timezone", None))
+        if calendar is not None:
+            return datetime.fromtimestamp(timestamp, tz=calendar).isoformat(sep=" ", timespec="seconds")
+        return datetime.fromtimestamp(timestamp, tz=CST).strftime("%Y-%m-%d %H:%M:%S")
 
     def environment(self, workflow: Workflow | None = None) -> EngineEnvironment:
         return EngineEnvironment(
@@ -389,6 +434,15 @@ class Engine:
             manifest = deepcopy(getattr(workflow, "manifest", None))
         self.scenario.setup(**setup_kwargs)
         self._register_scenario_apps()
+        if not isinstance(self.time_manager, SimulationTimeManager):
+            current = self.time_manager.time()
+            clock = SimulationTimeManager()
+            clock.reset(self.start_time)
+            clock.set_offset(current - self.start_time)
+            if self.farm_environment is not None:
+                self.farm_environment.register_time_manager(clock)
+            self.time_manager = clock
+            self._register_scenario_apps()
         _, _, tools_map = build_toolset(list(self.scenario.apps or []))
         registry = self._shared_tool_registry()
         if registry is not None:
@@ -535,7 +589,9 @@ class Engine:
             else:
                 # Lookup remains inside the try: missing-tool KeyErrors are also
                 # recoverable agent observations, but must match the old error.
-                tools_map[step.tool_name](**args)
+                response = tools_map[step.tool_name](**args)
+                if isinstance(response, ToolArgumentRejection):
+                    raise response.exception
         except Exception as exc:
             if type(exc).__name__ != error_type or str(exc) != error_message:
                 raise ReplayDivergenceError(
@@ -613,14 +669,18 @@ class Engine:
         if self.farm_environment is not None:
             self.farm_environment.sync()
             warehouse = self.farm_environment.warehouse
-            return {
+            equipment = getattr(self.scenario, "shared_equipment", [])
+            if isinstance(equipment, dict):
+                equipment = list(equipment.values())
+            summary = {
                 "farms": {key: self._farm_outcome_summary(ctx.world)
                           for key, ctx in self.farm_environment.farms.items()},
-                "warehouse": {"inventory": warehouse.get_inventory(),
-                              "grain_batches": warehouse.get_grain_batches()["batches"]},
-                "shared_equipment": {app.name: app.get_state()
-                                     for app in getattr(self.scenario, "shared_equipment", [])},
+                "shared_equipment": {app.name: app.get_state() for app in equipment},
             }
+            if warehouse is not None:
+                summary["warehouse"] = {"inventory": warehouse.get_inventory(),
+                                        "grain_batches": warehouse.get_grain_batches()["batches"]}
+            return summary
         for app in self.scenario.apps or []:
             candidate = unwrap_app(app)
             if getattr(candidate, "simulation_world", False):
@@ -767,11 +827,11 @@ class Engine:
             )
         event_times = self._captured_event_times(events)
         for event in events:
-            record_runtime_timing = run_oracle and bool(
-                getattr(event, "record_runtime_timing", False) or self.farm_environment is not None
-            )
+            record_runtime_timing = run_oracle
             time_before = self.time_manager.time() if record_runtime_timing else None
             content = event.execute() if run_oracle else None
+            if isinstance(content, ToolArgumentRejection):
+                raise content.exception
             if isinstance(content, ToolResult) and not content.ok:
                 detail = content.error
                 raise ToolExecutionError(detail["code"], detail["message"], field=detail.get("field"),
@@ -918,6 +978,16 @@ class Engine:
     def run_scenario_dynamic(self):
         self.scenario.setup()
         self._register_scenario_apps()
+        # This explicit background-loop entry point retains its real-time mode.
+        if isinstance(self.time_manager, SimulationTimeManager):
+            current = self.time_manager.time()
+            clock = TimeManager()
+            clock.reset(self.start_time)
+            clock.set_offset(current - self.start_time)
+            if self.farm_environment is not None:
+                self.farm_environment.register_time_manager(clock)
+            self.time_manager = clock
+            self._register_scenario_apps()
         assert self.agent is not None, "Dynamic run requires an agent"
         self._apply_scenario_system_prompt()
         agent_task = self._resolve_agent_task()
@@ -934,4 +1004,13 @@ class Engine:
                 if not event.triggered and self.current_time >= event.time_start:
                     self._trigger_dynamic_event(event)
             time.sleep(1)
-            self._advance_clock(self.time_increment_in_seconds - 1)
+            increment = self.time_increment_in_seconds - 1
+            if self.farm_environment is not None:
+                # The preceding wall-clock sleep is already included in
+                # TimeManager.time(); sync even when no extra offset is due.
+                if increment >= 0:
+                    self._advance_clock(increment)
+                else:
+                    self.farm_environment.sync()
+            else:
+                self.time_manager.add_offset(increment)

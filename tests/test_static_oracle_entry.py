@@ -82,8 +82,8 @@ def test_static_build_exports_complete_tools_arguments_and_dates_without_executi
     assert workflow.dag["first_work"].tool_args == {"units": 2, "seconds": 17}
     assert workflow.dag["wait_until_070100"].tool_name == "SystemApp__advance_time"
     assert workflow.dag["wait_until_070100"].tool_args == {"seconds": 43}
-    assert workflow.dag["wait_until_070100"].time == "2019-05-01 07:01:00"
-    assert workflow.dag["after"].time == "2019-05-01 07:01:11"
+    assert workflow.dag["wait_until_070100"].time == "2019-05-01 07:01:00+00:00"
+    assert workflow.dag["after"].time == "2019-05-01 07:01:11+00:00"
     assert all(step.content is None for step in workflow.dag.values())
     assert all(step.time_before is None and step.time_after is None
                for step in workflow.dag.values())

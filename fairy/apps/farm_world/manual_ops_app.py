@@ -45,6 +45,7 @@ class ManualOpsApp(App, ManualOperations):
         Draws chemicals from the shared warehouse and records application quota
         on the selected farm. Requires sprayable weather and advances the common
         clock for the operator passes.
+        Native WOFOST maize has no crop-protection model and refuses this action.
 
         Args:
             farm_id: Exact target farm ID; chemical stock comes from the shared warehouse.

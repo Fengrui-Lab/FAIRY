@@ -91,7 +91,7 @@ def build_maize_split_events(scenario):
             emit(tractor.detach_implement(), "o_detach_grader")
         elif task == "base_fertilize":
             emit(tractor.load_fertilizer(200.0), "o_load_base_fertilizer")
-            emit(tractor.base_fertilize(), "o_apply_base_fertilizer")
+            emit(tractor.base_fertilize(total_kg=200.0), "o_apply_base_fertilizer")
         elif task == "form_ridges":
             emit(tractor.attach_implement("furrower"), "o_attach_furrower")
             emit(tractor.form_ridges(0.75), "o_form_single_row_ridges")

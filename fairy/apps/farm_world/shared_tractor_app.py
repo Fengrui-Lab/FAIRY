@@ -12,6 +12,9 @@ from fairy.apps.app import App
 from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.farm_world_app import PESTICIDE_L_PER_RIDGE
 from fairy.apps.farm_world.equipment import TractorEquipment
+from fairy.apps.farm_world.tractor_tool_contracts import (
+    TractorContractContext, tractor_operation_contract,
+)
 from fairy.apps.farm_world.tractor_operations import (
     TractorOperations,
     _FERTILIZER_SPREADER_MAX_KG,
@@ -23,6 +26,7 @@ from fairy.apps.farm_world.tractor_operations import (
 )
 from fairy.time_manager import TimeManager
 from fairy.tool_utils import OperationType, app_tool, data_tool
+from fairy.tool_contracts import OperationContract
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
@@ -46,15 +50,27 @@ class SharedTractorApp(App, TractorOperations):
             raise ValueError("SharedTractorApp requires the environment's shared warehouse")
         self.tool_parameter_choices = {
             "farm_id": list(farm_environment.farms),
-            "seed_type": list(farm_environment.warehouse.stock.seed_stock),
         }
-        self.equipment = equipment or TractorEquipment()
-        self._initialize_tractor_state()
+        self._initialize_tractor_state(equipment)
+        self._tool_contract_context = TractorContractContext(
+            farms=lambda: {name: farm.world for name, farm in self.farm_environment.farms.items()},
+            equipment=lambda: self.equipment,
+            seed_types=lambda: tuple(self.farm_environment.warehouse.stock.seed_stock),
+            selected_seed_type=lambda: self.seed_type,
+            has_farm_selector=True,
+            harvest_moisture_limit=lambda world: (
+                self._harvest_moisture_limit_pct
+                if getattr(self, "_harvest_limit_configured", False)
+                else world.crop_definition.harvest_rules.max_moisture_pct
+            ),
+        )
         self._grain_cultivar_ids: list[str] = []
         self._grain_ridge_ids: list[int] = []
         self._grain_moistures_pct: list[float] = []
         self.register_time_manager(farm_environment.time_manager)
 
+    def get_tool_contract(self, method_name: str) -> OperationContract | None:
+        return tractor_operation_contract(self._tool_contract_context, method_name)
 
     def register_time_manager(self, time_manager: TimeManager) -> None:
         super().register_time_manager(time_manager)
@@ -379,7 +395,7 @@ class SharedTractorApp(App, TractorOperations):
     @type_check
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
-    def base_fertilize(self, farm_id: str) -> dict[str, Any]:
+    def base_fertilize(self, farm_id: str, total_kg: float | None = None) -> dict[str, Any]:
         """Spread base fertilizer over the selected farm with the shared tractor.
 
         Fertilizer and fuel scale with target field area: the reference 64-ridge
@@ -388,6 +404,7 @@ class SharedTractorApp(App, TractorOperations):
         and records preparation only on the selected farm.
 
         Args:
+            total_kg: Positive total fertilizer product mass; omitted uses the selected field's area-scaled default.
             farm_id: Target farm ID from the environment farm directory; ridge IDs are local to
                 this farm.
 
@@ -398,7 +415,7 @@ class SharedTractorApp(App, TractorOperations):
         error = self._target_error(farm_id)
         if error:
             return error
-        result = self._operate_base_fertilize(farm)
+        result = self._operate_base_fertilize(farm, total_kg=total_kg)
         return self._finish(farm, result)
 
     @type_check
@@ -522,7 +539,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Spray pesticide at the standard dose over selected farm ridges.
+        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at the standard dose over selected farm ridges.
 
         Covers at most 10 ridges. Requires sprayable weather, trafficable soil, an allowed
         chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all registered farms and
@@ -580,7 +597,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float = PESTICIDE_L_PER_RIDGE,
     ) -> dict[str, Any]:
-        """Spray pesticide at an explicit per-ridge dose on the selected farm.
+        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at an explicit per-ridge dose on the selected farm.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -641,7 +658,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Apply fungicide over selected farm ridges from the shared fungicide tank.
+        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply fungicide over selected farm ridges from the shared fungicide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded fungicide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -680,7 +697,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Apply herbicide over selected farm ridges from the shared pesticide tank.
+        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply herbicide over selected farm ridges from the shared pesticide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed herbicide regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -718,7 +735,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Perform mechanical weeding over selected farm ridges.
+        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Perform mechanical weeding over selected farm ridges.
 
         Covers at most 10 ridges. Requires trafficable soil, an allowed machine pass and
         mechanical-weeding quota, plus length-scaled fuel (2 L per 268 m pass). Advances all registered farms; records usage on the

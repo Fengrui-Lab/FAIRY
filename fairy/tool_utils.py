@@ -9,6 +9,8 @@ from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field, is_dataclass
 from enum import Enum
+
+from fairy.tool_contracts import OperationContract
 from typing import Annotated, Any, Callable, Literal, Union, get_args, get_origin, get_type_hints, is_typeddict
 
 
@@ -23,6 +25,17 @@ class ToolAttributeName(Enum):
     DATA = "_is_data_tool"
     USER = "_is_user_tool"
 
+
+class ToolArgumentRejection(dict):
+    """JSON-compatible refusal that retains its typed cause for Agent tracing.
+
+    Direct callers receive the normal ``error`` mapping. The Agent boundary
+    records this predictable rejection through its existing tool-error path.
+    """
+
+    def __init__(self, exception: Exception) -> None:
+        super().__init__(error=str(exception))
+        self.exception = exception
 
 class SchemaValidationError(ValueError):
     """An argument disagrees with the same schema supplied to the model."""
@@ -436,6 +449,8 @@ class AppToolArg:
     has_default: bool = False
     default: Any | None = None
     schema: dict[str, Any] | None = None
+    choices: list[Any] | None = None
+    schema_constraints: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -454,12 +469,9 @@ class AppTool:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         if getattr(self.class_instance, "validate_tool_arguments", False):
-            try:
-                arguments = bind_app_tool_arguments(self.class_instance, self.function, args, kwargs)
-                validate_schema(self.parameters_schema or app_tool_parameters_schema(
-                    self.class_instance, self.function), arguments)
-            except (TypeError, SchemaValidationError) as error:
-                return {"error": str(error).replace("must be one of", "choose one of")}
+            exception = typed_arguments_exception(self.function, self.class_instance, args, kwargs)
+            if exception is not None:
+                return ToolArgumentRejection(exception)
         # Legacy apps keep their return values and validation behaviour.
         if inspect.ismethod(self.function) and self.function.__self__ is not None:
             return self.function(*args, **kwargs)
@@ -473,6 +485,9 @@ class AppTool:
             for arg in self.args:
                 item = deepcopy(arg.schema) if arg.schema is not None else {"type": _json_type(arg.arg_type)}
                 item.setdefault("description", arg.description or "")
+                item.update(deepcopy(arg.schema_constraints))
+                if arg.choices is not None:
+                    item["enum"] = list(arg.choices)
                 if arg.has_default:
                     item["default"] = json_value(arg.default)
                 properties[arg.name] = item
@@ -527,6 +542,53 @@ def agent_tool(func: Callable[..., Any] | None = None, *, doc_enabled: bool = Tr
     return decorator if func is None else decorator(func)
 
 
+def _operation_contract(instance: Any, method_name: str) -> OperationContract | None:
+    resolver = getattr(instance, "get_tool_contract", None)
+    contract = resolver(method_name) if resolver is not None else None
+    if contract is not None and not isinstance(contract, OperationContract):
+        raise TypeError("get_tool_contract must return an OperationContract or None")
+    return contract
+
+
+def typed_arguments_error(function, instance, args, kwargs, *, check_choices: bool = True) -> str | None:
+    """Compatibility text view of the shared typed argument preflight."""
+    exception = typed_arguments_exception(function, instance, args, kwargs, check_choices=check_choices)
+    return str(exception) if exception is not None else None
+
+
+def typed_arguments_exception(function, instance, args, kwargs, *, check_choices: bool = True,
+                              check_dynamic: bool | None = None) -> Exception | None:
+    """Validate real Python arguments and crop/device rules before effects."""
+    try:
+        supplied = args if inspect.ismethod(function) and function.__self__ is not None else (instance, *args)
+        bound = inspect.signature(function).bind(*supplied, **dict(kwargs or {}))
+    except TypeError as exc:
+        return TypeError(f"Invalid tool arguments: {exc}")
+    bound.apply_defaults()
+    arguments = {name: value for name, value in bound.arguments.items() if name not in {"self", "cls"}}
+    try:
+        bind_app_tool_arguments(instance, function, args, kwargs)
+        schema = app_tool_parameters_schema(instance, function)
+        if not check_choices:
+            for name in getattr(instance, "tool_parameter_choices", {}):
+                if name in schema["properties"]:
+                    schema["properties"][name].pop("enum", None)
+        validate_schema(schema, arguments)
+        if check_dynamic is None:
+            from fairy.tool_execution import inside_tool_execution
+            from fairy.types import EventRegisterer
+
+            check_dynamic = not EventRegisterer.is_capturing() or inside_tool_execution()
+        contract = _operation_contract(instance, function.__name__)
+        if contract is not None and check_dynamic:
+            error = contract.validate(arguments)
+            if error is not None:
+                return ValueError(error)
+    except (SchemaValidationError, ValueError, TypeError) as exc:
+        return ValueError(str(exc).replace("must be one of", "choose one of"))
+    return None
+
+
 def app_tool_parameters_schema(instance: Any, func: Callable[..., Any]) -> dict[str, Any]:
     """Use one declared schema for opted-in discovery and runtime dispatch."""
     schema = parameters_schema(func)
@@ -543,6 +605,18 @@ def app_tool_parameters_schema(instance: Any, func: Callable[..., Any]) -> dict[
     for name, values in getattr(instance, "tool_parameter_choices", {}).items():
         if name in schema["properties"]:
             schema["properties"][name]["enum"] = list(values)
+    contract = _operation_contract(instance, func.__name__)
+    if contract is not None:
+        unknown = set(contract.parameters) - set(schema["properties"])
+        if unknown:
+            raise ValueError(f"Tool {func.__name__} contract refers to unknown arguments: {sorted(unknown)}")
+        for name, parameter in contract.parameters.items():
+            item = schema["properties"][name]
+            item["description"] = parameter.description
+            if parameter.choices is not None:
+                item["enum"] = list(parameter.choices)
+            if parameter.numeric is not None:
+                item.update(parameter.numeric.json_schema())
     validate_schema_definition(schema)
     return schema
 
@@ -576,8 +650,13 @@ def build_tool(instance: Any, func: Callable[..., Any], failure_probability=None
         item = schema["properties"][name]
         args.append(AppToolArg(name=name, arg_type=getattr(annotation, "__name__", str(annotation)),
                                description=item.get("description"), has_default=parameter.default is not inspect.Parameter.empty,
-                               default=None if parameter.default is inspect.Parameter.empty else parameter.default, schema=deepcopy(item)))
-    description = getattr(func, "_tool_description", None) or inspect.getdoc(func)
+                               default=None if parameter.default is inspect.Parameter.empty else parameter.default,
+                               schema=deepcopy(item), choices=deepcopy(item.get("enum")),
+                               schema_constraints={key: item[key] for key in (
+                                   "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum") if key in item}))
+    contract = _operation_contract(instance, func.__name__)
+    description = (contract.description if contract is not None else
+                   getattr(func, "_tool_description", None) or inspect.getdoc(func))
     bound_farm_id = getattr(instance, "bound_farm_id", None)
     if bound_farm_id is not None:
         description = f"{description or ''}\n\nBound farm: {bound_farm_id}.".strip()

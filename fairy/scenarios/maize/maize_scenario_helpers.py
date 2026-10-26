@@ -198,7 +198,7 @@ def build_maize_establishment(scenario, prev):
     prev = tractor.level().oracle().with_id("o_level_field").depends_on(prev)
     prev = tractor.detach_implement().oracle().with_id("o_detach_grader").depends_on(prev)
     prev = tractor.load_fertilizer(200.0).oracle().with_id("o_load_base_fertilizer").depends_on(prev)
-    prev = tractor.base_fertilize().oracle().with_id("o_apply_base_fertilizer").depends_on(prev)
+    prev = tractor.base_fertilize(total_kg=200.0).oracle().with_id("o_apply_base_fertilizer").depends_on(prev)
     prev = tractor.attach_implement("furrower").oracle().with_id("o_attach_furrower").depends_on(prev)
     prev = tractor.form_ridges(0.75).oracle().with_id("o_form_single_row_ridges").depends_on(prev)
     prev = tractor.detach_implement().oracle().with_id("o_detach_furrower").depends_on(prev)

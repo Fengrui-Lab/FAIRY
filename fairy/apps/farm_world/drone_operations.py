@@ -9,7 +9,6 @@ import uuid
 from typing import Any
 
 from fairy.apps.farm_world.farm_environment import FarmContext
-from fairy.apps.farm_world.farm_world_app import FIELD_LENGTH_M
 from fairy.apps.farm_world.models import GrowthStage
 
 _CHARGE_DURATION_S = 30 * 60
@@ -316,23 +315,26 @@ class DroneOperations:
         today = farm.world.simulation_date()
 
         truth_by_ridge = {}
+        water_threshold = physics.crop.observation_traits.unstressed_root_vwc
         for rid in pass_ridges:
             soil = physics.soil.states[rid]
             canopy = physics.canopy.states[rid]
             biotic = physics.biotic.states[rid]
             management = physics.management.states[rid]
+            status = physics.crop.project(rid, management)
+            has_canopy = status.current_planted and status.emerged and canopy.initialized
             truth_by_ridge[rid] = HiddenRidgeTruth(
                 ridge_id=rid,
                 top_vwc=soil.top_vwc,
                 root_vwc=soil.root_vwc,
                 top_temp_c=soil.top_temp_c,
-                ndvi_proxy=canopy.ndvi_proxy if canopy.initialized else 0.18,
-                lai=canopy.lai,
-                canopy_cover=canopy.canopy_cover,
+                ndvi_proxy=canopy.ndvi_proxy if has_canopy else 0.18,
+                lai=canopy.lai if has_canopy else 0.0,
+                canopy_cover=canopy.canopy_cover if has_canopy else 0.0,
                 # Approximate canopy temperature: air temp + water-stress lift.
                 # Physics version preserves the integration-guide rule that
                 # thermal anomaly indicates stress without revealing cause.
-                canopy_temp_c=air_temp + 2.0 + max(0.0, 0.20 - soil.root_vwc) * 25.0,
+                canopy_temp_c=air_temp + 2.0 + max(0.0, water_threshold - soil.root_vwc) * 25.0,
                 weed_pressure=biotic.weed_pressure,
                 insect_pressure=biotic.insect_pressure,
                 disease_pressure=biotic.disease_pressure,
@@ -355,8 +357,9 @@ class DroneOperations:
         observations: list[dict[str, Any]] = []
         for rid in pass_ridges:
             canopy_state = physics.canopy.states[rid]
+            status = physics.crop.project(rid, physics.management.states[rid])
             ndvi_val = ndvi_product.values.get(rid, -1.0)
-            if not canopy_state.initialized:
+            if not canopy_state.initialized or not status.current_planted or not status.emerged:
                 ndvi_val = -1.0
             observations.append(
                 {

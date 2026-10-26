@@ -14,7 +14,7 @@ pytest.importorskip("pcse")
 from fairy.apps.farm_world import FarmWorldApp, TractorApp
 from fairy.controllers.engine import Engine
 from fairy.scenarios.maize.farm_checkpoint_state import (
-    ROOT, TRACTOR_FIELDS, checkpoint_path, load_checkpoint,
+    ROOT, TRACTOR_FIELDS, checkpoint_path, load_checkpoint, restore_maize_checkpoint, _tuples,
 )
 from fairy.scenarios.maize.maize_scenario_catalog import TASK_SPECS, SPECS
 from fairy.scenarios.maize.validation import task_state
@@ -44,8 +44,13 @@ def without_ids(value):
 def physical_state(scenario):
     farm = scenario.get_typed_app(FarmWorldApp)
     tractor = scenario.get_typed_app(TractorApp)
+    farm_state = farm.get_state()
+    # Keep the full native/soil/queue/calendar snapshot in the comparison; only
+    # fresh invocation UUIDs in its physical action journal are non-semantic.
+    for action in (farm_state.get("physics_state") or {}).get("action_log", []):
+        action.pop("action_id", None)
     return {
-        "farm": farm.get_state(),
+        "farm": farm_state,
         "native": farm.physics.crop_backend.export_state(),
         "recovery": farm.physics.yield_recovery.get_state(),
         "tractor": without_ids({key: getattr(tractor, key) for key in TRACTOR_FIELDS}),
@@ -79,6 +84,44 @@ def test_three_tiers_use_explicit_python_modules_and_shared_runtime():
     assert not (ROOT / "oracle_plans").exists()
 
 
+@pytest.mark.parametrize("sid", ["scenario_maize_l1_harvest", "scenario_maize_l1_form_ridges"])
+def test_modern_checkpoint_replays_native_history_once_and_keeps_complete_state(sid, monkeypatch):
+    from fairy.physics.wofost_backend import WofostBackend
+    from fairy.scenarios.maize.maize_scenario_helpers import init_maize_apps
+    scenario = get_scenario_class(sid)()
+    init_maize_apps(scenario, scenario.spec)
+    farm = scenario.get_typed_app(FarmWorldApp)
+    saved = scenario._checkpoint
+    saved_backend = saved["farm"]["farm_world_state"]["physics_state"]["crop_backend_state"]
+    expected_native_steps = sum(len(run["journal"]) for run in
+        saved_backend["runs"].values())
+    native_steps, field_loads = 0, 0
+    original_native = WofostBackend._advance_native
+    original_load = farm.load_state
+
+    def advance_native(self, *args, **kwargs):
+        nonlocal native_steps
+        native_steps += 1
+        return original_native(self, *args, **kwargs)
+
+    def load_field(state):
+        nonlocal field_loads
+        field_loads += 1
+        return original_load(state)
+
+    monkeypatch.setattr(WofostBackend, "_advance_native", advance_native)
+    monkeypatch.setattr(farm, "load_state", load_field)
+    restore_maize_checkpoint(scenario, saved)
+    assert field_loads == 1
+    assert native_steps == expected_native_steps
+    assert farm.get_state() == saved["farm"]["farm_world_state"]
+    assert farm.physics.crop_backend.export_state() == saved_backend
+    for app in scenario.apps:
+        if app.name in saved["apps"]:
+            assert app.rng.getstate() == _tuples(saved["apps"][app.name]["rng"])
+    assert farm.physics.observation_model.rng.getstate() == _tuples(saved["observation_rng"])
+
+
 @pytest.mark.parametrize("sid", IDS)
 def test_every_split_oracle_completes_its_own_task(sid, completed):
     scenario, engine, workflow = completed[sid]
@@ -91,8 +134,13 @@ def test_every_split_oracle_completes_its_own_task(sid, completed):
         assert workflow.dag["o_dry_grain"].content["ridges_dried"] == 64
         assert not workflow.dag["o_dry_grain"].content.get("drying_skipped")
     if scenario.task == "refuel":
-        assert scenario._task_initial["fuel"] == 44
-        assert scenario.get_typed_app(TractorApp)._fuel_tank_l == 100
+        tractor = scenario.get_typed_app(TractorApp)
+        initial = scenario._task_initial["fuel"]
+        assert initial == scenario._checkpoint["apps"][tractor.name]["exact_state"]["_fuel_tank_l"]
+        assert tractor._fuel_tank_l == 100
+        assert scenario.get_typed_app(FarmWorldApp)._inventory.fuel_liters == pytest.approx(
+            scenario._task_initial["inventory"]["fuel_liters"] - (100 - initial)
+        )
         assert result.metadata["tool_errors"] == []
 
 

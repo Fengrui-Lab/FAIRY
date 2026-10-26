@@ -16,7 +16,7 @@ class RobotService(SharedFarmService):
     def inspect_ridge(self, farm_id: FarmId, asset_id: AssetId, ridge_id: RidgeId) -> dict[str, Any]:
         """Walk one whole ridge and report the legacy pest/disease diagnosis.
 
-        Requires an eligible robot with at least 15% battery and no charging.
+        Requires an eligible robot with at least 20% battery and no charging.
         Consumes battery and advances the shared clock. Rain adds a wet-ground
         warning, not a rejection. This legacy diagnosis uses threshold-based
         detections; use inspect_crop_health for observation-model scouting.

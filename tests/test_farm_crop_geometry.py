@@ -72,9 +72,16 @@ def test_profile_payload_is_json_compatible():
 @pytest.mark.parametrize("crop", ["maize", "rice"])
 def test_wofost_never_silently_runs_soybean_for_other_crops(crop):
     farm = FarmWorldApp(crop_type=crop)
-    with pytest.raises(ValueError, match="soybean only"):
+    if crop == "maize":
+        pytest.importorskip("pcse")
         farm.configure_crop_backend("wofost")
-    assert farm._physics is None
+        assert farm.physics.crop_backend.config.crop_name == "maize"
+        assert farm.physics.crop_backend.config.variety_name == "Grain_maize_201"
+        assert farm.validate_seed_for_crop("STANDARD") is not None
+    else:
+        with pytest.raises(ValueError, match="Unsupported upland crop"):
+            farm.configure_crop_backend("wofost")
+        assert farm._physics is None or farm._physics.crop_backend is None
 
 
 def test_seed_loading_does_not_relabel_hopper_or_consume_wrong_crop_stock():

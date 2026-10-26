@@ -328,6 +328,34 @@ class AppAgentBuilder:
         )
 
 
+def get_farm_world_system_prompt_for_apps(
+    toolsets: list[Any] | None,
+    mode: str = "fairy",
+    *,
+    parallel_tool_calls: bool = True,
+) -> str:
+    """Select crop instructions from concrete worlds, including wrapped services.
+
+    A crop label alone cannot distinguish transplanted paddy from the legacy
+    direct-seeded rice proxy. A mixed world must retain per-farm tool rules.
+    """
+    from fairy.apps.farm_world.multi_farm import farm_world_apps, iter_apps_of_type
+    from fairy.apps.paddy.world import PaddyWorldApp
+
+    farms = farm_world_apps(toolsets or [])
+    paddies = iter_apps_of_type(toolsets or [], PaddyWorldApp)
+    # The historical default selector returns the generic configured-farms
+    # prompt; it does not assume soybean geometry, stages or equipment.
+    crop = "soybean"
+    if len(paddies) == 1 and not farms:
+        crop = "rice"
+    elif len(farms) == 1 and not paddies and farms[0].is_native_maize:
+        crop = "maize"
+    return get_farm_world_system_prompt(
+        mode, parallel_tool_calls=parallel_tool_calls, crop=crop,
+    )
+
+
 def build_controller_agent(
     family_id: str,
     llm: Any,
@@ -335,12 +363,7 @@ def build_controller_agent(
     system_message: str | None = None,
 ) -> ResearchARESimulationAgent:
     if system_message is None:
-        crop = next((getattr(getattr(app, "wrapped_app", app), "crop_name", None)
-                     for app in toolsets or []
-                     if getattr(getattr(app, "wrapped_app", app), "crop_name", None)
-                     in {"rice", "maize"}), None)
-        if crop is not None:
-            system_message = get_farm_world_system_prompt(crop=crop)
+        system_message = get_farm_world_system_prompt_for_apps(toolsets)
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)

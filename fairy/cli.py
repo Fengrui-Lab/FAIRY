@@ -13,11 +13,11 @@ from fairy.controllers.agent_builder import (
     AgentBuilder,
     AppAgentBuilder,
     build_controller_agent,
+    get_farm_world_system_prompt_for_apps,
 )
 from fairy.controllers.agent_config import (
     FARM_SYSTEM_PROMPT_MODES,
     AppAgentConfigBuilder,
-    get_farm_world_system_prompt,
 )
 from fairy.controllers.app_agent import apply_a2a_to_apps, collect_a2a_traces
 from fairy.controllers.engine import Engine
@@ -397,10 +397,10 @@ def main() -> None:
             args.controller,
             llm=llm,
             toolsets=scenario.apps,
-            system_message=get_farm_world_system_prompt(
+            system_message=get_farm_world_system_prompt_for_apps(
+                scenario.apps,
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
-                crop=getattr(scenario, "crop_name", "soybean"),
             ),
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(

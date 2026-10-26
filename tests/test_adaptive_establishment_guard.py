@@ -99,6 +99,46 @@ def harness(tmp_path, *, reason="dry", quota=8., mutation=None, fuel_after_wait=
 ARGS = {"start_ridge": 20, "end_ridge": 23, "depth_cm": 4., "seed_spacing_cm": 7.9}
 
 
+def test_already_committed_water_is_rechecked_without_an_invented_delay(tmp_path):
+    value, state, events = harness(tmp_path)
+    original = value._execute_guarded
+    reads = []
+    original_read = value._read
+
+    def water(label, tool, args):
+        receipt = original(label, tool, args)
+        receipt["effect_ready_at"] = value.engine.time_manager.time()
+        return receipt
+
+    def read(label, method, args=None):
+        reads.append(method)
+        return original_read(label, method, args)
+
+    value._execute_guarded, value._read = water, read
+    assert value._seedbed_water("source_guard", ARGS)
+    assert "wait" not in events
+    assert value.engine.time_manager.time() == value.engine.start_time + 3180
+    assert state["used"] == .25 and len(value.policy_history) == 1
+    assert reads[-2:] == ["read_soil_sensors", "read_root_zone_sensors"]
+
+
+def test_water_receipt_with_past_confirmation_is_rejected_without_clock_rewind(tmp_path):
+    value, state, events = harness(tmp_path)
+    original = value._execute_guarded
+
+    def water(label, tool, args):
+        receipt = original(label, tool, args)
+        receipt["effect_ready_at"] = value.engine.time_manager.time() - 1
+        return receipt
+
+    value._execute_guarded = water
+    with pytest.raises(RuntimeError, match="in the past"):
+        value._seedbed_water("source_guard", ARGS)
+    assert "wait" not in events
+    assert value.engine.time_manager.time() == value.engine.start_time + 3180
+    assert events.count("irrigation") == 1 and state["used"] == .25
+
+
 def test_dry_guard_prepares_seed_first_waits_for_water_and_records_success_once(tmp_path):
     value, state, events = harness(tmp_path)
     result = value.call("o_r5_late_plant", "Tractor__plant_seeds", ARGS, op="WRITE")

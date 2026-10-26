@@ -113,8 +113,11 @@ def test_mature_snapshot_keeps_crop_grain_moisture_and_recent_maturity():
     assert yld.biological_yield_g_m2 == 1000
 
 
-def test_wofost_selection_rejects_maize_before_initializing_backend():
+def test_wofost_selection_uses_native_maize_and_rejects_the_legacy_seed_identity():
     farm = FarmWorldApp(crop_type="maize", num_ridges=1)
-    with pytest.raises(ValueError, match="soybean only"):
-        farm.configure_crop_backend("wofost")
-    assert farm._physics is None
+    pytest.importorskip("pcse")
+    farm.configure_crop_backend("wofost")
+    assert farm.physics.crop_backend.config.crop_name == "maize"
+    assert farm.physics.crop_backend.config.variety_name == "Grain_maize_201"
+    assert farm.validate_seed_for_crop("MAIZE_STANDARD") is not None
+    assert farm.validate_seed_for_crop("MAIZE_201") is None

@@ -59,7 +59,28 @@ RIDGE_WIDTH_M = 1.1
 NUM_RIDGES = 64
 BASE_FERTILIZER_KG = 200.0  # 当前 base_fertilize 工具实际消耗，不沿用旧脚本的 250 kg 装载量。
 
-BRIEFING = """
+BASIC_BRIEFING = """
+管理哈尔滨同一地区farm_a和farm_b的完整黑农84大豆季，完成整地播种、分别诊断管理、收获及安全入库。
+两场初始均未整地、未播种；各64垄（本地0–63），垄长268m、垄距1.1m，一垄两行，
+每场18,867.2m²（1.88672ha），种植HEINONG84，标准密度。两场共享同一区域天气。
+
+已知田块背景：farm_a有局部前茬重茬和叶部病害记录；这表示病害风险，不能直接视为当前确诊。
+farm_b局部土层较浅、持水能力较低，其余区域为与farm_a相同的深厚黑土。
+请通过各场实际观测定位问题，结合天气、生育期和管理额度决定是否及如何处理，并复查效果。
+
+FarmA/FarmB分别提供farm_a/farm_b的田块状态与管理额度。
+FarmA_Sensor/FarmA_Irrigation固定服务farm_a，FarmB_Sensor/FarmB_Irrigation固定服务farm_b。
+Tractor、Mavic3M、Matrice4T、Robot0跨场共用，移动田间工具按其参数指定farm_id。
+Warehouse是唯一共享仓库，存放种子、肥料、农药、燃油及粮食批次；装卸物料与加油不传farm_id，
+机上兼容物料可跨场使用。换场前清空粮箱，粮食批次保留来源场与垄范围。
+两场使用同一北京时间，作业和等待会同时推进两场；commit_daily_physics也会消耗一天。
+
+完成两场全田的种植和全季管理，依据实际成熟度、籽粒水分、天气与通行条件安排收获，
+所有粮食批次达到安全水分后入库。按实际设备容量、电量和覆盖范围作业，抽查不等于全田检查。
+最后分别报告管理证据、处理区域、水肥药用量和产量，以及共享库存和设备状态。本场景validate暂空。
+""".strip()
+
+DETAILED_BRIEFING = """
 管理哈尔滨同一地区farm_a和farm_b的完整黑农84大豆季，完成播前准备、播种、
 分别诊断与管理、收获及安全入库。每场64垄（本地0–63），垄长268m、垄距1.1m，
 每场有效种植面积约1.887ha；播深4cm、株距7.9cm。两场同品种、同天气，不能把A/B当成不同气候。
@@ -106,6 +127,9 @@ Mavic全64垄约耗64%，下一场前需充电；地面4垄约耗20%，留足下
 """.strip()
 
 
+BRIEFING = DETAILED_BRIEFING
+
+
 @register_scenario(SCENARIO_ID)
 class ScenarioTwoFarmFullSeasonHN84DiseaseWater(Scenario):
     """同气候、局部病史与土壤差异，管理必须指向实际有需求的农场。"""
@@ -116,7 +140,6 @@ class ScenarioTwoFarmFullSeasonHN84DiseaseWater(Scenario):
     queue_based_loop = True
     time_increment_in_seconds = 60
     expects_agent_harvest = True
-    scenario_input = BRIEFING
     additional_system_prompt = (
         "Manage both farms for the whole soybean season with one shared clock and equipment fleet. "
         "Farm A has a local previous-disease history; farm B has a local lower-water-holding soil. "
@@ -130,6 +153,13 @@ class ScenarioTwoFarmFullSeasonHN84DiseaseWater(Scenario):
         "Unload grain to a unique batch_id, then dry/store that batch through Warehouse. "
         "Calendar windows guide observation; actual conditions determine actions."
     )
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        if not self.scenario_input:
+            self.scenario_input = DETAILED_BRIEFING if self.detailed_briefing else BASIC_BRIEFING
 
     def init_and_populate_apps(self) -> None:
         """两场的固定设施独立创建，四台移动设备各创建一次。"""
@@ -277,7 +307,7 @@ class ScenarioTwoFarmFullSeasonHN84DiseaseWater(Scenario):
             ("farm_b", self.farm_b, self.sensor_b),
         )
         with EventRegisterer.capture_mode() as events:
-            previous = self.aui.send_message_to_agent(content=BRIEFING).with_id("briefing")
+            previous = self.aui.send_message_to_agent(content=self.scenario_input).with_id("briefing")
 
             # 1. 播前准备与播种：先完成A和B，再共同进入出苗等待。
             previous = self.weather.get_current_weather().oracle().with_id(

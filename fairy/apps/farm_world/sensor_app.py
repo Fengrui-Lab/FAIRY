@@ -44,6 +44,8 @@ _SENSOR_ZONES: list[tuple[str, int, int, int]] = [
 class SensorApp(App):
     """Configured soil and canopy probes, each covering a local ridge zone."""
 
+    validate_tool_arguments = True
+
     def get_tools(self):
         tools = super().get_tools()
         if self._farm_world_app.farm_environment is not None:
@@ -75,8 +77,12 @@ class SensorApp(App):
         }
 
     def load_state(self, state_dict: dict[str, Any]) -> None:
-        if state_dict.get("farm_id", self.bound_farm_id) != self.bound_farm_id:
-            raise ValueError("Sensor snapshot belongs to another farm")
+        saved_farm_id = state_dict.get("farm_id")
+        if (self.bound_farm_id is not None and saved_farm_id is not None
+                and saved_farm_id != self.bound_farm_id):
+            raise ValueError(
+                f"Cannot load farm {saved_farm_id!r} state into sensor bound to {self.bound_farm_id!r}"
+            )
         if state_dict.get("crop_id", self._farm_world_app.crop_type) != self._farm_world_app.crop_type:
             raise ValueError("Sensor snapshot belongs to another crop")
         saved_rng = state_dict.get("random_state")
@@ -378,9 +384,12 @@ class SensorApp(App):
                     canopy_states = [
                         physics.canopy.states[r] for r in range(rs, re + 1)
                     ]
-                    # Pre-emergence canopy state has initialized=False; report -1
-                    # to match the legacy "no valid reading yet" semantic.
-                    if any(not st.initialized for st in canopy_states):
+                    crop_states = [
+                        physics.crop.project(r, physics.management.states[r])
+                        for r in range(rs, re + 1)
+                    ]
+                    if any(not canopy.initialized or not crop.current_planted or not crop.emerged
+                           for canopy, crop in zip(canopy_states, crop_states)):
                         self.update_canopy_sensor(sid, -1.0)
                     else:
                         avg_ndvi = sum(st.ndvi_proxy for st in canopy_states) / len(

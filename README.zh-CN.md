@@ -2,13 +2,16 @@
 
 [English README](README.md) | [端到端实验复现指南（英文）](docs/replication/README.md) | [WOFOST 接入与无 LLM 演示](docs/wofost-integration.md)
 
+当前分支已整合 `extend_crops`、桌面 `multi-farm`（包括未提交修改）与本地 WOFOST 工作区。
+作物与模型的选择、共享仓库边界、运行命令及已知校验问题见[整合说明](docs/wofost-multifarm-integration.md)。
+
 当前13个选定任务分别保留经典版与WOFOST版：**无后缀的原ID、原文件、原类使用`legacy`；WOFOST的ID、文件名、类名均加`_V2`。** `farm_world_fullseason_v2`只是历史目录名，不是后端开关。[13对版本及运行示例](docs/wofost-scenario-versions.md)给出对应关系，[版本清单](configs/oracles/wofost_scenario_versions.json)保存准确ID、路径和类名。
 
-13套WOFOST中12套已校准，03保留原花期营养任务并标为未校准。前9套已校准方案中，正常季为7个管理窗口、两次30mm补水、无例行氮肥，展开为89次工具调用。本轮另完成3个灌溉题，每场8个窗口、101次调用，包含真实SurveyDrone全田粗查和Robot定点检查；按13%水分安全入库分别为7097.36、7005.65、6649.92kg。扩展名单后17场已暂停。这些是实际工具Oracle回放，**尚未运行35B Agent**。[前10场农事计划](docs/wofost-farming-plans.md)、[新增3场计划](docs/wofost-next20-farming-plans.md)和[接入说明](docs/wofost-integration.md)分别说明管理及运行方式；不能把前9场都说成已补无人机。
+13套WOFOST中12套已校准，03保留原花期营养任务并标为未校准。前9套已校准方案中，正常季为7个管理窗口、两次30mm补水、无例行氮肥，展开为89次工具调用。本轮另完成3个灌溉题，每场8个窗口、101次调用，包含真实SurveyDrone全田粗查和Robot定点检查；按13%水分安全入库分别为7097.36、7005.65、6649.92kg。扩展名单后17场已暂停。这些是实际工具Oracle回放，**此处为Oracle统计，Agent实验应查看独立运行记录**。[前10场农事计划](docs/wofost-farming-plans.md)、[新增3场计划](docs/wofost-next20-farming-plans.md)和[接入说明](docs/wofost-integration.md)分别说明管理及运行方式；不能把前9场都说成已补无人机。
 
 经典版来源于Git提交`e0a302c3d3de9cf532ea5fd01bc79ebb3e9bb864`，完整原源码另有备份。旧workflow只改为明确的4垄代表性抽样，以及3场在原天气下分别多等3/1/1天采收；不改初始题设、作物物理、App、Engine或TimeManager。13套经典版和13套`_V2`均通过普通生产CLI的build→replay→evaluate；经典版每场64垄全收且安全入库，初始世界与原Git定义13/13完全一致。12套已校准WOFOST的产量与改名前参照完全相同，03可运行至8229.50kg但仍未校准。[验证证据](docs/wofost-scenario-versions.md#当前完成与核验边界)区分两版本结果和考点校准。
 
-本次相关广泛回归**644项通过，0失败、0错误、0跳过**，覆盖原生模型、版本与源码契约、经典workflow兼容及App／共享运行时，**不是全仓库测试声明**。另仅修正一个旧天气测试把“4天合计82mm”误当“每天82mm”的断言，生产天气未改；[验收记录与修正依据](docs/wofost-scenario-versions.md#当前完成与核验边界)可核对。
+此前版本拆分的相关回归**644项通过，0失败、0错误、0跳过**，覆盖原生模型、版本与源码契约、经典workflow兼容及App／共享运行时，**不是全仓库测试声明**。另仅修正一个旧天气测试把“4天合计82mm”误当“每天82mm”的断言，生产天气未改；[验收记录与修正依据](docs/wofost-scenario-versions.md#当前完成与核验边界)可核对。
 
 现已增加场景作者直接设置真实土壤氮池的事件，支持当天观测、存档恢复和回放；其独立529项回归记录早于此次版本拆分，不能当作当前全部改动的验收统计。只清土壤氮仍不足以使官方大豆配置下的03追肥保产考点成立，详见[事件写法、数据流与对照结果](docs/wofost-soil-nitrogen-events.md)。
 

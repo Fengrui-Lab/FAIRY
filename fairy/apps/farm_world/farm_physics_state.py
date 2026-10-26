@@ -18,12 +18,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from fairy.apps.farm_world.crop_dynamics import CropDynamics
 
 from fairy.apps.farm_world.farm_action_record import FarmActionRecord
 from fairy.physics import (
     BioticPressureEngine,
-    CanopyBiomassGrowthEngine,
     HarvestAction,
     ManagementAction,
     ManagementEffectEngine,
@@ -31,10 +33,8 @@ from fairy.physics import (
     ObservationModelParameters,
     SensorAsset,
     SoilEngine,
-    ThermalTimePhenologyEngine,
     TreatmentApplication,
     WeatherGenerator,
-    YieldRecoveryEngine,
 )
 from fairy.physics.weather_engine import default_harbin_soybean_config
 
@@ -65,6 +65,10 @@ class FarmPhysicsState:
     scenario_type: str | None = None
     latitude_deg: float = 45.7  # Harbin/Heilongjiang default
     random_seed: int = 0
+    # Explicit biological runtime selection. None retains the historical
+    # crop_type-based seven-engine views (also used by native WOFOST).
+    # crop_id='maize' selects the separate EARLY_2026 reduced crop runtime.
+    crop_id: str | None = None
 
     # Optional native crop/soil backend; legacy engine views stay available to
     # observation tools and harvest accounting in either mode.
@@ -75,11 +79,12 @@ class FarmPhysicsState:
     # Engines. Constructed in __post_init__ so they exist for type-checking but
     # remain unused until the first physics-aware activity flips engines_active.
     soil: SoilEngine = field(init=False)
-    phenology: ThermalTimePhenologyEngine = field(init=False)
-    canopy: CanopyBiomassGrowthEngine = field(init=False)
+    crop: CropDynamics = field(init=False)
+    phenology: Any = field(init=False)
+    canopy: Any = field(init=False)
     biotic: BioticPressureEngine = field(init=False)
     management: ManagementEffectEngine = field(init=False)
-    yield_recovery: YieldRecoveryEngine = field(init=False)
+    yield_recovery: Any = field(init=False)
     weather_generator: WeatherGenerator | None = field(init=False, default=None)
     observation_model: ObservationModel = field(init=False)
 
@@ -110,18 +115,47 @@ class FarmPhysicsState:
 
         if self.num_ridges < 1:
             raise ValueError("num_ridges must be positive")
+        if self.crop_id == "maize":
+            self.crop_type = "maize"
+        elif self.crop_id == "soybean" and self.crop_type != "soybean":
+            raise ValueError("Explicit soybean crop_id does not match crop_type")
         self.crop_profile = get_crop_profile(self.crop_type)
         self.soil = SoilEngine(num_ridges=self.num_ridges)
-        self.phenology = ThermalTimePhenologyEngine(num_ridges=self.num_ridges)
-        self.canopy = CanopyBiomassGrowthEngine(num_ridges=self.num_ridges)
+        from fairy.apps.farm_world.crop_dynamics import create_crop_dynamics
+
+        self.crop = create_crop_dynamics(self.crop_id, self.num_ridges, crop_type=self.crop_type)
+        # Legacy validators and calibration helpers still address these native
+        # engines. They are aliases, never a second copy of crop state.
+        self.phenology = self.crop.phenology
+        self.canopy = self.crop.canopy
+        self.yield_recovery = self.crop.yield_recovery
         self.biotic = BioticPressureEngine(num_ridges=self.num_ridges)
         self.management = ManagementEffectEngine(num_ridges=self.num_ridges)
-        self.yield_recovery = YieldRecoveryEngine(num_ridges=self.num_ridges)
-        configure_crop_physics(self, self.crop_profile)
+        if self.crop_id != "maize":
+            configure_crop_physics(self, self.crop_profile)
         self.observation_model = ObservationModel(
             params=ObservationModelParameters(random_seed=self.random_seed)
         )
         self._install_default_sensor_assets()
+
+    def bind_native_crop_views(self, crop_name: str) -> None:
+        """Select the native crop facade without replacing its engine states.
+
+        Backend selection is explicit and only allowed on a compatible farm.
+        The physical backend calls this boundary without importing App or crop
+        runtime implementations into the native WOFOST module.
+        """
+        if crop_name != self.crop_type:
+            raise ValueError("Native crop does not match the farm species")
+        if self.crop_id == "maize":
+            raise ValueError("WOFOST requires compatibility views, not the independent reduced maize crop runtime")
+        from fairy.apps.farm_world.soybean_dynamics import ReducedCropDynamics, SoybeanDynamics
+        if crop_name == "maize" and not (
+            isinstance(self.crop, ReducedCropDynamics) and self.crop.crop_profile.crop_type == "maize"
+        ):
+            self.crop = ReducedCropDynamics(self.num_ridges, "maize", model=self.crop.model)
+        elif crop_name == "soybean" and isinstance(self.crop, ReducedCropDynamics):
+            self.crop = SoybeanDynamics(self.num_ridges, model=self.crop.model)
 
     # ------------------------------------------------------------------
     # Sensor asset registration (used by ObservationModel.observe_fixed_sensors)

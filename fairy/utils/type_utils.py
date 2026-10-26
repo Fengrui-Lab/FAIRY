@@ -95,13 +95,14 @@ def legacy_tool_call(instance: Any, function: Callable[..., Any], args=(), kwarg
     bound.apply_defaults()
     arguments = {key: value for key, value in bound.arguments.items() if key not in {"self", "cls"}}
     if getattr(instance, "validate_tool_arguments", False):
-        from fairy.tool_utils import SchemaValidationError, bind_app_tool_arguments
+        from fairy.tool_utils import ToolArgumentRejection, typed_arguments_exception
 
-        try:
-            bind_app_tool_arguments(instance, public, args, kwargs)
-            registry.contract(name).validate(arguments)
-        except SchemaValidationError as error:
-            return {"error": str(error).replace("must be one of", "choose one of")}
+        exception = typed_arguments_exception(
+            public, instance, args, kwargs,
+            check_dynamic=captured or not EventRegisterer.is_capturing(),
+        )
+        if exception is not None:
+            return ToolArgumentRejection(exception)
     if EventRegisterer.is_capturing() and not captured:
         registry.validate_static(name, arguments)
         return public(instance, *args, **kwargs)
@@ -133,6 +134,14 @@ def type_check(func: Callable[..., Any]) -> Callable[..., Any]:
         # Shared public services already have their own canonical contract.
         if uses_shared_executor(args[0], func):
             return func(*args, **kwargs)
+        if getattr(args[0], "validate_tool_arguments", False):
+            from fairy.tool_utils import ToolArgumentRejection, typed_arguments_exception
+
+            # Preserve Python missing/extra-argument exceptions for direct calls.
+            inspect.signature(func).bind(*args, **kwargs)
+            exception = typed_arguments_exception(func, args[0], args[1:], kwargs)
+            if exception is not None:
+                return ToolArgumentRejection(exception)
         return legacy_tool_call(args[0], func, args[1:], kwargs)
 
     return wrapper

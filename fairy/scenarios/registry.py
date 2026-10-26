@@ -39,6 +39,7 @@ def _import_known_scenarios() -> None:
     import importlib
     import pkgutil
 
+    # Each package is visited once; all three integrated scenario families remain.
     for package in (
         "fairy.scenarios.baseline_farm_world",
         "fairy.scenarios.farm_world_physics",

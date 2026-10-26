@@ -1,7 +1,8 @@
 """Versioned, allowlisted JSON checkpoints for a complete FarmRuntime.
 
 No pickle, eval, import-by-payload, or arbitrary object construction is used.
-Only the named domain dataclasses and engine field sets below are restorable.
+Only named domain dataclasses, engine field sets, explicit metadata containers
+and the crop-domain snapshot codec below are restorable.
 Checkpoints are taken between public tool operations and restore into a new
 runtime, leaving any currently running world untouched on validation failure.
 """
@@ -15,6 +16,7 @@ import hashlib
 import json
 import math
 import random
+from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
@@ -104,6 +106,8 @@ def encode_state(value: Any, *, _depth: int = 0) -> Any:
         if value.dtype.kind not in "biuf":
             raise ValueError("Checkpoint arrays must have numeric dtype")
         return {"$kind": "array", "dtype": value.dtype.str, "shape": list(value.shape), "values": child(value.tolist())}
+    if type(value) is SimpleNamespace:
+        return {"$kind": "namespace", "fields": {key: child(item) for key, item in vars(value).items()}}
     if isinstance(value, dict):
         items = [[child(key), child(item)] for key, item in value.items()]
         items.sort(key=lambda pair: json.dumps(pair[0], sort_keys=True, separators=(",", ":"), allow_nan=False))
@@ -117,6 +121,15 @@ def encode_state(value: Any, *, _depth: int = 0) -> Any:
     from fairy.physics.wofost_backend import WofostBackend
     if isinstance(value, WofostBackend):
         return {"$kind": "wofost", "state": child(value.export_state())}
+    if isinstance(value, farm_physics_state.FarmPhysicsState):
+        allowed = {item.name for item in fields(value)} | _PHYSICS_EXTRA
+        if set(vars(value)) - allowed:
+            raise ValueError("Unregistered fields on farm physics state")
+        # The crop codec owns runtime selection and engine aliases. Serializing
+        # adapter plus engine fields independently would create two crop states
+        # on restore, or require exposing implementation classes to the payload.
+        from fairy.apps.farm_world.crop_snapshot import snapshot_physics
+        return {"$kind": "farm_physics", "state": child(snapshot_physics(value))}
     cls, name = type(value), _key(type(value))
     if name not in _TYPES:
         raise ValueError(f"Unregistered checkpoint object {name}")
@@ -194,6 +207,17 @@ def decode_state(value: Any, *, _depth: int = 0) -> Any:
         if list(array.shape) != shape:
             raise ValueError("Checkpoint array shape does not match its values")
         return array
+    if kind == "namespace":
+        attributes = value.get("fields")
+        if not isinstance(attributes, dict) or any(not isinstance(key, str) for key in attributes):
+            raise ValueError("Checkpoint metadata namespace requires named fields")
+        return SimpleNamespace(**{key: child(item) for key, item in attributes.items()})
+    if kind == "farm_physics":
+        from fairy.apps.farm_world.crop_snapshot import restore_physics
+        snapshot = child(value["state"])
+        if not isinstance(snapshot, dict) or type(snapshot.get("num_ridges")) is not int:
+            raise ValueError("Malformed farm physics checkpoint")
+        return restore_physics(snapshot, snapshot["num_ridges"])
     if kind == "wofost":
         from fairy.physics.wofost_backend import WofostBackend
         return WofostBackend.from_state(child(value["state"]))
@@ -219,8 +243,17 @@ def decode_state(value: Any, *, _depth: int = 0) -> Any:
         result = cls(**{item.name: decoded[item.name] for item in definitions if item.init and item.name in decoded})
         for key, item in decoded.items():
             object.__setattr__(result, key, item)
-        if cls is farm_physics_state.FarmPhysicsState and result.crop_backend is not None:
-            result.crop_backend.bind_physics(result)
+        if cls is farm_physics_state.FarmPhysicsState:
+            # Historical object checkpoints predate CropDynamics. Retain their
+            # decoded engines as the sole state behind the newly built facade.
+            for name in ("phenology", "canopy", "yield_recovery"):
+                engine = getattr(result, name)
+                setattr(result.crop, name, engine)
+                setattr(result.crop.model, name, engine)
+            if result.crop_backend is not None:
+                saved_yield_params = result.yield_recovery.params
+                result.crop_backend.bind_physics(result)
+                result.yield_recovery.params = saved_yield_params
         return result
     if cls not in _OBJECT_FIELDS:
         raise ValueError("Type is not a restorable engine")

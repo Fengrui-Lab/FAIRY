@@ -160,12 +160,15 @@ This supports traceability and delayed-effect scenarios.
 
 ## Fertilizer and Fertigation Effects
 
-The model tracks a ridge-level nutrient index.
+The model tracks a ridge-level **dimensionless availability index**, not measured
+soil N/P/K or kilograms of nitrogen. Fertilizer tool quantities are product mass;
+the current inventory has no elemental composition. These equations are reduced
+simulation proxies, not a fertilizer recommendation or a calibrated nutrient budget.
 
 ```python
-nutrient_index = 1.0  -> no nutrient limitation
-nutrient_index < 1.0  -> possible nutrient stress
-nutrient_index > 1.0  -> possible over-application
+nutrient_index >= 0.85 -> no nutrient limitation from the deficiency curve
+nutrient_index < 0.85  -> nutrient growth multiplier declines toward 0.72
+nutrient_index > 1.05  -> separate excess penalty
 ```
 
 Default parameters:
@@ -173,13 +176,49 @@ Default parameters:
 ```python
 initial_nutrient_index = 0.75
 max_nutrient_index = 1.10
-base_fertilizer_gain = 0.20
-fertigation_gain = 0.12
-daily_nutrient_decay = 0.0015
-nutrient_uptake_coeff = 0.0020
+base_fertilizer_gain = 1.0
+fertigation_gain = 0.32
+daily_nutrient_decay = 0.0008
+nutrient_uptake_coeff = 0.00018  # availability-index units per g/m² of new biomass
 ```
 
-The nutrient index declines slowly each day and also declines with crop biomass production. Fertilization and fertigation increase it.
+The nutrient index declines through background depletion and actual crop growth.
+Fertilization and fertigation increase it. The uptake coefficient is retained from
+the existing model, not estimated from field data in this fix.
+
+For soybean the daily sequence is: process management/background aging, update
+soil and the crop, then call `settle_crop_growth(day, biomass_by_ridge)`. The crop
+adapter returns the unrounded difference in aboveground biomass **after seed-funded
+emergence initialization** and before/after that day's growth. This is daily new
+growth, never the accumulated season total. Pre-emergence, mature R8 and harvested
+ridges return zero when they produce no new biomass.
+
+`ManagementCropInput.daily_biomass_g_m2=None` means growth has not been calculated
+yet and uptake is deferred. A numeric value retains the earlier accounting path
+used by maize. In the soybean path, the orchestrator settles once after canopy
+growth; the crop adapter never mutates the management engine directly.
+
+`last_growth_uptake_day` prevents repeated consumption. Settlement does not age
+chemical effects, replay fertilizer, advance the clock or grow the crop again.
+It records `daily_growth_biomass_g_m2`, `daily_growth_uptake_index` and
+`cumulative_growth_uptake_index`, then refreshes the nutrient growth multiplier.
+These audit values and the date cursor survive JSON snapshots. Older snapshots
+without the fields start with no reconstructed historical consumption.
+
+The audit date is the **settlement date**. Soybean settles that day's actual
+increment. Maize retains its existing daily-start path, which supplies the
+previous growth update's increment; this fix does not shift maize's uptake day.
+New crop adapters must either supply numeric growth through `management_inputs`
+or defer with `None` and return each deferred ridge's increment from
+`advance_before_biotics`. Returning no growth in both phases omits uptake.
+
+This fixes the missing coupling, **not** soybean nitrogen physiology. Soybean can
+meet part of its N requirement through biological fixation, while P and K still
+have different sources and constraints. A mechanistic extension needs explicit
+fertilizer composition, soil nutrient pools, mineralization and crop-specific
+fixation/uptake. A fixed fixation percentage must not be applied to this composite
+index. See the sourced discussion in
+[the crop extension notes](../../docs/multi-crop-extension-plan.md).
 
 The model converts nutrient index to a growth multiplier:
 

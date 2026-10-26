@@ -6,6 +6,7 @@ and operation durations retain the original FieldOps irrigation rules.
 from __future__ import annotations
 
 from typing import Any
+from datetime import datetime, time, timedelta
 
 from fairy.apps.app import App
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
@@ -39,6 +40,10 @@ class IrrigationApp(App):
         """Expose the canonical irrigation methods; legacy aliases stay local."""
         return [tool for tool in super().get_tools()
                 if tool.name in {"irrigate", "get_irrigation_log"}]
+
+    @property
+    def irrigation_stop_vwc(self) -> float:
+        return self._farm_world_app.crop_profile.irrigation_stop_vwc
 
     def get_state(self) -> dict[str, Any]:
         return {"app_name": self.name, "farm_id": self.bound_farm_id,
@@ -78,9 +83,9 @@ class IrrigationApp(App):
         if float(duration_hours) <= 0:
             return {"error": "duration_hours must be positive"}
         current_vwc = self._irrigation_check_vwc(ridge_id)
-        if current_vwc >= 0.30:
+        if current_vwc >= self.irrigation_stop_vwc:
             return {
-                "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self.irrigation_stop_vwc:.2f}"
             }
         return self._start_irrigation([ridge_id], float(duration_hours))
 
@@ -93,10 +98,12 @@ class IrrigationApp(App):
         Irrigate a contiguous range of ridges.
 
         Uses this bound farm's water allowance and controller. Requires
-        VWC below 0.30 throughout the requested range. Advances the shared
+        VWC below the crop's configured irrigation_stop_vwc (shown by the
+        farm capabilities) throughout the requested range. Advances the shared
         clock by setup plus run duration. In active physics the water input
         is queued at the end of the run; the legacy mode delivers after two
-        more hours. Recheck soil conditions at the returned effect_ready_at.
+        more hours. Native PCSE integrates queued water at the next local day
+        boundary. Recheck soil conditions at the returned effect_ready_at.
 
         Args:
             start: First local ridge ID, zero based and inclusive.
@@ -114,9 +121,9 @@ class IrrigationApp(App):
             return {"error": "hours must be positive"}
         for ridge_id in range(start, end + 1):
             current_vwc = self._irrigation_check_vwc(ridge_id)
-            if current_vwc >= 0.30:
+            if current_vwc >= self.irrigation_stop_vwc:
                 return {
-                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self.irrigation_stop_vwc:.2f}"
                 }
         return self._start_irrigation(list(range(start, end + 1)), float(hours))
 
@@ -141,9 +148,9 @@ class IrrigationApp(App):
             return {"error": "duration_hours must be positive"}
         for ridge_id in range(start, end + 1):
             current_vwc = self._irrigation_check_vwc(ridge_id)
-            if current_vwc >= 0.30:
+            if current_vwc >= self.irrigation_stop_vwc:
                 return {
-                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= 0.30"
+                    "error": f"Ridge {ridge_id} soil VWC {current_vwc:.3f} already >= {self.irrigation_stop_vwc:.2f}"
                 }
         return self._start_irrigation(
             list(range(start, end + 1)), float(duration_hours)
@@ -207,6 +214,10 @@ class IrrigationApp(App):
 
         if self._farm_world_app.physics_active:
             effect_ready_at = finished_at
+            if self._farm_world_app.physics.crop_backend is not None:
+                zone = self._farm_world_app.simulation_timezone
+                next_day = datetime.fromtimestamp(finished_at, zone).date() + timedelta(days=1)
+                effect_ready_at = datetime.combine(next_day, time.min, zone).timestamp()
             # Physics path: queue ManagementAction(IRRIGATION) so the soil
             # engine receives water on the next advance_physics_time call,
             # and record a FarmActionRecord. The legacy add_vwc bump is
@@ -246,6 +257,8 @@ class IrrigationApp(App):
             "effect_ready_at": effect_ready_at,
             "eta_minutes_to_confirmation": round((effect_ready_at - finished_at) / 60.0, 1),
             "message": (
+                "Irrigation run finished. Water is queued for the next native daily settlement; recheck at effect_ready_at."
+                if self._farm_world_app.physics_active and self._farm_world_app.physics.crop_backend is not None else
                 "Irrigation run finished. Water input has been applied by the soil engine."
                 if self._farm_world_app.physics_active else
                 "Irrigation run finished. Recheck soil moisture after the 2-hour delivery delay."

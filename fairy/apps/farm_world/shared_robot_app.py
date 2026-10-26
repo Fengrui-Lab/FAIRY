@@ -44,6 +44,7 @@ class SharedRobotApp(RobotOperations, App):
         observation model reports generic noisy detections without species or
         disease identity; inspect_pests and inspect_crop_health always use noisy
         ground-inspection products when physics is active.
+        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -72,6 +73,7 @@ class SharedRobotApp(RobotOperations, App):
         5 battery percentage points, leaving at least 10 percent for return.
         Advances all farms by round-trip walking time per covered ridge.
         Charging or starting battery below 15 percent refuses the inspection.
+        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -105,6 +107,7 @@ class SharedRobotApp(RobotOperations, App):
         Each covered ridge consumes 5 battery percentage points, leaving at least
         10 percent for return. Advances time for every registered farm.
         Charging or starting battery below 15 percent refuses the inspection.
+        Native WOFOST maize reports stage and a noisy canopy/nutrient proxy, without biotic diagnoses.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Annotated, Callable
 
 from fairy.apps.app import App
-from fairy.tool_utils import OperationType, app_tool
+from fairy.tool_utils import OperationType, ToolParameter, app_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
@@ -47,14 +47,21 @@ class SystemApp(App):
         timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
         "current_weekday" (Monday, Tuesday, etc.).
         """
-        timestamp = self.time_manager.time()
-        date = datetime.fromtimestamp(timestamp, tz=(self.farm_environment.simulation_timezone
-                                      if self.farm_environment is not None else
-                                      getattr(self._farm_world_app, "simulation_timezone", timezone.utc)))
+        return self._time_snapshot(self.time_manager.time())
+
+    def _time_snapshot(self, timestamp: float) -> dict:
+        calendar = (self.farm_environment.simulation_timezone
+                    if self.farm_environment is not None else
+                    getattr(self._farm_world_app, "simulation_timezone", timezone.utc))
+        date = datetime.fromtimestamp(timestamp, tz=calendar)
         return {
             "current_timestamp": timestamp,
-            "current_datetime": date.strftime("%Y-%m-%d %H:%M:%S"),
+            "current_datetime": (date.isoformat(sep=" ", timespec="seconds")
+                                 if self.farm_environment is not None else
+                                 date.strftime("%Y-%m-%d %H:%M:%S")),
             "current_weekday": date.strftime("%A"),
+            "timezone": str(calendar),
+            "utc_offset": date.strftime("%z"),
         }
 
     def reset_wait_for_notification_timeout(self) -> None:
@@ -78,7 +85,7 @@ class SystemApp(App):
     @event_registered(operation_type=OperationType.READ)
     def advance_time(
         self,
-        seconds: int = 0,
+        seconds: Annotated[float, ToolParameter(minimum=0)] = 0.0,
         minutes: int = 0,
         hours: int = 0,
         days: int = 0,
@@ -92,7 +99,7 @@ class SystemApp(App):
         advances, subsequent state reads reflect the evolved world.
 
         Args:
-            seconds: Seconds to advance.
+            seconds: Finite non-negative seconds to advance, including fractional seconds.
             minutes: Minutes to advance.
             hours: Hours to advance.
             days: Days to advance.
@@ -101,7 +108,7 @@ class SystemApp(App):
             A dictionary containing the new current time.
         """
         total_seconds = (
-            int(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400
+            float(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400
         )
         if total_seconds <= 0:
             return {"error": "advance_time amount must be > 0"}
@@ -129,12 +136,10 @@ class SystemApp(App):
             advance = getattr(farm_world_app, "advance_physics_time", None)
             if callable(advance):
                 advance()
-        timestamp = self.time_manager.time()
         return {
             "status": "ok",
             "advanced_seconds": total_seconds,
-            "current_timestamp": timestamp,
-            "current_datetime": self.get_current_time()["current_datetime"],
+            **self._time_snapshot(self.time_manager.time()),
         }
 
     @app_tool()

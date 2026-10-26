@@ -83,8 +83,10 @@ def _audit(scenario, state, workflow):
     applied = sum(row["fertilizer"] for row in state["inputs"].values())
     if abs(inventory.fertilizer_kg + state["spreader"] + applied - spec.fertilizer_stock_kg) > 1e-5:
         failures.append("fertilizer inventory and native input accounting disagree")
-    if abs(state["fertilizer_used"] - applied - state["spreader"]) > 1e-5:
-        failures.append("fertilizer usage ledger disagrees with applied and loaded amounts")
+    # Loading transfers warehouse stock to machinery. Only field application
+    # consumes a farm's management quota; outstanding payload stays in stock.
+    if abs(state["fertilizer_used"] - applied) > 1e-5:
+        failures.append("fertilizer usage ledger disagrees with applied amounts")
     water = sum(row["water"] for row in state["inputs"].values()) / farm.num_ridges
     if abs(water - state["water_used"]) > 1e-5:
         failures.append("irrigation quota and native soil inputs disagree")
@@ -220,8 +222,8 @@ def validate_maize_task(scenario, *, workflow=None):
     if spec.level == "L2" and task in {"irrigation_management", "nutrition_management"}:
         # Generated offline from equal-weather/equal-duration managed and omitted
         # action runs. Validation never runs a control or finishes the season.
-        from .farm_checkpoint_state import ROOT, REBUILD_COMMAND
-        data = json.loads((ROOT / "scenario_artifacts.json").read_text())
+        from .farm_checkpoint_state import ARTIFACT_ROOT, REBUILD_COMMAND
+        data = json.loads((ARTIFACT_ROOT / "scenario_artifacts.json").read_text())
         reference = data.get("management_thresholds", {}).get(task)
         if reference and (reference.get("initial_checkpoint_sha256") != scenario._checkpoint["sha256"]
                           or reference.get("source_fingerprint") != scenario._checkpoint["source_fingerprint"]):

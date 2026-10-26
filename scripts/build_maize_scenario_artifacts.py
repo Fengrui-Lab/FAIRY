@@ -25,6 +25,8 @@ from fairy.scenarios.maize.farm_checkpoint_state import (
     load_checkpoint, source_fingerprint,
 )
 from fairy.scenarios.maize.maize_scenario_catalog import SPECS, CHECKPOINT_EVENTS
+from fairy.scenarios.maize import farm_checkpoint_state as artifact_store
+from fairy.scenarios.maize.maize_scenario_catalog import TASK_SPECS
 from fairy.scenarios.maize.validation import task_state
 from fairy.scenarios.registry import get_scenario_class
 from fairy.scenarios.workflow import Workflow
@@ -137,8 +139,62 @@ def build_artifacts(output_root=ROOT):
     return manifest
 
 
+def _verification_state(scenario):
+    from fairy.apps.farm_world import TractorApp
+    from fairy.scenarios.maize.farm_checkpoint_state import TRACTOR_FIELDS
+    farm = scenario.get_typed_app(FarmWorldApp)
+    tractor = scenario.get_typed_app(TractorApp)
+
+    def bookkeeping_free(value):
+        if isinstance(value, dict):
+            return {key: bookkeeping_free(item) for key, item in value.items()
+                    if key not in {"op_id", "action_id"}}
+        if isinstance(value, (list, tuple)):
+            return [bookkeeping_free(item) for item in value]
+        return value
+
+    # Random bookkeeping IDs identify a particular operation invocation. All
+    # physical state, timestamps, queues, observation streams and native model
+    # journals remain part of this independent replay comparison.
+    return bookkeeping_free({
+        "farm": farm.get_state(),
+        "native": farm.physics.crop_backend.export_state(),
+        "tractor": {key: getattr(tractor, key) for key in TRACTOR_FIELDS},
+        "rng": {app.name: app.rng.getstate() for app in scenario.apps
+                if app.name not in {"AgentUserInterface", "SystemApp"}},
+        "observation_rng": farm.physics.observation_model.rng.getstate(),
+    })
+
+
+def verify_artifacts(output_root):
+    """Run all split goals and independent replays against staging data."""
+    results = {}
+    with patch.object(artifact_store, "ARTIFACT_ROOT", Path(output_root)):
+        for sid in TASK_SPECS:
+            scenario, engine = make_engine(sid)
+            workflow = engine.run_scenario_oracle()
+            validation = engine.evaluate(workflow)
+            if not validation.success:
+                raise RuntimeError(f"Staged maize task failed: {sid}: {validation.to_dict()}")
+            expected = _verification_state(scenario)
+            replay, other_engine = make_engine(sid)
+            other_engine.replay_workflow(workflow)
+            replay_validation = other_engine.evaluate()
+            if not replay_validation.success or _verification_state(replay) != expected:
+                raise RuntimeError(f"Staged maize task replay diverged: {sid}")
+            results[sid] = {"validation": True, "replay_validation": True,
+                            "workflow_steps": len(workflow),
+                            "physical_state_sha256": hashlib.sha256(json_bytes(expected)).hexdigest()}
+            print(f"{sid}: task and independent replay verified", flush=True)
+    return results
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-root", type=Path, default=ROOT)
+    parser.add_argument("--verify-only", action="store_true",
+                        help="Verify existing output-root artifacts without regenerating them")
     args = parser.parse_args()
-    build_artifacts(args.output_root)
+    if not args.verify_only:
+        build_artifacts(args.output_root)
+    verify_artifacts(args.output_root)

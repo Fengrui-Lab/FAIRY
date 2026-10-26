@@ -35,6 +35,7 @@ class WeatherApp(App):
     def __init__(self) -> None:
         super().__init__(name="WeatherApp")
         self._weather: WeatherState = WeatherState.default()
+        self.simulation_timezone = timezone.utc
         self._avg_soil_vwc: float = 0.22  # updated by scenario / set_weather
 
     # ------------------------------------------------------------------
@@ -143,7 +144,7 @@ class WeatherApp(App):
     def advance_to_timestamp(self, timestamp: float) -> dict[str, Any]:
         """Promote a matching forecast day to current weather after time advances."""
         target_date = (
-            datetime.fromtimestamp(timestamp, tz=getattr(self, "simulation_timezone", timezone.utc)).date().isoformat()
+            datetime.fromtimestamp(timestamp, tz=self.simulation_timezone).date().isoformat()
         )
         if target_date == self._weather.date:
             return {"status": "unchanged", "date": self._weather.date}

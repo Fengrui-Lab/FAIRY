@@ -226,9 +226,16 @@ def test_maize_backend_rejects_soybean_seed_and_preserves_own_parameters():
 def test_crop_integration_does_not_transfer_soybean_profiles_or_legacy_crop_seeds():
     with pytest.raises(ValueError, match="profiles"):
         WofostConfig(crop_name="maize", cultivar_profiles={"MAIZE_201": "soybean_901_official_v1"})
-    for seed in ("MAIZE_STANDARD", "RICE_STANDARD"):
+    for seed in ("MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"):
         with pytest.raises(ValueError, match="does not match"):
             WofostConfig(cultivar_map={seed: "Soybean_901"})
+
+
+def test_soybean_native_backend_rejects_desktop_maize_seed_before_default_mapping():
+    pytest.importorskip("pcse")
+    backend = WofostBackend()
+    with pytest.raises(ValueError, match="does not match"):
+        backend._variety_for_seed("MAIZE_EARLY_2026")
 
 
 def test_native_backend_rejects_mismatched_farm_before_creating_crop():

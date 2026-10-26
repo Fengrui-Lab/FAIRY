@@ -87,7 +87,7 @@ def test_metadata_wraps_non_dict_results(result_kind, expected):
     assert engine.run_scenario_oracle().dag["work"].content == expected
 
 
-def test_legacy_events_keep_estimated_timing_and_unwrapped_results(monkeypatch):
+def test_legacy_events_keep_unwrapped_results_and_record_actual_timing(monkeypatch):
     monkeypatch.setattr("fairy.time_manager.time.time", lambda: 10000)
     app, engine = _captured_work(runtime_timing=False, metadata=False, result_kind="scalar")
     step = engine.run_scenario_oracle().dag["work"]
@@ -95,8 +95,11 @@ def test_legacy_events_keep_estimated_timing_and_unwrapped_results(monkeypatch):
     assert app.calls == 1
     assert engine.time_manager.time() == 1073
     assert step.content == "finished"
-    assert datetime.fromisoformat(step.time).replace(tzinfo=CST).timestamp() == 6000
-    assert "time_before" not in step.to_dict() and "time_after" not in step.to_dict()
+    # An executed reference uses the tool's clock even without the historical
+    # opt-in flag. Only an unexecuted build may carry the DAG's estimate.
+    assert datetime.fromisoformat(step.time).replace(tzinfo=CST).timestamp() == 1073
+    assert step.to_dict()["time_before"] == 1000
+    assert step.to_dict()["time_after"] == 1073
 
 
 def test_event_metadata_defaults_are_independent():
