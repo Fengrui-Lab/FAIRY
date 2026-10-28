@@ -71,7 +71,7 @@ class MaizeDynamics:
 
     def management_inputs(self, physics):
         return {rid: ManagementCropInput(stage=state.stage.value,
-                    daily_biomass_g_m2=self.canopy.states[rid].daily_biomass_g_m2)
+                    daily_biomass_g_m2=0.0)
                 for rid, state in self.phenology.states.items()}
 
     def biotic_inputs(self, physics):

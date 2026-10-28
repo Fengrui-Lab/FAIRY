@@ -1732,7 +1732,7 @@ class TractorOperations:
             )
 
         # Submit the harvest queue even at an unchanged timestamp. The
-        # orchestrator settles actions without running another drying day.
+        # orchestrator applies the historical harvest drying/loss update.
         farm.world.advance_physics_time()
 
         # Convert recovered yield from g/m² to kg per ridge: each ridge is

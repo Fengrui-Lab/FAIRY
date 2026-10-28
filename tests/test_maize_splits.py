@@ -5,7 +5,7 @@ import hashlib
 import inspect
 import json
 import copy
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
@@ -21,6 +21,7 @@ from fairy.scenarios.maize.maize_scenario_catalog import TASK_SPECS, SPECS
 from fairy.scenarios.maize.validation import task_state
 from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.workflow import Workflow
+from fairy.physics.weather_engine import WeatherEvent
 from fairy.types import CapturedEvent
 
 IDS = tuple(TASK_SPECS)
@@ -40,6 +41,18 @@ def without_ids(value):
     if isinstance(value, list):
         return [without_ids(item) for item in value]
     return value
+
+
+def checkpoint_field_state(checkpoint):
+    """Normalize persisted weather-event schema; retain all physical fields."""
+    state = copy.deepcopy(checkpoint["farm"]["farm_world_state"])
+    profile = state["physics_state"].get("profile")
+    if profile is not None:
+        profile["weather_events"] = [
+            json.loads(json.dumps(asdict(WeatherEvent.from_state(event)), default=str))
+            for event in profile["weather_events"]
+        ]
+    return state
 
 
 def physical_state(scenario):
@@ -169,7 +182,7 @@ def test_modern_checkpoint_replays_native_history_once_and_keeps_complete_state(
     restore_maize_checkpoint(scenario, saved)
     assert field_loads == 1
     assert native_steps == expected_native_steps
-    assert farm.get_state() == saved["farm"]["farm_world_state"]
+    assert farm.get_state() == checkpoint_field_state(saved)
     assert farm.physics.crop_backend.export_state() == saved_backend
     for app in scenario.apps:
         if app.name in saved["apps"]:
@@ -262,7 +275,7 @@ def test_checkpoint_restores_exact_device_state_and_native_history(sid):
     farm = scenario.get_typed_app(FarmWorldApp)
     assert farm.physics.crop_backend.export_state() == saved["farm"]["farm_world_state"]["physics_state"]["crop_backend_state"]
     assert scenario.start_time == saved["farm"]["sim_time"]
-    assert farm.get_state() == saved["farm"]["farm_world_state"]
+    assert farm.get_state() == checkpoint_field_state(saved)
 
 
 def test_capture_builds_no_oracle_and_advances_no_future_day(monkeypatch):

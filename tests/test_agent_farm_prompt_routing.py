@@ -96,7 +96,8 @@ def test_cli_uses_real_apps_instead_of_scenario_crop_label(tmp_path, monkeypatch
         def chat_completion(self, messages, tools=None):
             self.calls += 1
             assert messages[0]["content"] == (
-                expected + "\n\nToday's date in 'YYYY-MM-DD HH' format is 1970-01-01 08"
+                expected + "\n\nTask start time: 1970-01-01 08:00+08:00 (UTC+08:00). "
+                "Check the time tool for the current time after operations or waiting."
             )
             assert tools
             return SimpleNamespace(choices=[SimpleNamespace(

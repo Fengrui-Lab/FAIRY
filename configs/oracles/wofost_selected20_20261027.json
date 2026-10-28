@@ -1,0 +1,435 @@
+{
+  "schema_version": 1,
+  "selected_date": "2026-10-27",
+  "scope": "Current user-selected 20 single-farm soybean scenarios; distinct from the historical paused 2026-10-26 next20 list. Process one complete scene at a time.",
+  "completed": 20,
+  "pending": 0,
+  "existing_13_pairs": {
+    "calibrated": 12,
+    "uncalibrated": 1,
+    "note": "Historical thirteen-pair manifest remains intact. Flowering nutrition 03 remains uncalibrated."
+  },
+  "cases": [
+    {
+      "number": 1,
+      "title": "虫害阈值与有限施药机会",
+      "legacy_id": "scenario_full_season_heinong84_threshold_insect_limited_spray",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_threshold_insect_limited_spray.py",
+      "legacy_sha256": "49468f8b265cd84b58572036fc67bce2699f2ae714a3bb0c5d7afc01dc9b248a",
+      "planned_wofost_id": "scenario_full_season_heinong84_threshold_insect_limited_spray_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_heinong84_threshold_insect_limited_spray_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHeinong84ThresholdInsectLimitedSpray_V2",
+      "status": "calibrated",
+      "source_sha256": "18376ab124f54422fba729200af1903ececa8c7f6a619987d90576d5938a4778",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/01_threshold_insect",
+      "tool_calls": 140,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "early"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "湿季病害与低化学投入",
+      "legacy_id": "scenario_full_season_heinong84_low_chemical_wet_disease",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_low_chemical_wet_disease.py",
+      "legacy_sha256": "7c9e7073c84fba606bd002ecf0ce89d309d07b42dfdb82c6f3428341ae6899b8",
+      "planned_wofost_id": "scenario_full_season_heinong84_low_chemical_wet_disease_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_heinong84_low_chemical_wet_disease_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHeinong84LowChemicalWetDisease_V2",
+      "status": "calibrated",
+      "source_sha256": "96c80d42060cbb1274776bdc16fc1e759ba58e2e28d4b253d358396d78812c3f",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/02_wet_disease",
+      "tool_calls": 132,
+      "field_operation_rounds": 6,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "uniform"
+      ]
+    },
+    {
+      "number": 3,
+      "title": "有机田局部草害与机械资源分配",
+      "legacy_id": "scenario_full_season_hb_organic_patch_weed_mechanical_capacity",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_organic_weed_pressure_allowed_inputs.py",
+      "legacy_sha256": "6b7fe6a33eabf0884121b2b488823ac6e3100bbb5f08259fcb6f3c9e8dcde2ec",
+      "planned_wofost_id": "scenario_full_season_hb_organic_patch_weed_mechanical_capacity_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_organic_weed_pressure_allowed_inputs_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBOrganicPatchWeedMechanicalCapacity_V2",
+      "status": "calibrated",
+      "source_sha256": "26e7d471cf043a7eefe71fd265f09d5e8f01b8c93a427a1d199489841d6bb989",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/03_calibration",
+      "tool_calls": 123,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 4,
+      "title": "雨后机械除草窗口",
+      "legacy_id": "scenario_full_season_hb_mechanical_weed_trafficability_window",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_mechanical_weed_control_soil_wetness.py",
+      "legacy_sha256": "9be0da9e9ff3bb46e285029c595a6cc59c22eb5c8fe5f85cc454be66e76c45c8",
+      "planned_wofost_id": "scenario_full_season_hb_mechanical_weed_trafficability_window_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_mechanical_weed_control_soil_wetness_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBMechanicalWeedTrafficabilityWindow_V2",
+      "status": "calibrated",
+      "source_sha256": "b4d64056f2bb5cb8c6cd857a5dd9c5c357e3d74790ceb3370e26be3e294d6c73",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/04_calibration",
+      "tool_calls": 123,
+      "field_operation_rounds": 6,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 5,
+      "title": "花期凉湿与局部病害",
+      "legacy_id": "scenario_full_season_hb_coolwet_flowering_disease_risk",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_coolwet_flowering_disease_risk.py",
+      "legacy_sha256": "9aae3b0a392c684026afa5504c5ae321ae8c740e69a8a8bf78690a08ce20d1f5",
+      "planned_wofost_id": "scenario_full_season_hb_coolwet_flowering_disease_risk_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_coolwet_flowering_disease_risk_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBCoolwetFloweringDiseaseRisk_V2",
+      "status": "calibrated",
+      "source_sha256": "8dbe050a59c96d845d4116f0d71cefb9b0ede51d7342ec2d4348d6a12385a5ab",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/05_calibration",
+      "tool_calls": 122,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 6,
+      "title": "杀菌后的复查与再次用药",
+      "legacy_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_disease_recheck_after_fungicide.py",
+      "legacy_sha256": "f6945c196376fe34fe455bc04b88b2cfe64bd3320e4465ec8f3c52a513728bb1",
+      "planned_wofost_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_disease_recheck_after_fungicide_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneDiseaseRecheckAfterFungicide_V2",
+      "status": "calibrated",
+      "source_sha256": "32038828519f40552219d73c636b2fa891cca063c7c6c5a84640b7adf3713056",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/06_calibration",
+      "tool_calls": 153,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 7,
+      "title": "食叶虫与病斑鉴别",
+      "legacy_id": "scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis.py",
+      "legacy_sha256": "3f3edf4358c5a21e2309ca432b62d12503c74886f0ab7ea64ed6bdd4b3b9cc36",
+      "planned_wofost_id": "scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBLeaffeederVsDiseaseSpotsDiagnosis_V2",
+      "status": "calibrated",
+      "source_sha256": "2b56318980eca9110095a4d5bc40063982ab4e93868f7821fb9fbff53f3f13e4",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/07_calibration",
+      "tool_calls": 121,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 8,
+      "title": "旱后恢复慢，避免误诊病害",
+      "legacy_id": "scenario_full_season_hb_drought_recovery_false_disease_signal",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_drought_recovery_false_disease_signal.py",
+      "legacy_sha256": "6d3a0eacf36d1dfa23383e8506d56f7039c8396fa6bfdf49225bfdcc1c43e9bd",
+      "planned_wofost_id": "scenario_full_season_hb_drought_recovery_false_disease_signal_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_drought_recovery_false_disease_signal_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBDroughtRecoveryFalseDiseaseSignal_V2",
+      "status": "calibrated",
+      "source_sha256": "88c7233a8c70c3c8f4ca95c2e6450c0116f1b2cbac943605aa491de513eacf0f",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/08_calibration",
+      "tool_calls": 122,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 9,
+      "title": "缺水与虫害分区处理",
+      "legacy_id": "scenario_full_season_hb_dryr5r6_insect_threshold_waterstress",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_dryr5r6_insect_threshold_waterstress.py",
+      "legacy_sha256": "369884d9d31e9aca313d3213fbe84d1173a65dd3fbacd0dcab576eebdbb99bcc",
+      "planned_wofost_id": "scenario_full_season_hb_dryr5r6_insect_threshold_waterstress_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_dryr5r6_insect_threshold_waterstress_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBDryR5R6InsectThresholdWaterstress_V2",
+      "status": "calibrated",
+      "source_sha256": "235a4ba054450a86949dbfc46482d362487c9f4858bcfb6fcebe954cf5ccfeb9",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/09_calibration",
+      "tool_calls": 130,
+      "field_operation_rounds": 8,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 10,
+      "title": "高密度田保留关键杀菌预算",
+      "legacy_id": "scenario_full_season_hb_highdensity_wetjune_limited_fungicide",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_highdensity_wetjune_limited_fungicide.py",
+      "legacy_sha256": "89fce5d40c310aafafaef92c902cffeedbf018da4e80dc6e36c49353a38e6469",
+      "planned_wofost_id": "scenario_full_season_hb_highdensity_wetjune_limited_fungicide_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_highdensity_wetjune_limited_fungicide_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBHighdensityWetjuneLimitedFungicide_V2",
+      "status": "calibrated",
+      "source_sha256": "e40ece6bdd241d3e621b1513636e10a1f70f0cb3e650ad571ace27c4d498538b",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/10_calibration",
+      "tool_calls": 133,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 11,
+      "title": "先病后虫，共用施药预算",
+      "legacy_id": "scenario_full_season_hb_insect_after_fungicide_budget_conflict",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_insect_after_fungicide_budget_conflict.py",
+      "legacy_sha256": "f0bb9211cb2f554d751caa9e209e2230d216ab0cb82cb7e9159d76e56a742407",
+      "planned_wofost_id": "scenario_full_season_hb_insect_after_fungicide_budget_conflict_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_insect_after_fungicide_budget_conflict_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBInsectAfterFungicideBudgetConflict_V2",
+      "status": "calibrated",
+      "source_sha256": "5f80e2458186b6505740c716f30f0dda98c457b0b977e0c55d23574d2d251fc5",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/11_calibration",
+      "tool_calls": 141,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 12,
+      "title": "短暂无雨窗与土壤通行性",
+      "legacy_id": "scenario_full_season_hb_wetjune_shortwindow_trafficability",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_shortwindow_trafficability.py",
+      "legacy_sha256": "cc76efc8728bff502044ef4c75d498328959544f4b8483ecf19dcc19684f3de9",
+      "planned_wofost_id": "scenario_full_season_hb_wetjune_shortwindow_trafficability_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_shortwindow_trafficability_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneShortwindowTrafficability_V2",
+      "status": "calibrated",
+      "source_sha256": "7f4afb10aa1a681c902772737efaedd7479e9b93fb112f15956cfbf4b984569a",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/12_calibration",
+      "tool_calls": 121,
+      "field_operation_rounds": 6,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 13,
+      "title": "高密度田局部湿区病害",
+      "legacy_id": "scenario_full_season_hb_wetjune_highdensity_poordrainage_disease",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_highdensity_poordrainage_disease.py",
+      "legacy_sha256": "363b8a99499f0841d3c790f6900cea3b819a066d309b9a444e0d29cc60e7095f",
+      "planned_wofost_id": "scenario_full_season_hb_wetjune_highdensity_poordrainage_disease_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_highdensity_poordrainage_disease_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneHighdensityPoordrainageDisease_V2",
+      "status": "calibrated",
+      "source_sha256": "5851a4c9464617964a6a61495d131e7c4292bdfc85717130db88aaea776519eb",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/13_calibration",
+      "tool_calls": 122,
+      "field_operation_rounds": 6,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 14,
+      "title": "连作病史与局部湿区管理",
+      "legacy_id": "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease.py",
+      "legacy_sha256": "3af37462fc397dde15ceccd83026cccec09f7e3527c4305057fa25e8ba37b8cd",
+      "planned_wofost_id": "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneSoyhistoryPoordrainageDisease_V2",
+      "status": "calibrated",
+      "source_sha256": "dd4d8a1b6e6942177ebe537535bb56efebc6394074a98959c08dfce7a1963db6",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/14_calibration",
+      "tool_calls": 145,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 15,
+      "title": "晚雨后的局部虫害",
+      "legacy_id": "scenario_full_season_hb_laterain_insect_risk",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_laterain_insect_risk.py",
+      "legacy_sha256": "23fadb2e3193ced34b219eda3e637df3072f1cfe5e5e0c530ec6b5dbf5c9b72e",
+      "planned_wofost_id": "scenario_full_season_hb_laterain_insect_risk_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_laterain_insect_risk_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBLaterainInsectRisk_V2",
+      "status": "calibrated",
+      "source_sha256": "449e1083bc8f2eb0f677d6a615924be50205d2c6dbe2e829bd539251fd48fbce",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/15_calibration",
+      "tool_calls": 126,
+      "field_operation_rounds": 6,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 16,
+      "title": "同品种错期播种与分区收获",
+      "legacy_id": "scenario_full_season_heinong84_staggered_planting",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_staggered_planting.py",
+      "legacy_sha256": "1c8281b574f400ea6055876c8fb1eeb776b74379b900a3599fbea4405c11888f",
+      "planned_wofost_id": "scenario_full_season_heinong84_staggered_planting_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_heinong84_staggered_planting_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHeinong84StaggeredPlanting_V2",
+      "status": "calibrated",
+      "source_sha256": "dfb247e1b25d7806c9ff048c38d17b5ebb96447b150810bd46c01fd598f8983b",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/16_calibration",
+      "tool_calls": 136,
+      "field_operation_rounds": 10,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 17,
+      "title": "错期播种遇到同一场干旱",
+      "legacy_id": "scenario_full_season_hb_staggered_dryr5r6_stage_mismatch",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_staggered_dryr5r6_stage_mismatch.py",
+      "legacy_sha256": "cf6206396997ca0ba55be371d094c02dd69a6fca21c4011131129e2919cdfcdf",
+      "planned_wofost_id": "scenario_full_season_hb_staggered_dryr5r6_stage_mismatch_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_staggered_dryr5r6_stage_mismatch_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBStaggeredDryR5R6StageMismatch_V2",
+      "status": "calibrated",
+      "source_sha256": "144af9e9c9f68b8cf94de7a101ac1999f5ea30510a6bc5f5d6dfd996f179061b",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/17_calibration",
+      "tool_calls": 127,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 18,
+      "title": "错期播种与分区病害管理",
+      "legacy_id": "scenario_full_season_hb_staggered_wetjune_canopy_disease",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_staggered_wetjune_canopy_disease.py",
+      "legacy_sha256": "ff668c5034763b2abec1e2914be6e30982fa727cf2af2d6105cd2883e0081d39",
+      "planned_wofost_id": "scenario_full_season_hb_staggered_wetjune_canopy_disease_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_staggered_wetjune_canopy_disease_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBStaggeredWetjuneCanopyDisease_V2",
+      "status": "calibrated",
+      "source_sha256": "e6559e0eee70153a7648d662816499273b6589d3cfbc09e3c8e762fd792053bf",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/18_calibration",
+      "tool_calls": 137,
+      "field_operation_rounds": 8,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 19,
+      "title": "杂草与病害造成的长势异常",
+      "legacy_id": "scenario_full_season_hb_wetjune_weed_disease_diagnosis",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_weed_disease_diagnosis.py",
+      "legacy_sha256": "c1a139fb6bb4899de89a7d873f3f89e69527c161eeca933e88d23e4c2a4da907",
+      "planned_wofost_id": "scenario_full_season_hb_wetjune_weed_disease_diagnosis_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_weed_disease_diagnosis_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneWeedDiseaseDiagnosis_V2",
+      "status": "calibrated",
+      "source_sha256": "89b3bbcf634322e018fbff63b318f7fed24e399c64ea47dda48b0c929434f09b",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/19_calibration",
+      "tool_calls": 149,
+      "field_operation_rounds": 7,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "number": 20,
+      "title": "晚雨前有限时间内分区抢收",
+      "legacy_id": "scenario_full_season_hb_harvester_days_limit_laterain",
+      "legacy_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_harvester_days_limit_laterain.py",
+      "legacy_sha256": "bb1eda7a0e76c06cab5f20d84205ac6c7d5443021199eff252aea69a9e5e4ee8",
+      "planned_wofost_id": "scenario_full_season_hb_harvester_days_limit_laterain_V2",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_harvester_days_limit_laterain_V2.py",
+      "planned_wofost_class_name": "ScenarioFullSeasonHBHarvesterDaysLimitLateRain_V2",
+      "status": "calibrated",
+      "source_sha256": "c9a7896c047a7cafd8542e6dc76b212447810e27a5f1957ea0e3b2cfee53d8ab",
+      "evidence_dir": "validation_runs/wofost_selected20_20261027/20_calibration",
+      "tool_calls": 412,
+      "field_operation_rounds": 8,
+      "oracle_cli_replay_evaluate": "passed",
+      "comparison_arms": [
+        "correct",
+        "none",
+        "wrong"
+      ]
+    }
+  ],
+  "blocked": 0
+}

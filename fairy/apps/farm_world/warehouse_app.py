@@ -107,7 +107,7 @@ class WarehouseApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
-        """Read the scene's common seed, chemical, fertilizer, fuel and grain stock.
+        """Read the shared seed, chemical, fertilizer, fuel and grain stock.
 
         All farms draw from these same quantities. Machine tanks and hoppers
         are reported by the machine, and each farm reports its own water quota
@@ -115,7 +115,7 @@ class WarehouseApp(App):
 
         Returns:
             Warehouse identity, remaining consumables, pending/stored grain kg
-            and common storage/drying limits. Grain kg use each crop's model basis.
+            and common storage/drying limits. Grain quantities follow each crop's declared mass and moisture basis.
         """
         self._before_tool()
         return {"warehouse_id": self.warehouse_id, "inventory_scope": "scene",
@@ -261,8 +261,8 @@ class WarehouseApp(App):
         """Dry one pending grain batch to a safe moisture without advancing time.
 
         Already safe batches are left unchanged. Drying capacity is shared by
-        all farms and counted cumulatively per scene calendar day. Stored or
-        unknown batches fail. Kg retain the crop model's market-moisture basis.
+        all farms and counted cumulatively per calendar day. Stored or
+        unknown batches fail. Grain quantities retain the crop's declared market-moisture basis.
 
         Args:
             batch_id: Exact pending batch ID returned by get_grain_batches.

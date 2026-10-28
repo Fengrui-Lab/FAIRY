@@ -224,8 +224,13 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
         spacing_cm: float,
         id_prefix: str,
     ) -> Any:
+        farm_world = self.get_typed_app(FarmWorldApp)
+        seed_count = (end_ridge - start_ridge + 1) * farm_world.plants_per_ridge_from_spacing(
+            spacing_cm
+        )
+        # Finish each variety with an empty hopper before loading the next one.
         prev = (
-            tractor.load_seeds(seed_type, 300000)
+            tractor.load_seeds(seed_type, seed_count)
             .oracle()
             .with_id(f"{id_prefix}_load_seed")
             .depends_on(prev, delay_seconds=2)

@@ -149,6 +149,13 @@ HarvestAction(
 
 ## Daily Update Logic
 
+Regular updates are idempotent within a calendar date. Harvest retains the
+historical exception: it performs another grain-moisture and field-loss update
+before computing recovery, even if that date already had its regular update.
+Only the harvested ridges receive this additional update; other ridges retain
+their state. This compatibility behavior does not advance the environment clock
+or run crop growth for another day.
+
 ### 1. Update Biological Yield Potential
 
 Before R8, the engine stores the maximum biological yield potential received from the growth model. The first R8 day locks this biological yield ceiling. After R8, growth input no longer raises `biological_yield_g_m2`; only grain moisture, field loss, machine loss, and recovered yield at harvest can change.

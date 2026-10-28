@@ -497,7 +497,7 @@ class SharedTractorApp(App, TractorOperations):
 
         The bound operation contract publishes each farm's crop limits and the configured
         device's pass limit. Requires the target farm's declared
-        required_field_preparation_ops (legacy default level/base_fertilize/form_ridges), bare ridges, suitable
+        required_field_preparation_ops (as listed by the field capabilities), bare ridges, suitable
         soil and sufficient resources. Advances all registered farms.
 
         Args:
@@ -539,7 +539,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at the standard dose over selected farm ridges.
+        """Spray pesticide at the standard dose over selected farm ridges.
 
         Covers at most 10 ridges. Requires sprayable weather, trafficable soil, an allowed
         chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all registered farms and
@@ -554,6 +554,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -597,7 +599,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float = PESTICIDE_L_PER_RIDGE,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at an explicit per-ridge dose on the selected farm.
+        """Spray pesticide at an explicit per-ridge dose on the selected farm.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -613,6 +615,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -658,7 +662,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply fungicide over selected farm ridges from the shared fungicide tank.
+        """Apply fungicide over selected farm ridges from the shared fungicide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded fungicide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -674,6 +678,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -697,7 +703,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply herbicide over selected farm ridges from the shared pesticide tank.
+        """Apply herbicide over selected farm ridges from the shared pesticide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed herbicide regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -713,6 +719,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -735,7 +743,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Perform mechanical weeding over selected farm ridges.
+        """Perform mechanical weeding over selected farm ridges.
 
         Covers at most 10 ridges. Requires trafficable soil, an allowed machine pass and
         mechanical-weeding quota, plus length-scaled fuel (2 L per 268 m pass). Advances all registered farms; records usage on the
@@ -750,6 +758,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)

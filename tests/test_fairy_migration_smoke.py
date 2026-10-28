@@ -366,7 +366,7 @@ def test_weather_event_rain_event_is_physics_input_not_framework_event() -> None
     assert farm_world.physics.profile.name == "harbin_l3_wetjune_short_spray_window_seed_1521"
     profile_events = farm_world.physics.profile.weather_events
     storm, = [event for event in profile_events if event.label == "wet_june_rain"]
-    assert (storm.start_date, storm.duration_days, storm.total_rain_mm) == (date(2026, 6, 15), 4, 82.)
+    assert (storm.start_date, storm.duration_days, storm.rain_mm) == (date(2026, 6, 15), 4, 82.)
     generator = farm_world.physics.weather_generator
     control = deepcopy(generator)
     assert control.rng.bit_generator.state == generator.rng.bit_generator.state
@@ -388,8 +388,8 @@ def test_weather_event_rain_event_is_physics_input_not_framework_event() -> None
         # that public forecast must not consume additional background weather.
         assert weather.get_forecast(days=7) == weather.get_forecast(days=7)
         assert generator.rng.bit_generator.state == rng_after_actual
-    # 82 mm belongs to the entire four-day event, not every single-day query.
-    assert sum(injected_cents) == round(100 * storm.total_rain_mm)
+    # Legacy rain_mm retains the historical amount on each one-day query.
+    assert injected_cents == [round(100 * storm.rain_mm)] * storm.duration_days
 
 
 def test_end_to_end_oracle_replay_evaluate(tmp_path: Path, monkeypatch) -> None:
@@ -522,10 +522,10 @@ def test_farm_controller_prompt_uses_are_farm_context_with_function_calling() ->
     config = AgentConfigBuilder().build("farm_baseline_react")
     prompt = config.base_agent_config.system_prompt
 
-    assert "farms configured in this scenario" in prompt
-    assert "Ridge IDs are local to the selected farm" in prompt
-    assert "explicit farm_id and asset_id" in prompt
-    assert "one simulation clock" in prompt
+    assert "experienced farm manager" in prompt
+    assert "actual crops, field layouts" in prompt
+    assert "requirements and result format" in prompt
+    assert "Tool calls may read information" in prompt
     assert "provided function tools" in prompt
     assert "do not hand-write JSON action blobs" in prompt
     assert "Don't call tools unnecessarily" not in prompt
@@ -1362,9 +1362,9 @@ def test_farm_agent_key_tool_descriptions_are_restored() -> None:
 
     expected_phrases = {
         "AgentUserInterface__send_message_to_user": "Send a message to the user",
-        "SystemApp__advance_time": "Advance the simulation clock",
+        "SystemApp__advance_time": "Wait for the specified duration",
         "SystemApp__get_current_time": "Get the current time",
-        "SystemApp__wait_for_notification": "Wait until the next notification",
+        "SystemApp__wait_for_notification": "Check for a notification",
     }
     for tool_name, phrase in expected_phrases.items():
         assert phrase in descriptions[tool_name]
@@ -1412,7 +1412,7 @@ def test_l3_agent_run_uses_event_briefing_as_controller_task() -> None:
     assert "湿六月" in task_source["content_preview"]
 
     llm_start = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_start")
-    assert "Today's date in 'YYYY-MM-DD HH' format is" in llm_start["messages"][0]["content"]
+    assert "Task start time:" in llm_start["messages"][0]["content"]
     user_message = next(message for message in llm_start["messages"] if message["role"] == "user")
     assert "湿六月" in user_message["content"]
     assert "Kwoo context" in user_message["content"]

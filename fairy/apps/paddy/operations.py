@@ -31,7 +31,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def irrigate(self, plot_id: str, water_mm: float) -> dict:
-        """Deliver water_mm through the supply canal. Quota includes conveyance losses; flow and opening hours constrain duration."""
+        """Deliver water_mm through the supply canal. Quota includes conveyance losses; flow and opening hours constrain duration.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            water_mm: Positive requested surface-water depth in mm.
+        """
         p = self._plot(plot_id)
         amount = positive(water_mm, "water_mm")
         channel = self.world.channel("supply")
@@ -59,7 +64,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def drain(self, plot_id: str, water_mm: float) -> dict:
-        """Drain up to water_mm of ponded surface water; never directly remove root-zone water."""
+        """Drain up to water_mm of ponded surface water; never directly remove root-zone water.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            water_mm: Positive requested surface-water depth in mm.
+        """
         p = self._plot(plot_id)
         amount = positive(water_mm, "water_mm")
         channel = self.world.channel("drain")
@@ -83,7 +93,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def soak(self, plot_id: str, hours: int = 24) -> dict:
-        """Wait 1..72 hours for a ponded, unpuddled plot to soak. Read sensors to verify effective wet time."""
+        """Wait 1..72 hours for a ponded, unpuddled plot to soak. Read sensors to verify effective wet time.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            hours: Soaking duration in whole hours, from 1 to 72.
+        """
         p = self._plot(plot_id)
         if p.planted or p.puddled:
             raise ValueError("Soaking is a pre-puddling operation")
@@ -98,7 +113,11 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def puddle_and_level(self, plot_id: str) -> dict:
-        """Puddle/level using the tractor with puddler, after 24 wet hours with >=5 mm ponding and root VWC >=0.45."""
+        """Puddle/level using the tractor with puddler, after 24 wet hours with >=5 mm ponding and root VWC >=0.45.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = self._plot(plot_id)
         if p.planted or p.puddled:
             raise ValueError("Plot already puddled or planted")
@@ -119,7 +138,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def load_seedlings(self, batch_id: str, quantity: int) -> dict:
-        """Transfer purchased seedlings from stock to the transplanter, subject to onboard capacity."""
+        """Transfer purchased seedlings from stock to the transplanter, subject to onboard capacity.
+
+        Args:
+            batch_id: Exact seedling-batch ID from inventory.
+            quantity: Positive number of individual seedlings.
+        """
         self.world.advance_physics_time()
         batch = self.world.field.seedlings
         if batch_id != batch.batch_id:
@@ -139,10 +163,19 @@ class PaddyOpsApp(App):
     def transplant(self, plot_id: str, batch_id: str, row_spacing_cm: float = 20.,
                    hill_spacing_cm: float = 20., seedlings_per_hill: int = 3,
                    area_m2: float | None = None) -> dict:
-        """Transplant all remaining area or an explicit work batch. Complete each plot within one UTC day.
+        """Transplant all remaining plot area or a specified work batch.
 
-        Density is fixed at 20x20 cm, 3 seedlings/hill. Native crop establishment
-        occurs once, on completion of the hydraulic plot; partial work is recorded.
+        Use 20 cm row and hill spacing with 3 seedlings per hill. Complete each
+        plot's batches within one UTC calendar day. Partial work is recorded;
+        the plot is marked fully transplanted when its remaining area is completed.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            batch_id: Exact seedling-batch ID from inventory.
+            row_spacing_cm: Row spacing in cm; supported value 20.
+            hill_spacing_cm: Hill spacing in cm; supported value 20.
+            seedlings_per_hill: Seedlings per hill; supported value 3.
+            area_m2: Requested work area in square metres; None requests all remaining area, subject to the operation limit.
         """
         p = self._plot(plot_id)
         batch = self.world.field.seedlings
@@ -191,6 +224,10 @@ class PaddyOpsApp(App):
 
         Requires surface water <=0.1 mm, root VWC <=0.42, grain moisture
         14..28%, rainfall <=5 mm. Moisture outside 20..25% adds recovery loss.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            area_m2: Requested work area in square metres; None requests all remaining area, subject to the operation limit.
         """
         p = self._plot(plot_id)
         b = self.world.backends[plot_id]
@@ -237,7 +274,11 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def unload_grain(self, plot_id: str | None = None) -> dict:
-        """Unload combine batches to the dryer reception area, optionally selecting their source plot."""
+        """Unload combine batches to the dryer reception area, optionally selecting their source plot.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview. None selects all applicable plots.
+        """
         self.world.advance_physics_time()
         if plot_id:
             self._plot(plot_id)
@@ -254,7 +295,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def dry_grain(self, batch_id: str, target_moisture_pct: float = 14.) -> dict:
-        """Dry one reception batch to the reference 14% standard, consuming throughput time and electricity."""
+        """Dry one reception batch to the reference 14% standard, consuming throughput time and electricity.
+
+        Args:
+            batch_id: Exact grain-batch ID from the grain listing.
+            target_moisture_pct: Target grain moisture percentage; this dryer supports 14 only.
+        """
         self.world.advance_physics_time()
         batch = self.world.batch(batch_id)
         if batch.location != "reception" or target_moisture_pct != 14.:
@@ -277,7 +323,11 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def store_grain(self, batch_id: str) -> dict:
-        """Move a reception batch at <=14% moisture into warehouse capacity; no automatic drying occurs."""
+        """Move a reception batch at <=14% moisture into warehouse capacity; no automatic drying occurs.
+
+        Args:
+            batch_id: Exact grain-batch ID from the grain listing.
+        """
         self.world.advance_physics_time()
         batch = self.world.batch(batch_id)
         if batch.location != "reception" or batch.moisture_pct > 14.:
@@ -306,7 +356,12 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def load_fertilizer(self, kg: float, product_id: str = "urea") -> dict:
-        """Load the declared 46%-N urea product from warehouse stock to the tractor spreader supply."""
+        """Load the declared 46%-N urea product from warehouse stock to the tractor spreader supply.
+
+        Args:
+            kg: Positive fertilizer product mass in kg to load.
+            product_id: Fertilizer product ID from stock; supported value urea.
+        """
         self.world.advance_physics_time()
         amount = positive(kg, "kg")
         machine = self.world.machine("tractor")
@@ -321,10 +376,17 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def apply_fertilizer(self, plot_id: str, kg_per_ha: float, product_id: str = "urea") -> dict:
-        """Apply loaded urea with tractor/spreader. Dose is kg of product per hectare, maximum 300 per application.
+        """Apply loaded urea using the tractor and spreader.
 
-        Requires a puddled plot before maturity and <=50 mm surface water.
-        The native finite N pool receives product N with explicit 70% recovery.
+        Dose is kg of fertilizer product per hectare, at most 300 kg/ha per
+        application. Requires a puddled plot before maturity and surface water
+        at or below 50 mm. The declared product contains 46% nitrogen; product
+        mass and elemental nitrogen mass differ.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            kg_per_ha: Positive fertilizer product dose in kg/ha, at most 300 per application.
+            product_id: Fertilizer product ID from stock; supported value urea.
         """
         p = self._plot(plot_id)
         dose = positive(kg_per_ha, "kg_per_ha")
@@ -372,19 +434,39 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def apply_pesticide(self, plot_id: str, liters_per_ha: float = 1.) -> dict:
-        """Treat observed insect pressure with the scenario insecticide proxy; requires tractor/sprayer."""
+        """Apply insecticide using the tractor and sprayer with sufficient chemical stock.
+
+        Requires a growing crop before maturity, a positive dose no greater than
+        2 L/ha, rain no greater than 5 mm and wind no greater than 6 m/s.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            liters_per_ha: Positive working-fluid dose in L/ha, at most 2 per application.
+        """
         return self._treat(plot_id, "pests", liters_per_ha)
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def apply_fungicide(self, plot_id: str, liters_per_ha: float = 1.) -> dict:
-        """Treat observed disease pressure with the scenario fungicide proxy; requires tractor/sprayer."""
+        """Apply fungicide using the tractor and sprayer with sufficient chemical stock.
+
+        Requires a growing crop before maturity, a positive dose no greater than
+        2 L/ha, rain no greater than 5 mm and wind no greater than 6 m/s.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            liters_per_ha: Positive working-fluid dose in L/ha, at most 2 per application.
+        """
         return self._treat(plot_id, "disease", liters_per_ha)
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def control_weeds(self, plot_id: str) -> dict:
-        """Perform manual/mechanical rice weeding in <=30 mm ponding; consumes work time, not herbicide."""
+        """Perform manual/mechanical rice weeding in <=30 mm ponding; consumes work time, not herbicide.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = self._plot(plot_id)
         if not p.planted or self.world.backends[plot_id].maturity or self.world.backends[plot_id].water.states.SS > 3:
             raise ValueError("Weeding requires growing rice and <=30 mm water")
@@ -396,10 +478,15 @@ class PaddyOpsApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def replant_seedlings(self, plot_id: str, quantity: int) -> dict:
-        """Gap-fill within 14 days of transplant, preserving the native crop calendar.
+        """Gap-fill missing plants within 14 days of transplanting.
 
-        Recovery affects a labelled stand/assimilation proxy after two days;
-        this is not a new WOFOST cohort or a reset of DVS/biomass.
+        Requires loaded seedlings, moist soil and surface water at or below
+        30 mm. Recovery is reported after two days. Gap-filling does not restart
+        the existing crop's development schedule.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+            quantity: Positive number of individual seedlings.
         """
         p = self._plot(plot_id)
         b = self.world.backends[plot_id]

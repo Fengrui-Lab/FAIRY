@@ -29,7 +29,8 @@ from fairy.scenarios.wofost_farm import DATA, WofostFarmScenario
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "fairy/scenarios/farm_world_fullseason_v2"
+LEGACY_SOURCE = ROOT / "fairy/scenarios/farm_world_fullseason_v2"
+NATIVE_SOURCE = ROOT / "fairy/scenarios/wofost"
 RELEASE = ROOT / "configs/oracles/wofost_next20_release_status.json"
 DOCUMENT = json.loads(RELEASE.read_text()) if RELEASE.exists() else {"cases": []}
 CASES = DOCUMENT["cases"]
@@ -119,7 +120,8 @@ def test_release_selects_twenty_distinct_original_cases_without_replacing_the_fi
     assert sum(case["status"] in {"in_progress", "validating"} for case in CASES) <= 1
     for case in CASES:
         path = _source(case)
-        assert path.parent == SOURCE and path.is_file()
+        expected_source = NATIVE_SOURCE if case["scenario_id"].endswith("_V2") else LEGACY_SOURCE
+        assert path.parent == expected_source and path.is_file()
         assert case["status"] in {"pending", "in_progress", "validating", "complete"}
         assert case["original_core"]
         tree = ast.parse(path.read_text())
@@ -157,7 +159,7 @@ def test_completed_source_owns_its_world_events_and_literal_plan(built):
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
             name = node.module or ""
-            assert not name.startswith(("scripts", "json", "fairy.scenarios.farm_world_fullseason_v2"))
+            assert not name.startswith(("scripts", "json", "fairy.scenarios.farm_world_fullseason_v2", "fairy.scenarios.wofost.scenario_"))
             assert "batch_scenario" not in name and "wofost_reference" not in name
         elif isinstance(node, ast.Import):
             assert not any(alias.name.startswith(("scripts", "json")) for alias in node.names)

@@ -106,12 +106,12 @@ def test_same_regional_weather_has_independent_profiles_and_does_not_modify_regi
     local_rain = [event for event in a.weather_events if event.event_type == "rain_event"]
     registry_rain = [event for event in registered.weather_events if event.event_type == "rain_event"]
     assert len(local_rain) == 4 and len(registry_rain) == 1
-    assert registry_rain[0].total_rain_mm == 72.0
-    assert all(event.duration_days == 1 and event.total_rain_mm == 18.0 for event in local_rain)
+    assert registry_rain[0].rain_mm == 72.0
+    assert all(event.duration_days == 1 and event.rain_mm == 18.0 for event in local_rain)
     assert [event.start_date for event in local_rain] == [
         registry_rain[0].start_date + timedelta(days=offset) for offset in range(4)
     ]
-    assert sum(event.total_rain_mm for event in local_rain) == 72.0
+    assert sum(event.rain_mm for event in local_rain) == 72.0
     assert [event for event in a.weather_events if event.event_type != "rain_event"] == [
         event for event in registered.weather_events if event.event_type != "rain_event"
     ]

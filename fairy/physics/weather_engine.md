@@ -207,7 +207,22 @@ wind_event
 dry_spell
 ```
 
-Example:
+Rain events accept exactly one of two amount fields:
+
+- `rain_mm` retains the historical query-window allocation, RNG draws, and
+  rounding. A one-day query receives that amount; a multi-day query splits it
+  across the matching event days. It does not guarantee a whole-event total.
+- `total_rain_mm` is the whole-event total. It is split across all event days
+  once deterministically, then each query selects the corresponding dates.
+  Daily, partial-window and forecast queries preserve the same allocation.
+
+Historical registered profiles use `rain_mm`. The new two-farm and three-farm
+normal-season scenes select the independent
+`harbin_hb_base_hn84_std_normal_total_rain_seed_1101` profile, using
+`total_rain_mm`. New exports retain both keys; checkpoint readers interpret
+historical event dictionaries without a `rain_mm` key using legacy behavior.
+
+Example of a whole-event total:
 
 ```python
 WeatherEvent(

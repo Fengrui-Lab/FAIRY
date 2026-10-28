@@ -140,8 +140,8 @@ def test_real_agent_request_contains_maize_schema_and_crop_neutral_prompt(field)
     assert len(llm.requests) == 1
     messages, tools = llm.requests[0]
     system = "\n".join(message.get("content", "") for message in messages if message["role"] == "system")
-    assert "farms configured in this scenario" in system
-    assert "each farm's own crop profile" in system
+    assert "experienced farm manager" in system
+    assert "actual crops, field layouts" in system
     assert "soybean farms" not in system
     functions = {schema["function"]["name"]: schema["function"] for schema in tools}
     assert "FarmWorldApp__get_crop_capabilities" in functions

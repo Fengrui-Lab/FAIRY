@@ -190,7 +190,9 @@ def test_ground_ranges_without_physics_return_observations_and_actual_coverage(e
     assert robot.data["_battery_pct"] < before_battery
     assert engine.time_manager.offset > before_time
     assert len(robot.data["_inspection_log"]) == 1
-    assert "unavailable" in schemas[f"Robot__{method}"]["description"]
+    description = schemas[f"Robot__{method}"]["description"].lower()
+    assert any(word in description for word in ("unavailable", "missing"))
+    assert "unknown" in description or "not confirmed" in description
 
 
 def test_registration_rejects_a_fabricated_signature_on_an_ordinary_method():

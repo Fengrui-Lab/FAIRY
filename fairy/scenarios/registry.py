@@ -46,6 +46,7 @@ def _import_known_scenarios() -> None:
         "fairy.scenarios.farm_worldpp_physics",
         "fairy.scenarios.farm_world_fullseason",
         "fairy.scenarios.farm_world_fullseason_v2",
+        "fairy.scenarios.wofost",
         "fairy.scenarios.farm_world_diverse",
         "fairy.scenarios.two_farm",
         "fairy.scenarios.three_farm",

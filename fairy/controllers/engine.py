@@ -71,6 +71,21 @@ class EngineEnvironment:
         }
 
 
+def _has_observation_coverage(content: dict[str, Any], tool: Any) -> bool:
+    """A robot inspection can report valid observations over partial coverage."""
+    from fairy.apps.farm_world.robot_operations import RobotOperations
+
+    return (
+        isinstance(tool.class_instance, RobotOperations)
+        and tool.name in {"inspect_emergence", "inspect_crop_health", "inspect_pests"}
+        and isinstance(content.get("covered_ridges"), list)
+        and bool(content["covered_ridges"])
+        and isinstance(content.get("uncovered_ridges"), list)
+        and isinstance(content.get("observations"), dict)
+        and bool(content["observations"])
+    )
+
+
 class Engine:
     engine_name: str = "fairy_engine"
 
@@ -500,7 +515,10 @@ class Engine:
                             stage=detail.get("stage", "execution"),
                             partial_effects=detail.get("partial_effects", "unknown"))
                     elif isinstance(content, dict) and (
-                        bool(content.get("error")) or content.get("status") in {"error", "failed", "partial"}
+                        bool(content.get("error"))
+                        or content.get("status") in {"error", "failed"}
+                        or (content.get("status") == "partial"
+                            and not _has_observation_coverage(content, tools_map[step.tool_name]))
                     ):
                         # Keep an actual returned failure and its partial
                         # effects, then stop. Expected Python exceptions above

@@ -27,6 +27,7 @@ from typing import Any
 from fairy.apps.app import App
 from fairy.apps.farm_world.farm_world_app import FarmWorldApp
 from fairy.tool_utils import OperationType, app_tool, data_tool
+from fairy.tool_contracts import OperationContract
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
@@ -45,6 +46,18 @@ class SensorApp(App):
     """Configured soil and canopy probes, each covering a local ridge zone."""
 
     validate_tool_arguments = True
+
+    def get_tool_contract(self, method_name: str) -> OperationContract | None:
+        world = self._farm_world_app
+        if (method_name not in {"read_soil_sensors", "read_soil_sensor"}
+                or not world.physics_active or world.physics.crop_backend is None):
+            return None
+        return OperationContract(
+            "Read soil-water and temperature estimates for the reported ridge zone. "
+            "This field reports root-zone water content; it is not an independent "
+            "5 cm water measurement. Temperature represents the shallow soil layer. "
+            "Readings have uncertainty. Use this App's sensor listing for local probe IDs.",
+        )
 
     def get_tools(self):
         tools = super().get_tools()
@@ -122,20 +135,17 @@ class SensorApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_root_zone_sensors(self) -> dict[str, Any]:
-        """Read simulated root-zone water telemetry for irrigation decisions.
+        """Read root-zone soil-water estimates for irrigation decisions.
 
-        This is a separate modeled root-zone probe, not the existing 5 cm
-        surface sensor. Values are zone averages with +/-0.005 VWC noise;
-        use the local crop's irrigation threshold and check again after delivery.
+        Values are coverage-zone averages with +/-0.005 VWC uncertainty.
+        They describe estimated rooting-layer water, not an independent shallow
+        measurement. Check the crop's irrigation threshold and recheck after delivery.
 
-        When WOFOST is active, soil_nitrogen also reports native CNB model
-        telemetry for the same coverage zone: available and reserve nitrogen
-        in kg N/ha, the completed native forcing day, and the latest nitrogen
-        state day (which also includes scenario nitrogen interventions). These are modeled
-        soil pools, not a physical nitrogen probe or a plant nitrogen-deficiency
-        diagnosis. Existing nutrient_index is a separate juvenile growth proxy.
-        Nitrogen values are unavailable until every covered ridge has a native
-        state for the same completed day; missing values are never zero-filled.
+        If soil_nitrogen is provided, it contains calculated available and reserve
+        soil-nitrogen estimates in kg N/ha, their effective dates and coverage status.
+        These are not soil-test results or a direct diagnosis of crop nitrogen
+        deficiency. Missing values are unavailable, not zero. Nitrogen estimates
+        require complete coverage for the same reporting day.
         """
         self._sync_sensors()
         farm = self._farm_world_app
@@ -184,8 +194,7 @@ class SensorApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_soil_sensors(self) -> dict[str, Any]:
-        """
-        Return readings and actual coverage of this farm's soil probes.
+        """Return readings and actual coverage of this farm's soil probes.
 
         Each probe reports volumetric water content (vwc) and soil temperature
         (temp_c) at 5 cm depth. The reading represents the average condition
@@ -193,7 +202,7 @@ class SensorApp(App):
 
         Probe count and coverage depend on the configured farm layout.
         Each result includes sensor_id, ridge_start and ridge_end; the
-        environment directory supplies the global IDs for single-probe reads.
+        sensor listing provides the local IDs for single-probe reads.
         """
         self._sync_sensors()
         readings = []
@@ -212,8 +221,7 @@ class SensorApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_canopy_sensors(self) -> dict[str, Any]:
-        """
-        Return readings and actual coverage of this farm's canopy sensors.
+        """Return readings and actual coverage of this farm's canopy sensors.
 
         Each sensor reports an ndvi_proxy value (0.0-1.0). A value of -1
         means no valid reading yet (pre-emergence). The reading represents
@@ -221,7 +229,7 @@ class SensorApp(App):
 
         Probe count and coverage depend on the configured farm layout.
         Each result includes sensor_id, ridge_start and ridge_end; the
-        environment directory supplies the global IDs for single-probe reads.
+        sensor listing provides the local IDs for single-probe reads.
         """
         self._sync_sensors()
         readings = []
@@ -238,11 +246,10 @@ class SensorApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_soil_sensor(self, sensor_id: str) -> dict[str, Any]:
-        """
-        Return the latest reading from a single soil probe.
+        """Return the latest reading from a single soil probe.
 
         Args:
-            sensor_id: "S1" through "S6".
+            sensor_id: Exact local soil-probe ID returned by this App's read_soil_sensors.
         """
         self._sync_sensors()
         sensor = self._find_soil(sensor_id)
@@ -261,11 +268,10 @@ class SensorApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_canopy_sensor(self, sensor_id: str) -> dict[str, Any]:
-        """
-        Return the latest reading from a single canopy sensor.
+        """Return the latest reading from a single canopy sensor.
 
         Args:
-            sensor_id: "C1" through "C6".
+            sensor_id: Exact local canopy-probe ID returned by this App's read_canopy_sensors.
         """
         self._sync_sensors()
         sensor = self._find_canopy(sensor_id)

@@ -90,22 +90,16 @@ class SystemApp(App):
         hours: int = 0,
         days: int = 0,
     ) -> dict:
-        """
-        Advance the simulation clock by a specified amount of time.
+        """Wait for the specified duration while field conditions and pending activities progress.
 
-        Use this fast-forward tool when waiting for biological or physical
-        processes to play out, such as crop growth, soil drying, treatment
-        residual decay, irrigation effects, or post-harvest drying. After time
-        advances, subsequent state reads reflect the evolved world.
+        Use this when no immediate work is needed or an activity needs time to
+        complete. Check current conditions and operation status afterward.
 
         Args:
             seconds: Finite non-negative seconds to advance, including fractional seconds.
             minutes: Minutes to advance.
             hours: Hours to advance.
             days: Days to advance.
-
-        Returns:
-            A dictionary containing the new current time.
         """
         total_seconds = (
             float(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400
@@ -145,12 +139,11 @@ class SystemApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def wait_for_notification(self, timeout: int = 0) -> None:
-        """
-        Wait until the next notification or user message is received.
+        """Check for a notification or wait up to timeout seconds.
 
-        Use this only when there are no other useful tasks to perform. If
-        timeout is greater than zero, waiting ends after at most that many
-        seconds even if no notification arrives.
+        With timeout=0, return immediately if no notification is ready. Use a
+        positive timeout for a bounded wait. Use this when no other useful work
+        can be performed.
 
         Args:
             timeout: Maximum number of seconds to wait.

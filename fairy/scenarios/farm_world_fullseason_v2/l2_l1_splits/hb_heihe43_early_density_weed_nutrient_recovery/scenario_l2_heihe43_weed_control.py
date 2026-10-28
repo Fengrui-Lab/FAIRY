@@ -125,7 +125,7 @@ class ScenarioL2HBHeihe43EarlyWeedControl(Scenario):
             o_status = tractor.get_status().oracle().with_id(
                 "o_check_sprayer_status"
             ).depends_on(o_inventory, delay_seconds=1)
-            o_load = tractor.load_pesticide(29.4).oracle().with_id(
+            o_load = tractor.load_pesticide(97.92).oracle().with_id(
                 "o_load_herbicide_volume"
             ).depends_on(o_status, delay_seconds=1)
             spray_events, o_after_spray = apply_heihe43_herbicide_blocks(

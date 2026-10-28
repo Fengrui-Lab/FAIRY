@@ -15,15 +15,14 @@ class FarmService(SharedFarmService):
     def get_farm_overview(self, farm_id: FarmId) -> dict[str, Any]:
         """Read one farm's geometry, crop, season phase and ridge summary.
 
-        Synchronizes that farm's existing physics to the current clock but
-        does not advance time. Use ridge-state and sensor tools for detail.
+        Reports that farm's state at the current time without advancing time. Use ridge-state and sensor tools for detail.
 
         Args:
             farm_id: Exact farm ID whose state should be queried.
 
         Returns:
             Receipt with configuration, area, crop_profile, sim_date,
-            season_phase, inventory, ridges_overview and model assumptions in data.
+            season_phase, inventory and ridges_overview in data.
         """
         return self._execute("get_farm_overview", farm_id=farm_id)
 
@@ -32,8 +31,8 @@ class FarmService(SharedFarmService):
         """Read operational state for one local ridge without advancing time.
 
         Returns public planting, maturity and latest observation fields.
-        Hidden nutrient, stand and canopy truth are excluded; acquire new
-        observations with Sensor, Drone or Robot tools.
+        This query does not acquire new field measurements; use Sensor, Drone
+        or Robot tools for fresh observations.
 
         Args:
             farm_id: Farm containing the ridge.
@@ -49,7 +48,7 @@ class FarmService(SharedFarmService):
         """Read public operational states for an inclusive local ridge range.
 
         Does not advance time or acquire a new remote/ground inspection.
-        Hidden nutrient, stand and canopy truth remain excluded.
+        Use observation tools for fresh field measurements.
 
         Args:
             farm_id: Farm containing all requested ridges.
@@ -87,8 +86,8 @@ class FarmService(SharedFarmService):
 
         Requires this farm's fertilizer inventory, fertilizer allowance and
         any applicable water quota. One nutrient unit uses 30 kg per ridge.
-        Queues soil/management effects when physics is active; does not set
-        canopy health instantly and does not add operation time.
+        Field response is not instantaneous; reassess conditions after treatment.
+        This call does not add operation time.
 
         Args:
             farm_id: Farm supplying fertilizer and receiving the treatment.
@@ -113,7 +112,7 @@ class FarmService(SharedFarmService):
 
         Target must also satisfy the farm's storage limit and drying capacity.
         If the current batch is already safe, drying is skipped. Updates
-        grain moisture and batch flags; does not advance time in this model.
+        grain moisture and batch flags; does not advance time.
 
         Args:
             farm_id: Farm owning the pending unloaded grain batch.
@@ -131,7 +130,7 @@ class FarmService(SharedFarmService):
 
         Requires warehouse capacity. Wet undried grain is currently stored
         with a spoilage-risk warning rather than rejected; inspect the result
-        and moisture limits. Safe storage is checked by scenario validation.
+        and moisture limits. Successful transfer alone does not establish safe storage.
         Clears the trailer batch without adding operation time.
 
         Args:

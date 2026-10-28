@@ -56,7 +56,7 @@ from fairy.types import EventRegisterer
 
 SCENARIO_ID = "scenario_two_farm_full_season_hn84_normal"
 SOURCE_SCENARIO_ID = "scenario_full_season_hb_base_hn84_std_normal"
-PROFILE_NAME = "harbin_hb_base_hn84_std_normal_seed_1101"
+PROFILE_NAME = "harbin_hb_base_hn84_std_normal_total_rain_seed_1101"
 # 复用物理层正常年气候：seed=1101；固定雨段8/2–4、8/18–19，另有生成的日降雨。
 SEED_TYPE = "HEINONG84"
 SEED_SPACING_CM = 7.9

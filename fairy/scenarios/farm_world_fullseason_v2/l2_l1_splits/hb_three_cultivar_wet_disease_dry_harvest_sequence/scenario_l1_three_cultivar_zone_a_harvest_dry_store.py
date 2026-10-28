@@ -10,10 +10,12 @@ from fairy.scenarios.registry import register_scenario
 from fairy.scenarios.validation_result import ScenarioValidationResult
 from fairy.types import EventRegisterer
 
+from .._harbin_split_common import checkpoint_sim_time
+
 from ._hb_three_cultivar_split_common import (
+    CHECKPOINT_DIR,
     CHECKPOINT_ZONE_A_HARVEST_READY,
     SOURCE_L3_SCENARIO_ID,
-    cst_timestamp,
     populate_three_cultivar_apps,
     restore_three_cultivar_checkpoint,
     validate_native_workflow,
@@ -26,7 +28,10 @@ SCENARIO_ID = "scenario_l1_three_cultivar_zone_a_harvest_dry_store"
 class ScenarioL1ThreeCultivarZoneAHarvestDryStore(Scenario):
     """L1 split: harvest ready HEIHE50 zone A, dry, and store."""
 
-    start_time: float | None = cst_timestamp(2026, 8, 23, 8)
+    # Resume at the saved instant, after the source scenario's completed work.
+    start_time: float | None = checkpoint_sim_time(
+        CHECKPOINT_DIR, CHECKPOINT_ZONE_A_HARVEST_READY
+    )
     queue_based_loop: bool = True
     time_increment_in_seconds: int = 60
     detailed_briefing: bool = True

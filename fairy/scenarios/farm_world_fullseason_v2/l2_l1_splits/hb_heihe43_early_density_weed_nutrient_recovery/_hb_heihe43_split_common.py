@@ -131,7 +131,7 @@ def apply_heihe43_herbicide_blocks(
     previous,
     prefix: str,
     *,
-    liters_per_ridge: float = 2.4,
+    liters_per_ridge: float = 8.0,
 ):
     current = previous
     events = []

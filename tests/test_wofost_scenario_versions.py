@@ -22,7 +22,8 @@ from fairy.scenarios.registry import get_scenario_class, list_scenarios
 from fairy.scenarios.wofost_farm import WofostFarmScenario
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "fairy/scenarios/farm_world_fullseason_v2"
+LEGACY_SOURCE = ROOT / "fairy/scenarios/farm_world_fullseason_v2"
+NATIVE_SOURCE = ROOT / "fairy/scenarios/wofost"
 MANIFEST = ROOT / "configs/oracles/wofost_scenario_versions.json"
 DOCUMENT = json.loads(MANIFEST.read_text())
 ROWS = DOCUMENT["rows"]
@@ -49,7 +50,7 @@ UNCALIBRATED = "scenario_full_season_hb_low_nutrient_carryover_flowering_nutriti
 
 def _source(path):
     result = (ROOT / path).resolve()
-    assert result.parent == SOURCE
+    assert result.parent == (NATIVE_SOURCE if result.stem.endswith("_V2") else LEGACY_SOURCE)
     return result
 
 
@@ -91,7 +92,7 @@ def test_version_manifest_preserves_the_original_formal90_namespace_and_legacy_r
     for row in ROWS:
         assert row["wofost_id"] == row["legacy_id"] + "_V2"
         legacy_path = _source(row["legacy_source_path"])
-        assert _source(row["wofost_source_path"]) == legacy_path.with_name(legacy_path.stem + "_V2.py")
+        assert _source(row["wofost_source_path"]) == NATIVE_SOURCE / (legacy_path.stem + "_V2.py")
         assert row["wofost_class_name"] == row["legacy_class_name"] + "_V2"
     held = [row for row in ROWS if row["calibration_status"] == "uncalibrated"]
     assert [row["legacy_id"] for row in held] == [UNCALIBRATED]
@@ -125,7 +126,7 @@ def test_version_sources_and_registered_classes_are_independent_without_alias_ov
     for node in ast.walk(native_tree):
         if isinstance(node, ast.ImportFrom):
             name = node.module or ""
-            assert not name.startswith(("scripts", "json", "fairy.scenarios.farm_world_fullseason_v2.scenario_"))
+            assert not name.startswith(("scripts", "json", "fairy.scenarios.farm_world_fullseason_v2.scenario_", "fairy.scenarios.wofost.scenario_"))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             assert node.func.attr not in {"read_text", "read_bytes", "load_workflow"}
 

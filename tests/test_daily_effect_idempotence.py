@@ -1,4 +1,4 @@
-"""Actions are immediate; daily aging is charged only by calendar ticks."""
+"""Daily effects are idempotent; harvest retains legacy recovery drydown."""
 from copy import deepcopy
 from datetime import date, datetime, timedelta, timezone
 
@@ -97,7 +97,7 @@ def yield_inputs():
     return weather, phenology, growth
 
 
-def test_yield_daily_update_is_idempotent_and_harvest_does_not_dry_again():
+def test_regular_yield_update_is_idempotent_but_harvest_repeats_legacy_drydown():
     engine = YieldRecoveryEngine(num_ridges=2)
     weather, phenology, growth = yield_inputs()
     engine.update_day(weather, phenology, growth)
@@ -108,9 +108,27 @@ def test_yield_daily_update_is_idempotent_and_harvest_does_not_dry_again():
     results = engine.settle_harvest(weather, phenology, growth, {0: HarvestAction()})
     assert [result.ridge_id for result in results] == [0]
     assert engine.states[0].harvested
-    assert engine.states[0].grain_moisture_frac == before[0].grain_moisture_frac
+    assert engine.states[0].grain_moisture_frac == pytest.approx(
+        2 * before[0].grain_moisture_frac - engine.params.initial_r8_grain_moisture
+    )
     assert engine.states[0].field_loss_fraction == before[0].field_loss_fraction
     assert engine.states[1] == non_target
+
+
+def test_harvest_recovery_matches_main_drydown_and_market_weight():
+    engine = YieldRecoveryEngine(num_ridges=2)
+    weather, phenology, growth = yield_inputs()
+    state = engine.states[0]
+    state.r8_reached, state.maturity_date = True, DAY
+    state.biological_yield_g_m2 = 400
+    state.grain_moisture_frac = 0.1486
+    state.last_daily_update_day = DAY
+    other = deepcopy(engine.states[1])
+    engine.settle_harvest(weather, phenology, growth, {0: HarvestAction()})
+    # Captured from main's update_day with the same mature state and weather.
+    assert state.grain_moisture_frac == pytest.approx(0.131)
+    assert state.recovered_yield_g_m2_at_market_moisture == pytest.approx(389.55172413793105)
+    assert engine.states[1] == other
 
 
 def test_new_date_cursors_roundtrip_and_old_state_dictionaries_remain_valid():
@@ -187,17 +205,17 @@ def test_sequential_23_minute_treatments_preserve_first_ridge_effect(field):
     assert physics.biotic.states[0].cumulative_insect_pressure == 0
 
 
-def test_backwards_time_rejects_without_consuming_pending_actions(field):
+def test_backwards_time_is_noop_without_consuming_pending_actions(field):
     _, world = field
     physics = world.physics
     physics.queue_management_action(0, ManagementAction(ManagementActionType.INSECTICIDE))
-    with pytest.raises(ValueError, match="backwards"):
-        advance_physics_time(world, START - 1)
+    result = advance_physics_time(world, START - 1)
+    assert result == {"status": "noop", "day_ticks_run": 0, "elapsed_s": -1}
     assert 0 in physics.pending_management_actions_by_ridge
     assert physics.last_physics_sim_time == START
 
 
-def test_harvest_tool_settles_current_moisture_and_preserves_non_target(shared_field):
+def test_harvest_tool_repeats_legacy_drydown_and_preserves_non_target(shared_field):
     env, world = shared_field
     physics = world.physics
     from fairy.physics import SoybeanStage
@@ -220,7 +238,9 @@ def test_harvest_tool_settles_current_moisture_and_preserves_non_target(shared_f
     tractor = SharedTractorApp(env)
     result = tractor.harvest("farm_a", 0, 0)
     assert result["status"] == "ok"
-    assert physics.yield_recovery.states[0].grain_moisture_frac == 0.15
+    moisture = physics.yield_recovery.states[0].grain_moisture_frac
+    assert moisture < 0.15
+    # Preserve the historical bin metadata captured before recovery drydown.
     assert tractor.get_state()["grain_moistures_pct"] == [15]
     assert physics.yield_recovery.states[1] == non_target
     assert physics.yield_recovery.states[0].harvested

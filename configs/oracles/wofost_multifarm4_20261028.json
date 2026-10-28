@@ -1,0 +1,1360 @@
+{
+  "schema_version": 1,
+  "batch_id": "wofost_multifarm4_20261028",
+  "completed": 4,
+  "scope": "Four new two-farm full-season native WOFOST scenarios; independent complete leaf workflows; no legacy replacement.",
+  "existing_legacy_pairs": {
+    "total": 33,
+    "calibrated": 32,
+    "uncalibrated": 1,
+    "held": "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2"
+  },
+  "common_assembly": {
+    "path": "fairy/scenarios/wofost_multi_farm.py",
+    "sha256": "a246fa9f0ce396d5fdd590c4ab21d196e13491adf6eafc7f77057a2468c9216b",
+    "scope": "World assembly and completion/accounting validation only. No new crop/biotic/clock equations and no shared farming workflow."
+  },
+  "verification": {
+    "regression_passed": 284,
+    "regression_seconds": 296.28,
+    "warnings": "5280 existing PCSE/traitlets deprecation warnings",
+    "real_cli_build_execute_replay_evaluate": 4,
+    "controlled_full_seasons": 12,
+    "correct_oracle_tool_calls": 1295,
+    "static_plans_and_real_clocks_match": true,
+    "llm_agent_experiment": false
+  },
+  "cases": [
+    {
+      "number": 1,
+      "title": "相邻浅土与深土大豆：分场水分诊断",
+      "scenario_id": "scenario_two_farm_wofost_soil_water_diagnosis_V2",
+      "source_path": "fairy/scenarios/wofost/scenario_two_farm_wofost_soil_water_diagnosis_V2.py",
+      "source_sha256": "7790838de50a73608d7cefc24513510fba86c3a2ceff8bbf791709c2eca9e9ce",
+      "status": "calibrated",
+      "proof": "source plan == real Oracle == fresh replay; identical control world; full harvest/storage/resources audited",
+      "source_plan_and_real_times_match": true,
+      "all_farms_completed": true,
+      "arms": {
+        "correct": {
+          "farms": {
+            "shallow": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3092.56,
+              "native_dm_kg": 2782.063137649888,
+              "irrigation_mm": 90.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 2949.100171355461,
+              "stored_grain_kg_ha": 3278.2394843962006,
+              "native_irrigation_mm_mean": 82.80000000000003,
+              "native_evapotranspiration_mm_mean": 314.9990147954741
+            },
+            "deep": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3909.68,
+              "native_dm_kg": 3517.1924753572125,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3728.367193178863,
+              "stored_grain_kg_ha": 4144.419945725916,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 342.9212170548041
+            }
+          },
+          "total_stored_kg": 7002.24,
+          "fuel_used_l": 80.0,
+          "tool_calls": 239,
+          "field_operation_rounds": 13,
+          "operation_round_groups": [
+            [
+              "deep",
+              "form_ridges",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "deep",
+              "level",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "plant_seeds",
+              "播种_deep"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ],
+            [
+              "shallow",
+              "form_ridges",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "shallow",
+              "level",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "plant_seeds",
+              "播种_shallow"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "土壤差异诊断与额外一轮水"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "none": {
+          "farms": {
+            "shallow": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 2274.48,
+              "native_dm_kg": 2046.1295426433517,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 2168.9806040571484,
+              "stored_grain_kg_ha": 2411.041383989145,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 287.7329533461673
+            },
+            "deep": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3909.68,
+              "native_dm_kg": 3517.1924753572125,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3728.367193178863,
+              "stored_grain_kg_ha": 4144.419945725916,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 342.9212170548041
+            }
+          },
+          "total_stored_kg": 6184.16,
+          "fuel_used_l": 80.0,
+          "tool_calls": 238,
+          "field_operation_rounds": 12,
+          "operation_round_groups": [
+            [
+              "deep",
+              "form_ridges",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "deep",
+              "level",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "plant_seeds",
+              "播种_deep"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ],
+            [
+              "shallow",
+              "form_ridges",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "shallow",
+              "level",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "plant_seeds",
+              "播种_shallow"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "wrong": {
+          "farms": {
+            "shallow": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 2274.48,
+              "native_dm_kg": 2046.1295426433517,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 2168.9806040571484,
+              "stored_grain_kg_ha": 2411.041383989145,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 287.7329533461673
+            },
+            "deep": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4511.92,
+              "native_dm_kg": 4058.947307698112,
+              "irrigation_mm": 90.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4302.649367895726,
+              "stored_grain_kg_ha": 4782.818860244233,
+              "native_irrigation_mm_mean": 82.80000000000003,
+              "native_evapotranspiration_mm_mean": 360.7913924528142
+            }
+          },
+          "total_stored_kg": 6786.4,
+          "fuel_used_l": 80.0,
+          "tool_calls": 239,
+          "field_operation_rounds": 13,
+          "operation_round_groups": [
+            [
+              "deep",
+              "form_ridges",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "deep",
+              "level",
+              "准备_deep"
+            ],
+            [
+              "deep",
+              "plant_seeds",
+              "播种_deep"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "土壤差异诊断与额外一轮水"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "deep_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ],
+            [
+              "shallow",
+              "form_ridges",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "harvest",
+              "两场分别核查成熟与粮水"
+            ],
+            [
+              "shallow",
+              "level",
+              "准备_shallow"
+            ],
+            [
+              "shallow",
+              "plant_seeds",
+              "播种_shallow"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第一次关键期正常补水"
+            ],
+            [
+              "shallow_Irrigation",
+              "irrigate",
+              "第二次常规整轮水"
+            ]
+          ],
+          "expected_refusals": []
+        }
+      },
+      "gain_over_no_focal_management_pct": 13.228635740343076,
+      "gain_over_wrong_management_pct": 3.180478604267356,
+      "recipe_path": "tests/data/wofost_multi4/01.json",
+      "recipe_sha256": "5ab1e3b0e470b1a541dd57e961eda40918cc16fe9dc709755785893a65e648e8",
+      "evidence_directory": "validation_runs/wofost_multifarm4_20261028/01",
+      "grain_basis_note": "Commodity grain: soybean at 13%, maize at 14% moisture; native WOFOST dry matter separately reported. Cross-crop kg sum is warehouse mass, not a common yield or economic objective.",
+      "no_focal_management_note": "All arms retain sowing, routine background care, maturity checks, harvest and storage; none omits only the management decision under test.",
+      "reference_id": "lille"
+    },
+    {
+      "number": 2,
+      "title": "两场叶片异常：病虫鉴别与共有药液预算",
+      "scenario_id": "scenario_two_farm_wofost_shared_spray_diagnosis_V2",
+      "source_path": "fairy/scenarios/wofost/scenario_two_farm_wofost_shared_spray_diagnosis_V2.py",
+      "source_sha256": "6d58f22c97a0893242ba30d5763a82fff780aa1b7cfb76a7fc625647c432b980",
+      "status": "calibrated",
+      "proof": "source plan == real Oracle == fresh replay; identical control world; full harvest/storage/resources audited",
+      "source_plan_and_real_times_match": true,
+      "all_farms_completed": true,
+      "arms": {
+        "correct": {
+          "farms": {
+            "west": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4338.68,
+              "native_dm_kg": 3922.3507633289064,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.128,
+              "native_dm_kg_ha": 4157.851470625113,
+              "stored_grain_kg_ha": 4599.177408412483,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 378.2524511905531
+            },
+            "east": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4010.12,
+              "native_dm_kg": 3648.340686905375,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0608,
+              "native_dm_kg_ha": 3867.389635881715,
+              "stored_grain_kg_ha": 4250.890434192673,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 375.0090847465998
+            }
+          },
+          "total_stored_kg": 8348.8,
+          "fuel_used_l": 88.0,
+          "tool_calls": 252,
+          "field_operation_rounds": 14,
+          "operation_round_groups": [
+            [
+              "east",
+              "apply_fungicide",
+              "叶片异常不能跨场套用诊断"
+            ],
+            [
+              "east",
+              "form_ridges",
+              "准备_east"
+            ],
+            [
+              "east",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "east",
+              "level",
+              "准备_east"
+            ],
+            [
+              "east",
+              "plant_seeds",
+              "播种_east"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ],
+            [
+              "west",
+              "form_ridges",
+              "准备_west"
+            ],
+            [
+              "west",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "west",
+              "level",
+              "准备_west"
+            ],
+            [
+              "west",
+              "plant_seeds",
+              "播种_west"
+            ],
+            [
+              "west",
+              "spray_pesticide",
+              "叶片异常不能跨场套用诊断"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "none": {
+          "farms": {
+            "west": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3892.3599999999997,
+              "native_dm_kg": 3543.45882358231,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3756.2105914839613,
+              "stored_grain_kg_ha": 4126.060040705563,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 373.8853481861715
+            },
+            "east": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3501.8,
+              "native_dm_kg": 3203.9768004631037,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3396.345828170691,
+              "stored_grain_kg_ha": 3712.050542740841,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 368.725663147769
+            }
+          },
+          "total_stored_kg": 7394.16,
+          "fuel_used_l": 80.0,
+          "tool_calls": 246,
+          "field_operation_rounds": 12,
+          "operation_round_groups": [
+            [
+              "east",
+              "form_ridges",
+              "准备_east"
+            ],
+            [
+              "east",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "east",
+              "level",
+              "准备_east"
+            ],
+            [
+              "east",
+              "plant_seeds",
+              "播种_east"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ],
+            [
+              "west",
+              "form_ridges",
+              "准备_west"
+            ],
+            [
+              "west",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "west",
+              "level",
+              "准备_west"
+            ],
+            [
+              "west",
+              "plant_seeds",
+              "播种_west"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "wrong": {
+          "farms": {
+            "west": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3892.3599999999997,
+              "native_dm_kg": 3543.45882358231,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0608,
+              "native_dm_kg_ha": 3756.2105914839613,
+              "stored_grain_kg_ha": 4126.060040705563,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 373.8853481861715
+            },
+            "east": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 3501.8,
+              "native_dm_kg": 3203.9768004631037,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.128,
+              "native_dm_kg_ha": 3396.345828170691,
+              "stored_grain_kg_ha": 3712.050542740841,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 368.725663147769
+            }
+          },
+          "total_stored_kg": 7394.16,
+          "fuel_used_l": 88.0,
+          "tool_calls": 252,
+          "field_operation_rounds": 14,
+          "operation_round_groups": [
+            [
+              "east",
+              "form_ridges",
+              "准备_east"
+            ],
+            [
+              "east",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "east",
+              "level",
+              "准备_east"
+            ],
+            [
+              "east",
+              "plant_seeds",
+              "播种_east"
+            ],
+            [
+              "east",
+              "spray_pesticide",
+              "叶片异常不能跨场套用诊断"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "east_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ],
+            [
+              "west",
+              "apply_fungicide",
+              "叶片异常不能跨场套用诊断"
+            ],
+            [
+              "west",
+              "form_ridges",
+              "准备_west"
+            ],
+            [
+              "west",
+              "harvest",
+              "独立成熟及来源收储"
+            ],
+            [
+              "west",
+              "level",
+              "准备_west"
+            ],
+            [
+              "west",
+              "plant_seeds",
+              "播种_west"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-07-20"
+            ],
+            [
+              "west_Irrigation",
+              "irrigate",
+              "关键期水分与阶段检查2019-08-08"
+            ]
+          ],
+          "expected_refusals": []
+        }
+      },
+      "gain_over_no_focal_management_pct": 12.910729548724941,
+      "gain_over_wrong_management_pct": 12.910729548724941,
+      "recipe_path": "tests/data/wofost_multi4/02.json",
+      "recipe_sha256": "2a1a689e8f45cb825cbb77ee6b39e7696ac15de9e29934b06770e0727480551c",
+      "evidence_directory": "validation_runs/wofost_multifarm4_20261028/02",
+      "grain_basis_note": "Commodity grain: soybean at 13%, maize at 14% moisture; native WOFOST dry matter separately reported. Cross-crop kg sum is warehouse mass, not a common yield or economic objective.",
+      "no_focal_management_note": "All arms retain sowing, routine background care, maturity checks, harvest and storage; none omits only the management decision under test.",
+      "reference_id": "lille"
+    },
+    {
+      "number": 3,
+      "title": "大豆与玉米：有限共有氮肥的作物差异分配",
+      "scenario_id": "scenario_two_farm_wofost_soybean_maize_nitrogen_budget_V2",
+      "source_path": "fairy/scenarios/wofost/scenario_two_farm_wofost_soybean_maize_nitrogen_budget_V2.py",
+      "source_sha256": "27cc1dbb55771370a9a75b15c33785ca8008881dfb7aea44acd436e086d52158",
+      "status": "calibrated",
+      "proof": "source plan == real Oracle == fresh replay; identical control world; full harvest/storage/resources audited",
+      "source_plan_and_real_times_match": true,
+      "all_farms_completed": true,
+      "arms": {
+        "correct": {
+          "farms": {
+            "soybean": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4056.24,
+              "native_dm_kg": 3693.506959316041,
+              "irrigation_mm": 90.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3915.267723155572,
+              "stored_grain_kg_ha": 4299.779511533242,
+              "native_irrigation_mm_mean": 82.80000000000003,
+              "native_evapotranspiration_mm_mean": 360.80520410507296
+            },
+            "maize": {
+              "area_ha": 0.6432,
+              "stored_grain_kg": 7136.0,
+              "native_dm_kg": 6326.795110934066,
+              "irrigation_mm": 120.0,
+              "fertilizer_kg": 200.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 9836.435184909928,
+              "stored_grain_kg_ha": 11094.52736318408,
+              "native_irrigation_mm_mean": 110.40000000000006,
+              "native_evapotranspiration_mm_mean": 426.264000321111
+            }
+          },
+          "total_stored_kg": 11192.24,
+          "fuel_used_l": 88.18181818181824,
+          "tool_calls": 308,
+          "field_operation_rounds": 17,
+          "operation_round_groups": [
+            [
+              "maize",
+              "apply_fertilizer",
+              "复核两作物氮投入历史与共有余量"
+            ],
+            [
+              "maize",
+              "base_fertilize",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "form_ridges",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "harvest",
+              "玉米独立成熟收获"
+            ],
+            [
+              "maize",
+              "level",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "plant_seeds",
+              "播种_maize"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-15"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-15"
+            ],
+            [
+              "soybean",
+              "form_ridges",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "harvest",
+              "大豆独立成熟收获"
+            ],
+            [
+              "soybean",
+              "level",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "plant_seeds",
+              "播种_soybean"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-05"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-20"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-08-05"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "none": {
+          "farms": {
+            "soybean": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4056.24,
+              "native_dm_kg": 3693.506959316041,
+              "irrigation_mm": 90.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3915.267723155572,
+              "stored_grain_kg_ha": 4299.779511533242,
+              "native_irrigation_mm_mean": 82.80000000000003,
+              "native_evapotranspiration_mm_mean": 360.80520410507296
+            },
+            "maize": {
+              "area_ha": 0.6432,
+              "stored_grain_kg": 6773.12,
+              "native_dm_kg": 6005.016275213846,
+              "irrigation_mm": 120.0,
+              "fertilizer_kg": 100.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 9336.157144300134,
+              "stored_grain_kg_ha": 10530.348258706468,
+              "native_irrigation_mm_mean": 110.40000000000006,
+              "native_evapotranspiration_mm_mean": 426.15817738247466
+            }
+          },
+          "total_stored_kg": 10829.36,
+          "fuel_used_l": 80.18181818181824,
+          "tool_calls": 303,
+          "field_operation_rounds": 16,
+          "operation_round_groups": [
+            [
+              "maize",
+              "base_fertilize",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "form_ridges",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "harvest",
+              "玉米独立成熟收获"
+            ],
+            [
+              "maize",
+              "level",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "plant_seeds",
+              "播种_maize"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-15"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-15"
+            ],
+            [
+              "soybean",
+              "form_ridges",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "harvest",
+              "大豆独立成熟收获"
+            ],
+            [
+              "soybean",
+              "level",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "plant_seeds",
+              "播种_soybean"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-05"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-20"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-08-05"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "wrong": {
+          "farms": {
+            "soybean": {
+              "area_ha": 0.9433600000000001,
+              "stored_grain_kg": 4056.24,
+              "native_dm_kg": 3693.506959316041,
+              "irrigation_mm": 90.0,
+              "fertilizer_kg": 100.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 3915.267723155572,
+              "stored_grain_kg_ha": 4299.779511533242,
+              "native_irrigation_mm_mean": 82.80000000000003,
+              "native_evapotranspiration_mm_mean": 360.80520410507296
+            },
+            "maize": {
+              "area_ha": 0.6432,
+              "stored_grain_kg": 6773.12,
+              "native_dm_kg": 6005.016275213846,
+              "irrigation_mm": 120.0,
+              "fertilizer_kg": 100.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 9336.157144300134,
+              "stored_grain_kg_ha": 10530.348258706468,
+              "native_irrigation_mm_mean": 110.40000000000006,
+              "native_evapotranspiration_mm_mean": 426.15817738247466
+            }
+          },
+          "total_stored_kg": 10829.36,
+          "fuel_used_l": 88.18181818181824,
+          "tool_calls": 308,
+          "field_operation_rounds": 17,
+          "operation_round_groups": [
+            [
+              "maize",
+              "base_fertilize",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "form_ridges",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "harvest",
+              "玉米独立成熟收获"
+            ],
+            [
+              "maize",
+              "level",
+              "准备_maize"
+            ],
+            [
+              "maize",
+              "plant_seeds",
+              "播种_maize"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-07-15"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-01"
+            ],
+            [
+              "maize_Irrigation",
+              "irrigate",
+              "maize关键期根水2019-08-15"
+            ],
+            [
+              "soybean",
+              "apply_fertilizer",
+              "复核两作物氮投入历史与共有余量"
+            ],
+            [
+              "soybean",
+              "form_ridges",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "harvest",
+              "大豆独立成熟收获"
+            ],
+            [
+              "soybean",
+              "level",
+              "准备_soybean"
+            ],
+            [
+              "soybean",
+              "plant_seeds",
+              "播种_soybean"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-05"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-07-20"
+            ],
+            [
+              "soybean_Irrigation",
+              "irrigate",
+              "soybean关键期根水2019-08-05"
+            ]
+          ],
+          "expected_refusals": []
+        }
+      },
+      "gain_over_no_focal_management_pct": 3.3508905420080115,
+      "gain_over_wrong_management_pct": 3.3508905420080115,
+      "recipe_path": "tests/data/wofost_multi4/03.json",
+      "recipe_sha256": "e2db14bd7af3702352c41c80bf7bfbb670f774cfa152faa6cb0110c279190bd8",
+      "evidence_directory": "validation_runs/wofost_multifarm4_20261028/03",
+      "grain_basis_note": "Commodity grain: soybean at 13%, maize at 14% moisture; native WOFOST dry matter separately reported. Cross-crop kg sum is warehouse mass, not a common yield or economic objective.",
+      "no_focal_management_note": "All arms retain sowing, routine background care, maturity checks, harvest and storage; none omits only the management decision under test.",
+      "reference_id": "thionville"
+    },
+    {
+      "number": 4,
+      "title": "错期双农场：共享收割机与晚雨前有限时间",
+      "scenario_id": "scenario_two_farm_wofost_staggered_harvest_rain_window_V2",
+      "source_path": "fairy/scenarios/wofost/scenario_two_farm_wofost_staggered_harvest_rain_window_V2.py",
+      "source_sha256": "3775a076b18749f1b10b1ab4734b97e791b268beb71df9cdcebf773099f8aa85",
+      "status": "calibrated",
+      "proof": "source plan == real Oracle == fresh replay; identical control world; full harvest/storage/resources audited",
+      "source_plan_and_real_times_match": true,
+      "all_farms_completed": true,
+      "arms": {
+        "correct": {
+          "farms": {
+            "early": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 33589.460000000014,
+              "native_dm_kg": 30643.684907921386,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4352.796151693378,
+              "stored_grain_kg_ha": 4771.230113636366,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 386.83785329733126
+            },
+            "late": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 32318.88000000002,
+              "native_dm_kg": 30198.715321847965,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4289.590244580677,
+              "stored_grain_kg_ha": 4590.750000000003,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 363.9243071348792
+            }
+          },
+          "total_stored_kg": 65908.34000000003,
+          "fuel_used_l": 1402.9850746268648,
+          "tool_calls": 496,
+          "field_operation_rounds": 13,
+          "operation_round_groups": [
+            [
+              "early",
+              "form_ridges",
+              "准备_early"
+            ],
+            [
+              "early",
+              "harvest",
+              "唯一雨前晴日共享割台优先级"
+            ],
+            [
+              "early",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "early",
+              "level",
+              "准备_early"
+            ],
+            [
+              "early",
+              "plant_seeds",
+              "播种_early"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ],
+            [
+              "late",
+              "form_ridges",
+              "准备_late"
+            ],
+            [
+              "late",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "late",
+              "level",
+              "准备_late"
+            ],
+            [
+              "late",
+              "plant_seeds",
+              "播种_late"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "none": {
+          "farms": {
+            "early": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 32404.159999999985,
+              "native_dm_kg": 30643.684907921386,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4352.796151693378,
+              "stored_grain_kg_ha": 4602.863636363634,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 387.06172210433016
+            },
+            "late": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 32255.680000000022,
+              "native_dm_kg": 30198.715321847965,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4289.590244580677,
+              "stored_grain_kg_ha": 4581.772727272731,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 364.1481759418778
+            }
+          },
+          "total_stored_kg": 64659.84000000001,
+          "fuel_used_l": 1402.9850746268644,
+          "tool_calls": 494,
+          "field_operation_rounds": 12,
+          "operation_round_groups": [
+            [
+              "early",
+              "form_ridges",
+              "准备_early"
+            ],
+            [
+              "early",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "early",
+              "level",
+              "准备_early"
+            ],
+            [
+              "early",
+              "plant_seeds",
+              "播种_early"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ],
+            [
+              "late",
+              "form_ridges",
+              "准备_late"
+            ],
+            [
+              "late",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "late",
+              "level",
+              "准备_late"
+            ],
+            [
+              "late",
+              "plant_seeds",
+              "播种_late"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ]
+          ],
+          "expected_refusals": []
+        },
+        "wrong": {
+          "farms": {
+            "early": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 32404.159999999985,
+              "native_dm_kg": 30643.684907921386,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4352.796151693378,
+              "stored_grain_kg_ha": 4602.863636363634,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 387.06172210433016
+            },
+            "late": {
+              "area_ha": 7.04,
+              "stored_grain_kg": 32255.680000000022,
+              "native_dm_kg": 30198.715321847965,
+              "irrigation_mm": 60.0,
+              "fertilizer_kg": 0.0,
+              "active_ingredient_kg": 0.0,
+              "native_dm_kg_ha": 4289.590244580677,
+              "stored_grain_kg_ha": 4581.772727272731,
+              "native_irrigation_mm_mean": 55.20000000000003,
+              "native_evapotranspiration_mm_mean": 364.1481759418778
+            }
+          },
+          "total_stored_kg": 64659.84000000001,
+          "fuel_used_l": 1402.9850746268644,
+          "tool_calls": 499,
+          "field_operation_rounds": 12,
+          "operation_round_groups": [
+            [
+              "early",
+              "form_ridges",
+              "准备_early"
+            ],
+            [
+              "early",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "early",
+              "level",
+              "准备_early"
+            ],
+            [
+              "early",
+              "plant_seeds",
+              "播种_early"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "early_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ],
+            [
+              "late",
+              "form_ridges",
+              "准备_late"
+            ],
+            [
+              "late",
+              "harvest",
+              "雨后共同续收窗口"
+            ],
+            [
+              "late",
+              "level",
+              "准备_late"
+            ],
+            [
+              "late",
+              "plant_seeds",
+              "播种_late"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-07-20"
+            ],
+            [
+              "late_Irrigation",
+              "irrigate",
+              "两场关键期正常整轮水2019-08-08"
+            ]
+          ],
+          "expected_refusals": [
+            "00183_错误先收晚场的真实粮水拒绝"
+          ]
+        }
+      },
+      "gain_over_no_focal_management_pct": 1.9308739396818986,
+      "gain_over_wrong_management_pct": 1.9308739396818986,
+      "recipe_path": "tests/data/wofost_multi4/04.json",
+      "recipe_sha256": "07fb35e27471365b9dcaaaf31b972dc5ab4a513e99e8b6b5d8571d557186f36a",
+      "evidence_directory": "validation_runs/wofost_multifarm4_20261028/04",
+      "grain_basis_note": "Commodity grain: soybean at 13%, maize at 14% moisture; native WOFOST dry matter separately reported. Cross-crop kg sum is warehouse mass, not a common yield or economic objective.",
+      "no_focal_management_note": "All arms retain sowing, routine background care, maturity checks, harvest and storage; none omits only the management decision under test.",
+      "reference_id": "lille"
+    }
+  ]
+}

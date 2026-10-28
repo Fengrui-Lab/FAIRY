@@ -2,7 +2,7 @@
 
 ## 当前状态：13对版本共存，12套WOFOST已校准，03未校准
 
-原10个任务及本轮新增3个任务均已拆为独立命名的两个版本：无后缀的原ID、文件、类使用经典`legacy`；WOFOST的ID、文件名、类名均加`_V2`。两套源码共存，不是运行时别名，也不靠同一文件切换workflow。经典版保留原有类和继承组织，`_V2`在自己的文件中声明世界、事件和静态workflow。`farm_world_fullseason_v2`是历史目录名，不能据此判断后端。[版本对应表与运行说明](wofost-scenario-versions.md)及[准确名称清单](../configs/oracles/wofost_scenario_versions.json)列出13对ID、路径和类名。
+原10个任务及本轮新增3个任务均已拆为独立命名的两个版本：无后缀的原ID、文件、类使用经典`legacy`；WOFOST的ID、文件名、类名均加`_V2`。两套源码共存，不是运行时别名，也不靠同一文件切换workflow。经典版保留原有类和继承组织，`_V2`在自己的文件中声明世界、事件和静态workflow。WOFOST `_V2`场景统一放在[`fairy/scenarios/wofost/`](../fairy/scenarios/wofost/)，经典源码留在`farm_world_fullseason_v2`，原场景ID和运行命令不变。[版本对应表与运行说明](wofost-scenario-versions.md)及[准确名称清单](../configs/oracles/wofost_scenario_versions.json)列出13对ID、路径和类名。
 
 WOFOST中前9个农艺方案及本轮3个灌溉方案已校准，03仍保留花期营养考点并明确未校准；不把可运行等同于考点有效。后17个扩展任务已暂停。经典版恢复自Git提交`e0a302c3d3de9cf532ea5fd01bc79ebb3e9bb864`；13套经典版及13套`_V2`均已通过普通生产CLI的build→replay→evaluate。经典版每场64垄全部收割并安全入库，初始世界与原Git定义13/13一致；兼容修改只涉及4垄代表性抽样和3场采收分别多等3/1/1天，没有修改题设、物理、App、Engine或TimeManager。[两版本独立核验](wofost-scenario-versions.md#当前完成与核验边界)保存对应证据。
 
@@ -12,7 +12,7 @@ WOFOST中前9个农艺方案及本轮3个灌溉方案已校准，03仍保留花�
 
 ### 正常季：7个管理窗口，89次工具调用
 
-[正常季WOFOST源文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_base_hn84_std_normal_V2.py)的一季现在可以直接解释：
+[正常季WOFOST源文件](../fairy/scenarios/wofost/scenario_full_season_hb_base_hn84_std_normal_V2.py)的一季现在可以直接解释：
 
 1. 4月28日检查播床、整地起垄并一次完成全田播种，不例行施氮肥。
 2. 5月13日抽查出苗，正常则不补播。
@@ -40,7 +40,7 @@ WOFOST中前9个农艺方案及本轮3个灌溉方案已校准，03仍保留花�
 
 已增加[可回放的土壤氮状态事件](wofost-soil-nitrogen-events.md)，场景可以在指定本地日对指定农场、指定垄直接设置真实CNB有效氮/储备氮，Agent可读到对应模型状态。事件支持日结前后存档恢复；该独立批次529项相关回归通过，早于当前版本拆分。但官方大豆固氮保留时，提前清氮也没有使03产生显著的追肥收益，不能把接口完成当作考点校准完成。
 
-03的原任务仍是低氮供给后的花期营养管理。[03的WOFOST文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py)沿用既有未校准农艺配置；此次只更改版本身份和明确校准状态。固定作物参数、天气、土壤及水量的5组诊断对照中，花期施氮最大增产仅约0.072%；不足以支持“花期识别缺氮并追肥救产”的出题承诺。`RFRGRL`是特定幼苗阶段叶面积增长的限制因子，不能作为一般花期缺氮诊断。
+03的原任务仍是低氮供给后的花期营养管理。[03的WOFOST文件](../fairy/scenarios/wofost/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py)沿用既有未校准农艺配置；此次只更改版本身份和明确校准状态。固定作物参数、天气、土壤及水量的5组诊断对照中，花期施氮最大增产仅约0.072%；不足以支持“花期识别缺氮并追肥救产”的出题承诺。`RFRGRL`是特定幼苗阶段叶面积增长的限制因子，不能作为一般花期缺氮诊断。
 
 本轮不扩展新的结瘤或花期氮胁迫机制，不直接修改营养字段制造效果，也不把这个题换成缺水题。不能再说活跃源码“逐字未改”：ID、文件名、类名及状态元数据已调整。03重命名后的[新鲜WOFOST回放](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_next20_20261026/version_split/wofost_replay/03/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.run_report.json>)仍为233次调用、8229.50kg，说明可执行，仍不算追肥考点校准通过，也不代表经典版产量。[诊断依据](</Users/quao/Desktop/Second-year/CWSN/FAIRY/validation_runs/wofost_agronomic_redesign_20261026/flowering_nitrogen_diagnostics/verification.json>)记录模型原因，[发布状态清单](../configs/oracles/wofost_formal10_release_status.json)保存未校准状态和版本信息，不是运行时workflow输入。
 

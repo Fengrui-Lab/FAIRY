@@ -1,8 +1,7 @@
-"""Actual soybean growth consumes the nutrient proxy once on its own day.
+"""Non-WOFOST crops retain zero-growth nutrient accounting across integration.
 
-These integration tests use the normal shared clock, native crop transitions,
-same-time action injection and JSON snapshots. No assumed yield increase or
-real-world nitrogen fertilizer response is used as a pass condition.
+Growth, fertilization, background depletion and checkpoint continuity remain
+real; compatibility growth never introduces an additional nutrient debit.
 """
 
 from copy import deepcopy
@@ -109,7 +108,7 @@ def restore_pair(env, a, b, *, drop_growth_fields=False):
     return restored_env, restored_a, restored_b
 
 
-def test_vegetative_growth_consumes_its_actual_increment_on_the_same_day():
+def test_legacy_vegetative_growth_does_not_consume_nutrient_proxy():
     env, world, other = farm_pair()
     before_biomass = world.physics.canopy.states[0].aboveground_biomass_g_m2
     before_index = world.physics.management.states[0].nutrient_index
@@ -123,8 +122,8 @@ def test_vegetative_growth_consumes_its_actual_increment_on_the_same_day():
         SoybeanStage.V4_PLUS,
     }
     assert state.last_growth_uptake_day == world.simulation_date() == date(2026, 6, 2)
-    assert state.daily_growth_biomass_g_m2 == pytest.approx(grown)
-    assert state.daily_growth_uptake_index == pytest.approx(grown * parameters.nutrient_uptake_coeff)
+    assert state.daily_growth_biomass_g_m2 == 0
+    assert state.daily_growth_uptake_index == 0
     assert state.cumulative_growth_uptake_index == pytest.approx(state.daily_growth_uptake_index)
     assert state.nutrient_index == pytest.approx(
         before_index - parameters.daily_nutrient_decay - state.daily_growth_uptake_index
@@ -139,7 +138,21 @@ def test_vegetative_growth_consumes_its_actual_increment_on_the_same_day():
     assert other.physics.management.states[0].cumulative_growth_uptake_index == 0
 
 
-def test_multi_day_jump_and_daily_steps_settle_each_days_growth_identically():
+@pytest.mark.parametrize("configuration", [
+    {"crop_type": "soybean"}, {"crop_type": "maize"}, {"crop_type": "rice"},
+    {"crop_id": "maize"},
+])
+def test_non_wofost_crop_adapters_always_supply_zero_growth(configuration):
+    world = FarmWorldApp(**configuration)
+    world.configure_physics_profile("legacy_growth_contract")
+    assert world.physics.crop_backend is None
+    for canopy in world.physics.canopy.states.values():
+        canopy.daily_biomass_g_m2 = 25.0
+    assert all(value.daily_biomass_g_m2 == 0.0
+               for value in world.physics.crop.management_inputs(world.physics).values())
+
+
+def test_multi_day_jump_and_daily_steps_preserve_background_only_nutrient_use():
     jumped_env, jumped, _ = farm_pair()
     stepped_env, stepped, _ = farm_pair()
     initial_biomass = jumped.physics.canopy.states[0].aboveground_biomass_g_m2
@@ -149,9 +162,8 @@ def test_multi_day_jump_and_daily_steps_settle_each_days_growth_identically():
     assert snapshot_physics(jumped.physics) == snapshot_physics(stepped.physics)
     total_growth = jumped.physics.canopy.states[0].aboveground_biomass_g_m2 - initial_biomass
     management = jumped.physics.management.states[0]
-    assert management.cumulative_growth_uptake_index == pytest.approx(
-        total_growth * jumped.physics.management.params.nutrient_uptake_coeff
-    )
+    assert total_growth > 0
+    assert management.cumulative_growth_uptake_index == 0
     assert management.last_growth_uptake_day == date(2026, 6, 4)
 
 
@@ -188,7 +200,7 @@ def test_non_growing_states_have_no_growth_uptake(phase):
         grain.biological_yield_g_m2 = 300.0
         before = deepcopy(world.physics.management.states[0])
         world.physics.queue_harvest(0, HarvestAction())
-        env.sync()  # Same-time harvest commits, without repeating a biological day.
+        env.sync()  # Harvest drydown does not introduce a crop-growth nutrient debit.
         assert world.physics.yield_recovery.states[0].harvested
         assert world.physics.management.states[0] == before
     before_index = world.physics.management.states[0].nutrient_index
@@ -212,10 +224,9 @@ def test_emergence_seed_reserves_are_not_counted_as_new_daily_growth():
     canopy = world.physics.canopy.states[0]
     management = world.physics.management.states[0]
     seed_reserve = world.physics.canopy.params.initial_biomass_g_m2_at_emergence
-    assert management.daily_growth_biomass_g_m2 == pytest.approx(canopy.aboveground_biomass_g_m2 - seed_reserve)
-    assert management.cumulative_growth_uptake_index == pytest.approx(
-        management.daily_growth_biomass_g_m2 * world.physics.management.params.nutrient_uptake_coeff
-    )
+    assert canopy.aboveground_biomass_g_m2 >= seed_reserve
+    assert management.daily_growth_biomass_g_m2 == 0
+    assert management.cumulative_growth_uptake_index == 0
 
 
 def test_json_snapshot_preserves_daily_cursor_and_continues_without_double_consumption():
@@ -245,9 +256,8 @@ def test_old_snapshot_without_growth_accounting_fields_does_not_recharge_history
     assert state.cumulative_growth_uptake_index == 0
     restored_env.advance_time(86400)
     grown = restored.physics.canopy.states[0].aboveground_biomass_g_m2 - old_biomass
-    assert state.cumulative_growth_uptake_index == pytest.approx(
-        grown * restored.physics.management.params.nutrient_uptake_coeff
-    )
+    assert grown > 0
+    assert state.cumulative_growth_uptake_index == 0
     assert state.nutrient_index == pytest.approx(
         old_index - restored.physics.management.params.daily_nutrient_decay - state.daily_growth_uptake_index
     )
@@ -268,13 +278,14 @@ def test_full_replant_does_not_consume_old_canopy_growth_again():
     state = world.physics.management.states[0]
     assert state.daily_growth_biomass_g_m2 == state.daily_growth_uptake_index == 0
     assert state.cumulative_growth_uptake_index == cumulative
-    assert world.physics.management.states[1].cumulative_growth_uptake_index > neighbor_cumulative
+    assert world.physics.management.states[1].cumulative_growth_uptake_index == neighbor_cumulative
 
 
 def test_world_reset_discards_previous_growth_accounting():
     env, world, _ = farm_pair()
     env.advance_time(86400)
-    assert world.physics.management.states[0].cumulative_growth_uptake_index > 0
+    assert world.physics.canopy.states[0].aboveground_biomass_g_m2 > 0
+    assert world.physics.management.states[0].cumulative_growth_uptake_index == 0
     world.reset()
     world.configure_physics_profile("growth_uptake_static_weather")
     env.sync()

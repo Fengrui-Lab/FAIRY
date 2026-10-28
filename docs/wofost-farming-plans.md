@@ -8,7 +8,7 @@
 
 ## 正常季应该怎样读
 
-[正常季WOFOST源文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_base_hn84_std_normal_V2.py)先写`FARMING_PLAN`，用7个管理窗口讲清一季；然后才在`build_events_flow()`中展开成89次真实工具调用：
+[正常季WOFOST源文件](../fairy/scenarios/wofost/scenario_full_season_hb_base_hn84_std_normal_V2.py)先写`FARMING_PLAN`，用7个管理窗口讲清一季；然后才在`build_events_flow()`中展开成89次真实工具调用：
 
 1. **4月28日，整地播种。** 查播床与天气，整地、起垄，一次完成全田播种；不例行施氮肥。
 2. **5月13日，查出苗。** 地面抽查4垄，出苗正常，不补播。
@@ -41,7 +41,7 @@
 
 ## 02｜R5/R6干旱与限水
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_dryr5r6_hn84_water_limit_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_dryr5r6_hn84_water_limit_V2.py)
 
 - **原考点：** 干旱期分配有限水量，照顾22—43垄优先区。
 - **设定变化：** 保留Valladolid2019天气、干旱事件及分区土壤；额度改为全田等效240mm。完整正常轮灌参考为260mm，不再沿用小脉冲搜索的360mm/320mm。
@@ -52,7 +52,7 @@
 
 ## 03｜低氮供给与花期营养
 
-[未校准的WOFOST场景文件](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py)
+[未校准的WOFOST场景文件](../fairy/scenarios/wofost/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py)
 
 - **原考点保留：** 前期氮供给偏低，花期根据营养状况决定管理。
 - **核查结果：** 固定作物、天气、土壤及水量的5组对照中，花期施氮最大增产约0.072%，不能支持“识别花期缺氮并追肥救产”的有效题设。旧公开营养值使用的`RFRGRL`是特定幼苗阶段的叶面积增长限制因子，不能当成一般花期缺氮诊断。
@@ -61,7 +61,7 @@
 
 ## 04｜高草库、只准机械除草
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_high_weed_seedbank_early_control_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_high_weed_seedbank_early_control_V2.py)
 
 - **原考点：** 全田草害，化学额度为0，最多7趟机械作业、累计64垄。
 - **设定变化：** 保留种子库和分批出草，取消例行氮肥；将处置放在草害出现后的可通行窗口。
@@ -70,7 +70,7 @@
 
 ## 05｜灌浆期食叶虫
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_r5_leaf_feeder_defoliation_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_r5_leaf_feeder_defoliation_V2.py)
 
 - **原考点：** 16—39垄在灌浆阶段遭遇虫害，及时确认并处理。
 - **设定变化：** 保留905/Bologna及虫害目标区；7月17日注入一次虫压力，之后按现有模型演化，不再连续重置压力抵消早处理；保留7月18日起的无雨低风窗口。
@@ -81,7 +81,7 @@
 
 ## 06｜先轻虫、后重虫，药量有限
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_limited_spray_budget_season_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_limited_spray_budget_season_V2.py)
 
 - **原考点：** 不能把药剂在早期虫情出现时就用尽，需分配到后续问题。
 - **设定变化：** 有效成分额度由0.22改为0.24kg。早期20垄完整施药需0.160kg，后期28垄需0.224kg，两轮合计0.384kg；因此够一轮重虫处理，不够两轮都做。虫情由公开虫量档位和样本解释，置信度不是严重度。
@@ -90,7 +90,7 @@
 
 ## 07｜连续降雨中的短施药窗口
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_short_spray_window_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_wetjune_short_spray_window_V2.py)
 
 - **原考点：** 病害已出现，在连雨之间识别并利用可作业短窗。
 - **设定变化：** 在两段降雨之间明确保留6月22—24日无雨、低风窗口；后面6月25日起再次降雨。7月初只是错过后的恢复窗口，不再设计成整段时间都绝对无法喷药。
@@ -99,7 +99,7 @@
 
 ## 08｜病害管理后再遇干旱
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_disease_then_drought_recovery_tradeoff_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_disease_then_drought_recovery_tradeoff_V2.py)
 
 - **原考点：** 先处理20—43垄病害，后续长势异常时重新辨因，不能只重复上一种管理。
 - **设定变化：** 病压力在6月19日一次注入，保留8月1—16日干旱。额度为全田等效11.25mm，刚好支持目标24垄一次30mm；不用隔日小水或0.667mm尾水。
@@ -110,7 +110,7 @@
 
 ## 09｜先草害、后病害，冠层信号混淆
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_weed_then_disease_canopy_confusion_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_weed_then_disease_canopy_confusion_V2.py)
 
 - **原考点：** 相似冠层异常可能来自不同原因，处理类型和区域不能混淆。
 - **设定变化：** 保留4—23垄草害、32—51垄后期病害及原处理类型；病压力改为一次注入后演化，不反复重置；取消例行氮肥和每日轮询。
@@ -119,7 +119,7 @@
 
 ## 10｜降雨打断除草，雨后恢复
 
-[完整WOFOST场景](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_herbicide_window_missed_rain_delay_V2.py)
+[完整WOFOST场景](../fairy/scenarios/wofost/scenario_full_season_hb_herbicide_window_missed_rain_delay_V2.py)
 
 - **原考点：** 计划除草遇到降雨，判断暂缓，并在雨后恢复管理。
 - **设定变化：** 让12—45垄在5月24—26日分批出草，5月24—29日连续降雨；保留总雨量64mm，调整日期使5月27日确有草害和被雨阻断的决策。

@@ -13,7 +13,7 @@ class WorldService(SharedFarmService):
 
     @service_tool(OperationType.READ)
     def describe_environment(self) -> dict[str, Any]:
-        """List the frozen farm, asset, station and tool directory.
+        """List the available farms, equipment, weather stations and tools.
 
         Read this before selecting IDs. Each farm currently represents one
         rectangular field; ridge IDs are local to that farm. This directory

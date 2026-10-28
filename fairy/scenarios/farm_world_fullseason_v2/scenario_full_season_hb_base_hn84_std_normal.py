@@ -290,8 +290,7 @@ class ScenarioFullSeasonHBBaseHN84StdNormal(Scenario):
                 .depends_on(o_wait_mavic_after_emergence, delay_seconds=1)
             )
             o_emergence_ground = (
-                # Four-ridge sample only; keep historical step IDs for lookup compatibility.
-                robot.inspect_emergence(0, 3)
+                robot.inspect_emergence(0, 63)
                 .oracle()
                 .with_id("o_whole_field_emergence_ground_check")
                 .depends_on(o_robot_status_emergence, delay_seconds=2)
@@ -343,7 +342,7 @@ class ScenarioFullSeasonHBBaseHN84StdNormal(Scenario):
                 .depends_on(o_wait_mavic_after_early, delay_seconds=1)
             )
             o_early_health = (
-                robot.inspect_crop_health(0, 3)
+                robot.inspect_crop_health(0, 63)
                 .oracle()
                 .with_id("o_early_whole_field_health_check")
                 .depends_on(o_robot_status_early, delay_seconds=2)
@@ -371,7 +370,7 @@ class ScenarioFullSeasonHBBaseHN84StdNormal(Scenario):
                 .depends_on(o_r1_canopy, delay_seconds=1)
             )
             o_r1_health = (
-                robot.inspect_crop_health(0, 3)
+                robot.inspect_crop_health(0, 63)
                 .oracle()
                 .with_id("o_r1_whole_field_health_check")
                 .depends_on(o_robot_status_r1, delay_seconds=2)
@@ -429,7 +428,7 @@ class ScenarioFullSeasonHBBaseHN84StdNormal(Scenario):
                 .depends_on(o_wait_mavic_after_mid, delay_seconds=1)
             )
             o_mid_pests = (
-                robot.inspect_pests(0, 3)
+                robot.inspect_pests(0, 63)
                 .oracle()
                 .with_id("o_midseason_whole_field_pest_check")
                 .depends_on(o_mid_robot_status, delay_seconds=2)

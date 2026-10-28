@@ -48,11 +48,10 @@ class CropDynamics(Protocol):
     def biotic_inputs(self, physics: FarmPhysicsState) -> dict[int, BioticCropInput]: ...
     def advance_before_biotics(
         self, world: FarmWorldApp, physics: FarmPhysicsState, day: date, weather: WeatherInputs,
-    ) -> dict[int, float] | None:
-        """Grow the crop; return today's g/m² increments for deferred uptake.
+    ) -> None:
+        """Advance compatibility growth without debiting the nutrient proxy.
 
-        None keeps crops that already supply uptake through management_inputs
-        on their existing accounting path. The orchestrator owns settlement.
+        Native WOFOST owns real nitrogen uptake in its separate backend path.
         """
         ...
     def advance_after_biotics(self, physics: FarmPhysicsState, day: date, weather: WeatherInputs, harvest_actions: Mapping[int, HarvestAction]) -> None: ...

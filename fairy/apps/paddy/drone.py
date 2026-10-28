@@ -23,9 +23,13 @@ class PaddyDroneApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def fly_survey(self, plot_ids: list[str]) -> dict:
-        """Survey selected hydraulic plots for canopy cover and stress anomalies, with battery/time costs.
+        """Survey selected plots for canopy cover and signs of stress.
 
-        Outputs are coarse observation proxies; no native DVS, LAI or biomass is exposed.
+        Consumes flight time and battery. Read surveyed plots and the uncertainty
+        of the estimated canopy and stress observations.
+
+        Args:
+            plot_ids: Hydraulic-plot IDs to survey, from the field overview.
         """
         self.world.advance_physics_time()
         if not plot_ids or len(plot_ids) != len(set(plot_ids)):

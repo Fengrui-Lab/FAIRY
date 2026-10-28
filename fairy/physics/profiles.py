@@ -23,7 +23,8 @@ based on a 12-month climatology that can be tuned per scenario.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from copy import deepcopy
+from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Iterable
 
@@ -225,7 +226,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 6, 12),
                 duration_days=4,
-                total_rain_mm=80.0,
+                rain_mm=80.0,
                 label="june_rain_burst",
             ),
         ],
@@ -257,7 +258,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 6, 12),
                 duration_days=4,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="june_rain_burst_ab_zoned",
             ),
         ],
@@ -407,7 +408,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 9, 18),
                 duration_days=6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="post_window_late_rain",
             )
         ],
@@ -428,20 +429,31 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 8, 2),
                 duration_days=3,
-                total_rain_mm=42.0,
+                rain_mm=42.0,
                 label="normal_podfill_rain",
             ),
             WeatherEvent(
                 event_type="rain_event",
                 start_date=date(2026, 8, 18),
                 duration_days=2,
-                total_rain_mm=30.0,
+                rain_mm=30.0,
                 label="normal_late_podfill_rain",
             ),
         ],
         rng_seed=1101,
         start_date=date(2026, 5, 5),
     )
+
+    # New shared-farm scenes opt into whole-event rainfall totals. Keep the
+    # historical single-farm profile (including its event objects) independent.
+    total_rain_profile = deepcopy(profiles["harbin_hb_base_hn84_std_normal_seed_1101"])
+    total_rain_profile.name = "harbin_hb_base_hn84_std_normal_total_rain_seed_1101"
+    total_rain_profile.weather_events = [
+        replace(event, rain_mm=None, total_rain_mm=event.rain_mm)
+        if event.event_type == "rain_event" else event
+        for event in total_rain_profile.weather_events
+    ]
+    profiles[total_rain_profile.name] = total_rain_profile
 
     # HB_DRYR5R6_HN58_STD_WATERLIMIT: normal early season, R5/R6 dry spell.
     profiles["harbin_hb_dryr5r6_hn58_waterlimit_seed_1202"] = PhysicsProfile(
@@ -485,7 +497,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 6, 14),
                 duration_days=4,
-                total_rain_mm=82.0,
+                rain_mm=82.0,
                 label="wet_june_poordrainage_rain_burst",
             ),
         ],
@@ -518,7 +530,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 6, 12),
                 duration_days=1,
-                total_rain_mm=74.0,
+                rain_mm=74.0,
                 label="wet_june_soy_history_rain_burst",
             ),
         ],
@@ -617,7 +629,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 8, 1),
                 duration_days=5,
-                total_rain_mm=120.0,
+                rain_mm=120.0,
                 label="aug_deluge",
             ),
         ],
@@ -655,7 +667,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 9, 25),
                 duration_days=6,
-                total_rain_mm=70.0,
+                rain_mm=70.0,
                 label="late_harvest_rain",
             ),
         ],
@@ -694,7 +706,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 6, 14),
                 duration_days=4,
-                total_rain_mm=70.0,
+                rain_mm=70.0,
                 label="june_rain",
             ),
             WeatherEvent(
@@ -707,7 +719,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 event_type="rain_event",
                 start_date=date(2026, 9, 20),
                 duration_days=5,
-                total_rain_mm=55.0,
+                rain_mm=55.0,
                 label="harvest_rain",
             ),
         ],
@@ -740,9 +752,58 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
         outbreaks: list[BioticOutbreak] | None = None,
         start: date = date(2026, 5, 5),
     ) -> None:
-        # The seed selects the random stream only. Weather challenges must be
-        # explicit profile data, never added to accommodate an Oracle calendar.
         profile_events = list(events or [])
+        if seed >= 1700:
+            # Additional generated L3 scenarios use fixed expert-oracle action
+            # windows. Keep those windows workable while preserving the named
+            # stress events outside the operation dates.
+            profile_events.extend(
+                [
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 5, 30),
+                        7,
+                        label="l3_early_operation_window",
+                    ),
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 6, 12),
+                        9,
+                        label="l3_flowering_check_window",
+                    ),
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 7, 5),
+                        7,
+                        label="l3_midseason_operation_window",
+                    ),
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 7, 20),
+                        13,
+                        label="l3_r5_operation_window",
+                    ),
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 8, 1),
+                        25,
+                        label="l3_podfill_operation_window",
+                    ),
+                    WeatherEvent(
+                        "heat_wave",
+                        date(2026, 8, 18),
+                        35,
+                        temp_delta_c=4.0,
+                        label="l3_warm_maturity_finish",
+                    ),
+                    WeatherEvent(
+                        "dry_spell",
+                        date(2026, 9, 20),
+                        55,
+                        label="l3_harvest_operation_window",
+                    ),
+                ]
+            )
         profiles[name] = PhysicsProfile(
             name=name,
             location="Harbin/Heilongjiang",
@@ -812,14 +873,14 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 15),
                 4,
-                total_rain_mm=82.0,
+                rain_mm=82.0,
                 label="wet_june_rain",
             ),
             WeatherEvent(
                 "rain_event",
                 date(2026, 6, 25),
                 3,
-                total_rain_mm=38.0,
+                rain_mm=38.0,
                 label="short_spray_window_close",
             ),
             WeatherEvent(
@@ -936,7 +997,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=76.0,
+                rain_mm=76.0,
                 label="wet_june_canopy_rain",
             ),
             WeatherEvent(
@@ -967,7 +1028,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 10, 11),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="late_rain_risk",
             )
         ],
@@ -983,7 +1044,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 2),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="incoming_harvest_rain",
             )
         ],
@@ -999,7 +1060,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 31),
                 6,
-                total_rain_mm=60.0,
+                rain_mm=60.0,
                 label="post_window_shattering_rain",
             )
         ],
@@ -1036,7 +1097,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 8),
                 2,
-                total_rain_mm=28.0,
+                rain_mm=28.0,
                 label="light_harvest_rain",
             ),
         ],
@@ -1074,7 +1135,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 8),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="dryer_capacity_post_window_rain",
             )
         ],
@@ -1090,7 +1151,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 5),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="storage_capacity_post_window_rain",
             )
         ],
@@ -1157,7 +1218,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 10, 8),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="late_rain_harvest_risk",
             ),
         ],
@@ -1174,7 +1235,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 13),
                 5,
-                total_rain_mm=92.0,
+                rain_mm=92.0,
                 label="wet_june_poor_drainage_rain",
             ),
             WeatherEvent("dry_spell", date(2026, 7, 2), 4, label="spray_window_open"),
@@ -1205,7 +1266,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 12),
                 4,
-                total_rain_mm=84.0,
+                rain_mm=84.0,
                 label="soy_history_wet_june_rain",
             ),
             WeatherEvent(
@@ -1245,7 +1306,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 15),
                 4,
-                total_rain_mm=70.0,
+                rain_mm=70.0,
                 label="wet_june_mixed_diagnosis",
             ),
             WeatherEvent(
@@ -1281,7 +1342,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=78.0,
+                rain_mm=78.0,
                 label="limited_fungicide_wet_june",
             ),
             WeatherEvent(
@@ -1327,7 +1388,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 5,
-                total_rain_mm=98.0,
+                rain_mm=98.0,
                 label="trafficability_wet_rain",
             ),
             WeatherEvent("dry_spell", date(2026, 7, 1), 6, label="brief_spray_window"),
@@ -1335,7 +1396,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 7, 7),
                 3,
-                total_rain_mm=46.0,
+                rain_mm=46.0,
                 label="window_closes_rain",
             ),
         ],
@@ -1509,7 +1570,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=74.0,
+                rain_mm=74.0,
                 label="lowcarbon_wet_disease_rain",
             ),
             WeatherEvent(
@@ -1536,7 +1597,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 10, 12),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="limited_machinery_late_rain",
             )
         ],
@@ -1552,7 +1613,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 8),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="double_capacity_late_moisture",
             )
         ],
@@ -1568,7 +1629,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 3),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="shattering_drying_tradeoff_rain",
             )
         ],
@@ -1594,7 +1655,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 10, 9),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="cool_august_late_rain",
             )
         ],
@@ -1613,7 +1674,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 5, 5),
                 5,
-                total_rain_mm=42.0,
+                rain_mm=42.0,
                 label="late_planting_rain_delay",
             ),
             WeatherEvent(
@@ -1640,7 +1701,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 9),
                 3,
-                total_rain_mm=42.0,
+                rain_mm=42.0,
                 label="mixed_variety_harvest_rain",
             ),
         ],
@@ -1659,7 +1720,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 15),
                 4,
-                total_rain_mm=70.0,
+                rain_mm=70.0,
                 label="density_gradient_wet",
             ),
             WeatherEvent(
@@ -1690,7 +1751,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="fungicide_budget_rain",
             )
         ],
@@ -1723,7 +1784,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="disease_then_drought_rain",
             ),
             WeatherEvent(
@@ -1747,7 +1808,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 16),
                 4,
-                total_rain_mm=68.0,
+                rain_mm=68.0,
                 label="weed_then_disease_rain",
             )
         ],
@@ -1807,7 +1868,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 5, 17),
                 2,
-                total_rain_mm=48.0,
+                rain_mm=48.0,
                 label="post_plant_crusting_rain",
             )
         ],
@@ -1828,7 +1889,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 16),
                 3,
-                total_rain_mm=58.0,
+                rain_mm=58.0,
                 label="leafcolor_disease_risk_rain",
             )
         ],
@@ -1872,7 +1933,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 5, 25),
                 5,
-                total_rain_mm=64.0,
+                rain_mm=64.0,
                 label="herbicide_window_rain_delay",
             )
         ],
@@ -1893,7 +1954,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 5, 24),
                 4,
-                total_rain_mm=70.0,
+                rain_mm=70.0,
                 label="mechanical_weed_wet_soil_delay",
             )
         ],
@@ -1941,14 +2002,14 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=76.0,
+                rain_mm=76.0,
                 label="first_disease_rain",
             ),
             WeatherEvent(
                 "rain_event",
                 date(2026, 7, 1),
                 3,
-                total_rain_mm=42.0,
+                rain_mm=42.0,
                 label="recheck_disease_rain",
             ),
         ],
@@ -1985,7 +2046,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 1),
                 2,
-                total_rain_mm=24.0,
+                rain_mm=24.0,
                 label="pre_heat_rootzone_recharge",
             ),
             WeatherEvent(
@@ -2011,7 +2072,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 28),
                 7,
-                total_rain_mm=58.0,
+                rain_mm=58.0,
                 label="cloudy_wet_low_radiation",
             )
         ],
@@ -2045,7 +2106,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 10),
                 4,
-                total_rain_mm=50.0,
+                rain_mm=50.0,
                 label="fuel_limited_harvest_rain",
             ),
         ],
@@ -2058,7 +2119,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 16),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="high_moisture_discount_rain",
             )
         ],
@@ -2074,14 +2135,14 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 29),
                 4,
-                total_rain_mm=52.0,
+                rain_mm=52.0,
                 label="late_quality_rain",
             ),
             WeatherEvent(
                 "rain_event",
                 date(2026, 9, 17),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="post_window_quality_rain",
             ),
         ],
@@ -2150,14 +2211,14 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 26),
                 4,
-                total_rain_mm=68.0,
+                rain_mm=68.0,
                 label="late_rain_insect_risk",
             ),
             WeatherEvent(
                 "rain_event",
                 date(2026, 10, 10),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="post_window_laterain_insect_harvest_rain",
             ),
         ],
@@ -2191,7 +2252,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 7, 5),
                 6,
-                total_rain_mm=60.0,
+                rain_mm=60.0,
                 label="coolwet_flowering_rain",
             ),
         ],
@@ -2216,7 +2277,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 7, 18),
                 1,
-                total_rain_mm=36.0,
+                rain_mm=36.0,
                 label="hail_storm_proxy",
             )
         ],
@@ -2232,7 +2293,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 25),
                 3,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="storm_lodging_rain",
             ),
             WeatherEvent(
@@ -2246,7 +2307,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 8),
                 4,
-                total_rain_mm=50.0,
+                rain_mm=50.0,
                 label="lodged_harvest_rain",
             ),
         ],
@@ -2259,7 +2320,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 8),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="moisture_sensor_harvest_rain",
             )
         ],
@@ -2272,7 +2333,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 1),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="storage_aeration_post_window_rain",
             )
         ],
@@ -2285,7 +2346,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 8, 31),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="dryer_breakdown_harvest_rain",
             )
         ],
@@ -2339,7 +2400,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=76.0,
+                rain_mm=76.0,
                 label="hn60_highdensity_wet_june",
             ),
             WeatherEvent(
@@ -2386,7 +2447,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 13),
                 6,
-                total_rain_mm=72.0,
+                rain_mm=72.0,
                 label="heike71_late_rain_quality_risk",
             ),
         ],
@@ -2429,7 +2490,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=64.0,
+                rain_mm=64.0,
                 label="resistant_biotic_wet_window",
             ),
             WeatherEvent(
@@ -2474,7 +2535,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=74.0,
+                rain_mm=74.0,
                 label="three_cultivar_wet_disease_rain",
             ),
             WeatherEvent(
@@ -2487,7 +2548,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 9, 9),
                 3,
-                total_rain_mm=34.0,
+                rain_mm=34.0,
                 label="three_cultivar_moisture_harvest_rain",
             ),
         ],
@@ -2542,7 +2603,7 @@ def _build_profiles() -> dict[str, PhysicsProfile]:
                 "rain_event",
                 date(2026, 6, 14),
                 4,
-                total_rain_mm=68.0,
+                rain_mm=68.0,
                 label="lowchemical_cultivar_disease_window",
             ),
             WeatherEvent(

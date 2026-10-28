@@ -240,13 +240,10 @@ class TractorService(SharedFarmService):
     ) -> dict[str, Any]:
         """Sow up to four contiguous bare ridges in the selected farm.
 
-        Requires this farm's required_field_preparation_ops, listed in World
-        capabilities. The legacy default is level/base_fertilize/form_ridges;
-        a field explicitly configured without base_fertilize may omit it.
-        Also requires compatible seed aboard, sufficient seeds/fuel, a valid planting window
-        and crop-specific soil/depth/spacing conditions. See World capabilities
-        for this crop's ranges. Consumes seed/fuel, advances the shared clock
-        and registers planting; emergence occurs later through physics.
+        Requires the field preparation listed in World capabilities, compatible
+        loaded seeds, sufficient seeds and fuel, the planting window and the crop's
+        soil, depth and spacing conditions. Consumes seed, fuel and working time.
+        Emergence occurs later; inspect the crop before assessing establishment.
 
         Args:
             farm_id: Farm containing all ridges to sow and matching the loaded seed crop.
@@ -271,12 +268,10 @@ class TractorService(SharedFarmService):
     ) -> dict[str, Any]:
         """Re-sow or gap-fill up to four contiguous local ridges.
 
-        Requires crop-compatible seeds, sufficient seeds/fuel and valid crop
-        depth/spacing. Consumes a full sowing dose and advances shared time.
-        With active physics, an established crop is gap-filled without resetting
-        its phenology unless full_replant is True; pre-emergence or unplanted
-        ridges restart phenology. The inactive legacy path only adjusts stand
-        and initializes previously bare ridges.
+        Requires compatible loaded seeds, sufficient seed and fuel, valid depth
+        and spacing, and a supported replanting method. Uses seed and working
+        time. Gap-filling preserves the established crop's development schedule;
+        full_replant requests a restart only where that method is supported.
 
         Args:
             farm_id: Farm containing the ridges to re-sow or gap-fill.
@@ -285,7 +280,7 @@ class TractorService(SharedFarmService):
             end_ridge: Last local ridge ID; inclusive span must be at most four ridges.
             depth_cm: Sowing depth in cm within this farm's crop-specific range.
             seed_spacing_cm: In-row seed spacing in cm within this crop's range.
-            full_replant: In active physics, reset established ridge phenology when True.
+            full_replant: Request a restart of the ridge crop cycle where supported.
 
         Returns:
             Receipt with replanted_ridges, seeds_used, stand before/after and
@@ -304,7 +299,7 @@ class TractorService(SharedFarmService):
 
         Requires trafficable soil, onboard fertilizer/fuel and remaining farm
         fertilizer allowance. Consumes resources and advances shared time.
-        Active physics queues a nutrient effect; canopy recovery is not instant.
+        Field response may be delayed; reassess crop condition after application.
 
         Args:
             farm_id: Farm receiving fertilizer and charged for actual application.
@@ -375,7 +370,7 @@ class TractorService(SharedFarmService):
         Requires sprayable weather, trafficable soil, sufficient fungicide in
         the separate tank, fuel and disease-treatment permission. Consumes
         resources, records fungicide usage and advances shared time. Disease
-        control is modeled by the treatment/residual window, not instant cure.
+        control takes effect over time rather than instantly reversing crop damage.
 
         Args:
             farm_id: Farm receiving fungicide and charged for chemical usage.
@@ -485,12 +480,11 @@ class TractorService(SharedFarmService):
     def incorporate_residue(
         self, farm_id: FarmId, asset_id: AssetId, start_ridge: RidgeId, end_ridge: RidgeId,
     ) -> dict[str, Any]:
-        """Record residue incorporation on at most ten contiguous local ridges.
+        """Incorporate crop residue on at most ten contiguous local ridges.
 
-        Intended after harvest. Requires fuel and compatible asset association/
-        payload, consumes fuel and advances shared time. The reduced physics
-        model records this action but does not simulate soil organic carbon.
-        Harvest-before-residue ordering is a scenario validation responsibility.
+        Schedule this after harvest. Requires fuel and compatible equipment and
+        payload origin. Consumes fuel and working time and records the operation;
+        it does not report a measured increase in soil carbon or fertility.
 
         Args:
             farm_id: Farm receiving the residue incorporation pass.

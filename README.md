@@ -11,10 +11,20 @@ Each task has matched controls, resource budgets and independent replay evidence
 candidates without a demonstrated decision mechanism remain experimental. See the
 [challenge guide and calibration report](docs/crop-decision-challenges.md).
 
-Thirteen selected tasks now have separate classic and WOFOST versions. Original
+The [native WOFOST soybean–maize two-farm season](docs/wofost-two-farm-soybean-maize.md)
+uses adjacent regional crop references, pinned 2019 weather, one warehouse and shared machines.
+
+Four additional [multi-farm WOFOST seasons](docs/wofost-multifarm-four-20261028.md) are **4/4 engineering-calibrated**: independent soil-water diagnosis, shared chemical stock with pest/disease diagnosis, soybean–maize nitrogen allocation, and staggered harvest before rain with one harvester. Each owns a complete `_V2` file and has three management controls plus a real Oracle/replay/evaluation. The [manifest](configs/oracles/wofost_multifarm4_20261028.json) records per-farm dry matter, commodity grain, resources and timing; 284 related regression tests passed. These are new tasks, not additional legacy migrations.
+
+The twenty newly selected single-farm soybean seasons (2026-10-27) are **20/20 engineering-calibrated**. Each owns a standalone `_V2`, three management controls and a production Oracle build/replay/evaluation. Yield, resource and legal-window effects are reported separately. There are 33 legacy/WOFOST pairs, 32 calibrated; the original flowering-nutrition case03 remains uncalibrated. See the [per-case plans and comparisons](docs/wofost-selected20-20261027.md), [manifest](configs/oracles/wofost_selected20_20261027.json) and [quantitative results](configs/oracles/wofost_selected20_results_20261027.json). Existing uncommitted two-farm work is preserved; the common engine is unchanged.
+
+The earlier thirteen selected tasks have separate classic and WOFOST versions. Original
 scenario IDs, files and classes select the classic `legacy` engine; the WOFOST
-IDs, filenames and classes end in `_V2`. The directory name
-`farm_world_fullseason_v2` is historical and does not select the engine. See the
+IDs, filenames and classes end in `_V2`. The 33 paired single-farm WOFOST
+`_V2` sources and the four new multi-farm `_V2` sources live in
+[`fairy/scenarios/wofost/`](fairy/scenarios/wofost/). Existing scenario IDs and
+run commands are unchanged. Classic sources stay in the historical
+`farm_world_fullseason_v2` directory. See the
 [13 version pairs and run examples](docs/wofost-scenario-versions.md) and the
 [canonical version manifest](configs/oracles/wofost_scenario_versions.json).
 

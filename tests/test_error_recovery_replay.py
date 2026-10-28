@@ -259,3 +259,57 @@ def test_legacy_non_object_arguments_are_rejected_without_calling_tool(arguments
     assert app.value == 0
     assert engine.time_manager.offset == 0
     assert engine.run_log[-1]["status"] == "error"
+
+
+def test_replay_continues_after_partial_robot_inspection():
+    from fairy.apps.farm_world import FarmWorldApp, RobotApp, WeatherApp
+
+    farm = FarmWorldApp()
+    weather = WeatherApp()
+    robot = RobotApp(farm_world_app=farm, weather_app=weather, name="Robot0")
+    engine = Engine(None, Scenario(start_time=1000, apps=[farm, weather, robot]))
+    workflow = Workflow()
+    workflow.add_node(WorkflowStep(
+        name="inspect", tool_name="Robot0__inspect_emergence",
+        tool_args={"start_ridge": 0, "end_ridge": 63},
+    ))
+    workflow.add_node(WorkflowStep(
+        name="status", tool_name="Robot0__check_status", tool_args={},
+        depends_on=["inspect"],
+    ))
+
+    replayed = engine.replay_workflow(workflow)
+
+    content = replayed.dag["inspect"].content
+    assert content["status"] == "partial"
+    assert content["covered_ridges"] == list(range(8))
+    assert content["uncovered_ridges"] == list(range(8, 64))
+    assert len(content["observations"]) == 8
+    assert "status" in replayed.dag
+    assert [entry["status"] for entry in engine.run_log] == ["ok", "ok"]
+
+
+def test_replay_still_rejects_partial_write_with_coverage():
+    from fairy.tool_utils import OperationType
+    from fairy.types import event_registered
+    from fairy.tool_execution import ToolExecutionError
+
+    class PartialWriteApp(App):
+        @app_tool()
+        @event_registered(operation_type=OperationType.WRITE)
+        def apply(self) -> dict:
+            return {
+                "status": "partial", "covered_ridges": [0],
+                "uncovered_ridges": [1], "observations": {"0": {"vwc": 0.3}},
+            }
+
+    app = PartialWriteApp()
+    engine = Engine(None, Scenario(start_time=1000, apps=[app]))
+    workflow = Workflow()
+    workflow.add_node(WorkflowStep(
+        name="apply", tool_name="PartialWriteApp__apply", tool_args={},
+    ))
+
+    with pytest.raises(ToolExecutionError, match="partial"):
+        engine.replay_workflow(workflow)
+    assert engine.run_log[-1]["status"] == "error"

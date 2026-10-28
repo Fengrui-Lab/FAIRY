@@ -71,11 +71,10 @@ class IrrigationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def irrigate_ridge(self, ridge_id: int, duration_hours: float) -> dict[str, Any]:
-        """
-        Irrigate a single ridge.
+        """Irrigate a single ridge.
 
         Args:
-            ridge_id:       Ridge to irrigate (0-63).
+            ridge_id:       Ridge to irrigate (within this farm).
             duration_hours: Irrigation run time in hours.
         """
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
@@ -94,26 +93,18 @@ class IrrigationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def irrigate(self, start: int, end: int, hours: float) -> dict[str, Any]:
-        """
-        Irrigate a contiguous range of ridges.
+        """Irrigate a contiguous range using this field's water allowance.
 
-        Uses this bound farm's water allowance and controller. Requires
-        VWC below the crop's configured irrigation_stop_vwc (shown by the
-        farm capabilities) throughout the requested range. Advances the shared
-        clock by setup plus run duration. In active physics the water input
-        is queued at the end of the run; the legacy mode delivers after two
-        more hours. Native PCSE integrates queued water at the next local day
-        boundary. Recheck soil conditions at the returned effect_ready_at.
+        Requires the irrigation moisture check to be below the crop's stop
+        threshold throughout the requested range. Consumes setup and running
+        time. Water delivery or its soil response may complete later; use
+        effect_ready_at to schedule a recheck. Inspect already-pending irrigation
+        before starting another run.
 
         Args:
             start: First local ridge ID, zero based and inclusive.
             end: Last local ridge ID, inclusive and at least start.
             hours: Positive irrigation run time per ridge in hours.
-
-        Returns:
-            Target farm, covered ridges, water usage, run duration and
-            recommended recheck time; a pending run is reported without
-            charging the farm or scheduling the same water again.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge range [{start}, {end}]"}
@@ -134,12 +125,11 @@ class IrrigationApp(App):
     def irrigate_range(
         self, start: int, end: int, duration_hours: float
     ) -> dict[str, Any]:
-        """
-        Irrigate a contiguous range of ridges.
+        """Irrigate a contiguous range of ridges.
 
         Args:
-            start:          First ridge to irrigate (0-63).
-            end:            Last ridge to irrigate (0-63, >= start).
+            start:          First ridge to irrigate (within this farm).
+            end:            Last ridge to irrigate (within this farm, >= start).
             duration_hours: Irrigation run time per ridge in hours.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:

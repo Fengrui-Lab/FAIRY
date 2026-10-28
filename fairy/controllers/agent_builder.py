@@ -11,6 +11,8 @@ from fairy.controllers.agent_config import (
     AgentConfigBuilder as ControllerConfigBuilder,
     AppAgentConfig,
     AppAgentConfigBuilder,
+    DEFAULT_APP_AGENT_SYSTEM_MESSAGE,
+    FARM_WORLD_APP_AGENT_SYSTEM_MESSAGE,
     ControllerAgentConfig,
     FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT,
     get_farm_world_system_prompt,
@@ -255,13 +257,15 @@ class ResearchARESimulationAgent(Agent):
         if not isinstance(first_message, dict) or first_message.get("role") != "system":
             return
         content = str(first_message.get("content") or "")
-        if "Today's date in 'YYYY-MM-DD HH' format is" in content:
-            return
+        marker = "\n\nTask start time: "
+        content = content.split(marker, 1)[0]
+        calendar = getattr(self, "simulation_timezone", None) or CST
         date_str = datetime.fromtimestamp(
-            self.time_manager.time(), tz=CST
-        ).strftime("%Y-%m-%d %H")
+            self.time_manager.time(), tz=calendar
+        ).isoformat(sep=" ", timespec="minutes")
         first_message["content"] = (
-            f"{content}\n\nToday's date in 'YYYY-MM-DD HH' format is {date_str}"
+            f"{content}{marker}{date_str} ({calendar}). "
+            "Check the time tool for the current time after operations or waiting."
         )
 
     def run(self, input, **kwargs):
@@ -320,10 +324,18 @@ class AppAgentBuilder:
         runtime = getattr(app, "runtime", None)
         if runtime is not None:
             tools.extend(service for service in runtime.apps if service.name == "World" and service is not app)
+        system_prompt = app_agent_config.system_prompt
+        agricultural_app = any(
+            cls.__module__.startswith(("fairy.apps.farm_world.", "fairy.apps.paddy."))
+            for cls in type(app).__mro__
+        )
+        if agricultural_app and system_prompt.startswith(DEFAULT_APP_AGENT_SYSTEM_MESSAGE):
+            system_prompt = (FARM_WORLD_APP_AGENT_SYSTEM_MESSAGE
+                             + system_prompt[len(DEFAULT_APP_AGENT_SYSTEM_MESSAGE):])
         return Agent(
             name=app_agent_config.agent_name,
             llm=llm,
-            system_message=app_agent_config.system_prompt,
+            system_message=system_prompt,
             toolsets=tools,
         )
 
@@ -362,6 +374,7 @@ def build_controller_agent(
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
 ) -> ResearchARESimulationAgent:
+    explicit_system_message = system_message is not None
     if system_message is None:
         system_message = get_farm_world_system_prompt_for_apps(toolsets)
     config = ControllerConfigBuilder(
@@ -371,5 +384,5 @@ def build_controller_agent(
         agent_config=config,
         llm=llm,
         toolsets=toolsets,
-        system_message=system_message,
+        system_message=system_message if explicit_system_message else None,
     )
