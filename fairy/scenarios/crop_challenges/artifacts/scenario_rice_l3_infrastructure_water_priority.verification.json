@@ -1,0 +1,26 @@
+{
+  "scenario_rice_l1_channel_clearance": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "a9fb78608fd39884399ebf28fffad686cecd6b4720d7b15df98b518a77df7cfe",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_rice_l2_infrastructure_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "598f6a5b71231320f1c4ac77f6a69a21397d77043ec513603966a5f2d25baa13",
+    "success": false,
+    "status": "experimental"
+  },
+  "scenario_rice_l3_infrastructure_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "44ad058de7508a8c128954dc1a1e93e672a865df4394fa9e55bc25c1ba6afe10",
+    "success": false,
+    "status": "experimental"
+  }
+}

@@ -5,10 +5,10 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_topdress",
-  "initial_checkpoint_sha256": "7c19326f7ae7575122a909276c4c24a443dec3feb08c8e0a63a5d2c9e26951ca",
+  "initial_checkpoint_sha256": "b229d19bcba01185a060f1aaddc096e0b1a4310398492834996bcdeccf4cbd0f",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "91b2fc3963a01184d990ce3e40f2f0126d27b5dccd7cba088c0770d809e7ddda",
+  "expected_final_state_sha256": "40432c022cf199c0d6ce2a7aa30ae70b41e309cee20383348b8f49d7343a6381",
   "checkpoint_steps": {},
   "steps": [
     {

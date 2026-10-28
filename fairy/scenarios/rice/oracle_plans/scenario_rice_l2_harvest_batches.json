@@ -5,10 +5,10 @@
   "variant": "equipment_limit",
   "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
   "source_checkpoint_label": "before_drain",
-  "initial_checkpoint_sha256": "5548815ec607501b7960f23ecacb6934f7932be7a1a54b3aa7dbf7ade4c03292",
+  "initial_checkpoint_sha256": "fcd5713f46ca83cebed7c9fb15a18008baad4a1dfb5605b6497715417e6a357c",
   "config_fingerprint": "974c9b95656a8888352c2bb41fd4cad44184494e046d777e81b1a24e2dbab2d1",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "b9571d24be430d33f50babdf3ae1bbe570b877a51d839f415d0659aca6c7f961",
+  "expected_final_state_sha256": "8d4c1eabbfee43d008c3020a8b0561b8ec6297e13f2fe365b87723d0fd32b486",
   "checkpoint_steps": {},
   "steps": [
     {

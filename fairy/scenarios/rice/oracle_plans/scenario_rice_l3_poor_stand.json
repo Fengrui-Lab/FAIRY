@@ -8,7 +8,7 @@
   "initial_checkpoint_sha256": "12014f808025c3ad97ca3005113e40f5087904b5d2824ef9ed4fc2df60b9cd66",
   "config_fingerprint": "62abf630532968126eb2922ce559623133abf2d9f7ac39394a8f76f294dffe04",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "2e876f90894c1a2d623307fead323ce46cc3d4f6cbcda6956b4db53eea23b044",
+  "expected_final_state_sha256": "f865137e6d65d0f9e14b2492d1b3a3ecf9c3aa7cf556bd5dec865ce24319a009",
   "checkpoint_steps": {
     "initial_before_field_prep": 0,
     "before_puddle": 17,

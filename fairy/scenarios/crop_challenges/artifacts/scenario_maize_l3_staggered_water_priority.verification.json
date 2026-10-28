@@ -1,0 +1,18 @@
+{
+  "scenario_maize_l2_staggered_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "7cd384ab338284774bb81c739b66a2d770a7714e3cefc3914abc20d23b7f71e4",
+    "success": false,
+    "status": "experimental"
+  },
+  "scenario_maize_l3_staggered_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "078c37c6c2612a4f8b920c45dbabdc268d407b09f59aba6397a9fc76f936d1a5",
+    "success": false,
+    "status": "experimental"
+  }
+}

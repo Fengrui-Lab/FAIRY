@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
+import copy
 from dataclasses import replace
 from pathlib import Path
 
@@ -60,6 +61,59 @@ def physical_state(scenario):
     }
 
 
+def assert_source_continuation_equal(actual, expected):
+    """Allow roundoff only in four persisted projections of native values.
+
+    Older checkpoints can differ from freshly projected values by a few ULPs.
+    Native histories, resource ledgers, recovery, RNG and all other fields
+    still require exact equality.
+    """
+    comparable = copy.deepcopy(actual)
+    projections = (
+        (("farm", "physics_state", "soil", "states"),
+         ("cumulative_evap_mm", "cumulative_transpiration_mm")),
+        (("farm", "physics_state", "crop", "canopy", "states"),
+         ("canopy_cover", "lai")),
+    )
+    for path, names in projections:
+        rows, reference = comparable, expected
+        for key in path:
+            rows, reference = rows[key], reference[key]
+        assert rows.keys() == reference.keys()
+        for ridge_id, row in rows.items():
+            for name in names:
+                assert row[name] == pytest.approx(reference[ridge_id][name], rel=0, abs=1e-12)
+                row[name] = reference[ridge_id][name]
+    assert comparable == expected
+
+
+def test_continuation_roundoff_allowance_preserves_strict_native_and_inventory_checks():
+    baseline = {
+        "farm": {
+            "physics_state": {
+                "soil": {"states": {"0": {"cumulative_evap_mm": 1., "cumulative_transpiration_mm": 2.}}},
+                "crop": {"canopy": {"states": {"0": {"canopy_cover": .5, "lai": 1.5}}}},
+            },
+            "inventory": {"warehouse_grain_kg": 1.},
+        },
+        "native": {"TWSO": 1.},
+    }
+    rounded = copy.deepcopy(baseline)
+    rounded["farm"]["physics_state"]["soil"]["states"]["0"]["cumulative_evap_mm"] += 1e-13
+    assert_source_continuation_equal(rounded, baseline)
+    for path in (("native", "TWSO"), ("farm", "inventory", "warehouse_grain_kg")):
+        changed = copy.deepcopy(baseline)
+        row = changed
+        for key in path[:-1]:
+            row = row[key]
+        row[path[-1]] += 1e-13
+        with pytest.raises(AssertionError):
+            assert_source_continuation_equal(changed, baseline)
+    rounded["farm"]["physics_state"]["soil"]["states"]["0"]["cumulative_evap_mm"] += 1e-10
+    with pytest.raises(AssertionError):
+        assert_source_continuation_equal(rounded, baseline)
+
+
 @pytest.fixture(scope="module")
 def completed():
     results = {}
@@ -74,7 +128,8 @@ def test_three_tiers_use_explicit_python_modules_and_shared_runtime():
     assert len(TASK_SPECS) == 15
     assert sum(t.level == "L1" for t in TASK_SPECS.values()) == 11
     assert sum(t.level == "L2" for t in TASK_SPECS.values()) == 4
-    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | {s.scenario_id for s in SPECS.values()}
+    from fairy.scenarios.crop_challenges.catalog import TASKS
+    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | {s.scenario_id for s in SPECS.values()} | {sid for sid in TASKS if sid.startswith("scenario_maize_")}
     for sid in IDS:
         cls = get_scenario_class(sid)
         path = Path(inspect.getfile(cls))
@@ -328,7 +383,7 @@ def test_real_checkpoint_suffix_matches_uninterrupted_source(sid, source_runs):
         suffix.add_node(step)
     restored, engine = make_engine(sid)
     engine.replay_workflow(suffix)
-    assert physical_state(restored) == physical_state(source)
+    assert_source_continuation_equal(physical_state(restored), physical_state(source))
 
 
 def test_rechecks_are_required_even_after_successful_actions(completed):

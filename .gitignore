@@ -14,3 +14,4 @@ rebatch_outputs/
 runs/
 fos_exports/
 workflow_exports/
+fairy/scenarios/crop_challenges/artifacts/.publish.lock

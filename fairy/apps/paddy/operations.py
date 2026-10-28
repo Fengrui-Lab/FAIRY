@@ -108,7 +108,9 @@ class PaddyOpsApp(App):
         fuel = p.area_m2 * .004
         machine = require_machine(self.world, "tractor", fuel, "puddler")
         self.world.run_job(math.ceil(p.area_m2 / 1000 * 3600))
-        self.world.backends[plot_id].apply("puddle", sope_cm_day=1., ksub_cm_day=.2)
+        self.world.backends[plot_id].apply(
+            "puddle", sope_cm_day=p.soil.get("puddled_sope_cm_day", 1.),
+            ksub_cm_day=p.soil.get("puddled_ksub_cm_day", .2))
         consume_fuel(self.world, machine, fuel)
         p.puddled = p.levelled = True
         self.world.record("puddle_and_level", plot_id=plot_id, fuel_liters=fuel)

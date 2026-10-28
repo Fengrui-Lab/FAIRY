@@ -51,6 +51,7 @@ def _import_known_scenarios() -> None:
         "fairy.scenarios.three_farm",
         "fairy.scenarios.rice",
         "fairy.scenarios.maize",
+        "fairy.scenarios.crop_challenges",
     ):
         mod = importlib.import_module(package)
         for info in pkgutil.walk_packages(mod.__path__, package + "."):

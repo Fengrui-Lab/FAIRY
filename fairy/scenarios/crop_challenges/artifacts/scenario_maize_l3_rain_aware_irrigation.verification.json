@@ -1,0 +1,18 @@
+{
+  "scenario_maize_l2_rain_aware_irrigation": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "0f3e942882c84f0040de7c1c1e80a2f80c1e234f039e6a534f07835f7175fede",
+    "success": false,
+    "status": "experimental"
+  },
+  "scenario_maize_l3_rain_aware_irrigation": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "26c106d044bdc904587ad6e1009666168c8b785ad7221a50480ebc53f3772239",
+    "success": false,
+    "status": "experimental"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "scenario_maize_l1_targeted_fertilization": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "1b5165b1685188a42c90074605adc53ce08436d2d59effb767db714b9cc33fdb",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l2_zonal_nitrogen_recovery": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "55d3f30985f8e75aa61b58a5de0a9f2630ee2866c849dd123769d1b5c5c0a42e",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l3_zonal_nitrogen_recovery": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "f5d204d7a721aa43e7fef04caee38c82a9cdf4f2dda572de672ed55ae6661103",
+    "success": true,
+    "status": "calibrated"
+  }
+}

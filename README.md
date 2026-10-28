@@ -4,6 +4,13 @@ This branch combines `extend_crops`, the Desktop `multi-farm` working changes,
 and the local WOFOST work. See the [integration guide](docs/wofost-multifarm-integration.md)
 for explicit crop/backend selection, shared resources, commands, and validation limits.
 
+The maize/rice decision expansion adds 24 tasks: ten source seasons, ten real
+checkpoint windows, and four targeted operations. It covers zonal water/nitrogen,
+staggered maize sowing, rain windows, paddy infrastructure and crop protection.
+Each task has matched controls, resource budgets and independent replay evidence;
+candidates without a demonstrated decision mechanism remain experimental. See the
+[challenge guide and calibration report](docs/crop-decision-challenges.md).
+
 Thirteen selected tasks now have separate classic and WOFOST versions. Original
 scenario IDs, files and classes select the classic `legacy` engine; the WOFOST
 IDs, filenames and classes end in `_V2`. The directory name

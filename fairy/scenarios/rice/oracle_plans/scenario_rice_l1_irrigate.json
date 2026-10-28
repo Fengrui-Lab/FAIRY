@@ -5,10 +5,10 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_irrigate",
-  "initial_checkpoint_sha256": "7069a9d761b3f64e02911c190990ca9bb1716302ce61d8c4afeb6fc7fd7ecdbd",
+  "initial_checkpoint_sha256": "f5bbad7a382a0a694b4501aef36c304c436e64cdfd2e261eb35ffb5261446a6d",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "d2ca72df17d039b3c330f790e222c2d32479ee8991586fd72e2a955eac71b06b",
+  "expected_final_state_sha256": "0dd4cae7c97e7a22f1f35581fb34591f8cb5450e968fec0785626fc39fee5aa9",
   "checkpoint_steps": {},
   "steps": [
     {

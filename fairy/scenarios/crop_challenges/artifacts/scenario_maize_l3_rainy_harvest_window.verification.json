@@ -1,0 +1,18 @@
+{
+  "scenario_maize_l2_rainy_harvest_window": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "6a82be5cd7fb406190300e38227ef868c52b02e566dce0d08b40c8f5b4a281f3",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l3_rainy_harvest_window": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "6a82be5cd7fb406190300e38227ef868c52b02e566dce0d08b40c8f5b4a281f3",
+    "success": true,
+    "status": "calibrated"
+  }
+}

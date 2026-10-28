@@ -5,10 +5,10 @@
   "variant": "biotic",
   "source_l3_scenario_id": "scenario_rice_l3_biotic",
   "source_checkpoint_label": "before_treat",
-  "initial_checkpoint_sha256": "70bc54c722c0c125ef981599cffe82bf866f4878f27b33c78464cf2bb527e6f4",
+  "initial_checkpoint_sha256": "796127db116b215524ed0bdbe5e268ae236bfb614b5162798f6b3d470edf2cbb",
   "config_fingerprint": "27aebba1992f09ac03e65c8edb4b6b83e96129f80a08028f07b75637e1c4c1db",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "118554b874b1de243764ecd04aebbc3ff8f39e4abd6c6a7de30ef15698e187bd",
+  "expected_final_state_sha256": "c9f5b1be97c649c746d2112bde1c86d3223e30f0e50957ef3bc74fcf874f814f",
   "checkpoint_steps": {},
   "steps": [
     {

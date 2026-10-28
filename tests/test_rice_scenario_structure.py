@@ -56,7 +56,9 @@ EXPECTED_VARIANTS = {
 
 def test_registry_preserves_28_ids_with_independent_declared_classes():
     registered = {sid for sid in list_scenarios() if sid.startswith("scenario_rice_")}
-    assert registered == set(SCENARIO_IDS) == set(SPECS)
+    from fairy.scenarios.crop_challenges.catalog import TASKS
+    assert registered == set(SPECS) | {sid for sid in TASKS if sid.startswith("scenario_rice_")}
+    assert set(SCENARIO_IDS) == set(SPECS)
     classes = [get_scenario_class(sid) for sid in SCENARIO_IDS]
     assert len(set(classes)) == len({cls.__module__ for cls in classes}) == 28
 

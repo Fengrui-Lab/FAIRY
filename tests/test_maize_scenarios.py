@@ -54,7 +54,8 @@ def completed():
 
 
 def test_three_independent_scenario_modules_use_the_common_event_runtime():
-    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | set(TASK_SPECS)
+    from fairy.scenarios.crop_challenges.catalog import TASKS
+    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | set(TASK_SPECS) | {sid for sid in TASKS if sid.startswith("scenario_maize_")}
     for scenario_id in IDS:
         cls = get_scenario_class(scenario_id)
         path = Path(inspect.getfile(cls))
