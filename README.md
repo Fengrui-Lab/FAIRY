@@ -1,5 +1,8 @@
 # FAIRY
 
+> **`visualization` 为阶段性实验分支，当前暂不合入主线；待 FAIRY 2.0 推进时，再评估整合与合入。**
+> 本地农场实验台的启动方法见 [可视化使用说明](README-visualization.md)，当前状态、验证边界与保留问题见 [阶段记录与后续方向](docs/farm-visualization-roadmap.md)。
+
 This branch combines `extend_crops`, the Desktop `multi-farm` working changes,
 and the local WOFOST work. See the [integration guide](docs/wofost-multifarm-integration.md)
 for explicit crop/backend selection, shared resources, commands, and validation limits.

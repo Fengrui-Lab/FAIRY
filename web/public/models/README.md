@@ -1,0 +1,1 @@
+Place packaged GLB models here. The browser accepts `/models/<name>.glb` asset references and retains the selected entity's business binding. Missing models fall back to procedural geometry. Use metres, Y up and a ground-level origin. Visual model placement does not change field geometry, sensor coverage or equipment resources.
