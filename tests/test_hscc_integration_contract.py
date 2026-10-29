@@ -14,4 +14,6 @@ def test_optional_fertilizer_default_is_preserved_in_menu():
 def test_wofost_data_are_part_of_runtime_identity():
     ident=fingerprint()
     assert any(p.startswith('fairy/physics/data/wofost/') and p.endswith('.json') for p in ident['files'])
+    assert any(p.endswith('.gz') and p.startswith('fairy/scenarios/') for p in ident['files'])
+    assert any(p.endswith('.conf') and p.startswith('fairy/physics/data/') for p in ident['files'])
     assert ident['dependencies']['pcse']

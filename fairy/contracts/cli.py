@@ -20,7 +20,7 @@ def fingerprint():
     package = Path(__file__).resolve().parents[1]
     root = package.parent
     files = sorted(package.rglob('*.py')) + [root/'pyproject.toml', root/'uv.lock']
-    files += sorted(p for p in package.rglob('*') if p.is_file() and p.suffix.lower() in {'.json','.txt','.md','.yaml','.yml','.csv','.npz','.npy','.pkl','.pickle'})
+    files += sorted(p for p in package.rglob('*') if p.is_file() and p.suffix.lower() in {'.json','.txt','.md','.yaml','.yml','.csv','.npz','.npy','.pkl','.pickle','.gz','.conf'})
     hashes = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.is_file()}
     head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, capture_output=True, text=True)
     from importlib.metadata import version, PackageNotFoundError
