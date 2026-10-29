@@ -245,7 +245,7 @@ def main() -> None:
     parser.add_argument("--fallback-max-output-tokens", type=int, default=None, help="Fallback output budget; defaults to --max-output-tokens")
     parser.add_argument("--fallback-enable-thinking", type=_str_to_bool, default=None, help="Explicit thinking setting for vllm/openai-compatible fallback; omitted preserves server defaults")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
-    parser.add_argument("--done-check", type=_str_to_bool, default=False, help="Compatibility option for Jev/snapshot controllers; native LLM controllers require false (default)")
+    parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
     parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
