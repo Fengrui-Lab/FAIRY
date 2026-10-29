@@ -409,3 +409,57 @@ How to read: **Context errors** = Jev requests refused with `max_tokens_exceeded
 - Jev's share (48%) is close to the snapshot hybrid's (50%); the runs did not fail because of low confidence, they could not continue.
 
 Spent: about $2.36. Part 2 total: about $11.8.
+
+## 15. REFLEX-style hybrid (branch `jev-reflex`, 2026-10-24)
+
+Idea from REFLEX (arXiv 2609.26532): Jev always picks the tool. If Jev's confidence on the tool is at or above the threshold (0.4), Jev also picks the arguments, as before. If it is below, Jev's tool is kept and gpt-6-luna only fills in the arguments for that tool (it sees only that tool and cannot change it). Everything else is the same as section 13: snapshot, "done" check, menus, 300 actions / 60 min, seed 0. Two safety nets of the current hybrid also stay: a repeat that changed nothing, and a "done" refused twice, still hand the whole decision to the LLM. Option: `--hybrid-mode reflex` (default `full` = current hybrid, so earlier runs are unchanged). 1 run per scenario, all 19 L3-mini. Details: `PROGRESS.md`, Step 21.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | Reflex hybrid | Reflex: Jev picks the tool / tool and arguments | Actions where the LLM filled the arguments |
+|---|---|---|---|---|---|
+| organic_residue_weed_establishment | finished, 13.7%, $0.17, 233 act. | finished, -0.3%, $0.18, 195 act. | finished, -0.6%, $0.23, 158 act. | 100% / 51% | 78 |
+| organic_patch_weed_mechanical_capacity | finished, 8.4%, $0.10, 155 act. | finished, 4.2%, $0.10, 118 act. | finished, 8.4%, $0.47, 295 act. | 67% / 40% | 80 |
+| micronutrient_deficiency_flowering_patch | finished, 8.4%, $0.06, 109 act. | finished, 8.6%, $0.08, 128 act. | **not finished** (05-29, max tool calls), 100.0%, $0.36, 300 act. | 94% / 67% | 81 |
+| local_soil_constraint_nutrition_patch | finished, -9.7%, $0.04, 120 act. | finished, -9.1%, $0.17, 167 act. | **not finished** (06-04, max tool calls), 100.0%, $0.43, 300 act. | 94% / 64% | 89 |
+| heinong84_edge_low_fertility | finished, 5.1%, $0.07, 144 act. | finished, 4.7%, $0.19, 219 act. | **not finished** (05-25, max tool calls), 100.0%, $0.39, 300 act. | 91% / 65% | 79 |
+| cloudy_wet_low_radiation_biomass | finished, 13.8%, $0.02, 79 act. | finished, 0.9%, $0.05, 91 act. | finished, 0.2%, $0.08, 123 act. | 93% / 72% | 26 |
+| poordrainage_wetjune_disease_trafficability | finished, 11.3%, $0.03, 135 act. | finished, 7.4%, $0.11, 138 act. | **not finished** (05-30, max tool calls), 100.0%, $0.36, 300 act. | 97% / 59% | 115 |
+| staggered_wetjune_canopy_disease | finished, 3.5%, $0.08, 172 act. | finished, 9.5%, $0.10, 124 act. | **not finished** (08-13, max tool calls), 100.0%, $0.51, 300 act. | 98% / 50% | 145 |
+| soy_after_soy_wetjune_disease | finished, 13.2%, $0.06, 137 act. | finished, 9.0%, $0.06, 95 act. | finished, 2.3%, $0.32, 260 act. | 97% / 66% | 82 |
+| dryr5r6_hn58_std_waterlimit | finished, 1.8%, $0.05, 154 act. | finished, 5.2%, $0.08, 120 act. | finished, 4.1%, $0.18, 186 act. | 96% / 70% | 50 |
+| drought_recovery_false_disease_signal | finished, 3.1%, $0.05, 119 act. | finished, 3.4%, $0.30, 251 act. | **not finished** (05-28, max tool calls), 100.0%, $0.54, 300 act. | 97% / 49% | 146 |
+| heinong58_resistant_biotic_water_budget_priority | finished, 8.4%, $0.05, 124 act. | finished, 11.5%, $0.10, 140 act. | **not finished** (05-26, max tool calls), 100.0%, $0.53, 300 act. | 100% / 31% | 206 |
+| hn60_high_fastdrain_dryr5r6 | finished, 0.5%, $0.05, 120 act. | finished, 5.7%, $0.04, 79 act. | finished, 5.7%, $0.09, 123 act. | 97% / 73% | 29 |
+| dryr5r6_insect_threshold_waterstress | finished, 7.5%, $0.05, 116 act. | finished, 1.2%, $0.09, 118 act. | **not finished** (06-19, max tool calls), 100.0%, $0.37, 300 act. | 96% / 60% | 107 |
+| dryer_capacity_batch_harvest_storage | finished, 0.1%, $0.05, 147 act. | finished, 6.1%, $0.15, 188 act. | **not finished** (10-11, max tool calls), 51.8%, $0.47, 300 act. | 98% / 46% | 156 |
+| grain_moisture_sensor_failure_harvest | finished, 5.8%, $0.05, 125 act. | finished, 0.0%, $0.05, 91 act. | finished, 0.1%, $0.08, 116 act. | 100% / 70% | 35 |
+| laterain_shattering_drying_tradeoff | finished, 14.4%, $0.05, 120 act. | finished, 0.1%, $0.04, 76 act. | **not finished** (09-23, max tool calls), 16.3%, $0.38, 300 act. | 42% / 26% | 50 |
+| cool_august_lategrain_laterain | finished, 3.7%, $0.07, 126 act. | finished, 8.3%, $0.04, 88 act. | finished, 0.3%, $0.12, 155 act. | 99% / 73% | 41 |
+| compacted_headland_stand_recovery | finished, 8.7%, $0.08, 166 act. | **not finished** (09-03, max tool calls), 61.5%, $0.45, 300 act. | **not finished** (07-04, max tool calls), 100.0%, $0.43, 300 act. | 92% / 66% | 78 |
+
+Cells: season finished or not (date and why it stopped), grain loss (grain not harvested and stored vs the oracle; 100% = nothing harvested; below 0% = more than the oracle), cost, actions. Baseline = gpt-6-luna alone with the "done" check (the 7 reruns of 13.1, the other 12 from section 13).
+
+**Summary:**
+
+| | LLM baseline (13.1) | Hybrid (13) | Reflex hybrid |
+|---|---|---|---|
+| Seasons finished | **19 of 19** | 18 of 19 | 8 of 19 |
+| Used up all 300 actions | 0 | 1 | 11 |
+| Average grain loss, all 19 | **6.4%** | 7.3% | 52.0% |
+| Average grain loss, the 8 that reflex finished | 7.6% | 4.1% | **2.6%** |
+| Total cost (19 runs) | **$1.19** | $2.37 | $6.36 |
+| Cost, the 8 that reflex finished | **$0.57** | $0.60 | $1.57 |
+| Average actions per run | 137 | 143 | 248 |
+| Average time per run | 7.1 min | **3.4 min** | 4.7 min |
+| Jev picks the tool | – | 50% | 92% |
+| Jev picks tool and arguments | – | 50% | 58% |
+
+**Findings:**
+1. **Reflex is much worse here.** It finished 8 of 19 seasons (hybrid 18, baseline 19). 11 runs used up all 300 actions, 7 of them still in May or June, before any harvest.
+2. **Why: in the current hybrid, the LLM mostly fixes Jev's tool, not its arguments.** In the section 13 hybrid runs, when Jev was unsure, the LLM picked a different tool in 68% of hand-offs (914 of 1,348), most often "advance time" instead of another check. Reflex takes that away: Jev's unsure picks (status checks, charging, inspections, short waits) run as they are.
+3. **Waiting is the clearest case.** When Jev picks "wait for a notification", the LLM can only choose how long, and it chose 1 hour in 265 of 319 cases. The current hybrid's LLM switches to "advance time" by days. So reflex runs move through the season in small steps and run out of actions.
+4. **When reflex does finish, it loses the least grain** (2.6% on its 8 vs 4.1% hybrid and 7.6% baseline on the same 8), but it costs about 2.6× more ($1.57 vs about $0.60) because it takes more actions.
+5. **Cost overall:** $6.36 for 19 runs, about 2.7× the hybrid and 5× the baseline. Runs that hit 300 actions cost $0.36–0.54 each.
+6. One run per scenario (section 12: single runs vary a lot). The pattern (11 runs out of actions vs 1) is too large to be noise.
+7. One run (laterain) hung for 2.5 h in a gpt-6-luna request (FAIRY sets no request timeout); it was stopped and rerun.
+
+Spent: about $7.2 (check run $0.48, 19 runs $6.36, the hung run about $0.40). Part 2 total: about $16.6.

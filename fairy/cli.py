@@ -163,6 +163,7 @@ def main() -> None:
     parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
     parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
+    parser.add_argument("--hybrid-mode", choices=["full", "reflex"], default="full", help="farm_jev with --fallback-model: the LLM takes the whole decision (full, default) or only fills in the arguments of Jev's tool when Jev is unsure of the tool (reflex)")
     parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
@@ -354,6 +355,7 @@ def main() -> None:
             fallback_confidence=args.fallback_confidence,
             jev_state=args.jev_state,
             done_check=args.done_check,
+            hybrid_mode=args.hybrid_mode,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event

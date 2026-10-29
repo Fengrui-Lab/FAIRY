@@ -736,3 +736,52 @@ How to read: **Context errors** = Jev requests refused with `max_tokens_exceeded
 - Jev's share (48%) is close to the snapshot hybrid's (50%); the runs did not fail because of low confidence, they could not continue.
 
 Spent: about $2.36. Part 2 total: about $11.8.
+
+## Step 21 – REFLEX-style hybrid (2026-10-24, branch `jev-reflex`)
+
+**Built:** `--hybrid-mode reflex` for `farm_jev` with `--fallback-model` (default `full` = the current hybrid, unchanged). Jev picks the tool every step. If Jev's confidence on the tool is >= `--fallback-confidence`, Jev also picks the arguments. Below it, Jev's tool is kept and the LLM gets only that tool's schema plus the line "Jev has already chosen the next action: `<tool>`. Call exactly that tool; you only choose its arguments." Same input and memory as the current LLM helper. Jev is not asked for those arguments (saves a request). Low confidence only on the arguments: Jev's values are used. If the LLM calls another tool or none, Jev's arguments are used. A tool without arguments runs as Jev chose it. A repeat without change and a "done" refused twice still go to the LLM for the whole decision, as before. Logging: `jev_action` has `tool_confidence` and source `jev` / `llm_arguments` / `llm`; telemetry has `hybrid_mode` and `llm_argument_fills`. 6 tests added; all 20 Jev tests pass (full suite: 103 pass, 1 needs the `rg` program, which is not installed here; its check was done by hand with grep: no `are`/`rsare` imports).
+
+**Check run** (hn60_high_fastdrain_dryr5r6): the mode worked as built (97 argument fills, all logged), but the run used all 300 actions by 28 July without harvesting ($0.48; current hybrid: 79 actions, $0.04). Cause: when unsure, Jev picks short waits and checks, and the LLM can no longer replace them.
+
+**All 19 L3-mini**, 1 run each, same settings as Step 18 (Jev jev-latest + gpt-6-luna helper, reasoning "none", threshold 0.4, 300 actions / 60 min, seed 0, same task texts). Laterain hung 2.5 h in one gpt-6-luna request (no request timeout); stopped, set aside (`miniRhung__`), rerun. Runs: `validation_runs/jev_l3/runs/miniR__*`, scores: `scoring_reflex`, `scoring_reflex2`.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | Reflex hybrid | Reflex: Jev picks the tool / tool and arguments | Actions where the LLM filled the arguments |
+|---|---|---|---|---|---|
+| organic_residue_weed_establishment | finished, 13.7%, $0.17, 233 act. | finished, -0.3%, $0.18, 195 act. | finished, -0.6%, $0.23, 158 act. | 100% / 51% | 78 |
+| organic_patch_weed_mechanical_capacity | finished, 8.4%, $0.10, 155 act. | finished, 4.2%, $0.10, 118 act. | finished, 8.4%, $0.47, 295 act. | 67% / 40% | 80 |
+| micronutrient_deficiency_flowering_patch | finished, 8.4%, $0.06, 109 act. | finished, 8.6%, $0.08, 128 act. | **not finished** (05-29, max tool calls), 100.0%, $0.36, 300 act. | 94% / 67% | 81 |
+| local_soil_constraint_nutrition_patch | finished, -9.7%, $0.04, 120 act. | finished, -9.1%, $0.17, 167 act. | **not finished** (06-04, max tool calls), 100.0%, $0.43, 300 act. | 94% / 64% | 89 |
+| heinong84_edge_low_fertility | finished, 5.1%, $0.07, 144 act. | finished, 4.7%, $0.19, 219 act. | **not finished** (05-25, max tool calls), 100.0%, $0.39, 300 act. | 91% / 65% | 79 |
+| cloudy_wet_low_radiation_biomass | finished, 13.8%, $0.02, 79 act. | finished, 0.9%, $0.05, 91 act. | finished, 0.2%, $0.08, 123 act. | 93% / 72% | 26 |
+| poordrainage_wetjune_disease_trafficability | finished, 11.3%, $0.03, 135 act. | finished, 7.4%, $0.11, 138 act. | **not finished** (05-30, max tool calls), 100.0%, $0.36, 300 act. | 97% / 59% | 115 |
+| staggered_wetjune_canopy_disease | finished, 3.5%, $0.08, 172 act. | finished, 9.5%, $0.10, 124 act. | **not finished** (08-13, max tool calls), 100.0%, $0.51, 300 act. | 98% / 50% | 145 |
+| soy_after_soy_wetjune_disease | finished, 13.2%, $0.06, 137 act. | finished, 9.0%, $0.06, 95 act. | finished, 2.3%, $0.32, 260 act. | 97% / 66% | 82 |
+| dryr5r6_hn58_std_waterlimit | finished, 1.8%, $0.05, 154 act. | finished, 5.2%, $0.08, 120 act. | finished, 4.1%, $0.18, 186 act. | 96% / 70% | 50 |
+| drought_recovery_false_disease_signal | finished, 3.1%, $0.05, 119 act. | finished, 3.4%, $0.30, 251 act. | **not finished** (05-28, max tool calls), 100.0%, $0.54, 300 act. | 97% / 49% | 146 |
+| heinong58_resistant_biotic_water_budget_priority | finished, 8.4%, $0.05, 124 act. | finished, 11.5%, $0.10, 140 act. | **not finished** (05-26, max tool calls), 100.0%, $0.53, 300 act. | 100% / 31% | 206 |
+| hn60_high_fastdrain_dryr5r6 | finished, 0.5%, $0.05, 120 act. | finished, 5.7%, $0.04, 79 act. | finished, 5.7%, $0.09, 123 act. | 97% / 73% | 29 |
+| dryr5r6_insect_threshold_waterstress | finished, 7.5%, $0.05, 116 act. | finished, 1.2%, $0.09, 118 act. | **not finished** (06-19, max tool calls), 100.0%, $0.37, 300 act. | 96% / 60% | 107 |
+| dryer_capacity_batch_harvest_storage | finished, 0.1%, $0.05, 147 act. | finished, 6.1%, $0.15, 188 act. | **not finished** (10-11, max tool calls), 51.8%, $0.47, 300 act. | 98% / 46% | 156 |
+| grain_moisture_sensor_failure_harvest | finished, 5.8%, $0.05, 125 act. | finished, 0.0%, $0.05, 91 act. | finished, 0.1%, $0.08, 116 act. | 100% / 70% | 35 |
+| laterain_shattering_drying_tradeoff | finished, 14.4%, $0.05, 120 act. | finished, 0.1%, $0.04, 76 act. | **not finished** (09-23, max tool calls), 16.3%, $0.38, 300 act. | 42% / 26% | 50 |
+| cool_august_lategrain_laterain | finished, 3.7%, $0.07, 126 act. | finished, 8.3%, $0.04, 88 act. | finished, 0.3%, $0.12, 155 act. | 99% / 73% | 41 |
+| compacted_headland_stand_recovery | finished, 8.7%, $0.08, 166 act. | **not finished** (09-03, max tool calls), 61.5%, $0.45, 300 act. | **not finished** (07-04, max tool calls), 100.0%, $0.43, 300 act. | 92% / 66% | 78 |
+
+| | LLM baseline (13.1) | Hybrid (13) | Reflex hybrid |
+|---|---|---|---|
+| Seasons finished | **19 of 19** | 18 of 19 | 8 of 19 |
+| Used up all 300 actions | 0 | 1 | 11 |
+| Average grain loss, all 19 | **6.4%** | 7.3% | 52.0% |
+| Average grain loss, the 8 that reflex finished | 7.6% | 4.1% | **2.6%** |
+| Total cost (19 runs) | **$1.19** | $2.37 | $6.36 |
+| Cost, the 8 that reflex finished | **$0.57** | $0.60 | $1.57 |
+| Average actions per run | 137 | 143 | 248 |
+| Average time per run | 7.1 min | **3.4 min** | 4.7 min |
+| Jev picks the tool | – | 50% | 92% |
+| Jev picks tool and arguments | – | 50% | 58% |
+
+- Hand-offs: 1,673 argument fills (low tool confidence), 321 whole decisions after "done" refused twice, 109 after a repeat.
+- Section 13 hybrid logs: when Jev was unsure the LLM changed the tool in 68% of hand-offs (914 / 1,348), mostly to "advance time". Reflex removes exactly this.
+- LLM-filled "wait for notification": 1 hour in 265 of 319 cases.
+
+Spent: about $7.2. Part 2 total: about $16.6.
