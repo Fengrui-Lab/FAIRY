@@ -1,0 +1,134 @@
+{
+  "status": "passed",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deviceScaleFactor": 2,
+  "base": "http://127.0.0.1:8000",
+  "screenshots": [
+    {
+      "preset": "overview",
+      "file": "01-overview.png",
+      "state": {
+        "testid": "showcase",
+        "scene": "two",
+        "frame": "frame-2",
+        "field": "soybean_field",
+        "region": "soybean_field:r2c1",
+        "layer": "crop"
+      },
+      "pixels": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "preset": "trajectory",
+      "file": "02-trajectory.png",
+      "state": {
+        "testid": "showcase",
+        "scene": "two",
+        "frame": "frame-2",
+        "field": "soybean_field",
+        "region": "soybean_field:r2c1",
+        "layer": "crop"
+      },
+      "pixels": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "preset": "moisture",
+      "file": "03-moisture.png",
+      "state": {
+        "testid": "showcase",
+        "scene": "two",
+        "frame": "frame-2",
+        "field": "soybean_field",
+        "region": "soybean_field:r2c1",
+        "layer": "moisture"
+      },
+      "pixels": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "preset": "investigation",
+      "file": "04-investigation.png",
+      "state": {
+        "testid": "showcase",
+        "scene": "two",
+        "frame": "frame-2",
+        "field": "soybean_field",
+        "region": "soybean_field:r2c1",
+        "layer": "pest"
+      },
+      "pixels": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "preset": "management",
+      "file": "05-management.png",
+      "state": {
+        "testid": "showcase",
+        "scene": "two",
+        "frame": "frame-2",
+        "field": "soybean_field",
+        "region": "soybean_field:r2c1",
+        "layer": "crop"
+      },
+      "pixels": [
+        3840,
+        2160
+      ]
+    }
+  ],
+  "checks": [
+    "overview: all images load",
+    "overview: viewport and PiP fit without clipping",
+    "overview: direct URL restores fixed state",
+    "trajectory: all images load",
+    "trajectory: viewport and PiP fit without clipping",
+    "trajectory: direct URL restores fixed state",
+    "moisture: all images load",
+    "moisture: viewport and PiP fit without clipping",
+    "moisture: direct URL restores fixed state",
+    "investigation: all images load",
+    "investigation: viewport and PiP fit without clipping",
+    "investigation: direct URL restores fixed state",
+    "management: all images load",
+    "management: viewport and PiP fit without clipping",
+    "management: direct URL restores fixed state",
+    "Hotspot opens the matching aerial PiP",
+    "Trajectory thumbnail and hotspot share a media ID",
+    "3D renders a WebGL canvas",
+    "2D → 3D retains field / region / layer",
+    "3D → 2D retains the selected region",
+    "Moisture legend has explicit physical units",
+    "SVG map zoom responds",
+    "SVG map pans with pointer drag",
+    "3D field label selects the correct farm",
+    "3D raycasting selects an actual region",
+    "Three-farm mode uses its source calendar and location",
+    "Three farms show only HEINONG84 soybean",
+    "Shared equipment switches with scenario",
+    "Field-specific devices track farm selection",
+    "Three-farm crop legend does not invent maize",
+    "Long trajectory can locate the final step and its frame",
+    "Hover reveals a tool / time / image preview",
+    "Shared URL restores selected frame, field, region and layer",
+    "All displayed local media decode",
+    "Original workbench still renders its scenario selector",
+    "Original workbench loads without issuing farm commands",
+    "Existing API health responds successfully",
+    "Existing scenario catalog remains available"
+  ],
+  "errors": [],
+  "apiCalls": [],
+  "failures": []
+}
