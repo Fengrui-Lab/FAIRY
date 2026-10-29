@@ -1,0 +1,255 @@
+<title>Jev Farm Agent Status</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~68ch) with wide tables allowed to scroll; field-notebook palette (soil, leaf, pod-ochre accent). */
+:root {
+  --bg: #f7f8f5;
+  --surface: #eef1ea;
+  --fg: #1f2620;
+  --muted: #5b6659;
+  --line: #d4dacf;
+  --accent: #8a5a12;
+  --leaf: #2f6b3a;
+  --bad: #a3312a;
+  --bad-bg: #f6e3e0;
+  --font-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151a16; --surface: #1d241f; --fg: #e3e8e0; --muted: #9aa597; --line: #334036;
+  --accent: #e0a64a; --leaf: #7cc28a; --bad: #f08a80; --bad-bg: #3a1f1c; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #151a16; --surface: #1d241f; --fg: #e3e8e0; --muted: #9aa597; --line: #334036;
+  --accent: #e0a64a; --leaf: #7cc28a; --bad: #f08a80; --bad-bg: #3a1f1c; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 68rem; margin: 0 auto; padding-block: 40px 80px; display: grid; gap: 48px; }
+.prose { max-width: 44rem; }
+header { display: grid; gap: 12px; max-width: 46rem; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 600 clamp(30px, 5vw, 44px)/1.1 var(--font-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 26px/1.2 var(--font-display); margin: 0 0 12px; text-wrap: balance; }
+h3 { font: 600 18px/1.3 var(--font-body); margin: 24px 0 8px; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 12px; padding-left: 1.3em; }
+li { margin-bottom: 6px; }
+a { color: var(--leaf); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+.lede { font-size: 18px; color: var(--muted); margin: 0; }
+.meta { font: 13px/1.5 var(--font-mono); color: var(--muted); }
+section { display: grid; gap: 4px; }
+.status { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.status div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.status b { display: block; font: 600 13px/1.3 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+.done b { color: var(--leaf); } .open b { color: var(--accent); }
+.wrap { overflow-x: auto; margin: 8px 0 12px; border: 1px solid var(--line); border-radius: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+thead th { background: var(--surface); font: 600 12px/1.3 var(--font-mono); letter-spacing: .03em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+tbody tr:last-child > * { border-bottom: 0; }
+tbody th { font-weight: 500; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+.scen td { text-align: right; white-space: nowrap; }
+.scen th code { font-size: 12.5px; }
+td.fail { color: var(--bad); background: var(--bad-bg); }
+.x { margin-left: 4px; font-size: 11px; }
+.key { color: var(--accent); font-weight: 600; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--fg); max-width: 44rem; }
+details { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; background: var(--surface); }
+summary { cursor: pointer; font-weight: 600; }
+details .wrap { background: var(--bg); }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font: 13px/1.5 var(--font-mono); margin: 8px 0 12px; }
+dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: 6px 16px; margin: 0 0 12px; max-width: 50rem; }
+dt { font-weight: 600; } dd { margin: 0; min-width: 0; }
+@media (max-width: 560px) { dl { grid-template-columns: 1fr; } dd { margin-bottom: 8px; } }
+</style>
+
+<main>
+<header>
+  <span class="eyebrow">FAIRY · Jev decision model · status report</span>
+  <h1>Jev as a farm agent in FAIRY: where things stand</h1>
+  <p class="lede">What was built, every experiment that was run, what the results show, and where the code and logs are. Written so it can be read without earlier context.</p>
+  <p class="meta">Manos Neofotistos (Synkrasis) · 29 Oct 2026 · runs from 23–24 Oct 2026</p>
+</header>
+
+<section aria-labelledby="s-status">
+  <h2 id="s-status">Status in one screen</h2>
+  <div class="status">
+    <div class="done"><b>Done</b>Jev-based agent and a Jev + LLM hybrid run full farm seasons end to end on all 19 L3-mini scenarios.</div>
+    <div class="done"><b>Done</b>Hybrid matches the LLM agent on yield (7.3% vs 6.4% grain loss), finishes 18 of 19 seasons (LLM 19/19), ~2× faster, ~2× the dollar cost.</div>
+    <div class="done"><b>Done</b>Four ablations on L3-mini: full history, REFLEX-style, LLM with Jev as a tool (with and without a prompt note).</div>
+    <div class="done"><b>Done</b>Code on one branch; all 121 run logs packaged with a per-run CSV and FAIRY scores.</div>
+    <div class="open"><b>Not done</b>Full L3 set (only L3-mini). Repeats on L3-mini (1 run each). Jev under the other LLM controllers. Multi-farm (L4). A2A.</div>
+  </div>
+</section>
+
+<section aria-labelledby="s-bg" class="prose">
+  <h2 id="s-bg">Background</h2>
+  <dl>
+    <dt>FAIRY</dt><dd>Digital twin of a soybean farm (Harbin, one field of 64 ridges). An agent manages it by calling tools (tractor, drone, sensors, weather, warehouse). Levels: L1 = one skill, L2 = one episode, L3 = a full season. <b>L3-mini</b> = the 20 scenarios in <code>scripts/fullseason/l3_mini_20_scenario_ids.txt</code>; we use 19 (<code>hn50_hn84_hn58_mixed_stress</code> was left out). Each scenario has an oracle (expert) run used for scoring.</dd>
+    <dt>Jev</dt><dd>TypeSafe's "System One" decision model (<code>jev-latest</code>, version 1.14.0). It is not a language model: it receives a text description of the situation plus questions with option lists, and returns a pick, a probability per option and a confidence (0–1). Limits: 255 options per question, 64k tokens per request. Price $0.042 per million input tokens, output free, no caching.</dd>
+    <dt>LLM agent</dt><dd><code>gpt-6-luna</code> through the OpenAI Responses API, reasoning effort "medium", run with FAIRY's ReAct controller (<code>farm_baseline_react</code>). About 99% of its input is billed as cached ($0.01 per million).</dd>
+    <dt>Grain loss</dt><dd>The main yield metric: grain not harvested and stored, compared with the oracle (FAIRY's <code>recovered_yield_loss</code>). 100% = nothing harvested; below 0% = more than the oracle. A season counts as <b>finished</b> when all 64 ridges are harvested.</dd>
+    <dt>Task text</dt><dd>The scenarios' Chinese task texts were translated to English and checked by hand against the originals. Every agent gets the same English text.</dd>
+  </dl>
+</section>
+
+<section aria-labelledby="s-agents" class="prose">
+  <h2 id="s-agents">How the agents work</h2>
+  <h3>Hybrid (Jev + LLM), the main Jev setup</h3>
+  <ol>
+    <li>Code writes a short <b>farm snapshot</b> (date, crop state per group of ridges, inventory, equipment, what was already done). Jev does not see the full history.</li>
+    <li>Jev picks the next action from a <b>menu</b>: the scenario's tools plus "done".</li>
+    <li>Jev picks each argument from a menu built by code from the tool's limits, numbers in the task text and the farm state (never from the oracle). Waits are offered in plain units (30 min … 14 days, or "until ready"). Questions that don't depend on each other go in one request.</li>
+    <li><code>gpt-6-luna</code> takes over a decision when Jev's confidence is below 0.4, when Jev repeats an action that changed nothing, or after Jev's "done" was refused twice. The LLM makes one decision per call, with a memory of its own earlier calls.</li>
+  </ol>
+  <h3>Done check</h3>
+  <p>When an agent says it is finished, code checks the visible farm (for example, unharvested ridges). If work is left, the "done" is refused (at most twice per run) and the agent is told what is missing. Always on in the hybrid. For LLM agents it is the option <code>--done-check true</code>; the <b>fair LLM baseline</b> below uses it, so both sides play by the same rule.</p>
+</section>
+
+<section aria-labelledby="s-main">
+  <h2 id="s-main">Main result and ablations (L3-mini, 19 scenarios, 1 run each)</h2>
+  <div class="wrap">
+  <table>
+    <thead><tr><th></th><th class="num">LLM alone</th><th class="num">Hybrid</th><th class="num">Full history</th><th class="num">REFLEX-style</th><th class="num">LLM + Jev tool</th><th class="num">LLM + Jev tool + note</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Seasons finished</th><td class="num">19/19</td><td class="num key">18/19</td><td class="num">0/19</td><td class="num">8/19</td><td class="num">19/19</td><td class="num">19/19</td></tr>
+      <tr><th scope="row">Average grain loss</th><td class="num">6.4%</td><td class="num key">7.3%</td><td class="num">100%</td><td class="num">52.0%</td><td class="num">9.6%</td><td class="num">8.8%</td></tr>
+      <tr><th scope="row">Total cost, 19 runs</th><td class="num">$1.19</td><td class="num key">$2.37</td><td class="num">$2.36*</td><td class="num">$6.36</td><td class="num">$1.11</td><td class="num">$1.20</td></tr>
+      <tr><th scope="row">Average time per run</th><td class="num">7.1 min</td><td class="num key">3.4 min</td><td class="num">2.0 min*</td><td class="num">4.7 min</td><td class="num">5.4 min</td><td class="num">5.8 min</td></tr>
+      <tr><th scope="row">Decisions made by Jev</th><td class="num">–</td><td class="num key">50%</td><td class="num">48%</td><td class="num">tool 92%, tool + args 58%</td><td class="num">0 calls</td><td class="num">0 calls</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="meta">* Every full-history run stopped early with an error (Jev's input limit), so cost and time cover less than half a season. LLM alone = gpt-6-luna with the done check (7 runs rerun with the check, the other 12 finished the season without it, so the check would not have fired).</p>
+
+  <h3>What each column shows</h3>
+  <div class="prose">
+  <ul>
+    <li><b>Hybrid vs LLM alone.</b> Same yield level and both finish nearly every season. Jev makes half of the decisions; the hybrid is about twice as fast and costs about twice as much, because the LLM's cached input is cheaper than Jev's uncached input. Its one failure (<code>compacted_headland_stand_recovery</code>) used up all 300 actions, with the LLM making 74% of the decisions in that run.</li>
+    <li><b>Full history instead of the snapshot.</b> Jev's input grows with every action and hits the 64k limit before harvest in every run (after 43–114 actions). The code-built snapshot is required for full seasons.</li>
+    <li><b>REFLEX-style</b> (arXiv 2609.26532: Jev picks the tool; when unsure, the LLM only fills in that tool's arguments and cannot change the tool). 11 runs used up all 300 actions. In the hybrid, when Jev is unsure, the LLM picks a <i>different tool</i> in 68% of hand-offs (914 of 1,348), most often "advance time" instead of another check. REFLEX takes that away, so the season crawls forward in short steps. When it does finish it loses the least grain (2.6% on its 8 seasons, vs 4.1% hybrid and 7.6% LLM on the same 8) at about 2.6× the cost.</li>
+    <li><b>LLM with Jev as an optional tool</b> (<code>ask_jev</code>: the LLM writes a state and options, Jev answers). The LLM never called Jev in 38 runs, also when a neutral note in the system prompt explained what Jev is. These runs are effectively LLM-alone runs; their spread (up to 16 points on the same scenario between the two sets) shows how large single-run noise is.</li>
+  </ul>
+  </div>
+  <p class="note">Takeaway: Jev pays off when code puts it in charge and the LLM steps in, with full freedom, when Jev is unsure. Single runs vary a lot, so differences of a few points between settings are not reliable.</p>
+
+  <details>
+    <summary>Grain loss per scenario, all settings</summary>
+    <div class="wrap">
+    <table class="scen">
+      <thead><tr><th>Scenario (<code>scenario_full_season_hb_…</code>)</th><th>LLM alone</th><th>Hybrid</th><th>Full history</th><th>REFLEX-style</th><th>LLM + Jev tool</th><th>+ note</th></tr></thead>
+      <tbody>
+<tr><th scope="row"><code>cloudy_wet_low_radiation_biomass</code></th><td>13.8%</td><td>0.9%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>0.2%</td><td>4.6%</td><td>4.6%</td></tr>
+<tr><th scope="row"><code>compacted_headland_stand_recovery</code></th><td>8.7%</td><td class="fail">61.5%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>4.1%</td><td>3.0%</td></tr>
+<tr><th scope="row"><code>cool_august_lategrain_laterain</code></th><td>3.7%</td><td>8.3%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>0.3%</td><td>1.9%</td><td>0.1%</td></tr>
+<tr><th scope="row"><code>drought_recovery_false_disease_signal</code></th><td>3.1%</td><td>3.4%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>14.4%</td><td>9.7%</td></tr>
+<tr><th scope="row"><code>dryer_capacity_batch_harvest_storage</code></th><td>0.1%</td><td>6.1%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">51.8%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>31.9%</td><td>15.2%</td></tr>
+<tr><th scope="row"><code>dryr5r6_hn58_std_waterlimit</code></th><td>1.8%</td><td>5.2%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>4.1%</td><td>8.2%</td><td>15.6%</td></tr>
+<tr><th scope="row"><code>dryr5r6_insect_threshold_waterstress</code></th><td>7.5%</td><td>1.2%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>7.1%</td><td>6.0%</td></tr>
+<tr><th scope="row"><code>grain_moisture_sensor_failure_harvest</code></th><td>5.8%</td><td>0.0%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>0.1%</td><td>0.1%</td><td>11.3%</td></tr>
+<tr><th scope="row"><code>heinong58_resistant_biotic_water_budget_priority</code></th><td>8.4%</td><td>11.5%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>13.9%</td><td>7.9%</td></tr>
+<tr><th scope="row"><code>hn60_high_fastdrain_dryr5r6</code></th><td>0.5%</td><td>5.7%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>5.7%</td><td>5.7%</td><td>7.7%</td></tr>
+<tr><th scope="row"><code>laterain_shattering_drying_tradeoff</code></th><td>14.4%</td><td>0.1%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">16.3%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>16.2%</td><td>9.5%</td></tr>
+<tr><th scope="row"><code>local_soil_constraint_nutrition_patch</code></th><td>-9.7%</td><td>-9.1%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>-11.8%</td><td>-10.3%</td></tr>
+<tr><th scope="row"><code>micronutrient_deficiency_flowering_patch</code></th><td>8.4%</td><td>8.6%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>15.4%</td><td>14.1%</td></tr>
+<tr><th scope="row"><code>organic_patch_weed_mechanical_capacity</code></th><td>8.4%</td><td>4.2%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>8.4%</td><td>8.2%</td><td>8.3%</td></tr>
+<tr><th scope="row"><code>organic_residue_weed_establishment</code></th><td>13.7%</td><td>-0.3%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>-0.6%</td><td>19.1%</td><td>14.3%</td></tr>
+<tr><th scope="row"><code>poordrainage_wetjune_disease_trafficability</code></th><td>11.3%</td><td>7.4%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>8.0%</td><td>10.4%</td></tr>
+<tr><th scope="row"><code>scenario_full_season_heinong84_edge_low_fertility</code></th><td>5.1%</td><td>4.7%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>17.1%</td><td>6.9%</td></tr>
+<tr><th scope="row"><code>soy_after_soy_wetjune_disease</code></th><td>13.2%</td><td>9.0%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>2.3%</td><td>7.8%</td><td>17.8%</td></tr>
+<tr><th scope="row"><code>staggered_wetjune_canopy_disease</code></th><td>3.5%</td><td>9.5%</td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td class="fail">100.0%<span class="x" aria-label="season not finished">&#x2715;</span></td><td>9.6%</td><td>15.6%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="meta">Red with &#x2715; = season not finished (not all ridges harvested).</p>
+  </details>
+</section>
+
+<section aria-labelledby="s-sets">
+  <h2 id="s-sets">Everything that was run</h2>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>Test set</th><th>Scenarios</th><th>Runs each</th><th>Agents</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Small L1/L2 (Part 1)</th><td>15</td><td class="num">3</td><td>Pure Jev (history as input) vs gpt-4o-mini</td><td>Match with the oracle's steps: 47.1 vs 53.5 out of 100. Jev got stuck repeating actions; led to the snapshot, plain-unit waits and the hybrid.</td></tr>
+      <tr><th scope="row">L3, repeat check</th><td>3 (hn58, wet-June disease, dryer capacity)</td><td class="num">3</td><td>Hybrid vs gpt-6-luna</td><td>Similar grain loss; large run-to-run spread (LLM on dryer: 0.5% / 14.6% / 0.5%). Hybrid cheaper only on dryer capacity.</td></tr>
+      <tr><th scope="row">L3-mini</th><td>19</td><td class="num">1</td><td>LLM alone, hybrid, 4 ablations</td><td>The table above.</td></tr>
+      <tr><th scope="row">Full L3</th><td colspan="4">Not run.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="meta">Total API spend for all experiments: about $24.</p>
+</section>
+
+<section aria-labelledby="s-time">
+  <h2 id="s-time">Runtime and cost, for planning more runs</h2>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>Setting</th><th class="num">Time per run</th><th class="num">19 runs, one at a time</th><th class="num">Cost per run</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">LLM alone</th><td class="num">7.1 min</td><td class="num">~2.2 h</td><td class="num">~$0.06</td></tr>
+      <tr><th scope="row">Hybrid</th><td class="num">3.4 min</td><td class="num">~1.1 h</td><td class="num">~$0.12</td></tr>
+      <tr><th scope="row">REFLEX-style</th><td class="num">4.7 min</td><td class="num">~1.5 h</td><td class="num">~$0.33</td></tr>
+      <tr><th scope="row">LLM + Jev tool</th><td class="num">5.4–5.8 min</td><td class="num">~1.8 h</td><td class="num">~$0.06</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="prose">All runs went one at a time on a laptop. They only make API calls, so several can run in parallel; the limit is API rate limits. Every run: 300 actions max, 60 min max, seed 0.</p>
+</section>
+
+<section aria-labelledby="s-ctrl" class="prose">
+  <h2 id="s-ctrl">Which controller each setting uses</h2>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>Setting</th><th>Controller</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">LLM alone</th><td>ReAct (<code>farm_baseline_react</code>)</td></tr>
+      <tr><th scope="row">Hybrid, full history, REFLEX-style</th><td>Our own loop (<code>farm_jev</code>); the LLM helper makes one decision per call, not ReAct</td></tr>
+      <tr><th scope="row">LLM + Jev tool (± note)</th><td>ReAct plus the <code>ask_jev</code> tool (<code>farm_llm_jev</code>)</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul>
+    <li>The 9 controller families already in FAIRY (ReAct, planner-executor, reflective memory, multi-specialist, adaptive verifier, ReWOO, tree search, critic-refiner, graph memory) are on our branch and work with the LLM agent, done check included. Running them on L3-mini needs no new code (~2 h per controller, one at a time).</li>
+    <li>Putting Jev <i>inside</i> each of those controllers is new design work per controller (for example ReWOO: does the LLM plan and Jev execute each step, or does the hybrid's LLM helper run as ReWOO?). Not started.</li>
+    <li>A2A: not started.</li>
+  </ul>
+</section>
+
+<section aria-labelledby="s-code" class="prose">
+  <h2 id="s-code">Code, logs and how to rerun</h2>
+  <dl>
+    <dt>Code</dt><dd><code>github.com/Synkrasis-Labs/fairy-jev</code>, branch <code>jev-single-farm-hybrid-and-ablations</code>. Built on FAIRY <code>main</code> (commit a7654d8), single-farm soybean only. Jev code in <code>fairy/agents/jev/</code>. All new behaviour is behind options, off by default.</dd>
+    <dt>Write-up</dt><dd><code>docs/jev/review.md</code> (sections 12–16 for the numbers here) and <code>docs/jev/PROGRESS.md</code> (every step, setting and cost).</dd>
+    <dt>Launcher</dt><dd><code>scripts/jev_run_l3mini.py</code> runs any setting on the 19 scenarios with the exact flags used here (checked against the original commands); <code>--dry-run</code> prints them.</dd>
+    <dt>Logs</dt><dd><code>jev_single_farm_L3mini_runs.zip</code> (189 MB): all 121 L3-mini runs in FAIRY's standard files (every Jev request with options, probabilities and confidence; every LLM call with tokens; every tool call), one folder per setting, <code>runs_summary.csv</code> (one row per run), FAIRY's <code>summary_v2</code> scores for every run, the oracle baselines, and a README.</dd>
+  </dl>
+<pre>PYTHONPATH=. python scripts/jev_run_l3mini.py --output-root &lt;dir&gt; \
+    --settings hybrid_jev_plus_llm,llm_alone_react_done_check
+python scripts/rebatch_fos_from_traces.py --root &lt;dir&gt; --out-root &lt;scoring dir&gt; \
+    --oracle-baselines &lt;oracle_baselines dir&gt; --extrapolate --workers 4</pre>
+  <p>Needs <code>OPENAI_API_KEY</code> and <code>TYPESAFE_API_KEY</code>.</p>
+</section>
+
+<section aria-labelledby="s-l4" class="prose">
+  <h2 id="s-l4">Multi-farm (L4): not started</h2>
+  <p>The multi-crop, multi-plot scenarios live on FAIRY branch <code>codex/wofost-management-cultivars-oracle-audit</code> (13 commits and about 800 files on top of <code>main</code>, including WOFOST crop physics, rice, maize, shared equipment and a rewrite of the farm apps). Our branch and that one both change 9 files; on our side these are small hooks of a few lines each.</p>
+  <p>Our Jev agent assumes one field: the snapshot, the ridge menus and the done check all read one list of 64 ridges. On L4, Jev would also need to choose the farm or plot, and the snapshot and done check would need to cover all of them. How much work that is will be clear after running one two-farm scenario with the LLM agent on that branch.</p>
+</section>
+
+<section aria-labelledby="s-caveats" class="prose">
+  <h2 id="s-caveats">Limits of these results</h2>
+  <ul>
+    <li>One run per scenario on L3-mini; single runs vary a lot.</li>
+    <li>One LLM (gpt-6-luna) and one Jev version (1.14.0).</li>
+    <li>Jev's results depend on how its menus and snapshot are built; that design was refined during development on a few L1–L3 scenarios.</li>
+    <li>Cost compares dollars at current prices; the LLM's advantage comes from cached input, which Jev does not offer.</li>
+  </ul>
+</section>
+</main>
