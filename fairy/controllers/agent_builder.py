@@ -40,6 +40,9 @@ CONTROLLER_FAMILIES = [
     "farm_tree_search",
     "farm_critic_refiner",
     "farm_graph_memory",
+    "farm_jev",
+    "farm_qwen_snapshot",
+    "farm_llm_snapshot",
 ]
 
 
@@ -373,16 +376,53 @@ def build_controller_agent(
     llm: Any,
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
+    fallback_llm: Any = None,
+    fallback_confidence: float = 0.6,
+    jev_state: str = "snapshot",
+    done_check: bool = False,
+    decision_confidence_source: str = "provider",
+    qwen_context_policy: str = "bounded_history",
 ) -> ResearchARESimulationAgent:
     explicit_system_message = system_message is not None
     if system_message is None:
         system_message = get_farm_world_system_prompt_for_apps(toolsets)
+    if family_id in {"farm_qwen_snapshot", "farm_llm_snapshot"}:
+        from fairy.agents.jev.qwen_agent import QwenSnapshotAgent
+        if fallback_llm is not None:
+            raise ValueError("Pure Qwen does not use a fallback model")
+        return QwenSnapshotAgent(name=family_id, llm=llm, fallback_llm=llm,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            toolsets=toolsets, hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            qwen_context_policy=qwen_context_policy)
+    if family_id == "farm_jev":
+        # Jev picks actions from a menu instead of generating tool calls.
+        from fairy.agents.jev.jev_agent import JevAgent
+
+        if not callable(getattr(llm, "system_one", None)):
+            raise ValueError("farm_jev requires a client implementing system_one")
+        return JevAgent(
+            name=family_id,
+            llm=llm,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            toolsets=toolsets,
+            hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            fallback_llm=fallback_llm,
+            fallback_confidence=fallback_confidence,
+            state_mode=jev_state,
+            confidence_source=decision_confidence_source,
+            qwen_context_policy=qwen_context_policy,
+        )
+    if fallback_llm is not None:
+        raise ValueError("--fallback-model is only used by the farm_jev controller")
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)
-    return AgentBuilder().build(
+    agent = AgentBuilder().build(
         agent_config=config,
         llm=llm,
         toolsets=toolsets,
         system_message=system_message if explicit_system_message else None,
     )
+    if done_check:
+        agent.enable_done_check(toolsets or [])
+    return agent

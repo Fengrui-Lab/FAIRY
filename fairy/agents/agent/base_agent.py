@@ -82,6 +82,8 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
+            "api_mode": getattr(self.llm, "api_mode", None),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
             "reasoning_history_policy": "exclude",
         }
@@ -177,6 +179,9 @@ class BaseAgent:
         prompt_details = getattr(usage, "prompt_tokens_details", None)
         self.record_event(
             "llm_call_end",
+            model=getattr(self.llm,"model",None),
+            provider=getattr(self.llm,"provider",None),
+            model_version=getattr(response,"model",None),
             status="rejected" if rejection_reason else "ok",
             accepted=rejection_reason is None,
             rejection_reason=rejection_reason,

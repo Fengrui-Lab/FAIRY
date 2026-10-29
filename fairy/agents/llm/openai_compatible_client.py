@@ -4,7 +4,7 @@ import os
 
 from openai import OpenAI
 
-from fairy.agents.llm.base_llm import BaseLLM
+from fairy.agents.llm.base_llm import BaseLLM, _coerce_optional_bool
 
 
 class OpenAICompatibleClient(BaseLLM):
@@ -12,23 +12,29 @@ class OpenAICompatibleClient(BaseLLM):
 
     def __init__(self, model, temperature=0.1, api_key=None, **kwargs):
         super().__init__(model, temperature, **kwargs)
-        self.provider = "llama-api"
+        self.provider = kwargs.get("provider", "openai-compatible")
+        self.enable_thinking = _coerce_optional_bool(kwargs.get("enable_thinking"), "enable_thinking")
         self.api_key = api_key or os.getenv("LLAMA_API_KEY") or os.getenv("OPENAI_API_KEY")
         self.base_url = kwargs.get("base_url") or os.getenv("LLAMA_API_BASE")
         self.api_client = OpenAI(
             api_key=self.api_key,
             base_url=self.base_url,
             timeout=self.request_timeout,
+            **({"http_client": kwargs["http_client"]} if "http_client" in kwargs else {}),
+            **({"max_retries": kwargs["max_retries"]} if "max_retries" in kwargs else {}),
         )
 
     def chat_completion(self, messages, tools=None):
+        extra = ({"extra_body": {"chat_template_kwargs": {"enable_thinking": self.enable_thinking}}}
+                 if self.enable_thinking is not None else {})
         return self.api_client.chat.completions.create(
             model=self.model,
             messages=messages,
             tools=tools,
-            temperature=self.temperature,
+            **self.compatible_sampling_options(),
             **self.output_token_options(),
             **self.tool_call_options(tools),
+            **extra,
         )
 
     def to_dict(self):
@@ -39,4 +45,5 @@ class OpenAICompatibleClient(BaseLLM):
             "base_url": self.base_url,
             "parallel_tool_calls": self.parallel_tool_calls,
             "max_output_tokens": self.max_output_tokens,
+            "enable_thinking": self.enable_thinking,
         }

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from fairy.contracts.scenario_adapter import instantiate as instantiate_scenario
 
 import argparse
 import json
@@ -114,7 +115,10 @@ def _append_live_progress(path: Path, event: dict[str, Any]) -> None:
     row.pop("messages", None)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(row, ensure_ascii=False, default=str) + "\n")
+        from fairy.contracts.cli import scrub
+        import os
+        keys = json.loads(os.environ.get("FAIRY_REDACT_ENV_NAMES", "[]"))
+        handle.write(scrub(json.dumps(row, ensure_ascii=False, default=str), [os.environ.get(k) for k in keys]) + "\n")
 
 
 def _tool_replay_log_rows(run_log: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -157,6 +161,32 @@ def _str_to_bool(value: str | bool | None) -> bool:
     raise argparse.ArgumentTypeError(f"Expected boolean value, got {value!r}")
 
 
+def _fallback_config(args: argparse.Namespace) -> dict[str, Any]:
+    """Build an independent fallback config without copying the decision endpoint."""
+    from fairy.agents.llm.system_one_client import api_key_from_env, api_root
+
+    provider = args.fallback_provider or "openai"
+    if args.fallback_enable_thinking is not None and provider not in ("vllm", "openai-compatible", "llama-api"):
+        raise ValueError("--fallback-enable-thinking requires vllm or openai-compatible")
+    config = {
+        "provider": provider, "model": args.fallback_model,
+        "temperature": args.temperature, "parallel_tool_calls": False,
+        "max_output_tokens": (args.fallback_max_output_tokens
+                              if args.fallback_max_output_tokens is not None else args.max_output_tokens),
+    }
+    if args.fallback_endpoint is not None:
+        config["base_url"] = api_root(args.fallback_endpoint)
+    if args.fallback_api_key_env is not None:
+        config["api_key"] = api_key_from_env(args.fallback_api_key_env)
+    if args.fallback_enable_thinking is not None:
+        config["enable_thinking"] = args.fallback_enable_thinking
+    for key in ("output_token_parameter", "send_temperature", "reasoning_effort"):
+        value = getattr(args, "fallback_" + key, None)
+        if value is not None:
+            config[key] = value
+    return config
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run FAIRY farm scenarios")
     parser.add_argument("-s", "--scenario", help="Scenario id")
@@ -183,7 +213,20 @@ def main() -> None:
         default=DEFAULT_MAX_OUTPUT_TOKENS,
         help="Maximum completion tokens per LLM call",
     )
+    parser.add_argument("--reasoning-effort", default=None, help="OpenAI reasoning effort for --agent; for gpt-6-luna anything but 'none' uses the Responses API")
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
+    parser.add_argument("--request-max-retries", type=int, default=None, help="Compatible chat SDK retry count; omitted preserves SDK defaults")
+    parser.add_argument("--output-token-parameter", choices=["max_tokens", "max_completion_tokens"], default=None)
+    parser.add_argument("--send-temperature", type=_str_to_bool, default=None)
+    parser.add_argument("--fallback-output-token-parameter", choices=["max_tokens", "max_completion_tokens"], default=None)
+    parser.add_argument("--fallback-send-temperature", type=_str_to_bool, default=None)
+    parser.add_argument("--fallback-reasoning-effort", default=None)
+    parser.add_argument("--api-key-env", default=None, help="Main chat service credential environment variable")
+    parser.add_argument("--enable-thinking", type=_str_to_bool, default=None)
+    parser.add_argument("--qwen-context-policy", "--llm-context-policy", dest="qwen_context_policy", choices=["bounded_history", "snapshot_only"], default="bounded_history")
+    parser.add_argument("--decision-api-key-env", default=None, help="System One: name of environment variable containing the service key")
+    parser.add_argument("--decision-max-questions", type=int, default=None, help="System One: split independent questions into requests of at most this size")
+    parser.add_argument("--decision-confidence-source", choices=["provider", "max_probability"], default="provider", help="Decision routing score; provider preserves the original Jev behavior")
     parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
     parser.add_argument("--timeout-seconds", type=float, default=1200.0, help="Wall-time limit for --agent")
@@ -195,6 +238,15 @@ def main() -> None:
     parser.add_argument("--a2a-provider", default=None, help="A2A app-agent provider; defaults to main provider")
     parser.add_argument("--a2a-endpoint", default=None, help="A2A app-agent endpoint; defaults to main endpoint")
     parser.add_argument("--a2a-max-tool-calls", type=int, default=None, help="Maximum tool calls per A2A expert agent; defaults to --max-tool-calls")
+    parser.add_argument("--fallback-provider", default=None, help="farm_jev: LLM provider that decides when Jev is unsure")
+    parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
+    parser.add_argument("--fallback-endpoint", default=None, help="Independent OpenAI-compatible API root for the fallback, ending in /v1")
+    parser.add_argument("--fallback-api-key-env", default=None, help="Name of environment variable containing the fallback key")
+    parser.add_argument("--fallback-max-output-tokens", type=int, default=None, help="Fallback output budget; defaults to --max-output-tokens")
+    parser.add_argument("--fallback-enable-thinking", type=_str_to_bool, default=None, help="Explicit thinking setting for vllm/openai-compatible fallback; omitted preserves server defaults")
+    parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
+    parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
+    parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
     parser.add_argument("--replay", action="store_true", help="Replay a workflow against fresh scenario state")
@@ -255,7 +307,7 @@ def main() -> None:
         artifacts: dict[str, str] = {}
 
         if args.build_oracle:
-            build_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
+            build_engine = Engine(agent=None, scenario=instantiate_scenario(scenario_class, scenario_kwargs))
             source_workflow = build_engine.build_oracle_workflow(
                 run_oracle=args.run_oracle_tools,
                 **init_kwargs,
@@ -273,7 +325,7 @@ def main() -> None:
                     source_workflow = source_bundle.workflow
                 else:
                     source_workflow = Workflow.load_workflow(str(workflow_path))
-            active_engine = Engine(agent=None, scenario=scenario_class(**scenario_kwargs))
+            active_engine = Engine(agent=None, scenario=instantiate_scenario(scenario_class, scenario_kwargs))
             active_workflow = active_engine.replay_workflow(
                 source_bundle if source_bundle is not None else source_workflow, **init_kwargs
             )
@@ -334,7 +386,7 @@ def main() -> None:
         print(f"run_report={report_path}")
         return
 
-    scenario = scenario_class(**scenario_kwargs)
+    scenario = instantiate_scenario(scenario_class, scenario_kwargs)
     if args.agent:
         run_wall_start = time.perf_counter()
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -342,6 +394,11 @@ def main() -> None:
         progress_log_path = output_dir / f"{args.scenario}.progress.jsonl"
         if progress_log_path.exists():
             progress_log_path.unlink()
+        from fairy.agents.llm.system_one_client import api_key_from_env
+        if args.request_max_retries is not None and args.request_max_retries < 0:
+            raise ValueError("request-max-retries must be nonnegative")
+        if args.enable_thinking is not None and args.provider not in {"vllm", "openai-compatible", "llama-api"}:
+            raise ValueError("thinking requires a compatible chat provider")
         llm = BaseLLM.llm_builder(
             {
                 "provider": args.provider,
@@ -349,7 +406,15 @@ def main() -> None:
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
+                **({"max_retries": args.request_max_retries} if args.request_max_retries is not None else {}),
+                **({"api_key": api_key_from_env(args.api_key_env)} if args.api_key_env else {}),
+                **({"enable_thinking": args.enable_thinking} if args.enable_thinking is not None else {}),
                 **({"base_url": args.endpoint} if args.endpoint else {}),
+                **({"output_token_parameter": args.output_token_parameter} if args.output_token_parameter else {}),
+                **({"send_temperature": args.send_temperature} if args.send_temperature is not None else {}),
+                **({"reasoning_effort": args.reasoning_effort} if args.reasoning_effort else {}),
+                **({"api_key_env": args.decision_api_key_env} if args.decision_api_key_env else {}),
+                **({"max_questions_per_request": args.decision_max_questions} if args.decision_max_questions is not None else {}),
             }
         )
         scenario.setup(**init_kwargs)
@@ -393,6 +458,12 @@ def main() -> None:
                 "provider": app_provider,
                 "endpoint": app_endpoint,
             }
+        fallback_llm = None
+        if args.fallback_model:
+            fallback_config = _fallback_config(args)
+            if args.request_max_retries is not None:
+                fallback_config["max_retries"] = args.request_max_retries
+            fallback_llm = BaseLLM.llm_builder(fallback_config)
         agent = build_controller_agent(
             args.controller,
             llm=llm,
@@ -402,6 +473,12 @@ def main() -> None:
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
             ),
+            fallback_llm=fallback_llm,
+            fallback_confidence=args.fallback_confidence,
+            jev_state=args.jev_state,
+            done_check=args.done_check,
+            decision_confidence_source=args.decision_confidence_source,
+            qwen_context_policy=args.qwen_context_policy,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
@@ -479,6 +556,9 @@ def main() -> None:
             }
             a2a_metadata["expert_traces"] = a2a_traces
 
+        metrics_path = output_dir / f"{args.scenario}.runtime_metrics.json"
+        write_json(metrics_path, runtime_metrics)
+        artifacts["runtime_metrics"] = str(metrics_path)
         evaluation = engine.evaluation_report(workflow)
         report_path = output_dir / f"{args.scenario}.run_report.json"
         artifacts["run_report"] = str(report_path)

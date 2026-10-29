@@ -342,6 +342,17 @@ class Engine:
         first_message["content"] = f"{content}\n\n{additional_system_prompt}"
 
     def _resolve_agent_task(self) -> str:
+        # A translated task given via --scenario-kwargs replaces the briefing for every agent.
+        override = str(getattr(self.scenario, "agent_task_override", "") or "").strip()
+        if override:
+            if self.agent is not None and hasattr(self.agent, "record_event"):
+                self.agent.record_event(
+                    "agent_task_source",
+                    status="ok",
+                    source="agent_task_override",
+                    content_preview=override[:1000],
+                )
+            return override
         event_task = self._agent_briefing_from_events()
         if event_task:
             if self.agent is not None and hasattr(self.agent, "record_event"):
@@ -644,7 +655,7 @@ class Engine:
             return ScenarioValidationResult(
                 success=True,
                 message="Scenario has no validate() hook.",
-                metadata={"workflow_steps": len(workflow)},
+                metadata={"workflow_steps": len(workflow), "validation_performed": False},
             )
         env = self.environment(workflow)
         signature = inspect.signature(validate)
@@ -660,12 +671,14 @@ class Engine:
             result = ScenarioValidationResult(
                 success=True,
                 message="Scenario validate() returned no result.",
+                metadata={"validation_performed": False},
             )
         else:
             result = ScenarioValidationResult(
                 success=bool(raw_result),
                 message=str(raw_result),
             )
+        result.metadata.setdefault("validation_performed", raw_result is not None)
         result.metadata.setdefault("workflow_steps", len(workflow))
         result.metadata.setdefault("environment", env.to_dict())
         return result
@@ -773,14 +786,21 @@ class Engine:
         }
         return {"farms": per_farm, "aggregate": aggregate}
 
-    @staticmethod
-    def _farm_outcome_summary(farm_world: Any) -> dict[str, Any]:
+    def _farm_outcome_summary(self, farm_world: Any) -> dict[str, Any]:
         if getattr(farm_world, "shared_warehouse", None) is not None:
             summary = {"warehouse_id": farm_world.shared_warehouse.warehouse_id,
                        "management_status": farm_world.get_management_status()}
         else:
             inventory = farm_world.get_inventory() if hasattr(farm_world, "get_inventory") else {}
             summary = {"inventory": inventory}
+        ridges = list(getattr(farm_world, "_ridges", []))
+        summary["completion_facts"] = {
+            "ridges_total": len(ridges),
+            "ridges_harvested": sum(bool(getattr(r, "harvested", False)) for r in ridges),
+            "machine_grain_kg": [float(getattr(app, "_grain_bin_kg", 0.0))
+                for app in iter_apps_of_type(self.scenario.apps or [], TractorApp)
+                if getattr(app, "_farm_world_app", None) is farm_world],
+        }
         # Reporting must not construct or activate a crop engine. Mature
         # operational snapshots can legitimately have no physics history.
         physics = getattr(farm_world, "_physics", None)
@@ -791,6 +811,8 @@ class Engine:
             denominator = len(harvested_states) or len(states)
             selected = harvested_states or states
             summary["yield_recovery"] = {
+                "biological_yield_kg_terminal": sum(float(getattr(st, "biological_yield_g_m2", 0)) for st in states) * farm_world.field_length_m * farm_world.ridge_width_m / 1000,
+                "biological_yield_g_m2_terminal_mean": sum(float(getattr(st, "biological_yield_g_m2", 0)) for st in states) / len(states),
                 "ridges": len(states),
                 "harvested_ridges": len(harvested_states),
                 "avg_field_loss_fraction": round(

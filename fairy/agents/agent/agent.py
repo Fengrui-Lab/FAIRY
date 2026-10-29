@@ -92,7 +92,30 @@ class Agent(BaseAgent):
             # An agent attempt may include the SDK's own HTTP retries.
             # Only empty responses add corrective feedback; other retries reuse context.
             "retry_changes_request": True,
+            "done_check": getattr(self, "done_check_toolsets", None) is not None,
         }
+
+    def enable_done_check(self, toolsets: list[Any]) -> None:
+        """Optional (off by default): refuse "done" while visible work is left, max 2 times,
+        with the same rule as the Jev agent (fairy/agents/jev/done_check.py)."""
+        self.done_check_toolsets = list(toolsets or [])
+        self.done_refusals = 0
+
+    def _refuse_done(self, task: str) -> bool:
+        toolsets = getattr(self, "done_check_toolsets", None)
+        if toolsets is None or self.time_manager is None:
+            return False
+        from fairy.agents.jev.done_check import MAX_DONE_REFUSALS, current_problems, refusal_note
+
+        if self.done_refusals >= MAX_DONE_REFUSALS:
+            return False
+        problems = current_problems(task, toolsets, self.workflow, self.time_manager.time(), self.tools_map)
+        if not problems:
+            return False
+        self.done_refusals += 1
+        self.messages.system_notify("\n".join(refusal_note(problems)), time=self.env_time_str())
+        self.record_event("done_refused", status="ok", reasons=problems, refusal=self.done_refusals)
+        return True
 
     def before_llm_turn(self, task: str) -> str:
         return ""
@@ -426,6 +449,8 @@ class Agent(BaseAgent):
                 self.llm_turn_count += 1
                 self.after_llm_message(message)
                 if not message.tool_calls:  # if finished handling tool calls, break
+                    if self._refuse_done(str(input)):
+                        continue
                     self.stop_reason = "agent_finished"
                     break
 
