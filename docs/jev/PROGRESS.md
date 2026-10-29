@@ -785,3 +785,23 @@ Spent: about $2.36. Part 2 total: about $11.8.
 - LLM-filled "wait for notification": 1 hour in 265 of 319 cases.
 
 Spent: about $7.2. Part 2 total: about $16.6.
+
+## Step 22 – LLM runs the farm, Jev as a tool (2026-10-24, branch `jev-llm-driven`, code `683b5cc`)
+
+New agent `farm_llm_jev` (`fairy/agents/jev/llm_driven_agent.py`): gpt-6-luna (medium, Responses API) with the baseline's task, prompt and tools plus `ask_jev` (LLM writes state, question, options; Jev returns pick, probabilities, confidence). Done check on. 7 tests added; all 105 pass. 19 L3-mini, 1 run each, same limits as Step 18.
+
+- **0 Jev asks in all 19 runs** (2,470 farm actions); the tool was offered on every LLM call.
+- 19 of 19 finished; average grain loss 9.6% (baseline 13.1: 6.4%; hybrid: 7.3%); total $1.11 (baseline $1.19, hybrid $2.37). The gap to the baseline is mostly one run (dryer capacity 32.0%) and is run-to-run variation, since Jev was never used.
+- Details and table: `review.md`, section 16. Compacted headland hung once on an LLM call (laptop sleep); deleted and rerun.
+
+Spent: about $1.15. Part 2 total: about $10.5.
+
+## Step 23 – Jev tool with a note in the system prompt (2026-10-24, code `fdbac56`)
+
+Option `--jev-prompt-note true` (default off) adds a short neutral note to the system prompt: what Jev is, what it returns, "use it when it helps". 1 test added; all 106 pass. Reran the 19 L3-mini, 1 run each, everything else as in Step 22.
+
+- **0 Jev calls in all 19 runs** (2,537 farm actions); no LLM reply mentions Jev. "Followed Jev's pick" cannot be measured (no picks).
+- 19 of 19 finished; average grain loss 8.8% (Step 22: 9.6%, baseline 13.1: 6.4%); total $1.20.
+- Details: `review.md`, section 16.4.
+
+Spent: about $1.20. Part 2 total: about $11.7.

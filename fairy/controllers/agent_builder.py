@@ -38,6 +38,7 @@ CONTROLLER_FAMILIES = [
     "farm_critic_refiner",
     "farm_graph_memory",
     "farm_jev",
+    "farm_llm_jev",
 ]
 
 
@@ -334,7 +335,28 @@ def build_controller_agent(
     jev_state: str = "snapshot",
     done_check: bool = False,
     hybrid_mode: str = "full",
+    jev_llm: Any = None,
+    jev_prompt_note: bool = False,
 ) -> ResearchARESimulationAgent:
+    if family_id == "farm_llm_jev":
+        # The LLM runs the farm; Jev is a tool it can call (ask_jev).
+        from fairy.agents.jev.llm_driven_agent import build_llm_driven_jev_agent
+
+        agent = build_llm_driven_jev_agent(
+            family_id,
+            llm=llm,
+            jev_llm=jev_llm,
+            toolsets=toolsets,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            prompt_note=jev_prompt_note,
+        )
+        if done_check:
+            agent.enable_done_check(toolsets or [])
+        return agent
+    if jev_prompt_note:
+        raise ValueError("--jev-prompt-note is only used by the farm_llm_jev controller")
+    if jev_llm is not None:
+        raise ValueError("--jev-model is only used by the farm_llm_jev controller")
     if family_id == "farm_jev":
         # Jev picks actions from a menu instead of generating tool calls.
         from fairy.agents.jev.jev_agent import JevAgent
