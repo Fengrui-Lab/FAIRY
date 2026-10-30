@@ -17,7 +17,7 @@ build_events_flow() 按以下顺序完整展开参考工作流：
   4. +22 天：两场初花营养复核、健康抽查 28–35 垄、常规轻量追肥。
   5. +18 天：两场中期水分、全田 NDVI、病虫草抽查各场 56–63 垄。
   6. +8 天：两场灌浆水分和冠层检查，Matrice4T 分两半巡查各场全田。
-  7. +39 天：分别复核成熟、含水率、天气和通行；分 4 垄收获，逐趟卸到共享仓库并登记来源批次，
+  7. +34 天：分别复核成熟、含水率、天气和通行；分 4 垄收获，逐趟卸到共享仓库并登记来源批次，
      每批完成必要干燥和入库。+1 天后核对两场管理及共享库存并汇报。
 
 上述等待是指定 profile 下的参考巡查窗口，不是对生育期或可作业性的断言；
@@ -80,6 +80,7 @@ Warehouse是唯一共享仓库，存放种子、肥料、农药、燃油及粮�
 
 完成两场的整地播种、全季观察与必要管理，并在满足作物成熟、籽粒水分、天气及通行条件后收获全田。
 按共享设备的实际容量、电量和覆盖范围安排作业，处理后复查；把所有粮食批次干燥至安全水分并入库。
+达到收割条件后及时分批收获；必要时收后干燥，不必等籽粒在田间降到入库水分，以免过干损失。
 最后分别报告两场的管理依据、实际作业范围和产量，以及共享库存和设备状态。本场景validate暂空。
 """.strip()
 
@@ -110,9 +111,10 @@ FarmA/FarmB的commit_daily_physics也会让两场一起经过一天，不能把�
 6. 灌浆水分窗口（再约8天）：分别检查土壤/冠层，Matrice4T分0–31和32–63垄巡查两场；
    只有观测确认干旱才调用对应农场的固定灌溉，有病虫草证据才选对应处理，处理后复查。
    正常年也有雨天，停飞时继续观察并等待；参考路径中期等1天、灌浆等3天再复核天气。
-7. 参考收获窗口在再约39天后；这些间隔只是巡查计划，成熟和可作业条件必须重新观测。
+7. 参考收获窗口在再约34天后；这些间隔只是巡查计划，成熟和可作业条件必须重新观测。
    每场收获前分别确认0–63垄R8成熟、籽粒水分≤18%、无降雨、土壤允许通行。
-   必要时继续观察和等待；不要强行收未成熟或不满足条件的田。安装harvester，每次最多4垄；
+   条件不满足时继续复查；达到收割条件后及时分批收获，必要时收后干燥，不必等田间自然降到入库水分。
+   避免成熟后无依据地久等造成过干损失；不要强收未成熟或不满足条件的田。安装harvester，每次最多4垄；
    每趟卸粮到共享仓库并指定唯一batch_id，粮箱清空后才能切场。按批次检查水分、必要时干燥到13%再入库，
    已满足≤13.5%安全水分的批次可直接入库；最后分别汇报两场管理与产量，再汇报共享库存及设备状态。
 
@@ -438,9 +440,10 @@ class ScenarioTwoFarmFullSeasonHN84Normal(Scenario):
             previous = self.system.advance_time(days=1).oracle().with_id(
                 "settle_both_farms_after_podfill_1_day").depends_on(previous)
 
-            # 7. 成熟/收获/入库：分别核对田块；共享仓库按唯一来源批次接收、干燥和入库。
-            previous = self.system.advance_time(days=39).oracle().with_id(
-                "wait_both_farms_harvest_39_days").depends_on(previous)
+            # 7. 固定天气下提前到已核验的收获窗口，避免继续等待至籽粒过干。
+            # 成熟/收获/入库：分别核对田块；共享仓库按唯一来源批次接收、干燥和入库。
+            previous = self.system.advance_time(days=34).oracle().with_id(
+                "wait_both_farms_harvest_34_days").depends_on(previous)
             previous = self.weather.get_current_weather().oracle().with_id(
                 "harvest_weather").depends_on(previous)
             previous = self.weather.get_forecast(days=3).oracle().with_id(

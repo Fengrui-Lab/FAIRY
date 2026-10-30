@@ -9,6 +9,8 @@
 两场都从裸地正常管理：播前准备、播种、出苗巡查、按作物安排追肥和水分管理、
 独立确认成熟及含水率，最后分作物分批安全入库。没有强制病害或季中产量赋值。
 参考日期只代表固定种子下的巡查窗口；Agent必须读取实际状态后决定作业。
+参考路径在晚灌浆复核后12天检查并收获大豆，随后等待30天进入玉米收获窗口；
+较旧路径大豆提前5天，玉米后续作业日期不变，减少大豆成熟后过干的回收损失。
 
 运行：python -m fairy.cli -s scenario_two_farm_maize_soybean_full_season \
     --build-oracle --run-oracle-tools --replay --evaluate --output-dir /tmp/maize-soybean
@@ -70,6 +72,7 @@ Warehouse 统一拥有物料和粮食批次；Tractor、Mavic3M、Robot0 各只�
 从工具获取各作物播收、安全水分、作业条件与资源限制；处理前确认依据，处理后复查效果。
 完成边界：每场64垄均已收获，各作物粮食安全入库，无待入库批次，种箱和粮箱清空，
 各场额度与共享库存账一致，分别报告管理覆盖和实际收获结果；抽查不能代替全田覆盖。
+达到本场收割条件后及时分批收获；必要时收后干燥，不必等籽粒在田间降到入库水分，以免过干损失。
 所有动作共用北京时间的一只模拟时钟；等待一次同时推进两场，不为每场重复等待。
 """.strip()
 
@@ -101,6 +104,7 @@ Warehouse统一拥有物料和粮食批次；Tractor、Mavic3M、Robot0各只有
    无确诊病虫害不预防性施药；异常先复查并记录证据。
 5. 分别检查两场成熟度和天气，满足本场实际条件才收：玉米R6且水分≤30%，
    大豆R8且水分≤18%；都需无雨和可通行。先成熟的作物可先收，不按一个日期强收两场。
+   达到本场收割条件后及时分批收获，必要时收后干燥；不必等田间自然降到入库水分，以免过干损失。
 6. 每次最多收4垄，立即unload_grain(batch_id)，清空粮箱再切场。共享仓库按批次
    保留来源场、作物、品种和垄号；玉米必要时干燥至14%、大豆至13%后逐批store_grain。
    本仓库设备上限14%，大豆仍按自身13.5%安全上限检查，不会套用玉米的14%。
@@ -318,10 +322,11 @@ class ScenarioTwoFarmMaizeSoybeanFullSeason(Scenario):
             add(f"{phase}_robot_charge", self.robot, "charge", "为下次健康巡查充电。")
         add("wait_dent", self.system, "advance_time", "约8月下旬分别检查灌浆/成熟进度。", days=19)
         observe("late_fill")
-        add("wait_soybean_harvest", self.system, "advance_time", "秋季先复核较早熟大豆的成熟与水分。", days=17)
+        # 固定天气下大豆提前5天收获；后续等待补足这5天，保留玉米管理和收获日期。
+        add("wait_soybean_harvest", self.system, "advance_time", "及时复核较早熟大豆的成熟与水分，避免成熟后过干。", days=12)
         observe("soybean_harvest")
         self._append_harvest_actions(actions, "soybean_field", "harvester", 13.0)
-        add("wait_maize_harvest", self.system, "advance_time", "等待玉米独立达到收获条件，两场共同经过时间。", days=25)
+        add("wait_maize_harvest", self.system, "advance_time", "等待玉米独立达到收获条件；补足大豆提前收获的5天，保持玉米原参考窗口。", days=30)
         observe("maize_harvest")
         self._append_harvest_actions(actions, "maize_field", "maize_header", 14.0)
         add("final_batches", self.warehouse, "get_grain_batches", "按作物/来源逐批核对，不能用总粮重替代大豆完成。")

@@ -178,7 +178,7 @@ def test_replay_executes_reads_and_writes_and_restores_pre_execution_errors(
         _step(
             "step2",
             "ReplayApp__missing_tool",
-            content="KeyError: ReplayApp__missing_tool",
+            content="KeyError: 'ReplayApp__missing_tool'",
             op_type="TOOL_ERROR",
         ),
     ]
@@ -198,7 +198,7 @@ def test_replay_executes_reads_and_writes_and_restores_pre_execution_errors(
     ]
     assert events[0].metadata.return_value == {"value": 1}
     assert events[2].failed()
-    assert events[2].metadata.exception == "KeyError: ReplayApp__missing_tool"
+    assert events[2].metadata.exception == "KeyError: 'ReplayApp__missing_tool'"
 
 
 def test_replay_rejects_missing_method_on_recorded_success(
@@ -222,10 +222,13 @@ def test_replay_does_not_execute_tool_after_argument_parse_error(
     parse_error = _step(
         "step0",
         "ReplayApp__mutate",
-        content="JSONDecodeError: Expecting value",
+        content=("JSONDecodeError: Expecting property name enclosed in double quotes: "
+                 "line 1 column 2 (char 1)\nRaw arguments: {\n***"),
         op_type="TOOL_ERROR",
         error_stage="tool_args_parse",
     )
+    parse_error.update(error_type="JSONDecodeError", raw_arguments="{",
+        error_message="Expecting property name enclosed in double quotes: line 1 column 2 (char 1)")
 
     _, env, info = rebatch._replay_fairy_run_bundle(_bundle([parse_error]))
 

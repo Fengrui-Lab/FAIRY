@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import inspect
-import copy
 import re
 import time
 from copy import deepcopy
@@ -72,8 +71,15 @@ class EngineEnvironment:
 
 
 def _has_observation_coverage(content: dict[str, Any], tool: Any) -> bool:
-    """A robot inspection can report valid observations over partial coverage."""
+    """A survey/inspection can report valid observations over partial coverage."""
     from fairy.apps.farm_world.robot_operations import RobotOperations
+    from fairy.apps.farm_world.drone_operations import DroneOperations
+
+    if isinstance(tool.class_instance, DroneOperations) and tool.name == "fly_survey":
+        return (isinstance(content.get("surveyed_ridges"), list)
+                and bool(content["surveyed_ridges"])
+                and isinstance(content.get("observations"), list)
+                and bool(content["observations"]))
 
     return (
         isinstance(tool.class_instance, RobotOperations)
@@ -84,6 +90,80 @@ def _has_observation_coverage(content: dict[str, Any], tool: Any) -> bool:
         and isinstance(content.get("observations"), dict)
         and bool(content["observations"])
     )
+
+
+def _returned_failure(content: Any, tool: Any) -> bool:
+    return isinstance(content, dict) and (
+        bool(content.get("error"))
+        or content.get("ok") is False
+        or content.get("status") in {"error", "failed"}
+        or (content.get("status") == "partial" and not _has_observation_coverage(content, tool))
+    )
+
+
+def _verify_replay_response(step: WorkflowStep, content: Any, tool: Any) -> bool:
+    """Return whether an actual refusal matches the recorded refusal."""
+    expected_failure = _returned_failure(step.content, tool)
+    actual_failure = _returned_failure(content, tool)
+    if expected_failure:
+        if not actual_failure or content != step.content:
+            raise ReplayDivergenceError(
+                f"Workflow step {step.name!r}: recorded failure {step.content!r}; "
+                f"actual response {content!r}"
+            )
+        return True
+    if actual_failure:
+        # A built, unexecuted Oracle has no recorded response. Keep rejecting
+        # failed reference actions; actual Agent traces instead report drift.
+        message = str(content.get("error") or content.get("reason") or content.get("status"))
+        if step.content is None:
+            if isinstance(content, ToolResult):
+                detail = content.error
+                raise ToolExecutionError(detail["code"], detail["message"],
+                    field=detail.get("field"), details=detail.get("details"),
+                    stage=detail.get("stage", "execution"),
+                    partial_effects=detail.get("partial_effects", "unknown"))
+            raise ToolExecutionError("LEGACY_TOOL_ERROR", message,
+                details={"tool": step.tool_name, "response": deepcopy(content)},
+                stage="execution", partial_effects="unknown")
+        raise ReplayDivergenceError(
+            f"Workflow step {step.name!r}: recorded success returned a new failure: {message}"
+        )
+    return False
+
+
+def _reproduce_tool_error(step: WorkflowStep, invoke) -> str:
+    """Execute the original failure boundary and verify its typed exception.
+
+    A failed tool may have changed state or consumed time in the original run.
+    Keep those actual effects; the replay driver checks its recorded clock.
+    """
+    error_type, error_message, raw_arguments = _recorded_tool_error(step)
+    stage = step.error_stage or ("tool_args_parse" if error_type == "JSONDecodeError" else "tool_call")
+    if stage not in {"tool_args_parse", "tool_call"}:
+        raise ReplayDivergenceError(f"Workflow step {step.name!r} has unsupported error stage {stage!r}")
+    if stage == "tool_args_parse" and raw_arguments is None:
+        raise ReplayDivergenceError(
+            f"Workflow step {step.name!r} cannot reproduce argument parsing without raw arguments")
+    if stage == "tool_call" and not isinstance(step.tool_args, dict):
+        raise ReplayDivergenceError(
+            f"Workflow step {step.name!r} has legacy non-object tool arguments; "
+            "cannot safely replay the recorded call")
+    try:
+        if stage == "tool_args_parse":
+            parse_tool_arguments(raw_arguments)
+        else:
+            response = invoke()
+            if isinstance(response, ToolArgumentRejection):
+                raise response.exception
+    except Exception as exc:
+        if type(exc).__name__ != error_type or str(exc) != error_message:
+            raise ReplayDivergenceError(
+                f"Workflow step {step.name!r}: expected {error_type}: {error_message}; "
+                f"got {type(exc).__name__}: {exc}") from exc
+        return f"{type(exc).__name__}: {exc}"
+    raise ReplayDivergenceError(
+        f"Workflow step {step.name!r}: expected {error_type}: {error_message}, but the call succeeded")
 
 
 class Engine:
@@ -506,29 +586,17 @@ class Engine:
                     if step.tool_name not in tools_map:
                         raise KeyError(f"Workflow step {name!r} references unknown tool {step.tool_name!r}")
                     content = tools_map[step.tool_name](**args)
-                    if isinstance(content, ToolResult) and not content.ok:
-                        detail = content.error
-                        status = "error"
-                        error = f"{detail['code']}: {detail['message']}"
-                        failure = ToolExecutionError(detail["code"], detail["message"],
-                            field=detail.get("field"), details=detail.get("details"),
-                            stage=detail.get("stage", "execution"),
-                            partial_effects=detail.get("partial_effects", "unknown"))
-                    elif isinstance(content, dict) and (
-                        bool(content.get("error"))
-                        or content.get("status") in {"error", "failed"}
-                        or (content.get("status") == "partial"
-                            and not _has_observation_coverage(content, tools_map[step.tool_name]))
-                    ):
-                        # Keep an actual returned failure and its partial
-                        # effects, then stop. Expected Python exceptions above
-                        # remain errors while allowing a recorded correction.
-                        status = "error"
-                        error = str(content.get("error") or content.get("reason")
-                                    or f"Tool returned status {content.get('status')!r}")
-                        failure = ToolExecutionError("LEGACY_TOOL_ERROR", error,
-                            details={"tool": step.tool_name, "response": deepcopy(content)},
-                            stage="execution", partial_effects="unknown")
+                    if isinstance(content, ToolArgumentRejection):
+                        raise content.exception
+                    try:
+                        if _verify_replay_response(step, content, tools_map[step.tool_name]):
+                            status = "expected_error"
+                    except (ReplayDivergenceError, ToolExecutionError) as exc:
+                        # Retain the actual receipt and effects in the replay
+                        # artifact before stopping on an execution difference.
+                        failure, status, error = exc, "error", str(exc)
+                if step.time_after is not None:
+                    self._align_replay_timestamp(step.time_after)
             except Exception as exc:
                 self._record_run_log(
                     step_name=name, phase="replay", tool_name=step.tool_name,
@@ -539,8 +607,6 @@ class Engine:
                     error=f"{type(exc).__name__}: {exc}",
                 )
                 raise
-            if step.time_after is not None:
-                self._align_replay_timestamp(step.time_after)
             sim_time_after = self.time_manager.time()
             replayed.add_node(replace(
                 step, name=name, content=content, tool_args=args,
@@ -563,69 +629,12 @@ class Engine:
             self._attach_workflow_manifest(replayed)
         return replayed
 
-    def _replay_error_state(self) -> tuple[Any, ...]:
-        # Compare explicit simulation time, not wall-clock time spent replaying.
-        # Apps without snapshots cannot have their private state checked here.
-        states = []
-        for app in self.scenario.apps or []:
-            get_state = getattr(app, "get_state", None)
-            if callable(get_state):
-                state = get_state()
-                if state is not None:
-                    states.append((app.name, copy.deepcopy(state)))
-        return self.time_manager.start_time, self.time_manager.offset, states
-
-    def _replay_tool_error(
-        self, step: WorkflowStep, tools_map: dict[str, Any], args: Any
-    ) -> str:
-        error_type, error_message, raw_arguments = _recorded_tool_error(step)
-        stage = step.error_stage
-        # Older agent traces have the same error block but lack error_stage.
-        if stage is None:
-            stage = "tool_args_parse" if error_type == "JSONDecodeError" else "tool_call"
-        if stage not in {"tool_args_parse", "tool_call"}:
+    def _replay_tool_error(self, step: WorkflowStep, tools_map: dict[str, Any], args: Any) -> str:
+        error = _reproduce_tool_error(step, lambda: tools_map[step.tool_name](**args))
+        if step.time_after is not None and self.time_manager.time() > step.time_after + 1e-6:
             raise ReplayDivergenceError(
-                f"Workflow step {step.name!r} has unsupported error stage {stage!r}"
-            )
-        if stage == "tool_args_parse" and raw_arguments is None:
-            raise ReplayDivergenceError(
-                f"Workflow step {step.name!r} cannot reproduce argument parsing without raw arguments"
-            )
-        if stage == "tool_call" and not isinstance(args, dict):
-            # Old agents let non-object JSON reach Python's ** operator. Its
-            # exception contains unstable callable reprs; reject safely instead
-            # of guessing a match or executing a different argument set.
-            raise ReplayDivergenceError(
-                f"Workflow step {step.name!r} has legacy non-object tool arguments; "
-                "cannot safely replay the recorded call"
-            )
-        before = self._replay_error_state()
-        try:
-            if stage == "tool_args_parse":
-                # Neither invalid JSON nor a non-object value may reach a tool.
-                parse_tool_arguments(raw_arguments)
-            else:
-                # Lookup remains inside the try: missing-tool KeyErrors are also
-                # recoverable agent observations, but must match the old error.
-                response = tools_map[step.tool_name](**args)
-                if isinstance(response, ToolArgumentRejection):
-                    raise response.exception
-        except Exception as exc:
-            if type(exc).__name__ != error_type or str(exc) != error_message:
-                raise ReplayDivergenceError(
-                    f"Workflow step {step.name!r}: expected {error_type}: {error_message}; "
-                    f"got {type(exc).__name__}: {exc}"
-                ) from exc
-            if self._replay_error_state() != before:
-                raise ReplayDivergenceError(
-                    f"Workflow step {step.name!r}: failed tool changed application state "
-                    "or explicit simulation time"
-                ) from exc
-            return f"{type(exc).__name__}: {exc}"
-        raise ReplayDivergenceError(
-            f"Workflow step {step.name!r}: expected {error_type}: {error_message}, "
-            "but the call succeeded"
-        )
+                f"Workflow step {step.name!r}: explicit simulation time exceeded the recorded failure end")
+        return error
 
     def _align_replay_timestamp(self, timestamp: float) -> None:
         """Replay recorded epochs without rewinding any farm's physical state."""
