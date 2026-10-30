@@ -73,8 +73,9 @@ _DEFAULT_EXCLUDED_SWEEP_DIRS: tuple[str, ...] = ()
 _CST = timezone(timedelta(hours=8))
 
 
-class ReplayDivergenceError(RuntimeError):
-    """Raised when re-execution no longer represents the recorded run."""
+from fairy.controllers.engine import (
+    ReplayDivergenceError, _reproduce_tool_error, _verify_replay_response,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -157,10 +158,14 @@ def _instantiate_scenario_for_replay(
     """Look up the scenario class in the registry and prepare it for
     replay (apps + physics initialised, but events flow not driven)."""
     from fairy.scenarios.registry import registry
-    from fairy.time_manager import SimulationTimeManager
+    from fairy.controllers.engine import Engine
 
     cls = registry.get_scenario(scenario_id)
-    scenario = cls(**dict(scenario_kwargs or {}))
+    constructor_kwargs = dict(scenario_kwargs or {})
+    task_override = constructor_kwargs.pop("agent_task_override", None)
+    scenario = cls(**constructor_kwargs)
+    if task_override is not None:
+        scenario.agent_task_override = task_override
     if start_time is not None:
         scenario.start_time = float(start_time)
     if seed is not None:
@@ -170,20 +175,10 @@ def _instantiate_scenario_for_replay(
     # benign here — we don't run them through the env, only call tools
     # directly via the agent's trace.
     scenario.setup(**dict(init_kwargs or {}))
-    effective_start_time = getattr(scenario, "start_time", None)
-    if effective_start_time is not None:
-        # In a real run, Environment.register_apps() replaces every app's
-        # constructor-created clock with one shared environment clock reset to
-        # scenario.start_time. Replay calls tool methods directly, so it must
-        # mirror that registration step or FARM full-season time jumps replay
-        # from wall-clock app construction time.
-        # Engine advances simulated time only through explicit tool durations.
-        # A wall clock would drift past an exact recorded timestamp and make
-        # the next replay alignment move initialized farm physics backwards.
-        tm = SimulationTimeManager()
-        tm.reset(float(effective_start_time))
-        for app in scenario.apps or []:
-            app.register_time_manager(tm)
+    # Register the same scene clock, System hooks, and runtime observers as
+    # CLI replay. Binding only the public apps leaves a farm environment on
+    # its constructor clock and changes operation timing/state.
+    Engine(None, scenario)
     return scenario
 
 
@@ -339,17 +334,13 @@ def _workflow_step_times(
     return float(previous_post_time or post_time), post_time, False
 
 
-def _tool_error_happened_before_execution(step: dict[str, Any]) -> bool:
-    error_stage = str(step.get("error_stage") or "")
-    if error_stage:
-        return error_stage == "tool_args_parse"
-    # Compatibility for traces written before WorkflowStep.error_stage.
-    return "JSONDecodeError:" in str(step.get("content") or "")
-
-
 def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
     """Returns (scenario, env, info) where env has a populated EventLog."""
     from fairy.types import EventLog
+    from fairy.agents.agent.toolset_builder import build_toolset
+    from fairy.scenarios.workflow import WorkflowStep
+    from fairy.tool_utils import ToolArgumentRejection
+    from fairy.time_manager import SimulationTimeManager
 
     scenario_id = bundle.get("scenario_id")
     if not scenario_id:
@@ -368,8 +359,20 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
     )
     effective_start_time = getattr(scenario, "start_time", start_time)
     effective_seed = getattr(scenario, "seed", seed)
+    if any(not isinstance(app.time_manager, SimulationTimeManager) for app in scenario.apps or []):
+        # Legacy callers may supply a scene with wall clocks. Host CPU time
+        # must not become extra simulated time between recorded boundaries.
+        clock = SimulationTimeManager()
+        clock.reset(float(effective_start_time or 0.0))
+        environment = getattr(scenario, "farm_environment", None)
+        if environment is not None:
+            clock.set_offset(environment.time_manager.time() - clock.start_time)
+            environment.register_time_manager(clock)
+        for app in scenario.apps or []:
+            app.register_time_manager(clock)
     apps_by_name = {a.name: a for a in scenario.apps or []}
     apps_by_class = {a.__class__.__name__: a for a in scenario.apps or []}
+    _, _, tools_map = build_toolset(list(scenario.apps or []))
 
     tool_steps = _iter_fairy_tool_steps(bundle.get("workflow"))
     info = {
@@ -385,6 +388,8 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         "n_skipped": 0,
         "skipped_reasons": {},
         "exec_errors": 0,
+        "expected_error_events": 0,
+        "expected_exec_errors": 0,
         "exact_timing_steps": 0,
         "legacy_timing_steps": 0,
     }
@@ -412,8 +417,10 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
                 )
             target_app = _synthetic_replay_app(target_app_name)
 
-        args = step.get("tool_args") or {}
-        if not isinstance(args, dict):
+        args = step.get("tool_args")
+        if args is None and not recorded_error:
+            args = {}
+        if not isinstance(args, dict) and not recorded_error:
             raise ReplayDivergenceError(
                 f"{step.get('name')} {tool_name}: tool_args must be an object"
             )
@@ -430,40 +437,52 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
         timing_key = "exact_timing_steps" if exact_timing else "legacy_timing_steps"
         info[timing_key] += 1
 
-        exception_obj = None
         _align_replay_time(scenario, pre_time)
+        invoked = False
+        def invoke():
+            nonlocal invoked
+            if tool_name in tools_map:
+                invoked = True
+                return tools_map[tool_name](**args)
+            if method_exists:
+                invoked = True
+                return method(**args)
+            return tools_map[tool_name](**args)  # Reproduce the real lookup error.
 
-        failed_before_execution = recorded_error and _tool_error_happened_before_execution(
-            step
-        )
-        should_execute = method_exists and not failed_before_execution
-
-        if should_execute:
+        recorded_step = WorkflowStep(**step)
+        exception_obj = None
+        if recorded_error:
+            exception_obj = _reproduce_tool_error(recorded_step, invoke)
+            info["expected_error_events"] += 1
+            info["expected_exec_errors"] += int(invoked)
+            info["n_restored_error_events"] += int(not invoked)
+        else:
             try:
-                method(**args)
-                info["n_executed"] += 1
+                content = invoke()
+                if isinstance(content, ToolArgumentRejection):
+                    raise content.exception
             except Exception as exc:
-                exception_obj = exc
-                info["n_executed"] += 1
-                info["exec_errors"] += 1
-        elif recorded_error:
-            if not str(step.get("content") or "").strip():
                 raise ReplayDivergenceError(
-                    f"{step.get('name')} {tool_name}: TOOL_ERROR has no recorded error"
-                )
-            info["n_restored_error_events"] += 1
+                    f"{step.get('name')} {tool_name}: recorded success raised "
+                    f"{type(exc).__name__}: {exc}") from exc
+            if _verify_replay_response(recorded_step, content, tools_map.get(tool_name) or method):
+                info["expected_error_events"] += 1
+        info["n_executed"] += int(invoked)
 
         return_value = step.get("content")
+        clock = getattr(target_app, "time_manager", None)
+        if isinstance(clock, SimulationTimeManager) and clock.time() > post_time + 1e-6:
+            raise ReplayDivergenceError(f"{step.get('name')} {tool_name}: execution overran recorded end timestamp")
         _align_replay_time(scenario, post_time)
         rebound_events.append(
             _build_completed_event_from_workflow_step(
                 step,
                 target_app,
                 fn_name,
-                args,
+                args if isinstance(args, dict) else {},
                 pre_time,
                 return_value,
-                return_value if recorded_error else exception_obj,
+                exception_obj,
                 method=replay_method,
             )
         )
@@ -1178,6 +1197,8 @@ def replay_one_cell(
     row["replay_restored_error_events"] = info["n_restored_error_events"]
     row["replay_skipped"] = info["n_skipped"]
     row["replay_exec_errors"] = info["exec_errors"]
+    row["replay_expected_error_events"] = info["expected_error_events"]
+    row["replay_expected_exec_errors"] = info["expected_exec_errors"]
     row["replay_exact_timing_steps"] = info["exact_timing_steps"]
     row["replay_legacy_timing_steps"] = info["legacy_timing_steps"]
     if inline_donothing_kg is not None:
@@ -1600,6 +1621,8 @@ _SUMMARY_COLUMN_ORDER: list[str] = [
     "replay_restored_error_events",
     "replay_skipped",
     "replay_exec_errors",
+    "replay_expected_error_events",
+    "replay_expected_exec_errors",
     "replay_exact_timing_steps",
     "replay_legacy_timing_steps",
     # Failure columns

@@ -384,8 +384,10 @@ class TractorOperations:
         allowed_seed_types = set(farm.world.crop_definition.seed_types)
         if seed_type not in allowed_seed_types:
             return {"error": f"Unknown seed_type '{seed_type}'"}
-        if self._seed_hopper > 0 and self.seed_type != seed_type:
-            return {"error": "Seed hopper contains another seed type; empty or return it first"}
+        # Preserve the original single-farm loading order: selecting a variety
+        # relabels the existing hopper before capacity and stock checks.
+        # SharedTractorApp implements its own loading and rejects mixed varieties.
+        self.seed_type = seed_type
         count = int(count)
         if count <= 0:
             return {"error": "count must be positive"}
@@ -398,7 +400,6 @@ class TractorOperations:
             return {
                 "error": f"Insufficient {seed_type} seeds in warehouse: need {to_transfer}"
             }
-        self.seed_type = seed_type
         self._seed_hopper = current + to_transfer
         self.is_state_modified = True
         return {

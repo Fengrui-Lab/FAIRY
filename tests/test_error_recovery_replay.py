@@ -58,8 +58,8 @@ def _call(agent, name="FailureApp__update", arguments=None):
     ))
 
 
-def _error_workflow():
-    scenario = Scenario(start_time=1000, apps=[FailureApp()])
+def _error_workflow(behavior="normal"):
+    scenario = Scenario(start_time=1000, apps=[FailureApp(behavior)])
     agent, _ = _agent(scenario)
     with pytest.raises(RecoverableToolCallError):
         _call(agent)
@@ -113,7 +113,6 @@ def test_legacy_string_error_observations_remain_replayable(wrapped):
     ("succeed", "but the call succeeded"),
     ("different_type", "got RuntimeError"),
     ("different_message", "something else failed"),
-    ("mutate", "changed application state"),
     ("advance", "explicit simulation time"),
 ])
 def test_expected_errors_cannot_hide_replay_divergence(behavior, match):
@@ -133,6 +132,124 @@ def test_exception_in_recorded_success_still_raises():
     with pytest.raises(ValueError, match="nonnegative"):
         engine.replay_workflow(workflow)
     assert engine.run_log[-1]["status"] == "error"
+
+
+@pytest.mark.parametrize("behavior,value,elapsed", [("mutate",4,5), ("advance",3,65)])
+def test_recorded_failed_call_preserves_original_partial_effects(behavior,value,elapsed):
+    workflow = _error_workflow(behavior)
+    app = FailureApp(behavior)
+    engine = Engine(None, Scenario(start_time=1000, apps=[app]))
+    replayed = engine.replay_workflow(workflow)
+    assert app.calls == 2
+    assert app.value == value == replayed.dag["step1"].content
+    assert engine.time_manager.offset == elapsed
+    assert [x["status"] for x in engine.run_log] == ["expected_error","ok"]
+
+
+class ReceiptApp(App):
+    def __init__(self, envelope=False, stock=0, message="Insufficient fertilizer"):
+        super().__init__()
+        self.envelope, self.stock, self.message = envelope, stock, message
+        self.attempts, self.refills = 0, 0
+
+    @app_tool()
+    def fertilize(self) -> dict:
+        from fairy.tool_execution import ToolExecutionError, ToolResult
+        self.attempts += 1
+        before = self.time_manager.time()
+        self.time_manager.add_offset(2)
+        if self.stock == 0:
+            if self.envelope:
+                return ToolResult(ok=False, tool="ReceiptApp__fertilize",
+                    time_before=before, time_after=self.time_manager.time(),
+                    error=ToolExecutionError("STOCK_EMPTY",self.message))
+            return {"error":self.message,"farm_id":"farm_a"}
+        self.stock -= 1
+        return {"status":"ok","stock":self.stock}
+
+    @app_tool()
+    def refill(self) -> dict:
+        self.refills += 1
+        self.stock += 1
+        return {"stock":self.stock}
+
+
+def _receipt_trace(envelope):
+    app = ReceiptApp(envelope)
+    agent,_ = _agent(Scenario(start_time=1000,apps=[app]))
+    for method in ["fertilize","refill","fertilize"]:
+        _call(agent,f"ReceiptApp__{method}","{}")
+    return agent.workflow
+
+
+@pytest.fixture(params=["cli","rebatch"])
+def receipt_replay(request,monkeypatch):
+    def run(workflow,app):
+        engine = Engine(None,Scenario(start_time=1000,apps=[app]))
+        if request.param == "cli":
+            result = engine.replay_workflow(workflow)
+            assert engine.run_log[0]["status"] == "expected_error"
+            return result
+        from scripts import rebatch_fos_from_traces as rebatch
+        monkeypatch.setattr(rebatch,"_instantiate_scenario_for_replay",lambda *a,**k:engine.scenario)
+        _,_,info = rebatch._replay_fairy_run_bundle({"scenario_id":"offline",
+            "start_time":1000,"workflow":workflow.to_dict()})
+        assert info["n_executed"] == 3 and info["n_skipped"] == 0
+        assert info["expected_error_events"] == 1 and info["exec_errors"] == 0
+        return workflow
+    return run
+
+
+@pytest.mark.parametrize("envelope",[False,True])
+def test_returned_failure_is_reproduced_before_refill_and_retry(receipt_replay,envelope,tmp_path):
+    workflow = _receipt_trace(envelope)
+    path = tmp_path/"recorded.json"
+    workflow.save_workflow(str(path))
+    app = ReceiptApp(envelope)
+    replayed = receipt_replay(Workflow.load_workflow(str(path)),app)
+    assert app.attempts == 2 and app.refills == 1 and app.stock == 0
+    assert app.time_manager.time() == 1004
+    assert replayed.dag["step0"].content == workflow.dag["step0"].content
+
+
+@pytest.mark.parametrize("envelope",[False,True])
+@pytest.mark.parametrize("change",["success","different_error"])
+def test_returned_failure_must_match_record_before_recovery(receipt_replay,envelope,change):
+    app = ReceiptApp(envelope,stock=1) if change=="success" else ReceiptApp(envelope,message="Wrong implement")
+    with pytest.raises(ReplayDivergenceError,match="recorded failure"):
+        receipt_replay(_receipt_trace(envelope),app)
+    assert app.attempts == 1 and app.refills == 0
+
+
+@pytest.mark.parametrize("envelope",[False,True])
+def test_new_returned_failure_in_recorded_success_is_divergence(receipt_replay,envelope):
+    source = _receipt_trace(envelope).dag["step2"]
+    workflow = Workflow()
+    workflow.add_node(replace(source,name="step0",time_before=1000,time_after=1002))
+    app = ReceiptApp(envelope)
+    with pytest.raises(ReplayDivergenceError,match="new failure"):
+        receipt_replay(workflow,app)
+    assert app.attempts == 1 and app.refills == 0
+
+
+def test_recorded_partial_write_continues_with_its_actual_effects():
+    class PartialApp(App):
+        def __init__(self):
+            super().__init__(); self.value=0
+        @app_tool()
+        def work(self):
+            self.value+=1; self.time_manager.add_offset(3)
+            return {"status":"partial","completed":self.value,"remaining":1}
+        @app_tool()
+        def inspect(self):
+            return {"value":self.value}
+    app=PartialApp(); agent,_=_agent(Scenario(start_time=1000,apps=[app]))
+    _call(agent,"PartialApp__work","{}");_call(agent,"PartialApp__inspect","{}")
+    target=PartialApp(); engine=Engine(None,Scenario(start_time=1000,apps=[target]))
+    result=engine.replay_workflow(agent.workflow)
+    assert target.value==1 and engine.time_manager.offset==3
+    assert result.dag["step1"].content=={"value":1}
+    assert engine.run_log[0]["status"]=="expected_error"
 
 
 @pytest.mark.parametrize("legacy", [False, True])
@@ -313,3 +430,25 @@ def test_replay_still_rejects_partial_write_with_coverage():
     with pytest.raises(ToolExecutionError, match="partial"):
         engine.replay_workflow(workflow)
     assert engine.run_log[-1]["status"] == "error"
+
+
+def test_recorded_partial_drone_survey_replays_coverage_battery_and_time():
+    from fairy.apps.farm_world import FarmWorldApp, DroneApp, WeatherApp
+    def scene():
+        farm,weather=FarmWorldApp(),WeatherApp()
+        weather.set_weather("2026-05-12",20,55,2,0,350)
+        drone=DroneApp(farm_world_app=farm,weather_app=weather,name="Mavic3M")
+        drone._battery_pct=36.0
+        return Scenario(start_time=1778544000,apps=[farm,weather,drone]),drone
+    source,drone=scene();agent,original=_agent(source)
+    _call(agent,"Mavic3M__fly_survey",'{"start_ridge":0,"end_ridge":63}')
+    _call(agent,"Mavic3M__check_status","{}")
+    recorded=agent.workflow.dag["step0"].content
+    assert recorded["status"]=="partial" and recorded["surveyed_ridges"]
+    target,replay_drone=scene();engine=Engine(None,target)
+    result=engine.replay_workflow(agent.workflow)
+    actual=result.dag["step0"].content
+    assert actual["surveyed_ridges"]==recorded["surveyed_ridges"]
+    assert replay_drone._battery_pct==drone._battery_pct
+    assert engine.time_manager.time()==original.time_manager.time()
+    assert [x["status"] for x in engine.run_log]==["ok","ok"]
