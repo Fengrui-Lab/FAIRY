@@ -48,11 +48,15 @@ def test_typesafe_probe_custom_environment(monkeypatch):
             calls.append((kwargs,os.environ['TYPESAFE_API_KEY']))
         def system_one(self,**kwargs):
             return {'model':'actual-returned','choices':{'probe':{'choice':'a','probabilities':{'a':.9,'b':.1},'confidence':.9}}}
-    monkeypatch.setitem(sys.modules,'typesafe_sdk',SimpleNamespace(TypeSafeClient=Client))
+    monkeypatch.setattr(Client, 'close', lambda self: None, raising=False)
+    monkeypatch.setitem(sys.modules,'typesafe_sdk',SimpleNamespace(TypeSafeClient=Client, RetryPolicy=lambda **kw:SimpleNamespace(max_retries=kw.get('max_retries',2))))
+    monkeypatch.setitem(sys.modules,'typesafe_sdk.constants',SimpleNamespace(BASE_URL_ENV='TYPESAFE_BASE_URL',DEFAULT_BASE_URL='https://api.typesafe.ai',DEFAULT_TIMEOUT=10.0))
     monkeypatch.setenv('CUSTOM_TYPESAFE','fixture-key')
     result=probe({'provider':'typesafe','model_id':'served','api_key_env':'CUSTOM_TYPESAFE'})
     assert result['status']=='passed'
     assert calls[0][1]=='fixture-key'
+    assert calls[0][0]['timeout']==60 and calls[0][0]['retry'].max_retries==0
+    assert result['max_retries']==0 and result['timeout_seconds']==60
 
 
 def test_native_scenario_description_never_runs_model_or_oracle(monkeypatch):

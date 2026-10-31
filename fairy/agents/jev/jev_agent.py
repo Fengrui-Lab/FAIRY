@@ -50,7 +50,8 @@ from fairy.agents.jev.menu import (
     task_numbers,
 )
 from fairy.agents.jev.done_check import MAX_DONE_REFUSALS, REPORT_TOOL, done_problems
-from fairy.agents.jev.snapshot import RESULT_CHARS, _failed, _short, build_snapshot, ridge_ranges
+from fairy.agents.jev.menu import dependent_menu, extended_scene_tool, scene_world, build_arg_menu, arg_descriptions, MAX_CHOICE_OPTIONS
+from fairy.agents.jev.snapshot import RESULT_CHARS, _failed, _result_data, _short, build_snapshot, ridge_ranges
 
 TOOL_QUESTION_ID = "next_action"
 PART1_TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
@@ -157,6 +158,11 @@ class JevAgent(Agent):
             (int(t.num_ridges) for t in self._toolsets if hasattr(t, "num_ridges")),
             None,
         )
+        if self._num_ridges is None:
+            from fairy.apps.farm_world.multi_farm import farm_world_apps
+            self._num_ridges = max((f.num_ridges for f in farm_world_apps(self._toolsets)), default=None)
+        if self._num_ridges is None and any(type(t).__name__ == "PaddyWorldApp" for t in self._toolsets):
+            self._num_ridges = 0  # Paddy uses plots, never synthesized ridge IDs.
         if self._num_ridges is None:
             raise ValueError("JevAgent needs a farm app with num_ridges in its toolsets")
         self.tool_menus: dict[str, ToolMenu] = {}
@@ -399,6 +405,10 @@ class JevAgent(Agent):
             return pick, {}, confidences
 
         menu = self.tool_menus[pick]
+        if dependent_menu(self.tools_map[pick]):
+            arguments, arg_confidences = self._dependent_values(menu, state)
+            confidences.update(arg_confidences)
+            return pick, arguments, confidences
         if pick in prepared:
             self._fanout["hits"] += 1
             options = prepared[pick]
@@ -417,7 +427,7 @@ class JevAgent(Agent):
         recent = [s.tool_name for s in self._facts.get("steps", [])[-LIKELY_RECENT_ACTIONS:]]
         out: list[str] = []
         for name in likely + recent[::-1]:
-            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out:
+            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out and not dependent_menu(self.tools_map[name]):
                 out.append(name)
         return out
 
@@ -437,7 +447,7 @@ class JevAgent(Agent):
             qid = _arg_question_id(a.name, tool_key)
             count_from = RANGE_END_TO_START.get(a.name) if RANGE_END_TO_START.get(a.name) in names else None
             if count_from:
-                width = PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
+                width = self._menu_width(menu)
                 opts: dict[str, Any] = {_count_key(n): n for n in range(1, width + 1)}
             else:
                 opts = self._arg_options(menu, a, {})
@@ -450,6 +460,70 @@ class JevAgent(Agent):
             }
             options[a.name] = (qid, opts)
         return questions, options
+
+    def _menu_width(self, menu: ToolMenu) -> int:
+        native = self.tools_map[menu.tool_name]
+        if extended_scene_tool(native):
+            if native.class_name == "ManualOpsApp":
+                return 2
+            if native.class_name in ("SharedTractorApp", "TractorService"):
+                return PASS_WIDTH.get(("TractorApp", native.name), self._num_ridges)
+            world = scene_world(native)
+            return PASS_WIDTH.get((native.class_name, native.name), getattr(world, "num_ridges", self._num_ridges))
+        return PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
+
+    def _dependent_values(self, menu: ToolMenu, state: dict[str, Any]):
+        """Same Choice/value mapping, resolving entity selectors before dependants."""
+        native = self.tools_map[menu.tool_name]
+        arguments, confidences = {}, {}
+        scope_order = {"farm_id": 0, "asset_id": 1, "plot_id": 2, "machine_id": 2}
+        args = sorted(menu.args, key=lambda a: (scope_order.get(a.name, 3), a.name == "batch_id"))
+        for arg in args:
+            opts = self._arg_options(menu, arg, arguments)
+            if arg.name in ("water_mm", "quantity", "liters", "count", "kg"):
+                raw_arg = next(a for a in native.args if a.name == arg.name)
+                scoped = build_arg_menu(native, raw_arg,
+                    descriptions=arg_descriptions(native.function_description),
+                    numbers=task_numbers(str(state.get("task", ""))), num_ridges=self._num_ridges,
+                    arguments=arguments, steps=self._facts.get("steps", []), task_text=str(state.get("task", "")))
+                opts = scoped.options
+            count_from = RANGE_END_TO_START.get(arg.name)
+            runtime = getattr(native.class_instance, "runtime", None)
+            if runtime is not None and arg.name == "asset_id" and arguments.get("farm_id"):
+                opts = {k: v for k, v in opts.items() if v is None or arguments["farm_id"] in runtime.assets[v].spec.allowed_farm_ids}
+            if runtime is not None and arguments.get("farm_id"):
+                from types import SimpleNamespace
+                world = runtime.farms[arguments["farm_id"]].farm
+                asset = runtime.assets.get(arguments.get("asset_id"))
+                caps = runtime.capabilities(SimpleNamespace(farm=world, farm_id=arguments["farm_id"], asset=asset, asset_id=arguments.get("asset_id")))
+                if arg.name == "seed_type":
+                    opts = {k: v for k, v in opts.items() if v in caps["planting"]["compatible_seed_types"]}
+                if arg.name == "depth_cm":
+                    lo, hi = caps["planting"]["depth_cm_range"]
+                    opts = {**{f"{round(lo+(hi-lo)*i/9,3):g}": round(lo+(hi-lo)*i/9,3) for i in range(10)}, **opts}
+            if count_from in arguments:
+                world = scene_world(native, arguments)
+                width = self._menu_width(menu)
+                width = min(width, world.num_ridges - arguments[count_from])
+                opts = {_count_key(n): arguments[count_from] + n - 1 for n in range(1, width + 1)}
+            if native.name == "measure_grain_moisture":
+                if arg.name == "plot_id":
+                    batches = next(a for a in menu.args if a.name == "batch_id").options
+                    if not any(v is not None for v in batches.values()):
+                        opts = {k: v for k, v in opts.items() if v is not None}
+                elif arg.name == "batch_id":
+                    opts = {k: v for k, v in opts.items() if (v is None) == (arguments.get("plot_id") is not None)}
+            if not opts or len(opts) > MAX_CHOICE_OPTIONS:
+                raise ValueError(f"Invalid dependent menu: {menu.tool_name}.{arg.name}")
+            qid = _arg_question_id(arg.name, None)
+            question = {"type": "choice", "instructions": self._arg_instructions(menu, arg, count_from=count_from if count_from in arguments else None),
+                        "criteria": {k: None for k in opts}}
+            # Include selected scope in the question, not hidden simulator facts.
+            question["instructions"] += " Selected arguments: " + json.dumps(arguments)
+            answer = self._ask("arguments", state, {qid: question})[qid]
+            arguments[arg.name] = opts[answer["choice"]]
+            confidences[qid] = answer["confidence"]
+        return arguments, confidences
 
     def _read_values(
         self,
@@ -495,8 +569,7 @@ class JevAgent(Agent):
             for s in steps
         ):
             return False
-        failed = [s.op_type == "TOOL_ERROR" or (isinstance(s.content, dict) and "error" in s.content) for s in steps]
-        return all(failed) or steps[0].content == steps[1].content
+        return all(_failed(s) for s in steps) or _result_data(steps[0].content) == _result_data(steps[1].content)
 
     def _llm_decide(self, state: dict[str, Any], reason: str) -> tuple[str, dict[str, Any]] | None:
         """One decision by the fallback LLM; None keeps Jev's choice (LLM error or unknown tool)."""
@@ -686,6 +759,16 @@ class JevAgent(Agent):
                 key = f"until {p['from_action']} is ready ({_readable_seconds(secs)})"
                 options[key] = {"seconds": secs} if arg.name == DURATION_ARG else secs
             return options
+        native = self.tools_map[menu.tool_name]
+        if extended_scene_tool(native) and arg.name in ("ridge_id", "start", "end", "start_ridge", "end_ridge"):
+            world = scene_world(native, arguments)
+            if hasattr(world, "_ridges"):
+                options = {k: v for k, v in options.items() if 0 <= v < world.num_ridges}
+                keep = RIDGE_FILTERS.get("TractorApp__" + native.name)
+                if keep:
+                    eligible = {r.ridge_id for r in world._ridges if keep({"planted": r.planted, "harvested": r.harvested})}
+                    narrowed = {k: v for k, v in options.items() if v in eligible}
+                    options = narrowed or options
         allowed = self._allowed_ridges(menu.tool_name)
         if arg.name in RANGE_STARTS or arg.name == "ridge_id":
             if allowed:
@@ -715,7 +798,7 @@ class JevAgent(Agent):
         lines = [
             f"Farm agent report ({farm.get('time')}).",
             "Actions this run: " + json.dumps(farm.get("actions_this_run", {}), ensure_ascii=False),
-            "Crop now: " + json.dumps(farm.get("crop", []), ensure_ascii=False),
+            "Crop now: " + json.dumps(farm.get("farms") or farm.get("plots") or farm.get("crop", []), ensure_ascii=False),
             "Inventory now: " + json.dumps(farm.get("inventory", {}), ensure_ascii=False),
         ]
         return "\n".join(lines)
@@ -773,6 +856,10 @@ class JevAgent(Agent):
         self._snapshot, self._facts = build_snapshot(
             self._toolsets, self.workflow, self.time_manager.time()
         )
+        if any(extended_scene_tool(t) for t in self.tools_map.values()):
+            # Dynamic entities (especially grain batches) can appear after a tool.
+            self.tool_menus = build_tool_menus(self.tools_map, task_text=str(task), num_ridges=self._num_ridges,
+                                              steps=self._facts.get("steps", []))
         if self.state_mode == "history":
             # Part 1 input (diagnostic): every action with its full result, no snapshot.
             # The snapshot is still built for the menus and the done check.

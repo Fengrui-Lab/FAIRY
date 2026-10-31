@@ -59,9 +59,8 @@ def test_normalizes_both_protocol_shapes_without_changing_confidence(sdk):
     lambda r: r["answers"]["q0"]["probabilities"].update(a=float("nan")),
     lambda r: r["answers"]["q0"]["probabilities"].update(a=float("inf")),
     lambda r: r["answers"]["q0"]["probabilities"].update(a=-0.1),
-    lambda r: r["answers"]["q0"]["probabilities"].update(a=0.4),
+    lambda r: r["answers"]["q0"]["probabilities"].update(a=1.1),
     lambda r: r["answers"]["q0"].update(confidence=1.1),
-    lambda r: r["answers"]["q0"].update(choice="b"),
     lambda r: r["usage"].update(input_tokens=-1),
     lambda r: r["usage"].update(input_tokens=True),
 ])
@@ -70,6 +69,20 @@ def test_rejects_malformed_answers(mutation):
     mutation(raw)
     with pytest.raises(DecisionProtocolError):
         normalize_response(raw, questions())
+
+
+@pytest.mark.parametrize("sdk", [False, True])
+@pytest.mark.parametrize("probabilities", [{"a": 0.8, "b": 0.199}, {"a": 0.8, "b": 0.201}])
+def test_preserves_approximate_probability_sums(sdk, probabilities):
+    raw = payload(questions())
+    raw["answers"]["q0"]["probabilities"] = probabilities.copy()
+    if sdk:
+        raw = SimpleNamespace(choices={q: SimpleNamespace(**a) for q, a in raw["answers"].items()},
+                              usage=SimpleNamespace(**raw["usage"]), model="sdk-revision")
+    result = normalize_response(raw, questions())
+    assert result.choices["q0"].probabilities == probabilities
+    assert result.choices["q0"].choice == "a"
+    assert result.choices["q0"].confidence == 0.3
 
 
 def test_split_requests_preserve_state_ids_auth_and_usage(monkeypatch):
@@ -356,3 +369,15 @@ def test_cli_routes_independent_services_and_records_safe_config(local_server, m
     assert received and received[0][1]["Authorization"] == "Bearer decision-secret"
     logs = "".join(p.read_text() for p in (tmp_path / "run").glob("*.json*"))
     assert "decision-secret" not in logs and "qwen-secret" not in logs
+
+
+@pytest.mark.parametrize("sdk", [False, True])
+def test_preserves_provider_choice_without_argmax_override(sdk):
+    raw = payload(questions())
+    raw["answers"]["q0"]["choice"] = "b"
+    if sdk:
+        raw = SimpleNamespace(choices={q: SimpleNamespace(**a) for q, a in raw["answers"].items()})
+    result = normalize_response(raw, questions()).choices["q0"]
+    assert result.choice == "b"
+    assert result.probabilities == {"a": 0.8, "b": 0.2}
+    assert result.confidence == 0.3

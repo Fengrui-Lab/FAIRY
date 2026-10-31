@@ -61,12 +61,26 @@ def probe(service):
         previous = os.environ.get('TYPESAFE_API_KEY')
         os.environ['TYPESAFE_API_KEY'] = os.environ[key]
         try:
-            client = TypeSafeJevClient(service['model_id'], 0.0)
+            client = TypeSafeJevClient(service['model_id'], 0.0, timeout=service.get('timeout',60),
+                                      max_retries=0, base_url=service.get('endpoint'))
         finally:
             if previous is None: os.environ.pop('TYPESAFE_API_KEY',None)
             else: os.environ['TYPESAFE_API_KEY'] = previous
-        result = client.system_one({'label':'a'}, {'probe':{'type':'choice','instructions':'Choose a', 'criteria':{'a':'a','b':'b'}}})
-        return {'status':'passed','contract_ok':True,'provider':p,'returned_model':result.model}
+        import time
+        started = time.perf_counter()
+        try:
+            result = client.system_one({'label':'a'}, {'probe':{'type':'choice','instructions':'Choose a', 'criteria':{'a':'a','b':'b'}}})
+        finally:
+            client.close()
+        match = result.choices['probe'].choice == 'a'
+        return {'status':'passed' if match else 'semantic_probe_failed', 'contract_ok':True,
+                'semantic_match':match, 'provider':p, 'requested_model':service['model_id'],
+                'returned_model':result.model, 'usage':result.usage.tokens(),
+                'probabilities':result.choices['probe'].probabilities,
+                'provider_confidence':result.choices['probe'].confidence,
+                'timeout_seconds':client.request_timeout, 'max_retries':client.sdk_max_retries,
+                'endpoint':client.base_url, 'http_request_count':1,
+                'wall_time_seconds':time.perf_counter()-started}
     args = argparse.Namespace(model=service['model_id'], endpoint=service['endpoint'],
         api_key_env=service.get('api_key_env'), timeout=service.get('timeout',60),
         max_questions_per_request=service.get('max_questions'), question_count=2, option_count=2,

@@ -25,6 +25,20 @@ def done_problems(task: str, facts: dict[str, Any], tools_map: dict[str, Any] | 
         for p in facts.get("pending", [])
         if p.get("ridges")
     ]
+    for farm_id, farm in facts.get("farms", {}).items():
+        # Reuse the original checks for each field; shared inventory/machines
+        # are checked exactly once below.
+        problems.extend(f"{farm_id}: {p}" for p in done_problems(task,
+            {"ridges": farm["ridges"], "inventory": farm.get("inventory", {})}, None))
+    for plot in facts.get("plots", []):
+        if re.search(r"\bharvest", text) and plot["planted"] and not plot["harvested"]:
+            problems.append(f"plot {plot['plot_id']} is planted but not harvested yet.")
+        if re.search(r"\bplant ridges\b|\bplant\b", text) and not plot["planted"] and not plot["harvested"]:
+            problems.append(f"plot {plot['plot_id']} is not planted yet.")
+    if re.search(r"\bstor", text):
+        for batch in facts.get("inventory", {}).get("grain_batches", []):
+            if batch["location"] != "stored" and batch["wet_kg"] > 0:
+                problems.append(f"grain batch {batch['batch_id']} is not stored yet.")
     if re.search(r"\bharvest", text):
         left = [r["ridge_id"] for r in ridges if r["planted"] and not r["harvested"]]
         if left:

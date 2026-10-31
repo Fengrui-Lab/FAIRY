@@ -133,9 +133,19 @@ def _tool_steps(workflow: Any) -> list[Any]:
 
 
 def _failed(step: Any) -> bool:
-    return step.op_type == "TOOL_ERROR" or (
-        isinstance(step.content, dict) and "error" in step.content
-    )
+    if step.op_type == "TOOL_ERROR":
+        return True
+    result = step.content
+    if isinstance(result, dict) and isinstance(result.get("ok"), bool):
+        return not result["ok"]
+    return isinstance(result, dict) and "error" in result
+
+
+def _result_data(result: Any) -> Any:
+    """Read the native shared-service receipt without changing stored results."""
+    if isinstance(result, dict) and isinstance(result.get("ok"), bool):
+        return result.get("data")
+    return result
 
 
 def _range_of(args: dict[str, Any]) -> list[int] | None:
@@ -169,7 +179,7 @@ def pending_effects(steps: list[Any], now: float) -> list[dict[str, Any]]:
     """Effects announced in Jev's own results that are not ready yet."""
     out = []
     for step in steps:
-        result = step.content
+        result = _result_data(step.content)
         if _failed(step) or not isinstance(result, dict):
             continue
         for field in READY_AT_FIELDS:
@@ -222,6 +232,8 @@ def repeat_count(steps: list[Any]) -> int:
 
 def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict[str, Any], dict[str, Any]]:
     apps = _apps(toolsets)
+    if len(apps.get("FarmWorldApp", [])) > 1 or "PaddyWorldApp" in apps or any(hasattr(a, "runtime") for a in toolsets):
+        return _scene_snapshot(toolsets, workflow, now)
     farm = apps["FarmWorldApp"][0]
     ridges = _ridges(farm)
     snap: dict[str, Any] = {
@@ -274,3 +286,83 @@ def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict
         "steps": steps,
     }
     return {"farm_now": snap, "steps_so_far": step_history(steps), "recent_actions": recent}, facts
+
+
+def _scene_snapshot(toolsets: list[Any], workflow: Any, now: float):
+    """Project public tool fields without invoking their physics-refresh wrappers."""
+    from dataclasses import asdict
+    from types import SimpleNamespace
+    from copy import deepcopy, copy
+    farms, machines, inventory, plots = {}, {}, {}, []
+    runtimes = {id(a.runtime): a.runtime for a in toolsets if hasattr(a, "runtime")}
+    for runtime in runtimes.values():
+        for farm_id, site in runtime.farms.items():
+            f = site.farm
+            ridges = _ridges(f)
+            farms[farm_id] = {"name": f.name, "ridges": ridges, "crop": _crop(ridges),
+                "season_phase": f._season_phase, "inventory": _inventory(f.get_inventory())}
+        for asset in runtime.assets.values():
+            if asset.kind == "tractor":
+                fields = {"fuel_tank_l": "_fuel_tank_l", "fertilizer_spreader_kg": "_fertilizer_spreader_kg",
+                          "seed_hopper": "_seed_hopper", "seed_type": "seed_type", "grain_bin_kg": "_grain_bin_kg",
+                          "attached_implement": "_attached_implement", "pesticide_tank_l": "_pesticide_tank_l"}
+                machines[asset.asset_id] = {k: deepcopy(asset.data[v]) for k, v in fields.items() if v in asset.data}
+                machines[asset.asset_id].update(payload_origin_farm_id=asset.payload_origin_farm_id, last_farm_id=asset.last_farm_id)
+            else:
+                machines[asset.asset_id] = {"battery_pct": asset.data.get("_battery_pct"), "charging": asset.data.get("_charging")}
+    for app in toolsets:
+        kind = type(app).__name__
+        if kind == "FarmWorldApp":
+            ridges = _ridges(app)
+            farms[app.farm_id] = {"name": app.name, "ridges": ridges,
+                "crop": _crop(ridges), "season_phase": app._season_phase,
+                "management": app._management_regime.to_dict()}
+        elif kind == "WarehouseApp":
+            inventory = {"warehouse_id": app.warehouse_id, **asdict(app.stock),
+                "harvest_grain_kg": app._grain_total("pending"),
+                "warehouse_grain_kg": app._grain_total("stored"),
+                "facilities": app._facility_state(),
+                "batches": [asdict(b) for b in app.grain_batches.values()]}
+        elif kind == "SharedTractorApp":
+            status = app._operate_get_status()
+            status.pop("source_farm_id", None)
+            status.pop("available_implements", None)
+            status.update(warehouse_id=app.farm_environment.warehouse.warehouse_id,
+                grain_cultivar_ids=list(app._grain_cultivar_ids), grain_ridge_ids=list(app._grain_ridge_ids),
+                grain_moisture_pct=max(app._grain_moistures_pct) if app._grain_moistures_pct else None)
+            machines[app.name] = status
+        elif kind in ("SharedDroneApp", "SharedRobotApp"):
+            status = copy(app)._check_status()
+            machines[app.name] = {k: status[k] for k in ("battery_pct", "charging", "eta_minutes_to_full") if k in status}
+        elif kind == "PaddyWorldApp":
+            f = app.field
+            plots = [app._plot_record(p) for p in f.plots]
+            inventory = {"seedlings": asdict(f.seedlings), "fuel_liters": f.fuel_liters,
+                "channels": [asdict(c) for c in f.channels],
+                "stored_kg_at_14pct": sum(p.stored_dry_kg / .86 for p in f.plots),
+                "storage_capacity_kg": f.storage_capacity_kg,
+                "fertilizer": {"product_id": "urea", "stock_kg": f.fertilizer_kg, "n_fraction": .46},
+                **{k: getattr(f, k) for k in ("insecticide_liters", "fungicide_liters", "repair_material_kg", "electricity_kwh", "drying_capacity_wet_kg_day")},
+                "grain_batches": [{"batch_id": b.batch_id, "plot_id": b.plot_id, "location": b.location, "wet_kg": round(b.wet_kg, 2)} for b in f.grain_batches]}
+            machines.update({m.machine_id: asdict(m) for m in f.machines})
+            machines["combine"]["grain_bin_kg"] = sum(b.wet_kg for b in f.grain_batches if b.location == "combine")
+            machines["drone"] = {"battery_pct": f.drone_battery_pct}
+    steps = _tool_steps(workflow)
+    qualified = []
+    for step in steps:
+        args = step.tool_args or {}
+        scope = {k: args[k] for k in ("farm_id", "plot_id", "asset_id") if k in args}
+        name = step.tool_name + (" " + json.dumps(scope, sort_keys=True) if scope else "")
+        qualified.append(SimpleNamespace(op_type=step.op_type, tool_name=name, tool_args=args, content=step.content))
+    pending = pending_effects(qualified, now)
+    snap = {"time": _fmt_time(now), "farms": farms, "plots": plots,
+            "inventory": inventory, "machines": machines,
+            "actions_this_run": work_done(qualified), "pending_effects": pending}
+    notes = [s for s in workflow.dag.values() if s.op_type == "system"]
+    if notes:
+        snap["notifications"] = [{"time": s.time, "message": _short(s.content)} for s in notes[-NOTIFICATIONS:]]
+    if repeat_count(steps) >= REPEAT_WARNING_AT:
+        snap["warning"] = f"The last action was repeated {repeat_count(steps)} times in a row with the same arguments; repeating it again will not change the result."
+    facts = {"farms": farms, "plots": plots, "inventory": inventory, "machines": machines, "pending": pending, "steps": steps}
+    return deepcopy({"farm_now": snap, "steps_so_far": step_history(steps),
+        "recent_actions": [{"action": s.tool_name, "arguments": s.tool_args or {}, "failed": _failed(s), "result": _short(s.content)} for s in steps[-RECENT_ACTIONS:]]}), facts

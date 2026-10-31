@@ -21,16 +21,26 @@ Part 2 additions (docs/jev/PROGRESS.md, Part 2):
 - the report to the user: one option, filled with a report written by code;
 - per turn, the agent narrows ridge options (end >= start, PASS_WIDTH, and no
   harvesting/planting of ridges the farm overview shows as already done).
+
+Rice irrigation uses public effective canal flow to convert existing WAIT_STEPS
+and task durations into water-depth ranges. Each range uses the same ten-value
+spacing; quota/opening limits clip candidates, never set their spacing. This is
+a scene-specific extension of the finite-menu policy, not an optimal dose rule.
 """
 
 from __future__ import annotations
 
 import re
+import json
+import math
+from itertools import combinations
+from types import SimpleNamespace
 from dataclasses import dataclass, field
 from typing import Any
 
 from fairy.apps.farm_world import tractor_app as _tractor
 from fairy.apps.farm_world.models import SeedType
+from fairy.agents.jev.snapshot import _failed, _result_data
 
 DONE_OPTION = "done"
 DONE_DESCRIPTION = "All steps of the task are complete; stop and report."
@@ -54,7 +64,10 @@ CAPACITY_MAX: dict[tuple[str, str, str], float] = {
 
 # Explicit ranges written in the tool bodies (rejected or clamped outside).
 CODE_RANGES: dict[tuple[str, str, str], tuple[float, float]] = {
+    ("PaddyOpsApp", "soak", "hours"): (1, 72),
     ("WeatherApp", "get_forecast", "days"): (1, 7),
+    ("PaddyOpsApp", "apply_fertilizer", "kg_per_ha"): (0, 300),
+    ("PaddyOpsApp", "dry_grain", "target_moisture_pct"): (14, 14),
     ("FarmWorldApp", "dry_grain", "target_moisture_pct"): (11.0, 16.0),
     ("TractorApp", "plant_seeds", "depth_cm"): (3.0, 5.0),
     ("TractorApp", "replant_seeds", "depth_cm"): (3.0, 5.0),
@@ -102,6 +115,10 @@ REPORT_OPTION = "send the factual report of this run (written by code from the f
 
 class EmptyMenuError(ValueError):
     """An argument has no value to offer."""
+
+    def __init__(self, message: str, *, reason: str = "missing_rule"):
+        super().__init__(message)
+        self.reason = reason
 
 
 @dataclass
@@ -154,6 +171,10 @@ def task_numbers(task_text: str) -> list[float]:
 
 
 def _option_key(value: Any, *, ridge: bool = False) -> str:
+    if value is None:
+        return "default (null)"
+    if isinstance(value, list):
+        return json.dumps(value, ensure_ascii=False)
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, str):
@@ -200,7 +221,25 @@ def build_arg_menu(
     descriptions: dict[str, str],
     numbers: list[float],
     num_ridges: int,
+    arguments: dict[str, Any] | None = None,
+    steps: list[Any] | tuple = (),
+    task_text: str = "",
 ) -> ArgMenu:
+    schema = getattr(tool, "parameters_schema", {}).get("properties", {}).get(arg.name, {})
+    if arg.arg_type == "Annotated":
+        kind = schema.get("type")
+        nullable_schema = False
+        if isinstance(kind, list):
+            nullable_schema = "null" in kind
+            kind = next((k for k in kind if k != "null"), None)
+        if "anyOf" in schema:
+            kinds = [x.get("type") for x in schema["anyOf"]]
+            nullable_schema = "null" in kinds
+            kind = next((k for k in kinds if k != "null"), None)
+        mapped = {"string": "str", "integer": "int", "number": "float", "boolean": "bool", "array": "list"}.get(kind)
+        if mapped is None:
+            raise ValueError(f"No menu rule for native schema {schema}")
+        arg = SimpleNamespace(name=arg.name, arg_type=mapped + (" | None" if nullable_schema else ""), has_default=arg.has_default, default=arg.default)
     key = (tool.class_name, tool.name, arg.name)
     description = descriptions.get(arg.name, "")
     parts = {p.strip() for p in arg.arg_type.split("|")}
@@ -214,12 +253,22 @@ def build_arg_menu(
         values = list(range(num_ridges))
         source = f"every ridge 0-{num_ridges - 1}"
     elif arg_type == "str":
-        values, source = _text_values(tool, arg)
+        values, source = scene_text_values(tool, arg, numbers=numbers, steps=steps, task_text=task_text) or _text_values(tool, arg)
+    elif arg_type in ("list", "list[str]", "List[str]") and tool.class_name == "PaddyDroneApp" and arg.name == "plot_ids":
+        ids = [p.plot_id for p in scene_world(tool).field.plots]
+        if 2 ** len(ids) - 1 > MAX_CHOICE_OPTIONS:
+            raise ValueError("Plot subset menu exceeds Choice limit")
+        values = [list(c) for n in range(1, len(ids) + 1) for c in combinations(ids, n)]
+        source = "all nonempty subsets of visible plot IDs"
+    elif arg_type in ("int", "float") and "enum" in schema and extended_scene_tool(tool):
+        values, source = list(schema["enum"]), "native tool JSON schema enum"
     elif arg_type in ("int", "float"):
-        values, source = _numeric_values(key, arg_type, numbers)
+        values, source = scene_numeric_values(tool, arg, numbers, arguments=arguments, steps=steps, task_text=task_text) or _numeric_values(key, arg_type, numbers)
     else:
         raise ValueError(f"No menu rule for {key} of type {arg.arg_type}")
 
+    if arg_type == "int":
+        values = [int(v) for v in values if float(v).is_integer()]
     if arg.has_default and arg.default is not None:
         default = arg.default
         if arg_type == "float":
@@ -228,14 +277,16 @@ def build_arg_menu(
         source += " + default"
 
     seen: dict[str, Any] = {}
-    ordered = values if arg_type in ("str", "bool") else sorted(values)
+    ordered = values if arg_type in ("str", "bool", "list", "list[str]", "List[str]") else sorted(values)
     for value in ordered:
         seen.setdefault(_option_key(value, ridge=arg.name in RIDGE_ARGS), value)
     if nullable and arg.has_default and arg.default is None:
         seen["default (null)"] = None
         source += " + nullable default"
     if not seen:
-        raise EmptyMenuError(f"Empty menu for {key}")
+        raise EmptyMenuError(f"Empty menu for {key}", reason=(
+            "empty_resources" if extended_scene_tool(tool) and arg.name in
+            ("batch_id", "plot_id", "machine_id", "asset_id", "farm_id", "channel_id") else "missing_rule"))
     if len(seen) > MAX_CHOICE_OPTIONS:
         raise ValueError(f"Menu for {key} has {len(seen)} options (> {MAX_CHOICE_OPTIONS})")
     return ArgMenu(arg.name, arg.arg_type, description, source, seen)
@@ -293,7 +344,8 @@ def _text_values(tool: Any, arg: Any) -> tuple[list[Any], str]:
 
 
 def build_tool_menus(
-    tools_map: dict[str, Any], *, task_text: str, num_ridges: int
+    tools_map: dict[str, Any], *, task_text: str, num_ridges: int,
+    steps: list[Any] | tuple = (),
 ) -> dict[str, ToolMenu]:
     """One ToolMenu per tool, in the same order the LLM agent sees them."""
     numbers = task_numbers(task_text)
@@ -306,7 +358,7 @@ def build_tool_menus(
             try:
                 args = [
                     build_arg_menu(
-                        tool, arg, descriptions=docs, numbers=numbers, num_ridges=num_ridges
+                        tool, arg, descriptions=docs, numbers=numbers, num_ridges=tool_ridge_count(tool, num_ridges), steps=steps, task_text=task_text
                     )
                     for arg in tool.args
                 ]
@@ -322,3 +374,253 @@ def build_tool_menus(
     if len(menus) + 1 > MAX_CHOICE_OPTIONS:
         raise ValueError(f"Tool menu has {len(menus) + 1} options (> {MAX_CHOICE_OPTIONS})")
     return menus
+
+# New scene support uses the same finite-value menus, not a second planner.
+def scene_world(tool: Any, arguments: dict[str, Any] | None = None) -> Any:
+    app = tool.class_instance
+    runtime = getattr(app, "runtime", None)
+    if runtime is not None:
+        target = (arguments or {}).get("farm_id")
+        if target in runtime.farms:
+            return runtime.farms[target].farm
+        if len(runtime.farms) == 1:
+            return next(iter(runtime.farms.values())).farm
+    env = getattr(app, "farm_environment", None)
+    if env is not None:
+        target = (arguments or {}).get("farm_id") or getattr(app, "bound_farm_id", None)
+        if target in env.farms:
+            return env.farms[target].world
+    for name in ("farm", "_farm", "world", "_farm_world_app"):
+        world = getattr(app, name, None)
+        if world is not None:
+            return world
+    return app
+
+
+def extended_scene_tool(tool: Any) -> bool:
+    app = tool.class_instance
+    return (hasattr(app, "runtime") or tool.class_name.startswith(("Shared", "Paddy")) or
+            tool.class_name == "WarehouseApp" or
+            getattr(app, "farm_environment", None) is not None or
+            getattr(scene_world(tool), "crop_id", "soybean") != "soybean")
+
+
+def scene_text_values(tool: Any, arg: Any, *, numbers: list[float] = (), steps=(), task_text="") -> tuple[list[Any], str] | None:
+    if not extended_scene_tool(tool):
+        return None
+    app = tool.class_instance
+    schema = getattr(tool, "parameters_schema", {}).get("properties", {}).get(arg.name, {})
+    if "enum" in schema:
+        return list(schema["enum"]), "native tool JSON schema enum"
+    if arg.name == "farm_id" and getattr(app, "farm_environment", None) is not None:
+        return list(app.farm_environment.farms), "farm IDs in native FarmEnvironment"
+    choices = getattr(app, "tool_parameter_choices", {}).get(arg.name)
+    if choices is not None:
+        return list(choices), "native tool_parameter_choices"
+    contract = getattr(app, "get_tool_contract", lambda _: None)(tool.name)
+    parameter = contract.parameters.get(arg.name) if contract else None
+    if parameter and parameter.choices is not None:
+        return list(parameter.choices), "native tool contract choices"
+    if tool.class_name == "WarehouseApp" and arg.name == "batch_id":
+        return [b.batch_id for b in app.grain_batches.values() if b.status == "pending"], "pending batches in get_grain_batches"
+    if tool.class_name == "SharedTractorApp" and arg.name == "batch_id":
+        existing = app.farm_environment.warehouse.grain_batches
+        n = 1
+        while f"jev-batch-{n:06d}" in existing:
+            n += 1
+        return [f"jev-batch-{n:06d}"], "one deterministic unused batch label; no action policy"
+    if tool.class_name.startswith("Paddy"):
+        field = scene_world(tool).field
+        if arg.name == "plot_id":
+            if tool.name in RICE_OBS_AMOUNTS or tool.name == "irrigate":
+                ids, reasons = [], []
+                for plot in field.plots:
+                    try:
+                        _rice_amount_values(tool, numbers, {"plot_id": plot.plot_id}, steps, task_text)
+                        ids.append(plot.plot_id)
+                    except EmptyMenuError as exc:
+                        reasons.append(exc)
+                if not ids:
+                    raise reasons[0]
+                return ids, "public plot IDs with amount candidates; no extra observations"
+            return [p.plot_id for p in field.plots], "plot IDs in get_farm_overview"
+        if arg.name == "machine_id":
+            if tool.name in ("attach_implement", "detach_implement"):
+                return [m.machine_id for m in field.machines if m.kind == "tractor"], "native implement operations accept tractors only"
+            return [m.machine_id for m in field.machines], "machine IDs in get_machine_status"
+        if arg.name == "channel_id":
+            return [c.channel_id for c in field.channels], "channel IDs in get_inventory"
+        if arg.name == "batch_id":
+            if tool.name in ("load_seedlings", "transplant"):
+                return [field.seedlings.batch_id], "seedling batch in get_inventory"
+            return [b.batch_id for b in field.grain_batches
+                    if tool.name == "measure_grain_moisture" or b.location == "reception"], "grain batches in get_inventory"
+        if arg.name == "implement":
+            return ["puddler", "spreader", "sprayer"], "PaddyMachineryApp.attach_implement accepted names"
+        if arg.name == "product_id":
+            return ["urea"], "PaddyOpsApp fertilizer product"
+    return None
+
+
+RICE_OBS_AMOUNTS = {"drain": "water_mm", "replant_seedlings": "quantity"}
+
+
+def _latest_observation(steps, method, plot_id):
+    for step in reversed(steps):
+        if (step.op_type != "TOOL" or _failed(step) or
+                step.tool_name != "PaddyObservationApp__" + method or
+                (step.tool_args or {}).get("plot_id") != plot_id):
+            continue
+        data = _result_data(step.content)
+        if isinstance(data, dict) and data.get("plot_id") == plot_id:
+            return data, getattr(step, "time", None)
+    raise EmptyMenuError(f"{plot_id}: awaiting successful {method}", reason="awaiting_observation")
+
+
+def _rice_amount_values(tool, numbers, arguments, steps, task_text=""):
+    """Bounds from public inventory/area or already acquired observations only."""
+    world = scene_world(tool)
+    plots = [p for p in world.field.plots if not arguments.get("plot_id") or p.plot_id == arguments["plot_id"]]
+    values, sources, errors = [], [], []
+    for plot in plots:
+        try:
+            candidates = None
+            if tool.name == "irrigate":
+                channel = next(c for c in world.field.channels if c.channel_id == "supply")
+                top = max(0., channel.quota_m3 - channel.withdrawn_m3) * channel.efficiency * 1000 / plot.area_m2
+                if plot.plot_id not in channel.connected_plots:
+                    top = 0
+                # Inverse of the native tool's volume / effective-flow duration.
+                mm_per_hour = channel.flow_m3_hour * (1 - channel.blockage_fraction) * channel.efficiency * 1000 / plot.area_m2
+                if (channel.open_hour, channel.close_hour) != (0, 24):
+                    # Full declared window only, not a plan to wait for it. The
+                    # native tool still validates the actual start/end times.
+                    top = min(top, mm_per_hour * (channel.close_hour - channel.open_hour))
+                durations = list(dict.fromkeys(WAIT_STEPS + task_durations(task_text)))
+                candidates = [
+                    min(top, mm_per_hour * amount * UNIT_SECONDS[unit] / 3600 * i / EVENLY_SPACED_COUNT)
+                    for unit, amount in durations for i in range(1, EVENLY_SPACED_COUNT + 1)
+                ] + list(numbers)
+                source = (f"{plot.plot_id}: public effective flow={mm_per_hour:g} mm/hour; "
+                          "WAIT_STEPS + task durations, 10 evenly spaced per duration; "
+                          "clipped by remaining quota and declared channel opening span; "
+                          "actual-time checks remain native")
+            elif tool.name == "drain":
+                obs, timestamp = _latest_observation(steps, "read_water_sensors", plot.plot_id)
+                top = obs.get("surface_water_mm")
+                source = f"{plot.plot_id}: acquired surface_water_mm; observation time={obs.get('timestamp', timestamp)}"
+            else:
+                obs, timestamp = _latest_observation(steps, "inspect_establishment", plot.plot_id)
+                stand = obs.get("stand_fraction_estimate")
+                if not isinstance(stand, (int, float)) or not math.isfinite(stand) or not 0 <= stand <= 1:
+                    raise EmptyMenuError(f"{plot.plot_id}: invalid stand observation", reason="invalid_observation")
+                # Native transplant density: 20 cm x 20 cm, three seedlings per hill.
+                missing = math.floor((1 - stand) * plot.area_m2 * 75 + 1e-7)
+                top = min(missing, world.field.seedlings.loaded)
+                source = f"{plot.plot_id}: observed stand estimate * public area * native density, capped by loaded seedlings; observation time={obs.get('timestamp', timestamp)}"
+            if not isinstance(top, (int, float)) or not math.isfinite(top):
+                raise EmptyMenuError(f"{plot.plot_id}: invalid amount bound", reason="invalid_observation")
+            if top <= 0:
+                raise EmptyMenuError(f"{plot.plot_id}: no positive amount from current public resources/observation", reason="empty_resources")
+            if candidates is None:
+                candidates = [top * i / EVENLY_SPACED_COUNT for i in range(1, EVENLY_SPACED_COUNT + 1)] + list(numbers)
+            if tool.name == "replant_seedlings":
+                candidates = [math.floor(v) for v in candidates]
+            else:
+                candidates = [math.floor(v * 1000 + 1e-9) / 1000 for v in candidates]
+            candidates = [v for v in candidates if 0 < v <= top]
+            if not candidates:
+                raise EmptyMenuError(f"{plot.plot_id}: no representable positive amount", reason="empty_resources")
+            values.extend(candidates); sources.append(source)
+        except EmptyMenuError as exc:
+            errors.append(exc)
+    if not values:
+        if errors:
+            raise errors[0]
+        raise EmptyMenuError("No matching public plot", reason="empty_resources")
+    return values, "10 evenly spaced + task numbers within bound; " + "; ".join(sources)
+
+
+def scene_numeric_values(tool: Any, arg: Any, numbers: list[float], *, arguments=None, steps=(), task_text="") -> tuple[list[Any], str] | None:
+    if not extended_scene_tool(tool):
+        return None
+    app = tool.class_instance
+    arguments = arguments or {}
+    if tool.class_name.startswith("Paddy"):
+        world = scene_world(tool)
+        if (tool.name == "irrigate" and arg.name == "water_mm" or
+                RICE_OBS_AMOUNTS.get(tool.name) == arg.name):
+            return _rice_amount_values(tool, numbers, arguments, steps, task_text)
+        top = None
+        if tool.name == "load_seedlings" and arg.name == "quantity":
+            top = world.machine("transplanter").seedling_capacity
+        elif tool.name == "refuel" and arg.name == "liters":
+            top = max(m.tank_capacity_liters for m in world.field.machines
+                      if not arguments.get("machine_id") or m.machine_id == arguments["machine_id"])
+        elif tool.name == "load_fertilizer" and arg.name == "kg":
+            top = world.machine("tractor").fertilizer_capacity_kg
+        if top is not None:
+            vals = [top * i / 10 for i in range(1, 11)] + numbers
+            if arg.arg_type == "int": vals = [int(v) for v in vals if float(v).is_integer()]
+            return vals, "10 evenly spaced up to public machine capacity + task numbers"
+    runtime = getattr(app, "runtime", None)
+    if runtime is not None and tool.class_name == "TractorService":
+        capacity = {"refuel": ("liters", "fuel_tank_l"), "load_seeds": ("count", "seed_hopper_count"),
+                    "load_fertilizer": ("kg", "fertilizer_spreader_kg"),
+                    **{name: ("liters", "pesticide_tank_l") for name in ("load_pesticide", "load_fungicide", "refill_pesticide_tank")}}.get(tool.name)
+        if capacity and arg.name == capacity[0]:
+            values = []
+            for asset in runtime.assets.values():
+                if asset.kind != "tractor" or arguments.get("asset_id") not in (None, asset.asset_id):
+                    continue
+                farm_ids = [fid for fid in asset.spec.allowed_farm_ids if arguments.get("farm_id") in (None, fid)]
+                if not farm_ids:
+                    continue
+                fid = farm_ids[0]
+                caps = runtime.capabilities(SimpleNamespace(farm=runtime.farms[fid].farm, farm_id=fid, asset=asset, asset_id=asset.asset_id))
+                top = caps["asset_capacities"][capacity[1]]
+                values.extend(top * i / EVENLY_SPACED_COUNT for i in range(1, EVENLY_SPACED_COUNT + 1))
+            if not values:
+                raise EmptyMenuError("No eligible public asset capacity", reason="empty_resources")
+            return values + list(numbers), "10 evenly spaced up to selected public asset capacity + task numbers"
+    schema = getattr(tool, "parameters_schema", {}).get("properties", {}).get(arg.name, {})
+    if "minimum" in schema and "maximum" in schema:
+        lo, hi = schema["minimum"], schema["maximum"]
+        values = (list(range(math.ceil(lo), math.floor(hi) + 1)) if arg.arg_type == "int" else
+                  [round(lo + (hi - lo) * i / 9, 3) for i in range(10)])
+        return values + list(numbers), "native JSON schema range + task numbers"
+    contract = getattr(app, "get_tool_contract", lambda _: None)(tool.name)
+    parameter = contract.parameters.get(arg.name) if contract else None
+    if parameter and parameter.numeric:
+        schema = parameter.numeric.json_schema()
+        lo, hi = schema.get("minimum", 0), schema.get("maximum")
+        if hi is not None:
+            if arg.arg_type == "int":
+                values = list(range(int(lo), int(hi) + 1))
+            else:
+                values = [round(lo + (hi - lo) * i / 9, 3) for i in range(10)]
+            return values + numbers, "native numeric contract range + task numbers"
+    if tool.class_name == "SharedTractorApp":
+        return _numeric_values(("TractorApp", tool.name, arg.name), arg.arg_type, numbers)
+    if tool.class_name == "WarehouseApp" and arg.name == "target_moisture_pct":
+        return _numeric_values(("FarmWorldApp", "dry_grain", arg.name), arg.arg_type, numbers)
+    return None
+
+
+def dependent_menu(tool: Any) -> bool:
+    names = {a.name for a in tool.args}
+    return extended_scene_tool(tool) and (("farm_id" in names or "asset_id" in names) or
+        tool.name == "measure_grain_moisture" and {"plot_id", "batch_id"} <= names or
+        tool.class_name.startswith("Paddy") and (tool.name in (*RICE_OBS_AMOUNTS, "irrigate") or "machine_id" in names))
+
+
+def tool_ridge_count(tool: Any, default: int) -> int:
+    app = tool.class_instance
+    if hasattr(app, "runtime"):
+        return max(site.farm.num_ridges for site in app.runtime.farms.values())
+    world = scene_world(tool)
+    if hasattr(world, "num_ridges"):
+        return world.num_ridges
+    if getattr(app, "farm_environment", None) is not None:
+        return max(f.world.num_ridges for f in app.farm_environment.farms.values())
+    return default

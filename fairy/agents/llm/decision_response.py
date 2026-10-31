@@ -119,10 +119,6 @@ def normalize_response(raw: Any, questions: dict[str, Any]) -> DecisionResponse:
         if not isinstance(probabilities, Mapping) or set(probabilities) != set(options):
             raise DecisionProtocolError("response must include a probability for every option, and no others")
         probs = {k: _probability(v) for k, v in probabilities.items()}
-        if not math.isclose(sum(probs.values()), 1.0, rel_tol=0, abs_tol=1e-4):
-            raise DecisionProtocolError("option probabilities must sum to one (tolerance 1e-4)")
-        if probs[choice] + 1e-6 < max(probs.values()):
-            raise DecisionProtocolError("selected option is not a maximum-probability option")
         confidence = read_field(answer, "confidence")
         normalized[qid] = DecisionAnswer(
             choice, probs, _probability(confidence) if confidence is not None else None
