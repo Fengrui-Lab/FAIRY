@@ -5,17 +5,12 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_dry",
-  "initial_checkpoint_sha256": "d7e92fa761d1e777bf33b038a24932b2e566960818e40028a986a0a375fdb372",
+  "initial_checkpoint_sha256": "5de14af1f9aa9480bc5abbe897871cdc0a8267ab127a63377645b7b486f62b54",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "2a47263719fde5fe4a2fa362292da037e6da5d5437969f202df83ee664bb6397",
+  "expected_final_state_sha256": "4af5761d05084a657ef4929d2a80aa0ee132d789bf7c404dc0fb49e243fa8f48",
   "checkpoint_steps": {},
   "steps": [
-    {
-      "tool_name": "PaddyWorldApp__get_inventory",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
     {
       "tool_name": "PaddyObservationApp__measure_grain_moisture",
       "tool_args": {
@@ -28,12 +23,13 @@
       "tool_args": {
         "batch_id": "grain_0001"
       },
-      "duration_seconds": 5850.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
+      "duration_seconds": 8011.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    181,
+    183
   ]
 }

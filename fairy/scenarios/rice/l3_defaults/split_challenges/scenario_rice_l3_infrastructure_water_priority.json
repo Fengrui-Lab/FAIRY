@@ -1,0 +1,2268 @@
+{
+  "source_id": "scenario_rice_l3_infrastructure_water_priority",
+  "source_l3_plan_sha256": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "controls": [
+    {
+      "policy": "omit",
+      "errors": [
+        {
+          "step": 15,
+          "error": "Channel supply job must fit UTC 6:00..10:00"
+        },
+        {
+          "step": 26,
+          "error": "Puddling requires 24 wet hours, saturated topsoil and >=5 mm water"
+        },
+        {
+          "step": 35,
+          "error": "No surface water to drain"
+        },
+        {
+          "step": 38,
+          "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose"
+        },
+        {
+          "step": 44,
+          "error": "Transplanting requires a prepared, unplanted plot"
+        },
+        {
+          "step": 46,
+          "error": "Transplant before inspecting establishment"
+        },
+        {
+          "step": 61,
+          "error": "Transplant before inspecting establishment"
+        },
+        {
+          "step": 84,
+          "error": "Unknown product, insufficient fertilizer stock or loading capacity exceeded"
+        },
+        {
+          "step": 86,
+          "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose"
+        },
+        {
+          "step": 121,
+          "error": "Unknown product, insufficient fertilizer stock or loading capacity exceeded"
+        },
+        {
+          "step": 123,
+          "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose"
+        },
+        {
+          "step": 218,
+          "error": "Standing-grain moisture requires mature rice"
+        },
+        {
+          "step": 224,
+          "error": "Standing-grain moisture requires mature rice"
+        }
+      ],
+      "matched_time": true,
+      "matched_weather": true,
+      "outcomes": {
+        "channel_clearance": {
+          "time": 1767231600.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 0.0,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.6,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "diagnosis": {
+          "time": 1767257100.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 33.333333333333336,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.6,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "season": {
+          "time": 1775227756.0,
+          "day": "2026-04-03",
+          "biological_dry_kg": 311.4554568631337,
+          "biomass_dry_kg": 1104.6689968290266,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 977.7777777777777,
+          "fertilizer_used": 90.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 9.0,
+          "infrastructure": {
+            "blockage": 0.6,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        }
+      }
+    },
+    {
+      "policy": "repair_all_first",
+      "errors": [],
+      "matched_time": true,
+      "matched_weather": true,
+      "outcomes": {
+        "channel_clearance": {
+          "time": 1767231600.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 0.0,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.0,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "diagnosis": {
+          "time": 1767257100.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 0.0,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 10.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.0,
+            "leaks": {
+              "p1": 0.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "season": {
+          "time": 1775227756.0,
+          "day": "2026-04-03",
+          "biological_dry_kg": 42.04728985317781,
+          "biomass_dry_kg": 1269.106513897184,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 277.77777777777777,
+          "fertilizer_used": 225.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 10.0,
+          "fuel_used_liters": 22.5,
+          "infrastructure": {
+            "blockage": 0.0,
+            "leaks": {
+              "p1": 0.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        }
+      }
+    },
+    {
+      "policy": "irrigate_first",
+      "errors": [],
+      "matched_time": true,
+      "matched_weather": true,
+      "outcomes": {
+        "channel_clearance": {
+          "time": 1767231600.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 0.0,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.6,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "diagnosis": {
+          "time": 1767257100.0,
+          "day": "2026-01-01",
+          "biological_dry_kg": 0.0,
+          "biomass_dry_kg": 0.0,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 33.333333333333336,
+          "fertilizer_used": 0.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "fuel_used_liters": 0.0,
+          "infrastructure": {
+            "blockage": 0.6,
+            "leaks": {
+              "p1": 8.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        },
+        "season": {
+          "time": 1775227756.0,
+          "day": "2026-04-03",
+          "biological_dry_kg": 1794.6715869973668,
+          "biomass_dry_kg": 3815.037459929227,
+          "stored_kg_at_14pct": 0.0,
+          "water_used": 1144.444444444444,
+          "fertilizer_used": 225.0,
+          "energy_used_kwh": 0.0,
+          "insecticide_used_liters": 0.0,
+          "fungicide_used_liters": 0.0,
+          "repair_used_kg": 10.0,
+          "fuel_used_liters": 22.5,
+          "infrastructure": {
+            "blockage": 0.0,
+            "leaks": {
+              "p1": 0.0,
+              "p2": 0.0
+            }
+          },
+          "pressures": {
+            "p1": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            },
+            "p2": {
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0
+            }
+          },
+          "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+        }
+      }
+    }
+  ],
+  "checkpoints": {
+    "diagnosis": {
+      "schema": 2,
+      "start_date": "2026-01-01",
+      "sim_time": 1767225600.0,
+      "initial_field": {
+        "field_id": "rice_demo",
+        "plots": [
+          {
+            "plot_id": "p1",
+            "area_m2": 1000.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 8.0
+          },
+          {
+            "plot_id": "p2",
+            "area_m2": 1500.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 0.0
+          }
+        ],
+        "channels": [
+          {
+            "channel_id": "supply",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 0.9,
+            "quota_m3": 1800.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.6,
+            "open_hour": 6,
+            "close_hour": 10
+          },
+          {
+            "channel_id": "drain",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 1.0,
+            "quota_m3": 12000.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.0,
+            "open_hour": 0,
+            "close_hour": 24
+          }
+        ],
+        "seedlings": {
+          "batch_id": "ir72_standard",
+          "cultivar": "Rice_IR72",
+          "quantity": 210000,
+          "loaded": 0,
+          "age_days_at_delivery": 20,
+          "establishment_profile": "ir72_transplant_v1"
+        },
+        "fuel_liters": 500.0,
+        "storage_capacity_kg": 10000.0,
+        "machines": [
+          {
+            "machine_id": "tractor",
+            "kind": "tractor",
+            "fuel_liters": 20.0,
+            "tank_capacity_liters": 60.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "transplanter",
+            "kind": "transplanter",
+            "fuel_liters": 10.0,
+            "tank_capacity_liters": 25.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "combine",
+            "kind": "combine",
+            "fuel_liters": 15.0,
+            "tank_capacity_liters": 50.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          }
+        ],
+        "grain_batches": [],
+        "fertilizer_kg": 300.0,
+        "insecticide_liters": 10.0,
+        "fungicide_liters": 10.0,
+        "repair_material_kg": 100.0,
+        "electricity_kwh": 1000.0,
+        "energy_used_kwh": 0.0,
+        "fuel_used_liters": 0.0,
+        "fertilizer_applied_kg": 0.0,
+        "chemicals_used": {
+          "insecticide_liters": 0.0,
+          "fungicide_liters": 0.0
+        },
+        "repair_used_kg": 0.0,
+        "drone_battery_pct": 100.0,
+        "drying_capacity_wet_kg_day": 10000.0,
+        "forecast_error_mm": 0.0
+      },
+      "field": {
+        "field_id": "rice_demo",
+        "plots": [
+          {
+            "plot_id": "p1",
+            "area_m2": 1000.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 8.0
+          },
+          {
+            "plot_id": "p2",
+            "area_m2": 1500.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 0.0
+          }
+        ],
+        "channels": [
+          {
+            "channel_id": "supply",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 0.9,
+            "quota_m3": 1800.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.6,
+            "open_hour": 6,
+            "close_hour": 10
+          },
+          {
+            "channel_id": "drain",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 1.0,
+            "quota_m3": 12000.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.0,
+            "open_hour": 0,
+            "close_hour": 24
+          }
+        ],
+        "seedlings": {
+          "batch_id": "ir72_standard",
+          "cultivar": "Rice_IR72",
+          "quantity": 210000,
+          "loaded": 0,
+          "age_days_at_delivery": 20,
+          "establishment_profile": "ir72_transplant_v1"
+        },
+        "fuel_liters": 500.0,
+        "storage_capacity_kg": 10000.0,
+        "machines": [
+          {
+            "machine_id": "tractor",
+            "kind": "tractor",
+            "fuel_liters": 20.0,
+            "tank_capacity_liters": 60.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "transplanter",
+            "kind": "transplanter",
+            "fuel_liters": 10.0,
+            "tank_capacity_liters": 25.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "combine",
+            "kind": "combine",
+            "fuel_liters": 15.0,
+            "tank_capacity_liters": 50.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          }
+        ],
+        "grain_batches": [],
+        "fertilizer_kg": 300.0,
+        "insecticide_liters": 10.0,
+        "fungicide_liters": 10.0,
+        "repair_material_kg": 100.0,
+        "electricity_kwh": 1000.0,
+        "energy_used_kwh": 0.0,
+        "fuel_used_liters": 0.0,
+        "fertilizer_applied_kg": 0.0,
+        "chemicals_used": {
+          "insecticide_liters": 0.0,
+          "fungicide_liters": 0.0
+        },
+        "repair_used_kg": 0.0,
+        "drone_battery_pct": 100.0,
+        "drying_capacity_wet_kg_day": 10000.0,
+        "forecast_error_mm": 0.0
+      },
+      "weather": {
+        "rain_mm": 0.0,
+        "overrides": {}
+      },
+      "actions": [],
+      "daily_records": [],
+      "observations": {},
+      "backends": {
+        "p1": {
+          "schema": 2,
+          "provenance": {
+            "backend": "wofost",
+            "model": "Wofost81_NWLP_PADDY",
+            "pcse_version": "6.0.13",
+            "adapter_schema": 2,
+            "crop_data": {
+              "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+              "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+              "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+              "license": "EUPL",
+              "variety": "Rice_IR72",
+              "calibration": "upstream_transfer_not_locally_calibrated",
+              "completion": {
+                "profile_id": "ir72_wofost81_completion_v1",
+                "status": "uncalibrated_structural_transfer",
+                "base_variety": "Rice_IR72",
+                "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+                "parameters": {
+                  "AMAX_REF": 40.0,
+                  "KN": 0.4
+                },
+                "parameter_evidence": {
+                  "AMAX_REF": {
+                    "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                    "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                    "units": "kg CO2 ha-1 leaf h-1"
+                  },
+                  "KN": {
+                    "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                    "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                    "units": "dimensionless"
+                  }
+                },
+                "notes": [
+                  "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+                  "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+                  "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+                ],
+                "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+              }
+            },
+            "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+            "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+            "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+            "crop_start_type": "emergence",
+            "hydrology": "ponded_two_zone_CWB_extension",
+            "density_response": "not_modelled",
+            "stage_mapping": "management_proxy_v1",
+            "calibration": "uncalibrated_transfer",
+            "parameter_overrides": {}
+          },
+          "specification": {
+            "unit": {
+              "unit_id": "p1",
+              "unit_kind": "paddy_plot",
+              "area_m2": 1000.0
+            },
+            "start_date": "2026-01-01",
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "first_weather": {
+              "tmin_c": 23.0,
+              "tmax_c": 31.0,
+              "humidity_pct": 75.0,
+              "rain_mm": 0.0,
+              "radiation_mj_m2": 18.0,
+              "wind_ms": 2.0
+            },
+            "parameter_overrides": {}
+          },
+          "journal": []
+        },
+        "p2": {
+          "schema": 2,
+          "provenance": {
+            "backend": "wofost",
+            "model": "Wofost81_NWLP_PADDY",
+            "pcse_version": "6.0.13",
+            "adapter_schema": 2,
+            "crop_data": {
+              "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+              "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+              "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+              "license": "EUPL",
+              "variety": "Rice_IR72",
+              "calibration": "upstream_transfer_not_locally_calibrated",
+              "completion": {
+                "profile_id": "ir72_wofost81_completion_v1",
+                "status": "uncalibrated_structural_transfer",
+                "base_variety": "Rice_IR72",
+                "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+                "parameters": {
+                  "AMAX_REF": 40.0,
+                  "KN": 0.4
+                },
+                "parameter_evidence": {
+                  "AMAX_REF": {
+                    "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                    "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                    "units": "kg CO2 ha-1 leaf h-1"
+                  },
+                  "KN": {
+                    "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                    "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                    "units": "dimensionless"
+                  }
+                },
+                "notes": [
+                  "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+                  "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+                  "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+                ],
+                "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+              }
+            },
+            "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+            "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+            "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+            "crop_start_type": "emergence",
+            "hydrology": "ponded_two_zone_CWB_extension",
+            "density_response": "not_modelled",
+            "stage_mapping": "management_proxy_v1",
+            "calibration": "uncalibrated_transfer",
+            "parameter_overrides": {}
+          },
+          "specification": {
+            "unit": {
+              "unit_id": "p2",
+              "unit_kind": "paddy_plot",
+              "area_m2": 1500.0
+            },
+            "start_date": "2026-01-01",
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "first_weather": {
+              "tmin_c": 23.0,
+              "tmax_c": 31.0,
+              "humidity_pct": 75.0,
+              "rain_mm": 0.0,
+              "radiation_mj_m2": 18.0,
+              "wind_ms": 2.0
+            },
+            "parameter_overrides": {}
+          },
+          "journal": []
+        }
+      },
+      "provenance": {
+        "backend": "wofost",
+        "model": "Wofost81_NWLP_PADDY",
+        "pcse_version": "6.0.13",
+        "adapter_schema": 2,
+        "crop_data": {
+          "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+          "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+          "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+          "license": "EUPL",
+          "variety": "Rice_IR72",
+          "calibration": "upstream_transfer_not_locally_calibrated",
+          "completion": {
+            "profile_id": "ir72_wofost81_completion_v1",
+            "status": "uncalibrated_structural_transfer",
+            "base_variety": "Rice_IR72",
+            "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+            "parameters": {
+              "AMAX_REF": 40.0,
+              "KN": 0.4
+            },
+            "parameter_evidence": {
+              "AMAX_REF": {
+                "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                "units": "kg CO2 ha-1 leaf h-1"
+              },
+              "KN": {
+                "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                "units": "dimensionless"
+              }
+            },
+            "notes": [
+              "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+              "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+              "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+            ],
+            "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+          }
+        },
+        "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+        "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+        "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+        "crop_start_type": "emergence",
+        "hydrology": "ponded_two_zone_CWB_extension",
+        "density_response": "not_modelled",
+        "stage_mapping": "management_proxy_v1",
+        "calibration": "uncalibrated_transfer",
+        "parameter_overrides": {},
+        "field": {
+          "field_id": "rice_demo",
+          "plots": [
+            {
+              "plot_id": "p1",
+              "area_m2": 1000.0,
+              "soil": {
+                "SMW": 0.15,
+                "SMFCF": 0.3,
+                "SM0": 0.5,
+                "CRAIRC": 0.06,
+                "SOPE": 4.0,
+                "KSUB": 1.0,
+                "RDMSOL": 60.0,
+                "initial_vwc": 0.3,
+                "bund_height_mm": 150.0,
+                "NAVAILI": 30.0,
+                "NSOILBASE": 40.0,
+                "NSOILBASE_FR": 0.005,
+                "BG_N_SUPPLY": 0.05
+              },
+              "soaked_hours": 0.0,
+              "puddled": false,
+              "levelled": false,
+              "planted": false,
+              "harvested": false,
+              "seedling_batch_id": null,
+              "seedlings_planted": 0,
+              "transplant_timestamp": null,
+              "grain_moisture_pct": 25.0,
+              "harvested_dry_kg": 0.0,
+              "harvest_loss_dry_kg": 0.0,
+              "loaded_grain_dry_kg": 0.0,
+              "unloaded_grain_dry_kg": 0.0,
+              "stored_dry_kg": 0.0,
+              "storage_moisture_pct": null,
+              "transplanted_area_m2": 0.0,
+              "harvested_area_m2": 0.0,
+              "transplant_day": null,
+              "field_loss_dry_kg": 0.0,
+              "stand_fraction": 1.0,
+              "pending_stand_recovery": 0.0,
+              "recovery_timestamp": null,
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0,
+              "bund_leak_mm_day": 8.0
+            },
+            {
+              "plot_id": "p2",
+              "area_m2": 1500.0,
+              "soil": {
+                "SMW": 0.15,
+                "SMFCF": 0.3,
+                "SM0": 0.5,
+                "CRAIRC": 0.06,
+                "SOPE": 4.0,
+                "KSUB": 1.0,
+                "RDMSOL": 60.0,
+                "initial_vwc": 0.24,
+                "bund_height_mm": 150.0,
+                "NAVAILI": 30.0,
+                "NSOILBASE": 40.0,
+                "NSOILBASE_FR": 0.005,
+                "BG_N_SUPPLY": 0.05
+              },
+              "soaked_hours": 0.0,
+              "puddled": false,
+              "levelled": false,
+              "planted": false,
+              "harvested": false,
+              "seedling_batch_id": null,
+              "seedlings_planted": 0,
+              "transplant_timestamp": null,
+              "grain_moisture_pct": 25.0,
+              "harvested_dry_kg": 0.0,
+              "harvest_loss_dry_kg": 0.0,
+              "loaded_grain_dry_kg": 0.0,
+              "unloaded_grain_dry_kg": 0.0,
+              "stored_dry_kg": 0.0,
+              "storage_moisture_pct": null,
+              "transplanted_area_m2": 0.0,
+              "harvested_area_m2": 0.0,
+              "transplant_day": null,
+              "field_loss_dry_kg": 0.0,
+              "stand_fraction": 1.0,
+              "pending_stand_recovery": 0.0,
+              "recovery_timestamp": null,
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0,
+              "bund_leak_mm_day": 0.0
+            }
+          ],
+          "channels": [
+            {
+              "channel_id": "supply",
+              "connected_plots": [
+                "p1",
+                "p2"
+              ],
+              "flow_m3_hour": 80.0,
+              "efficiency": 0.9,
+              "quota_m3": 1800.0,
+              "withdrawn_m3": 0.0,
+              "delivered_m3": 0.0,
+              "discharged_m3": 0.0,
+              "blockage_fraction": 0.6,
+              "open_hour": 6,
+              "close_hour": 10
+            },
+            {
+              "channel_id": "drain",
+              "connected_plots": [
+                "p1",
+                "p2"
+              ],
+              "flow_m3_hour": 80.0,
+              "efficiency": 1.0,
+              "quota_m3": 12000.0,
+              "withdrawn_m3": 0.0,
+              "delivered_m3": 0.0,
+              "discharged_m3": 0.0,
+              "blockage_fraction": 0.0,
+              "open_hour": 0,
+              "close_hour": 24
+            }
+          ],
+          "seedlings": {
+            "batch_id": "ir72_standard",
+            "cultivar": "Rice_IR72",
+            "quantity": 210000,
+            "loaded": 0,
+            "age_days_at_delivery": 20,
+            "establishment_profile": "ir72_transplant_v1"
+          },
+          "fuel_liters": 500.0,
+          "storage_capacity_kg": 10000.0,
+          "machines": [
+            {
+              "machine_id": "tractor",
+              "kind": "tractor",
+              "fuel_liters": 20.0,
+              "tank_capacity_liters": 60.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            },
+            {
+              "machine_id": "transplanter",
+              "kind": "transplanter",
+              "fuel_liters": 10.0,
+              "tank_capacity_liters": 25.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            },
+            {
+              "machine_id": "combine",
+              "kind": "combine",
+              "fuel_liters": 15.0,
+              "tank_capacity_liters": 50.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            }
+          ],
+          "grain_batches": [],
+          "fertilizer_kg": 300.0,
+          "insecticide_liters": 10.0,
+          "fungicide_liters": 10.0,
+          "repair_material_kg": 100.0,
+          "electricity_kwh": 1000.0,
+          "energy_used_kwh": 0.0,
+          "fuel_used_liters": 0.0,
+          "fertilizer_applied_kg": 0.0,
+          "chemicals_used": {
+            "insecticide_liters": 0.0,
+            "fungicide_liters": 0.0
+          },
+          "repair_used_kg": 0.0,
+          "drone_battery_pct": 100.0,
+          "drying_capacity_wet_kg_day": 10000.0,
+          "forecast_error_mm": 0.0
+        },
+        "weather": {
+          "kind": "synthetic_tropical_v1",
+          "config": {
+            "rain_mm": 0.0,
+            "overrides": {}
+          }
+        },
+        "start_date": "2026-01-01",
+        "management_profile": "paddy_operations_v2",
+        "observation_profile": "deterministic_rounded_v2; no_native_state_in_agent_tools",
+        "auxiliary_models": "biotic_logistic_v1; gap_fill_assimilation_proxy_v1; late_harvest_loss_v1",
+        "config_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+      },
+      "sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86"
+    },
+    "channel_clearance": {
+      "schema": 2,
+      "start_date": "2026-01-01",
+      "sim_time": 1767225600.0,
+      "initial_field": {
+        "field_id": "rice_demo",
+        "plots": [
+          {
+            "plot_id": "p1",
+            "area_m2": 1000.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 8.0
+          },
+          {
+            "plot_id": "p2",
+            "area_m2": 1500.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 0.0
+          }
+        ],
+        "channels": [
+          {
+            "channel_id": "supply",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 0.9,
+            "quota_m3": 1800.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.6,
+            "open_hour": 6,
+            "close_hour": 10
+          },
+          {
+            "channel_id": "drain",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 1.0,
+            "quota_m3": 12000.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.0,
+            "open_hour": 0,
+            "close_hour": 24
+          }
+        ],
+        "seedlings": {
+          "batch_id": "ir72_standard",
+          "cultivar": "Rice_IR72",
+          "quantity": 210000,
+          "loaded": 0,
+          "age_days_at_delivery": 20,
+          "establishment_profile": "ir72_transplant_v1"
+        },
+        "fuel_liters": 500.0,
+        "storage_capacity_kg": 10000.0,
+        "machines": [
+          {
+            "machine_id": "tractor",
+            "kind": "tractor",
+            "fuel_liters": 20.0,
+            "tank_capacity_liters": 60.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "transplanter",
+            "kind": "transplanter",
+            "fuel_liters": 10.0,
+            "tank_capacity_liters": 25.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "combine",
+            "kind": "combine",
+            "fuel_liters": 15.0,
+            "tank_capacity_liters": 50.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          }
+        ],
+        "grain_batches": [],
+        "fertilizer_kg": 300.0,
+        "insecticide_liters": 10.0,
+        "fungicide_liters": 10.0,
+        "repair_material_kg": 100.0,
+        "electricity_kwh": 1000.0,
+        "energy_used_kwh": 0.0,
+        "fuel_used_liters": 0.0,
+        "fertilizer_applied_kg": 0.0,
+        "chemicals_used": {
+          "insecticide_liters": 0.0,
+          "fungicide_liters": 0.0
+        },
+        "repair_used_kg": 0.0,
+        "drone_battery_pct": 100.0,
+        "drying_capacity_wet_kg_day": 10000.0,
+        "forecast_error_mm": 0.0
+      },
+      "field": {
+        "field_id": "rice_demo",
+        "plots": [
+          {
+            "plot_id": "p1",
+            "area_m2": 1000.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 8.0
+          },
+          {
+            "plot_id": "p2",
+            "area_m2": 1500.0,
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "soaked_hours": 0.0,
+            "puddled": false,
+            "levelled": false,
+            "planted": false,
+            "harvested": false,
+            "seedling_batch_id": null,
+            "seedlings_planted": 0,
+            "transplant_timestamp": null,
+            "grain_moisture_pct": 25.0,
+            "harvested_dry_kg": 0.0,
+            "harvest_loss_dry_kg": 0.0,
+            "loaded_grain_dry_kg": 0.0,
+            "unloaded_grain_dry_kg": 0.0,
+            "stored_dry_kg": 0.0,
+            "storage_moisture_pct": null,
+            "transplanted_area_m2": 0.0,
+            "harvested_area_m2": 0.0,
+            "transplant_day": null,
+            "field_loss_dry_kg": 0.0,
+            "stand_fraction": 1.0,
+            "pending_stand_recovery": 0.0,
+            "recovery_timestamp": null,
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0,
+            "bund_leak_mm_day": 0.0
+          }
+        ],
+        "channels": [
+          {
+            "channel_id": "supply",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 0.9,
+            "quota_m3": 1800.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.6,
+            "open_hour": 6,
+            "close_hour": 10
+          },
+          {
+            "channel_id": "drain",
+            "connected_plots": [
+              "p1",
+              "p2"
+            ],
+            "flow_m3_hour": 80.0,
+            "efficiency": 1.0,
+            "quota_m3": 12000.0,
+            "withdrawn_m3": 0.0,
+            "delivered_m3": 0.0,
+            "discharged_m3": 0.0,
+            "blockage_fraction": 0.0,
+            "open_hour": 0,
+            "close_hour": 24
+          }
+        ],
+        "seedlings": {
+          "batch_id": "ir72_standard",
+          "cultivar": "Rice_IR72",
+          "quantity": 210000,
+          "loaded": 0,
+          "age_days_at_delivery": 20,
+          "establishment_profile": "ir72_transplant_v1"
+        },
+        "fuel_liters": 500.0,
+        "storage_capacity_kg": 10000.0,
+        "machines": [
+          {
+            "machine_id": "tractor",
+            "kind": "tractor",
+            "fuel_liters": 20.0,
+            "tank_capacity_liters": 60.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "transplanter",
+            "kind": "transplanter",
+            "fuel_liters": 10.0,
+            "tank_capacity_liters": 25.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          },
+          {
+            "machine_id": "combine",
+            "kind": "combine",
+            "fuel_liters": 15.0,
+            "tank_capacity_liters": 50.0,
+            "implement": null,
+            "fertilizer_kg": 0.0,
+            "fertilizer_capacity_kg": 80.0,
+            "grain_capacity_wet_kg": 1500.0,
+            "seedling_capacity": 150000
+          }
+        ],
+        "grain_batches": [],
+        "fertilizer_kg": 300.0,
+        "insecticide_liters": 10.0,
+        "fungicide_liters": 10.0,
+        "repair_material_kg": 100.0,
+        "electricity_kwh": 1000.0,
+        "energy_used_kwh": 0.0,
+        "fuel_used_liters": 0.0,
+        "fertilizer_applied_kg": 0.0,
+        "chemicals_used": {
+          "insecticide_liters": 0.0,
+          "fungicide_liters": 0.0
+        },
+        "repair_used_kg": 0.0,
+        "drone_battery_pct": 100.0,
+        "drying_capacity_wet_kg_day": 10000.0,
+        "forecast_error_mm": 0.0
+      },
+      "weather": {
+        "rain_mm": 0.0,
+        "overrides": {}
+      },
+      "actions": [],
+      "daily_records": [],
+      "observations": {},
+      "backends": {
+        "p1": {
+          "schema": 2,
+          "provenance": {
+            "backend": "wofost",
+            "model": "Wofost81_NWLP_PADDY",
+            "pcse_version": "6.0.13",
+            "adapter_schema": 2,
+            "crop_data": {
+              "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+              "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+              "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+              "license": "EUPL",
+              "variety": "Rice_IR72",
+              "calibration": "upstream_transfer_not_locally_calibrated",
+              "completion": {
+                "profile_id": "ir72_wofost81_completion_v1",
+                "status": "uncalibrated_structural_transfer",
+                "base_variety": "Rice_IR72",
+                "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+                "parameters": {
+                  "AMAX_REF": 40.0,
+                  "KN": 0.4
+                },
+                "parameter_evidence": {
+                  "AMAX_REF": {
+                    "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                    "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                    "units": "kg CO2 ha-1 leaf h-1"
+                  },
+                  "KN": {
+                    "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                    "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                    "units": "dimensionless"
+                  }
+                },
+                "notes": [
+                  "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+                  "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+                  "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+                ],
+                "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+              }
+            },
+            "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+            "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+            "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+            "crop_start_type": "emergence",
+            "hydrology": "ponded_two_zone_CWB_extension",
+            "density_response": "not_modelled",
+            "stage_mapping": "management_proxy_v1",
+            "calibration": "uncalibrated_transfer",
+            "parameter_overrides": {}
+          },
+          "specification": {
+            "unit": {
+              "unit_id": "p1",
+              "unit_kind": "paddy_plot",
+              "area_m2": 1000.0
+            },
+            "start_date": "2026-01-01",
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.3,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "first_weather": {
+              "tmin_c": 23.0,
+              "tmax_c": 31.0,
+              "humidity_pct": 75.0,
+              "rain_mm": 0.0,
+              "radiation_mj_m2": 18.0,
+              "wind_ms": 2.0
+            },
+            "parameter_overrides": {}
+          },
+          "journal": []
+        },
+        "p2": {
+          "schema": 2,
+          "provenance": {
+            "backend": "wofost",
+            "model": "Wofost81_NWLP_PADDY",
+            "pcse_version": "6.0.13",
+            "adapter_schema": 2,
+            "crop_data": {
+              "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+              "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+              "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+              "license": "EUPL",
+              "variety": "Rice_IR72",
+              "calibration": "upstream_transfer_not_locally_calibrated",
+              "completion": {
+                "profile_id": "ir72_wofost81_completion_v1",
+                "status": "uncalibrated_structural_transfer",
+                "base_variety": "Rice_IR72",
+                "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+                "parameters": {
+                  "AMAX_REF": 40.0,
+                  "KN": 0.4
+                },
+                "parameter_evidence": {
+                  "AMAX_REF": {
+                    "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                    "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                    "units": "kg CO2 ha-1 leaf h-1"
+                  },
+                  "KN": {
+                    "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                    "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                    "units": "dimensionless"
+                  }
+                },
+                "notes": [
+                  "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+                  "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+                  "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+                ],
+                "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+              }
+            },
+            "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+            "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+            "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+            "crop_start_type": "emergence",
+            "hydrology": "ponded_two_zone_CWB_extension",
+            "density_response": "not_modelled",
+            "stage_mapping": "management_proxy_v1",
+            "calibration": "uncalibrated_transfer",
+            "parameter_overrides": {}
+          },
+          "specification": {
+            "unit": {
+              "unit_id": "p2",
+              "unit_kind": "paddy_plot",
+              "area_m2": 1500.0
+            },
+            "start_date": "2026-01-01",
+            "soil": {
+              "SMW": 0.15,
+              "SMFCF": 0.3,
+              "SM0": 0.5,
+              "CRAIRC": 0.06,
+              "SOPE": 4.0,
+              "KSUB": 1.0,
+              "RDMSOL": 60.0,
+              "initial_vwc": 0.24,
+              "bund_height_mm": 150.0,
+              "NAVAILI": 30.0,
+              "NSOILBASE": 40.0,
+              "NSOILBASE_FR": 0.005,
+              "BG_N_SUPPLY": 0.05
+            },
+            "first_weather": {
+              "tmin_c": 23.0,
+              "tmax_c": 31.0,
+              "humidity_pct": 75.0,
+              "rain_mm": 0.0,
+              "radiation_mj_m2": 18.0,
+              "wind_ms": 2.0
+            },
+            "parameter_overrides": {}
+          },
+          "journal": []
+        }
+      },
+      "provenance": {
+        "backend": "wofost",
+        "model": "Wofost81_NWLP_PADDY",
+        "pcse_version": "6.0.13",
+        "adapter_schema": 2,
+        "crop_data": {
+          "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/rice.yaml",
+          "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+          "sha256": "91d4d63aaeb474a5c56a3876bcc71d137809e76e68d27719eb3318bb85f5918c",
+          "license": "EUPL",
+          "variety": "Rice_IR72",
+          "calibration": "upstream_transfer_not_locally_calibrated",
+          "completion": {
+            "profile_id": "ir72_wofost81_completion_v1",
+            "status": "uncalibrated_structural_transfer",
+            "base_variety": "Rice_IR72",
+            "source_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+            "parameters": {
+              "AMAX_REF": 40.0,
+              "KN": 0.4
+            },
+            "parameter_evidence": {
+              "AMAX_REF": {
+                "source": "rice.yaml: CropParameters.Varieties.Rice_IR72.AMAXTB; CropParameters.EcoTypes.rice_eu.AMAX_REF",
+                "method": "IR72 AMAXTB is constant at 40 throughout DVS 0..2. Use 40 as the 8.1 reference cap, also the explicit upstream rice_eu AMAX_REF. This is a structural conversion, not a proof of equivalent 7.2/8.1 assimilation.",
+                "units": "kg CO2 ha-1 leaf h-1"
+              },
+              "KN": {
+                "source": "rice.yaml: CropParameters.EcoTypes.rice_eu.KN",
+                "method": "Transfer the upstream rice_eu nitrogen extinction coefficient to IR72 as an explicit cross-ecotype assumption. Not an IR72 observation or fitted coefficient.",
+                "units": "dimensionless"
+              }
+            },
+            "notes": [
+              "IR72 already inherits AMAX_SLP=3.24 and AMAX_LNB=0 from upstream GenericC3.",
+              "Keep native WOFOST81 assimilation; do not substitute 7.x assimilation or a different model.",
+              "No local field-yield accuracy is claimed. Sensitivity runs must be reported separately from calibration."
+            ],
+            "sha256": "9f46d19da086f1dadbe24f9ac0a29c5e67b31d369b6ddc342e2702dd91fa044c"
+          }
+        },
+        "nutrients": "native_classic_N_bucket; empirical_transport_v1",
+        "nitrogen_loss": "fertilizer_recovery_0.7; transport=min(0.1,outgoing_mm*0.0005)*NAVAIL",
+        "external_stress": "empirical_stand_and_biotic_PGASS_multiplier_v1",
+        "crop_start_type": "emergence",
+        "hydrology": "ponded_two_zone_CWB_extension",
+        "density_response": "not_modelled",
+        "stage_mapping": "management_proxy_v1",
+        "calibration": "uncalibrated_transfer",
+        "parameter_overrides": {},
+        "field": {
+          "field_id": "rice_demo",
+          "plots": [
+            {
+              "plot_id": "p1",
+              "area_m2": 1000.0,
+              "soil": {
+                "SMW": 0.15,
+                "SMFCF": 0.3,
+                "SM0": 0.5,
+                "CRAIRC": 0.06,
+                "SOPE": 4.0,
+                "KSUB": 1.0,
+                "RDMSOL": 60.0,
+                "initial_vwc": 0.3,
+                "bund_height_mm": 150.0,
+                "NAVAILI": 30.0,
+                "NSOILBASE": 40.0,
+                "NSOILBASE_FR": 0.005,
+                "BG_N_SUPPLY": 0.05
+              },
+              "soaked_hours": 0.0,
+              "puddled": false,
+              "levelled": false,
+              "planted": false,
+              "harvested": false,
+              "seedling_batch_id": null,
+              "seedlings_planted": 0,
+              "transplant_timestamp": null,
+              "grain_moisture_pct": 25.0,
+              "harvested_dry_kg": 0.0,
+              "harvest_loss_dry_kg": 0.0,
+              "loaded_grain_dry_kg": 0.0,
+              "unloaded_grain_dry_kg": 0.0,
+              "stored_dry_kg": 0.0,
+              "storage_moisture_pct": null,
+              "transplanted_area_m2": 0.0,
+              "harvested_area_m2": 0.0,
+              "transplant_day": null,
+              "field_loss_dry_kg": 0.0,
+              "stand_fraction": 1.0,
+              "pending_stand_recovery": 0.0,
+              "recovery_timestamp": null,
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0,
+              "bund_leak_mm_day": 8.0
+            },
+            {
+              "plot_id": "p2",
+              "area_m2": 1500.0,
+              "soil": {
+                "SMW": 0.15,
+                "SMFCF": 0.3,
+                "SM0": 0.5,
+                "CRAIRC": 0.06,
+                "SOPE": 4.0,
+                "KSUB": 1.0,
+                "RDMSOL": 60.0,
+                "initial_vwc": 0.24,
+                "bund_height_mm": 150.0,
+                "NAVAILI": 30.0,
+                "NSOILBASE": 40.0,
+                "NSOILBASE_FR": 0.005,
+                "BG_N_SUPPLY": 0.05
+              },
+              "soaked_hours": 0.0,
+              "puddled": false,
+              "levelled": false,
+              "planted": false,
+              "harvested": false,
+              "seedling_batch_id": null,
+              "seedlings_planted": 0,
+              "transplant_timestamp": null,
+              "grain_moisture_pct": 25.0,
+              "harvested_dry_kg": 0.0,
+              "harvest_loss_dry_kg": 0.0,
+              "loaded_grain_dry_kg": 0.0,
+              "unloaded_grain_dry_kg": 0.0,
+              "stored_dry_kg": 0.0,
+              "storage_moisture_pct": null,
+              "transplanted_area_m2": 0.0,
+              "harvested_area_m2": 0.0,
+              "transplant_day": null,
+              "field_loss_dry_kg": 0.0,
+              "stand_fraction": 1.0,
+              "pending_stand_recovery": 0.0,
+              "recovery_timestamp": null,
+              "pests": 0.0,
+              "disease": 0.0,
+              "weeds": 0.0,
+              "bund_leak_mm_day": 0.0
+            }
+          ],
+          "channels": [
+            {
+              "channel_id": "supply",
+              "connected_plots": [
+                "p1",
+                "p2"
+              ],
+              "flow_m3_hour": 80.0,
+              "efficiency": 0.9,
+              "quota_m3": 1800.0,
+              "withdrawn_m3": 0.0,
+              "delivered_m3": 0.0,
+              "discharged_m3": 0.0,
+              "blockage_fraction": 0.6,
+              "open_hour": 6,
+              "close_hour": 10
+            },
+            {
+              "channel_id": "drain",
+              "connected_plots": [
+                "p1",
+                "p2"
+              ],
+              "flow_m3_hour": 80.0,
+              "efficiency": 1.0,
+              "quota_m3": 12000.0,
+              "withdrawn_m3": 0.0,
+              "delivered_m3": 0.0,
+              "discharged_m3": 0.0,
+              "blockage_fraction": 0.0,
+              "open_hour": 0,
+              "close_hour": 24
+            }
+          ],
+          "seedlings": {
+            "batch_id": "ir72_standard",
+            "cultivar": "Rice_IR72",
+            "quantity": 210000,
+            "loaded": 0,
+            "age_days_at_delivery": 20,
+            "establishment_profile": "ir72_transplant_v1"
+          },
+          "fuel_liters": 500.0,
+          "storage_capacity_kg": 10000.0,
+          "machines": [
+            {
+              "machine_id": "tractor",
+              "kind": "tractor",
+              "fuel_liters": 20.0,
+              "tank_capacity_liters": 60.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            },
+            {
+              "machine_id": "transplanter",
+              "kind": "transplanter",
+              "fuel_liters": 10.0,
+              "tank_capacity_liters": 25.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            },
+            {
+              "machine_id": "combine",
+              "kind": "combine",
+              "fuel_liters": 15.0,
+              "tank_capacity_liters": 50.0,
+              "implement": null,
+              "fertilizer_kg": 0.0,
+              "fertilizer_capacity_kg": 80.0,
+              "grain_capacity_wet_kg": 1500.0,
+              "seedling_capacity": 150000
+            }
+          ],
+          "grain_batches": [],
+          "fertilizer_kg": 300.0,
+          "insecticide_liters": 10.0,
+          "fungicide_liters": 10.0,
+          "repair_material_kg": 100.0,
+          "electricity_kwh": 1000.0,
+          "energy_used_kwh": 0.0,
+          "fuel_used_liters": 0.0,
+          "fertilizer_applied_kg": 0.0,
+          "chemicals_used": {
+            "insecticide_liters": 0.0,
+            "fungicide_liters": 0.0
+          },
+          "repair_used_kg": 0.0,
+          "drone_battery_pct": 100.0,
+          "drying_capacity_wet_kg_day": 10000.0,
+          "forecast_error_mm": 0.0
+        },
+        "weather": {
+          "kind": "synthetic_tropical_v1",
+          "config": {
+            "rain_mm": 0.0,
+            "overrides": {}
+          }
+        },
+        "start_date": "2026-01-01",
+        "management_profile": "paddy_operations_v2",
+        "observation_profile": "deterministic_rounded_v2; no_native_state_in_agent_tools",
+        "auxiliary_models": "biotic_logistic_v1; gap_fill_assimilation_proxy_v1; late_harvest_loss_v1",
+        "config_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+      },
+      "sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86"
+    }
+  },
+  "tasks": {
+    "scenario_rice_l2_infrastructure_water_priority": {
+      "status": "experimental",
+      "calibration_note": "Previous calibration pending; new source slices and matched controls recorded, no promotion claimed",
+      "reference": {
+        "time": 1767257100.0,
+        "day": "2026-01-01",
+        "biological_dry_kg": 0.0,
+        "biomass_dry_kg": 0.0,
+        "stored_kg_at_14pct": 0.0,
+        "water_used": 33.333333333333336,
+        "fertilizer_used": 0.0,
+        "energy_used_kwh": 0.0,
+        "insecticide_used_liters": 0.0,
+        "fungicide_used_liters": 0.0,
+        "repair_used_kg": 10.0,
+        "fuel_used_liters": 0.0,
+        "infrastructure": {
+          "blockage": 0.0,
+          "leaks": {
+            "p1": 0.0,
+            "p2": 0.0
+          }
+        },
+        "pressures": {
+          "p1": {
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0
+          },
+          "p2": {
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0
+          }
+        },
+        "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+      },
+      "gates": [],
+      "window_budgets": {
+        "water_used": 36.66666666666667,
+        "fertilizer_used": 0.0,
+        "energy_used_kwh": 0.0,
+        "repair_used_kg": 11.0,
+        "insecticide_used_liters": 0.0,
+        "fungicide_used_liters": 0.0
+      },
+      "endpoint_state_digest": "7be8bf9f786f2525d8afbb1263d2a3cc0394b1791be866701932247f82cd2942",
+      "initial_checkpoint_digest": "24b29460c030147b3d7398793894ef370accd022e42374d708fa357956535ba0",
+      "plan_digest": "777356282b940c788915b10164e1f8536b4c48951e3c3032167b3c12b55ce75f",
+      "plan": [
+        {
+          "tool_name": "PaddyWorldApp__get_farm_overview",
+          "tool_args": {},
+          "duration_seconds": 0.0
+        },
+        {
+          "tool_name": "PaddyWorldApp__get_inventory",
+          "tool_args": {},
+          "duration_seconds": 0.0
+        },
+        {
+          "tool_name": "PaddyMachineryApp__get_machine_status",
+          "tool_args": {},
+          "duration_seconds": 0.0
+        },
+        {
+          "tool_name": "WeatherApp__get_forecast",
+          "tool_args": {
+            "days": 7
+          },
+          "duration_seconds": 0.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 1200.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__clear_channel",
+          "tool_args": {
+            "channel_id": "supply"
+          },
+          "duration_seconds": 3600.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 1200.0
+        },
+        {
+          "tool_name": "PaddyObservationApp__read_water_sensors",
+          "tool_args": {
+            "plot_id": "p2"
+          },
+          "duration_seconds": 0.0
+        },
+        {
+          "tool_name": "SystemApp__advance_time",
+          "tool_args": {
+            "seconds": 15600
+          },
+          "duration_seconds": 15600.0
+        },
+        {
+          "tool_name": "PaddyOpsApp__irrigate",
+          "tool_args": {
+            "plot_id": "p2",
+            "water_mm": 20
+          },
+          "duration_seconds": 1500.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__repair_bund",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 7200.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 1200.0
+        }
+      ],
+      "briefing": "在窄供水窗口下疏渠，按根水需要救急补水，修复漏埂并复查。\n来源季 scenario_rice_l3_infrastructure_water_priority，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-01 08:45 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-01。窗口增量预算：{\"water_used\": 36.66666666666667, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 11.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。 本诊断机制仍为实验状态，尚未通过正式配对校准。",
+      "source_l3_scenario_id": "scenario_rice_l3_infrastructure_water_priority",
+      "source_l3_plan_sha256": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+      "source_release": "rice_oracle_release_20261101_v1",
+      "source_step_range": [
+        0,
+        12
+      ],
+      "initial_checkpoint_sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86",
+      "expected_final_state_sha256": "7583484115a369aa025e00d0dee03015f6380bed184bf703a53da83c8cf26639"
+    },
+    "scenario_rice_l1_channel_clearance": {
+      "status": "calibrated",
+      "calibration_note": "Action contract; not an agronomic yield claim",
+      "reference": {
+        "time": 1767231600.0,
+        "day": "2026-01-01",
+        "biological_dry_kg": 0.0,
+        "biomass_dry_kg": 0.0,
+        "stored_kg_at_14pct": 0.0,
+        "water_used": 0.0,
+        "fertilizer_used": 0.0,
+        "energy_used_kwh": 0.0,
+        "insecticide_used_liters": 0.0,
+        "fungicide_used_liters": 0.0,
+        "repair_used_kg": 0.0,
+        "fuel_used_liters": 0.0,
+        "infrastructure": {
+          "blockage": 0.0,
+          "leaks": {
+            "p1": 8.0,
+            "p2": 0.0
+          }
+        },
+        "pressures": {
+          "p1": {
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0
+          },
+          "p2": {
+            "pests": 0.0,
+            "disease": 0.0,
+            "weeds": 0.0
+          }
+        },
+        "crop_fingerprint": "f6b5350a3398443910c0665b178366cd7be48945c34122a58cf602a5d7a2243d"
+      },
+      "gates": [],
+      "window_budgets": {
+        "water_used": 0.0,
+        "fertilizer_used": 0.0,
+        "energy_used_kwh": 0.0,
+        "repair_used_kg": 0.0,
+        "insecticide_used_liters": 0.0,
+        "fungicide_used_liters": 0.0
+      },
+      "endpoint_state_digest": "a9fb78608fd39884399ebf28fffad686cecd6b4720d7b15df98b518a77df7cfe",
+      "initial_checkpoint_digest": "24b29460c030147b3d7398793894ef370accd022e42374d708fa357956535ba0",
+      "plan_digest": "68a936ac52a00c297b0d203c3f737b766dc0ebdccadab5fa507160faf1f1b9a2",
+      "plan": [
+        {
+          "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 1200.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__clear_channel",
+          "tool_args": {
+            "channel_id": "supply"
+          },
+          "duration_seconds": 3600.0
+        },
+        {
+          "tool_name": "PaddyInfrastructureApp__inspect_infrastructure",
+          "tool_args": {
+            "plot_id": "p1"
+          },
+          "duration_seconds": 1200.0
+        }
+      ],
+      "briefing": "巡检并疏通供水渠，复查堵塞和供水能力；保留后续救急灌水与修埂资源。\n来源季 scenario_rice_l3_infrastructure_water_priority，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-01 01:40 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-01。窗口增量预算：{\"water_used\": 0.0, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。",
+      "source_l3_scenario_id": "scenario_rice_l3_infrastructure_water_priority",
+      "source_l3_plan_sha256": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+      "source_release": "rice_oracle_release_20261101_v1",
+      "source_step_range": [
+        4,
+        7
+      ],
+      "initial_checkpoint_sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86",
+      "expected_final_state_sha256": "f75de1fde46dc97a73375d38aa192e204daa5ea6154a4d83526d5fa2ab7c097a"
+    }
+  }
+}

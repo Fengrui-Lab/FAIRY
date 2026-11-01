@@ -1,0 +1,288 @@
+{
+  "scenario_rice_l1_irrigate": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      49,
+      51
+    ],
+    "initial_checkpoint_sha256": "c991a3f6abf1ec2fb3e99c744413559a4ae900119ab3dde786934212947ebdb8",
+    "expected_final_state_sha256": "4782bc4c107f0bd9ea3e85cc2d0c22208004a853f7030db0c85e6ab3ce5ff249"
+  },
+  "scenario_rice_l1_drain": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      19,
+      21
+    ],
+    "initial_checkpoint_sha256": "8163e803ca22046c2c61dc4e97e1bc3ab52a47aff32e0e30ad924f14a0277eb5",
+    "expected_final_state_sha256": "3f48519fcc778aa6292625d2b599160a2e5950139d945b8e15e2d18d6d75d7ec"
+  },
+  "scenario_rice_l1_puddle": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      17,
+      18
+    ],
+    "initial_checkpoint_sha256": "29bf75d5717b0035f1356d31c311c3745fd4b933189cab0478eece3044cd072d",
+    "expected_final_state_sha256": "d444c655d4155c775a37d3d88f4702ec1c10be4c7ab21565238fd4e3f05e58aa"
+  },
+  "scenario_rice_l1_transplant": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      32,
+      34
+    ],
+    "initial_checkpoint_sha256": "3e8247cdfdcaa67e13c45729c404b078c28a7f7b60a72ba9716ec633993dfc95",
+    "expected_final_state_sha256": "9a1156e365157b2551feae24496681068c85648e7fbc1b6991e75649fc62b1f9"
+  },
+  "scenario_rice_l1_harvest": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      174,
+      180
+    ],
+    "initial_checkpoint_sha256": "1850baa0fe1e243ae842ea87b146db90f0a4455bd4389e71f7df9f6e58e794af",
+    "expected_final_state_sha256": "1c0af274e5723841ad3bcb7d726e7b09be4c5f9707fccbe157af091068bbda32"
+  },
+  "scenario_rice_l1_observe_water": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      43,
+      44
+    ],
+    "initial_checkpoint_sha256": "949a2ec109e3ab95cc3927a4027d04138feade80e308321a7219b52abc493482",
+    "expected_final_state_sha256": "ba8ce94b663954d27a7fcc177f726b5637525f187d98bd79332f2b956959aa0a"
+  },
+  "scenario_rice_l1_dry": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      181,
+      183
+    ],
+    "initial_checkpoint_sha256": "5de14af1f9aa9480bc5abbe897871cdc0a8267ab127a63377645b7b486f62b54",
+    "expected_final_state_sha256": "4af5761d05084a657ef4929d2a80aa0ee132d789bf7c404dc0fb49e243fa8f48"
+  },
+  "scenario_rice_l1_store": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      183,
+      184
+    ],
+    "initial_checkpoint_sha256": "4af5761d05084a657ef4929d2a80aa0ee132d789bf7c404dc0fb49e243fa8f48",
+    "expected_final_state_sha256": "2e6d9a643fd7067a2cfe0fc0e73278498d156a21af804aa78deaa3b6c2546bec"
+  },
+  "scenario_rice_l1_fertilize": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      64,
+      68
+    ],
+    "initial_checkpoint_sha256": "5dd0fec0a3bccba654fcb86b7205f7bfd272e4ce8b292f7c1e9fb207182fa13d",
+    "expected_final_state_sha256": "270388d6527142fa57efb0d59edc33920476cceeaf4e881c5477ab07ffb9ce5d"
+  },
+  "scenario_rice_l2_establishment": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      0,
+      37
+    ],
+    "initial_checkpoint_sha256": "8c6a22b01d51eda77571cac87db5b1947af9090fe77cb7080a144b0499117e13",
+    "expected_final_state_sha256": "59543fc7b26c7f230cc7e4c351bdfd3b18967956d3aaa6e2aaf067b780c977c6"
+  },
+  "scenario_rice_l2_irrigation_management": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      37,
+      55
+    ],
+    "initial_checkpoint_sha256": "59543fc7b26c7f230cc7e4c351bdfd3b18967956d3aaa6e2aaf067b780c977c6",
+    "expected_final_state_sha256": "028a6a00b01ccf3e016b1d672531b4ae75c8e30f0fc825dab7841bfea80815ff"
+  },
+  "scenario_rice_l2_harvest_storage": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      174,
+      199
+    ],
+    "initial_checkpoint_sha256": "1850baa0fe1e243ae842ea87b146db90f0a4455bd4389e71f7df9f6e58e794af",
+    "expected_final_state_sha256": "3107fa62807a218d80e5ce8681ba400da2e6864a40729d564ef3fb555f5bb0bd"
+  },
+  "scenario_rice_l2_nutrition_management": {
+    "source_l3_scenario_id": "scenario_rice_l3_normal",
+    "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      37,
+      80
+    ],
+    "initial_checkpoint_sha256": "59543fc7b26c7f230cc7e4c351bdfd3b18967956d3aaa6e2aaf067b780c977c6",
+    "expected_final_state_sha256": "062dadfbbf1be6f3f1222cccdde75780f4241d99b5e417cfadbd137c0b5899ca"
+  },
+  "scenario_rice_l1_scout": {
+    "source_l3_scenario_id": "scenario_rice_l3_biotic",
+    "source_l3_plan_sha256": "1cbde92befffd131eaf02317c9c5bfedb4faf45d967a700ab39c1cd25740d91d",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      41,
+      42
+    ],
+    "initial_checkpoint_sha256": "1203d7672beba78bb06475833b22e13b6a61e7e3b6e98c723d4307c7206e27dc",
+    "expected_final_state_sha256": "3f298cad8fdff2895be8af097a79ba3cc26bdbdb4cd6d2d21d540203673b2973"
+  },
+  "scenario_rice_l2_crop_protection": {
+    "source_l3_scenario_id": "scenario_rice_l3_biotic",
+    "source_l3_plan_sha256": "1cbde92befffd131eaf02317c9c5bfedb4faf45d967a700ab39c1cd25740d91d",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      41,
+      56
+    ],
+    "initial_checkpoint_sha256": "1203d7672beba78bb06475833b22e13b6a61e7e3b6e98c723d4307c7206e27dc",
+    "expected_final_state_sha256": "c75831b085245d07844f62083c659220328af1858a5b3314ec9780fcaa6f535f"
+  },
+  "scenario_rice_l1_repair_bund": {
+    "source_l3_scenario_id": "scenario_rice_l3_infrastructure",
+    "source_l3_plan_sha256": "1512df87afa3fd0a236d80b854d109287d35404130597ebcd646e16f6cf6a741",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      6,
+      9
+    ],
+    "initial_checkpoint_sha256": "dce4bd65d762f36bfd819edd2b133193b9fa86084f4a5e15725ac22daec56cde",
+    "expected_final_state_sha256": "beb6ebd8371573c8a5416621e3fddf7c27c09b5d9e195782392d3fbc957e87d1"
+  },
+  "scenario_rice_l2_infrastructure_recovery": {
+    "source_l3_scenario_id": "scenario_rice_l3_infrastructure",
+    "source_l3_plan_sha256": "1512df87afa3fd0a236d80b854d109287d35404130597ebcd646e16f6cf6a741",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      0,
+      9
+    ],
+    "initial_checkpoint_sha256": "02f1e41695b6843a0acb2fef6a052b51617b95922669563a58afad8c50f6f461",
+    "expected_final_state_sha256": "beb6ebd8371573c8a5416621e3fddf7c27c09b5d9e195782392d3fbc957e87d1"
+  },
+  "scenario_rice_l1_refuel": {
+    "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
+    "source_l3_plan_sha256": "d13c26ad4f15e0b4ee4d1c4aa7475d873820e86e5458dd44605f533b7b41617d",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      16,
+      17
+    ],
+    "initial_checkpoint_sha256": "97890931d507903e1b739f7620d44e29752c014f6ef74c75a29936fa03b31de3",
+    "expected_final_state_sha256": "3965349dca8ac31de7a90661afceb54564f1842ef57cf13e287d97a934278830"
+  },
+  "scenario_rice_l2_harvest_batches": {
+    "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
+    "source_l3_plan_sha256": "d13c26ad4f15e0b4ee4d1c4aa7475d873820e86e5458dd44605f533b7b41617d",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      178,
+      228
+    ],
+    "initial_checkpoint_sha256": "00501844812e8ed349c88a3abb0b6cb8e56e34f97876b9ce624de3b88f985549",
+    "expected_final_state_sha256": "43873d3015506b707408ac9ba520f61bc091ddc35c36bef4bd482c5252ef1cb5"
+  },
+  "scenario_rice_l1_gap_fill": {
+    "source_l3_scenario_id": "scenario_rice_l3_poor_stand",
+    "source_l3_plan_sha256": "7a33a94279f2dc395c83f66a253948102b24b51e0c904c6c5fe0cca73f3164ad",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      37,
+      43
+    ],
+    "initial_checkpoint_sha256": "e16d4cca350f9f51568ad81194945037bdc946a3414f17c3301e8538dd9c14bd",
+    "expected_final_state_sha256": "0d14a57bef0ce6ff2e97abe443a839d39e794fd056e8b51f3a8ad78469b9d328"
+  },
+  "scenario_rice_l2_zonal_water_n_allocation": {
+    "source_l3_scenario_id": "scenario_rice_l3_zonal_water_n_allocation",
+    "source_l3_plan_sha256": "b7a0cd05aae24b2350698ad58a01740d494b8943ec685aacb29c8c8563d2781f",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      37,
+      128
+    ],
+    "initial_checkpoint_sha256": "9218b32ead997af1b64f2c87c3369583e8fb7451b793fddb5c3ef70b316a6b18",
+    "expected_final_state_sha256": "e43c5313486ba94695ec56a1b9e52a3614c68deb2ec4162b2b6c23d7222c28ce"
+  },
+  "scenario_rice_l2_infrastructure_water_priority": {
+    "source_l3_scenario_id": "scenario_rice_l3_infrastructure_water_priority",
+    "source_l3_plan_sha256": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      0,
+      12
+    ],
+    "initial_checkpoint_sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86",
+    "expected_final_state_sha256": "7583484115a369aa025e00d0dee03015f6380bed184bf703a53da83c8cf26639"
+  },
+  "scenario_rice_l1_channel_clearance": {
+    "source_l3_scenario_id": "scenario_rice_l3_infrastructure_water_priority",
+    "source_l3_plan_sha256": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      4,
+      7
+    ],
+    "initial_checkpoint_sha256": "84752def75b0aaf510a7705d9308db3836c1a58368ed60531dfba62b39259d86",
+    "expected_final_state_sha256": "f75de1fde46dc97a73375d38aa192e204daa5ea6154a4d83526d5fa2ab7c097a"
+  },
+  "scenario_rice_l2_zonal_crop_protection": {
+    "source_l3_scenario_id": "scenario_rice_l3_zonal_crop_protection",
+    "source_l3_plan_sha256": "69a5448d83e946387ca98080579a99e248c47dea8d409a4e22892798a9b9c5d9",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      37,
+      118
+    ],
+    "initial_checkpoint_sha256": "9d7cb5ea7caec49743446369a0622999c18a7ee04c4e07e85c02c8c23c850d4a",
+    "expected_final_state_sha256": "ed0544c496cb49a66877453f0aa6a4e9377024014e56ec2ab971a46881ca840b"
+  },
+  "scenario_rice_l1_targeted_protection": {
+    "source_l3_scenario_id": "scenario_rice_l3_zonal_crop_protection",
+    "source_l3_plan_sha256": "69a5448d83e946387ca98080579a99e248c47dea8d409a4e22892798a9b9c5d9",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      43,
+      55
+    ],
+    "initial_checkpoint_sha256": "01e06530edd44752d71b2faa7207ba0fdeb994e6f0e73906d5fad0f1b5cd490b",
+    "expected_final_state_sha256": "13476f690004ff0b777847eb17d7fe52d73f6896f598df6c3a96dcc7db55015f"
+  },
+  "scenario_rice_l2_rainy_harvest_capacity": {
+    "source_l3_scenario_id": "scenario_rice_l3_rainy_harvest_capacity",
+    "source_l3_plan_sha256": "1be79527cde32a336acad9e6fbaadd14aa1658d134a93ac64557280dbbef90e6",
+    "source_release": "rice_oracle_release_20261101_v1",
+    "source_step_range": [
+      174,
+      252
+    ],
+    "initial_checkpoint_sha256": "87c3beeca7f2505ef625069a9d57f90832452eac22c42970a1bba2987fe6e953",
+    "expected_final_state_sha256": "d7ed5f14c60dd564cfad89e9d514bcdaaf166dd0f886e5a38332801cf505ca1f"
+  }
+}

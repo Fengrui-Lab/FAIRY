@@ -4,11 +4,11 @@
   "task": "observe_water",
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
-  "source_checkpoint_label": "after_transplant",
-  "initial_checkpoint_sha256": "74adf4f8db8fb049a3be0298e51ae75dcc1075b800a8f72124b5e3c621c74a39",
+  "source_checkpoint_label": "before_water_observation",
+  "initial_checkpoint_sha256": "949a2ec109e3ab95cc3927a4027d04138feade80e308321a7219b52abc493482",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "24f3b584c8d31bdbb2242c2cc0fcffb793e72bd08dcba4397b70be592074e558",
+  "expected_final_state_sha256": "ba8ce94b663954d27a7fcc177f726b5637525f187d98bd79332f2b956959aa0a",
   "checkpoint_steps": {},
   "steps": [
     {
@@ -17,11 +17,12 @@
         "plot_id": "p1"
       },
       "duration_seconds": 0.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    43,
+    44
   ]
 }

@@ -12,7 +12,7 @@ from fairy.apps.paddy.infrastructure import PaddyInfrastructureApp
 from fairy.apps.paddy.drone import PaddyDroneApp
 from fairy.apps.system import SystemApp
 from fairy.scenarios.rice.farm_checkpoint_state import (
-    ARTIFACT_SCHEMA, REBUILD_COMMAND, load_checkpoint, load_oracle_plan,
+    ARTIFACT_SCHEMA, REBUILD_COMMAND, load_checkpoint, load_oracle_plan, verify_split_source,
 )
 from fairy.scenarios.rice.rice_scenario_catalog import configuration
 from fairy.types import EventRegisterer
@@ -52,6 +52,8 @@ def build_rice_events(scenario, spec):
     }
     if any(plan.get(key) != value for key, value in expected.items()):
         raise ValueError(f"Rice oracle plan configuration/checkpoint mismatch; rebuild with {REBUILD_COMMAND}")
+    if spec.level != "L3":
+        verify_split_source(plan)
     apps = {app.name: app for app in scenario.apps}
     allowed = {app.name: {tool.name for tool in app.get_tools()} for app in scenario.apps}
     # Validate the complete plan before capturing any events.

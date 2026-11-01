@@ -4,25 +4,26 @@
   "task": "refuel",
   "variant": "equipment_limit",
   "source_l3_scenario_id": "scenario_rice_l3_equipment_limit",
-  "source_checkpoint_label": "initial_before_field_prep",
-  "initial_checkpoint_sha256": "48a8956bba6d972e64cdfbea3a5c0ffc9af42df8d0aa8b1f406ac4bdf3756906",
+  "source_checkpoint_label": "before_refuel",
+  "initial_checkpoint_sha256": "97890931d507903e1b739f7620d44e29752c014f6ef74c75a29936fa03b31de3",
   "config_fingerprint": "974c9b95656a8888352c2bb41fd4cad44184494e046d777e81b1a24e2dbab2d1",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "784f304fc4d2911e0a4672bc48b716e77f58faa5bd1bd4ad92187b3deaef4bc5",
+  "expected_final_state_sha256": "3965349dca8ac31de7a90661afceb54564f1842ef57cf13e287d97a934278830",
   "checkpoint_steps": {},
   "steps": [
     {
       "tool_name": "PaddyMachineryApp__refuel",
       "tool_args": {
         "machine_id": "tractor",
-        "liters": 10.0
+        "liters": 59.0
       },
       "duration_seconds": 300.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "d13c26ad4f15e0b4ee4d1c4aa7475d873820e86e5458dd44605f533b7b41617d",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    16,
+    17
   ]
 }

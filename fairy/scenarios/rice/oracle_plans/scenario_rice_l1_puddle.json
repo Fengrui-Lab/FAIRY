@@ -5,35 +5,24 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_puddle",
-  "initial_checkpoint_sha256": "9239ac96c24384ca2729cf09501ad33d3bf806047dff153c66eb3676cc81265c",
+  "initial_checkpoint_sha256": "29bf75d5717b0035f1356d31c311c3745fd4b933189cab0478eece3044cd072d",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "210c2b1b9a1c430e4f876ff087845f27d4ac0da2c531bdf7d7bc6f0fa6201e36",
+  "expected_final_state_sha256": "d444c655d4155c775a37d3d88f4702ec1c10be4c7ab21565238fd4e3f05e58aa",
   "checkpoint_steps": {},
   "steps": [
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
-    {
-      "tool_name": "PaddyMachineryApp__get_machine_status",
-      "tool_args": {
-        "machine_id": "tractor"
-      },
-      "duration_seconds": 0.0
-    },
     {
       "tool_name": "PaddyOpsApp__puddle_and_level",
       "tool_args": {
         "plot_id": "p1"
       },
       "duration_seconds": 3600.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    17,
+    18
   ]
 }

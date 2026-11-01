@@ -28,16 +28,17 @@ def validate_rice_task(scenario, env):
         goal = (world.sim_time - scenario._initial_state["sim_time"] >= 10 * 86400 and
                 any(a["action"] == "irrigate" for a in actions) and stress_ok)
     elif scenario.task == "irrigate":
-        goal = abs(sum(a["water_mm"] for a in actions if a["action"] == "irrigate" and a["plot_id"] == "p1") - 30) < 1e-6
+        goal = abs(sum(a["water_mm"] for a in actions if a["action"] == "irrigate" and a["plot_id"] == "p1") - 20) < 1e-6
     elif scenario.task == "drain":
-        goal = any(a["action"] == "drain" and a["plot_id"] == "p1" and a["actual_mm"] > 0 for a in actions)
+        goal = (any(a["action"] == "drain" and a["plot_id"] == "p1" and a["actual_mm"] > 0 for a in actions)
+                and abs(world.backends["p1"].water.ledger()["surface_water_mm"] - 20.) <= .1 + 1e-6)
     elif scenario.task in {"puddle", "transplant", "harvest"}:
         goal = {"puddle": p1.puddled and p1.levelled, "transplant": p1.planted, "harvest": p1.harvested}[scenario.task]
     elif scenario.task == "observe_water":
         goal = any(k == "water:p1" and v["timestamp"] >= scenario.start_time for k, v in world.observations.items())
     elif scenario.task == "refuel":
         goal = abs(sum(a.get("liters", 0) for a in actions
-                       if a["action"] == "refuel" and a["machine_id"] == "tractor") - 10.) < 1e-8
+                       if a["action"] == "refuel" and a["machine_id"] == "tractor") - 59.) < 1e-8
     elif scenario.task in {"dry", "store"}:
         original = next(b for b in scenario._initial_state["field"]["grain_batches"] if b["location"] == "reception")
         batch = world.batch(original["batch_id"])
@@ -46,13 +47,15 @@ def validate_rice_task(scenario, env):
         applied = {p.plot_id: sum(a["product_kg"] for a in actions
                    if a["action"] == "apply_fertilizer" and a["plot_id"] == p.plot_id) for p in plots}
         if scenario.task == "fertilize":
-            goal = abs(applied["p1"] - p1.unit.mass_kg(150.)) < 1e-6
+            goal = abs(applied["p1"] - p1.unit.mass_kg(300.)) < 1e-6
         else:
-            goal = (all(applied[p.plot_id] >= p.unit.mass_kg(150.) - 1e-6 for p in plots)
+            goal = (all(applied[p.plot_id] >= p.unit.mass_kg(300.) - 1e-6 for p in plots)
                     and world.sim_time - scenario.start_time >= 25 * 86400)
     elif scenario.task in {"scout", "crop_protection"}:
-        goal = all(f"pests:{p.plot_id}" in world.observations for p in plots)
-        goal = goal and any(a["action"] == "fly_survey" for a in actions)
+        targets = [p1] if scenario.task == "scout" else plots
+        goal = all(f"pests:{p.plot_id}" in world.observations and
+                   world.observations[f"pests:{p.plot_id}"]["timestamp"] >= scenario.start_time
+                   for p in targets)
         if scenario.task == "crop_protection":
             goal = goal and all(all(getattr(p, key) < old[key] for key in ("pests", "disease", "weeds"))
                                 for p, old in zip(plots, scenario._initial_state["field"]["plots"]))

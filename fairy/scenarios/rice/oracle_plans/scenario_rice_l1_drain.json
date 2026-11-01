@@ -5,34 +5,32 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_drain",
-  "initial_checkpoint_sha256": "334f570d04c518c34e51cd69ea9da51118fb1a8e2780188efff100e8b2220b67",
+  "initial_checkpoint_sha256": "8163e803ca22046c2c61dc4e97e1bc3ab52a47aff32e0e30ad924f14a0277eb5",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "79880d1209dca573f8034e67f52ff3a3bede6b38340423b59008b19828175a8b",
+  "expected_final_state_sha256": "3f48519fcc778aa6292625d2b599160a2e5950139d945b8e15e2d18d6d75d7ec",
   "checkpoint_steps": {},
   "steps": [
     {
-      "tool_name": "PaddyWorldApp__get_inventory",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
       "duration_seconds": 0.0
     },
     {
       "tool_name": "PaddyOpsApp__drain",
       "tool_args": {
         "plot_id": "p1",
-        "water_mm": 20.0
+        "water_mm": 32.3
       },
-      "duration_seconds": 900.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
+      "duration_seconds": 1454.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    19,
+    21
   ]
 }
