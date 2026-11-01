@@ -1,5 +1,20 @@
 # AI Change Log
 
+- 2026-11-01: Moved OpenAI `gpt-6-luna` to Responses with explicit `medium`
+  reasoning by default (client configuration may override `reasoning_effort`).
+  Tool schemas/results and output usage are adapted to the existing agent
+  contract. Encrypted reasoning for tool turns stays in client memory and
+  is replayed only for matching conversation tool calls, including shared-client
+  A2A use; it is excluded from logs and exports. Logs now report `api_mode`,
+  `reasoning_effort`, and the effective reasoning history policy. Incomplete
+  and failed responses are rejected and accounted for before any tool executes.
+  Mock SDK tests cover round trips, usage, single-tool filtering and retries.
+  A live `scenario_rice_l3_normal` run with the installed detailed briefing
+  completed 204 tool calls and 205 model calls without tool errors; independent
+  replay reproduced its outcome exactly. Mature grain was 8.308789 t/ha at 14%
+  moisture versus the frozen Oracle's 8.335921 t/ha (0.325488% relative loss).
+  This is one seed-0 run, not a model success-rate estimate.
+
 - 2026-08-10: Verified Qwen Cloud native function calling with both
   `qwen3.6-flash` and the fixed `qwen3.6-flash-2026-04-16` snapshot. A FAIRY
   physics smoke completed 14/14 oracle tool steps at temperature 0.1 with no

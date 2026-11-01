@@ -38,14 +38,15 @@ SCENARIO_IDS = (
     + tuple(f"scenario_rice_l3_{variant}" for variant in L3_VARIANTS)
 )
 EXPECTED_CHECKPOINTS = {
+    "refuel": "before_refuel", "repair_bund": "before_bund_repair",
     "irrigate": "before_irrigate", "drain": "before_drain",
     "puddle": "before_puddle", "transplant": "before_transplant",
-    "harvest": "before_harvest", "observe_water": "after_transplant",
+    "harvest": "before_harvest", "observe_water": "before_water_observation",
     "dry": "before_dry", "store": "before_store", "fertilize": "before_topdress",
     "scout": "before_treat", "gap_fill": "after_transplant",
-    "irrigation_management": "management_start", "harvest_storage": "before_drain",
+    "irrigation_management": "management_start", "harvest_storage": "before_harvest",
     "nutrition_management": "management_start", "crop_protection": "before_treat",
-    "harvest_batches": "before_drain",
+    "harvest_batches": "before_harvest",
 }
 EXPECTED_VARIANTS = {
     "scout": "biotic", "crop_protection": "biotic", "gap_fill": "poor_stand",

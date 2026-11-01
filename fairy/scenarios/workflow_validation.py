@@ -154,10 +154,10 @@ def evaluate_workflows(
 
 
 def _resolve_tool_name(action: Action) -> str:
-    app_name = action.app_name
-    if action.class_name in {"DroneApp", "RobotApp"} and app_name:
-        return f"{app_name}__{action.function_name}"
-    return f"{action.class_name}__{action.function_name}"
+    # Match tool registration and Oracle export; class names merge distinct
+    # instances (e.g. FarmA/FarmB) and expose implementation-only subclasses.
+    app_name = action.app_name or action.class_name
+    return f"{app_name}__{action.function_name}"
 
 
 def _resolve_op_type(action: Action) -> str | None:
@@ -274,7 +274,7 @@ def workflow_from_oracle_events(scenario: Any) -> dict[str, dict[str, Any]]:
         if cls == "AgentUserInterface":
             continue
         fn = getattr(function, "__name__", function.__class__.__name__)
-        app_name = getattr(app, "name", cls)
+        app_name = getattr(app, "name", None) or cls
         tool_name = f"{app_name}__{fn}"
         tool_args = dict(getattr(event, "kwargs", {}) or {})
         args = list(getattr(event, "args", ()) or ())

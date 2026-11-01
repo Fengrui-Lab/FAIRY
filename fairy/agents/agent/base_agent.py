@@ -84,10 +84,10 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
-            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
             "api_mode": getattr(self.llm, "api_mode", None),
+            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
-            "reasoning_history_policy": "preserve_deepseek" if getattr(self.llm, "provider", None) == "deepseek" and getattr(self.llm, "enable_thinking", None) is True else "exclude",
+            "reasoning_history_policy": getattr(self.llm, "reasoning_history_policy", "preserve_deepseek" if getattr(self.llm, "provider", None) == "deepseek" and getattr(self.llm, "enable_thinking", None) is True else "exclude"),
         }
 
     def chat_completion(self, messages, tools=None):
@@ -132,7 +132,10 @@ class BaseAgent:
         raw_message = getattr(choice, "message", None)
         raw_tool_calls = list(getattr(raw_message, "tool_calls", None) or [])
         finish_reason = getattr(choice, "finish_reason", None)
-        rejection_reason = self._response_rejection_reason(raw_message, finish_reason)
+        rejection_reason = (
+            getattr(response, "response_rejection_reason", None)
+            or self._response_rejection_reason(raw_message, finish_reason)
+        )
         # Rejected replies are logged/accounted for but never become history
         # or executable tool calls, including partially generated tool calls.
         message = (
@@ -281,7 +284,7 @@ class BaseAgent:
             "tool_calls",
             "function_call",
         }
-        if getattr(self.llm, "provider", None) == "deepseek" and getattr(self.llm, "enable_thinking", None) is True:
+        if self.llm_config()["reasoning_history_policy"] == "preserve_deepseek":
             allowed_keys.add("reasoning_content")
         compatible_messages: list[dict[str, Any]] = []
         for message in messages:

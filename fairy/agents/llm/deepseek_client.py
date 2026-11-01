@@ -24,6 +24,8 @@ class DeepSeekClient(BaseLLM):
         self.enable_thinking = _coerce_optional_bool(kwargs.get("enable_thinking"), "enable_thinking")
         self.api_key = api_key or DEEPSEEK_API_KEY
         self.model = model
+        self.reasoning_history_policy = "provider_required_transport_only"
+        self._tool_reasoning = {}
         self.base_url = kwargs.get("base_url") or DEEPSEEK_API_BASE
         self.api_client = OpenAI(
             api_key=self.api_key,
@@ -46,9 +48,22 @@ class DeepSeekClient(BaseLLM):
 
         Returns:
         """
+        # The agent keeps reasoning out of its request logs. DeepSeek thinking
+        # tool turns nevertheless require the original field on the wire.
+        # Restore it here on fresh dictionaries, scoped to this client session.
+        transport_messages = []
+        for message in messages:
+            copied = dict(message)
+            if copied.get("role") == "assistant":
+                for call in copied.get("tool_calls") or []:
+                    call_id = call.get("id")
+                    if call_id in self._tool_reasoning:
+                        copied["reasoning_content"] = self._tool_reasoning[call_id]
+                        break
+            transport_messages.append(copied)
         response = self.api_client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=transport_messages,
             tools=tools,
             temperature=self.temperature,
             **({"extra_body": {"thinking": {"type": "enabled" if self.enable_thinking else "disabled"}}} if self.enable_thinking is not None else {}),
@@ -56,6 +71,12 @@ class DeepSeekClient(BaseLLM):
             **self.tool_call_options(tools),
         )
 
+        if response.choices:
+            message = response.choices[0].message
+            reasoning = getattr(message, "reasoning_content", None)
+            if reasoning is not None:
+                for call in getattr(message, "tool_calls", None) or []:
+                    self._tool_reasoning[call.id] = reasoning
         return response
 
     def to_dict(self):

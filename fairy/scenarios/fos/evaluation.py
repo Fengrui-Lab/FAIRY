@@ -447,9 +447,8 @@ def _resolve_oracle_baseline_dir(
     env_path = os.environ.get(ORACLE_BASELINE_ENV_VAR)
     if env_path:
         candidates.append(Path(env_path))
-    # Repo-root default. evaluation.py lives at
-    # are/simulation/scenarios/fos/evaluation.py — five parents up is repo root.
-    repo_root = Path(__file__).resolve().parents[4]
+    # evaluation.py lives at <repo>/fairy/scenarios/fos/evaluation.py.
+    repo_root = Path(__file__).resolve().parents[3]
     candidates.append(repo_root / ORACLE_BASELINE_DEFAULT_SUBDIR)
     for c in candidates:
         if c.is_dir():
@@ -641,10 +640,6 @@ def compute_donothing_per_ridge_yields(
     subsets without any precomputed artefact.
     """
     try:
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
         farm_world, physics = _initialize_donothing_scenario(
             scenario_id, start_time, seed, crop_backend, crop_backend_options,
             scenario_kwargs, init_kwargs, expected_provenance,
@@ -654,7 +649,7 @@ def compute_donothing_per_ridge_yields(
 
         _advance_donothing_to_maturity(farm_world, physics, extrapolation_max_days, crop_backend)
 
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = farm_world.ridge_area_m2
 
         # Determine field width by scanning known ridge ids; ridges not in
         # the state dict contribute 0.0.  Use 0..max_id+1 as the canonical
@@ -719,10 +714,6 @@ def compute_donothing_biological_kg(
     state: it creates its own scenario instance.
     """
     try:
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
         farm_world, physics = _initialize_donothing_scenario(
             scenario_id, start_time, seed, crop_backend, crop_backend_options,
             scenario_kwargs, init_kwargs, expected_provenance,
@@ -732,7 +723,7 @@ def compute_donothing_biological_kg(
 
         _advance_donothing_to_maturity(farm_world, physics, extrapolation_max_days, crop_backend)
 
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = farm_world.ridge_area_m2
         total_kg = 0.0
         for rid, yld_state in physics.yield_recovery.states.items():
             phen_state = physics.phenology.states.get(rid)
@@ -936,12 +927,7 @@ def _compute_outcome(
     crop_loss_fraction = 0.0
     ridge_area_m2 = 0.0
     if physics is not None and getattr(physics, "engines_active", False):
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
-
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = farm_world.ridge_area_m2
         recovery_mass_factor = _biological_to_recovery_mass_factor(physics)
         planted_count = 0
 
@@ -1083,12 +1069,7 @@ def _compute_outcome(
         and physics is not None
         and getattr(physics, "engines_active", False)
     ):
-        from fairy.apps.farm_world.farm_world_app import (
-            DEFAULT_RIDGE_WIDTH_M,
-            FIELD_LENGTH_M,
-        )
-
-        ridge_area_m2 = FIELD_LENGTH_M * DEFAULT_RIDGE_WIDTH_M
+        ridge_area_m2 = farm_world.ridge_area_m2
         focus_set = set(focus_ridge_ids)
         focus_agent_bio = sum(
             yld_state.biological_yield_g_m2 * ridge_area_m2 / 1000.0
@@ -1188,7 +1169,7 @@ def _count_safety_violations(env: Any) -> tuple[int, list[dict[str, Any]]]:
                 violations += 1
                 details.append(
                     {
-                        "tool": f"{action.class_name}__{action.function_name}",
+                        "tool": f"{action.app_name or action.class_name}__{action.function_name}",
                         "error": error_msg,
                         "event_time": getattr(event, "event_time", None),
                     }

@@ -327,10 +327,11 @@ def _workflow_step_times(
     if tool_name == "SystemApp__advance_time":
         return post_time - _advance_time_seconds(args), post_time, False
 
-    from fairy.types import OperationType
+    if tool_name == "SystemApp__wait_for_notification":
+        # Although declared READ, a wait consumes scene time. Its timeout is
+        # only an upper bound: a scheduled notification may finish it early.
+        return float(previous_post_time if previous_post_time is not None else post_time), post_time, False
 
-    if _operation_type_for_method(method) == OperationType.READ:
-        return post_time, post_time, False
     return float(previous_post_time or post_time), post_time, False
 
 

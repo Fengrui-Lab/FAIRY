@@ -36,14 +36,16 @@ VARIANTS = (
 )
 
 CHECKPOINTS = {
+    "refuel": "before_refuel",
+    "repair_bund": "before_bund_repair",
     "puddle": "before_puddle",
     "transplant": "before_transplant",
     "irrigate": "before_irrigate",
     "drain": "before_drain",
     "harvest": "before_harvest",
     "irrigation_management": "management_start",
-    "harvest_storage": "before_drain",
-    "observe_water": "after_transplant",
+    "harvest_storage": "before_harvest",
+    "observe_water": "before_water_observation",
     "dry": "before_dry",
     "store": "before_store",
     "fertilize": "before_topdress",
@@ -51,7 +53,7 @@ CHECKPOINTS = {
     "crop_protection": "before_treat",
     "gap_fill": "after_transplant",
     "nutrition_management": "management_start",
-    "harvest_batches": "before_drain",
+    "harvest_batches": "before_harvest",
 }
 
 TASK_VARIANTS = {
@@ -99,26 +101,26 @@ def configuration(variant: str) -> tuple[dict[str, Any], dict[str, Any]]:
 
 _TASK_GOALS = {
     "season": "完成两个田格从泡田整地、成品苗插秧、灌排管理到收获干燥入库的单季种植。",
-    "establishment": "完成两个田格的泡田、耙田整平、浅水调整和成品苗插秧。",
-    "irrigation_management": "根据观测完成接下来10天的灌排管理，避免水分胁迫并遵守共享配额。",
-    "harvest_storage": "完成收前排水、成熟监测、收割、卸粮和干燥入库。",
-    "puddle": "完成p1田格的耙田整平，泡田前置条件已具备。",
-    "transplant": "复核p1田格、装载成品秧苗并完成标准密度插秧。",
-    "irrigate": "为p1田格完成30毫米到田灌水，并复查水量和资源。",
-    "drain": "从p1田格排出至多20毫米田面水，并复查实际排水量。",
-    "harvest": "复核条件后收割p1田格，当前已进入可收获窗口。",
-    "observe_water": "读取p1水位及土壤水分传感器，并保留带时间戳的观测。",
-    "refuel": "检查拖拉机油箱，从仓库补充10升燃油。",
-    "dry": "测量接粮区粮批含水率，将其干燥至14%，保留在接粮区。",
-    "store": "复测已干燥粮批的含水率，将其入库。",
-    "fertilize": "根据p1田间观测，装载尿素并完成150千克/公顷追肥。",
-    "scout": "无人机巡查两个田格，落地检查病虫草害，保留观测。",
-    "gap_fill": "检查p1缺苗，使用剩余成品秧苗补苗，等待两天后复查成活。",
-    "nutrition_management": "根据观测完成接下来25天的水肥管理，包括适时追肥。",
-    "crop_protection": "无人机巡查并确认两个田格的病虫草害，采取处理使三类危害均下降。",
-    "repair_bund": "巡检p1田埂，使用维修材料修复渗漏。",
-    "infrastructure_recovery": "巡查田埂和渠道，修复渗漏并疏通堵塞渠道。",
-    "harvest_batches": "在小粮箱和有限干燥能力下，分批完成两个田格的收割、卸粮、干燥和入库。",
+    "establishment": "完成两个田格的泡田、耙田整平、基肥、浅水调整和成品苗插秧。",
+    "irrigation_management": "根据观测完成本窗口至少 10 天的水分管理，避免胁迫并遵守共享水额。",
+    "harvest_storage": "从新版来源季的收获窗口开始，复核成熟、天气、水分与通行性，完成两个田格收割、卸粮、干燥至 14% 和入库。",
+    "puddle": "完成 p1 耙田整平，泡田前置条件和机具已经具备。",
+    "transplant": "检查并装载成品秧苗，完成 p1 标准密度插秧。",
+    "irrigate": "根据水位和根区观测，为 p1 完成 20 毫米到田灌水。",
+    "drain": "把 p1 的田面水调整至约 20 毫米，为基肥和插秧准备浅水条件。",
+    "harvest": "复核成熟、水分、天气和通行性，收割 p1。",
+    "observe_water": "读取 p1 的田面水和根区水分传感器，保留带时间戳的观测。",
+    "refuel": "为拖拉机补充 59 升燃油，使当前 1 升余油补至 60 升满箱。",
+    "dry": "测量接粮区目标粮批含水率，干燥至 14%，保留在接粮区。",
+    "store": "将已干燥至 14% 的目标粮批安全入库。",
+    "fertilize": "检查 p1 生育阶段，装载尿素，完成 300 千克/公顷的一轮追肥。",
+    "scout": "落地检查 p1 的虫、病、草害，保留分项观测；本任务只诊断。",
+    "gap_fill": "检查 p1 缺苗，使用剩余成品秧苗补苗，等待两天后复查成活。",
+    "nutrition_management": "根据观测完成本窗口至少 25 天的水肥管理，在分蘖期为两个田格各完成一轮 300 千克/公顷尿素追肥。",
+    "crop_protection": "落地确诊两个田格的虫、病、草害，按对象、天气和水层处理并复查。",
+    "repair_bund": "根据 p1 田埂巡检修复渗漏，并复查修复结果。",
+    "infrastructure_recovery": "巡查田埂和渠道，疏通堵塞并修复渗漏，复查恢复情况。",
+    "harvest_batches": "在 600 千克粮箱和每日 2000 千克湿谷干燥能力下，分批完成两个田格收割、卸粮、干燥至 14% 和入库；避免湿谷长时间排队。",
 }
 
 _TOOL_BRIEFING = (
@@ -132,14 +134,16 @@ _TOOL_BRIEFING = (
 def _spec(level: Literal["L1", "L2", "L3"], task: str, variant: str = "normal") -> RiceScenarioSpec:
     suffix = variant if level == "L3" else task
     goal = _TASK_GOALS[task]
+    from fairy.scenarios.rice.l3_defaults import detailed_briefing, split_briefing
     return RiceScenarioSpec(
         scenario_id=f"scenario_rice_{level.lower()}_{suffix}",
         level=level,
         task=task,
         variant=variant,
         checkpoint_label=CHECKPOINTS.get(task),
-        briefing_text=goal,
-        detailed_briefing_text=goal + _TOOL_BRIEFING,
+        briefing_text=goal if level == "L3" else split_briefing(f"scenario_rice_{level.lower()}_{suffix}", False),
+        detailed_briefing_text=(detailed_briefing(f"scenario_rice_l3_{suffix}")
+                                if level == "L3" else split_briefing(f"scenario_rice_{level.lower()}_{suffix}")),
     )
 
 

@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "sources": {
+    "fairy/scenarios/management_extensions/catalog.py": "b6255ea889b4e6511d385bd19d335a9b6838e3c753dcf0937af8ae52ed0e4f04",
+    "fairy/scenarios/management_extensions/references.json": "c1b4fe355de8405cac676819b8bb044ec55dad70993f50c4c92b00ee254cd231",
+    "fairy/scenarios/management_extensions/scenario_multiobjective_seed_discount.py": "e04f12ed78850dc4296fd0a66b7d4f1eba3a4a21758e17f100900f54142838af",
+    "fairy/scenarios/management_extensions/__init__.py": "0b8c6644cdcc4c100c58348731110e39c1aebbead3dc23ee51f4582c87d36f3b",
+    "fairy/scenarios/management_extensions/runtime.py": "9d64cf7ce48f9b5aba5664bd67fcd376d8888cbf3023e6dfd39671d6807e6e49",
+    "fairy/scenarios/management_extensions/common.py": "e8794b4665ed439f447e9c6012ab2aba12f98d94247d384701540c3b52571be0",
+    "fairy/scenarios/management_extensions/scenario_multiseason_scn_switch_to_maize.py": "6803dcb6644b747b4c983c01a50837e2cfacd8f8c3689bcca6896887ff74e9be",
+    "fairy/scenarios/management_extensions/scenario_multiseason_scn_continue_maize.py": "3b569259ad10bd1ed40218f09a47399a08d877930afff81e6a5e57c125434882",
+    "fairy/scenarios/management_extensions/scenario_multiobjective_seed_total_cost.py": "723d6a5ee13cb0e6c7e1bd3d828ceacbda3b66f980f0a145535a496435b09d7d",
+    "fairy/scenarios/management_extensions/validation.py": "2e668add3bd64a2aed8e7e36e81598b47d808cf39b0b355e234e3027d119b06b",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/nasa_power.original.json": "a9b354725a8d7a8818bfc226735addd377e8606ac7d9e1503a59a22ad9e4ec12",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/weather.json": "286b795177700d35b93808e7a06f6f543baa646ba968f8f8e76c033baa63866c",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/manifest.json": "ec8bdf18368e0ea7b4974dc3d50fad2043260d74825cbc40ef5a193c7696a4a1",
+    "fairy/scenarios/registry.py": "d1e4c64132d1de9d477fd340c6da5afbb70628d9b11513672ffa04e04e21f8d9",
+    "scripts/calibrate_management_extension_oracles.py": "2d7f3d0053ac3602215c758d5597aab86787c6b74bafd1028a4a165d4a35ae56",
+    "scripts/verify_management_extension_calibration.py": "b68fb50896ddee08e6edc4601bce96508846569e7634a6598e8c347a541a9c1a",
+    "scripts/validate_management_extension_oracles.py": "0203dee5052555185bb235276cd7bbd85042fbaa958c2865cf7879a514d68c7f"
+  },
+  "workflow_sha256": "4f6902446b4d36e342b4ebc112d95905b58f67716a90957022ce503cc3806247",
+  "source_scope": "Extension package, registry and audit scripts; not a complete native runtime fingerprint.",
+  "commands": [
+    [
+      "/Users/quao/.codex/worktrees/wofost-management-audit/FAIRY/.venv/bin/python",
+      "-m",
+      "fairy.cli",
+      "-s",
+      "scenario_multiseason_scn_continue_maize",
+      "--workflow",
+      "/Users/quao/.codex/worktrees/wofost-management-audit/FAIRY/configs/oracles/management_extensions/scenario_multiseason_scn_continue_maize.json",
+      "--output-dir",
+      "validation_runs/management_extensions_prompt_weather_20261101/replay/scenario_multiseason_scn_continue_maize",
+      "--build-oracle"
+    ],
+    [
+      "/Users/quao/.codex/worktrees/wofost-management-audit/FAIRY/.venv/bin/python",
+      "-m",
+      "fairy.cli",
+      "-s",
+      "scenario_multiseason_scn_continue_maize",
+      "--workflow",
+      "/Users/quao/.codex/worktrees/wofost-management-audit/FAIRY/configs/oracles/management_extensions/scenario_multiseason_scn_continue_maize.json",
+      "--output-dir",
+      "validation_runs/management_extensions_prompt_weather_20261101/replay/scenario_multiseason_scn_continue_maize",
+      "--replay",
+      "--evaluate"
+    ]
+  ],
+  "previous_sources": {
+    "fairy/scenarios/management_extensions/catalog.py": "b6255ea889b4e6511d385bd19d335a9b6838e3c753dcf0937af8ae52ed0e4f04",
+    "fairy/scenarios/management_extensions/references.json": "c1b4fe355de8405cac676819b8bb044ec55dad70993f50c4c92b00ee254cd231",
+    "fairy/scenarios/management_extensions/scenario_multiobjective_seed_discount.py": "e04f12ed78850dc4296fd0a66b7d4f1eba3a4a21758e17f100900f54142838af",
+    "fairy/scenarios/management_extensions/__init__.py": "0b8c6644cdcc4c100c58348731110e39c1aebbead3dc23ee51f4582c87d36f3b",
+    "fairy/scenarios/management_extensions/runtime.py": "6501e415bf3704a1f52614d968058347417e95f23544767ed01b0e0b27b8fa23",
+    "fairy/scenarios/management_extensions/common.py": "bf758930baf5c0760495016bb2cf6c06d10f7c30b2aaa32e3a012afd949e2fe0",
+    "fairy/scenarios/management_extensions/scenario_multiseason_scn_switch_to_maize.py": "229351900dd89e27171353081e5dfc36aa3f96480aed0e0d9ed983d44c198db9",
+    "fairy/scenarios/management_extensions/scenario_multiseason_scn_continue_maize.py": "dbe94d56efa10d55a1093a69eaa9efe1e41561816d55d1aaa546106d8b75fd9f",
+    "fairy/scenarios/management_extensions/scenario_multiobjective_seed_total_cost.py": "723d6a5ee13cb0e6c7e1bd3d828ceacbda3b66f980f0a145535a496435b09d7d",
+    "fairy/scenarios/management_extensions/validation.py": "2e668add3bd64a2aed8e7e36e81598b47d808cf39b0b355e234e3027d119b06b",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/nasa_power.original.json": "a9b354725a8d7a8818bfc226735addd377e8606ac7d9e1503a59a22ad9e4ec12",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/weather.json": "286b795177700d35b93808e7a06f6f543baa646ba968f8f8e76c033baa63866c",
+    "fairy/scenarios/management_extensions/data/thionville_december2019_v1/manifest.json": "ec8bdf18368e0ea7b4974dc3d50fad2043260d74825cbc40ef5a193c7696a4a1",
+    "fairy/scenarios/registry.py": "d1e4c64132d1de9d477fd340c6da5afbb70628d9b11513672ffa04e04e21f8d9",
+    "scripts/calibrate_management_extension_oracles.py": "2d7f3d0053ac3602215c758d5597aab86787c6b74bafd1028a4a165d4a35ae56",
+    "scripts/verify_management_extension_calibration.py": "b68fb50896ddee08e6edc4601bce96508846569e7634a6598e8c347a541a9c1a",
+    "scripts/validate_management_extension_oracles.py": "0203dee5052555185bb235276cd7bbd85042fbaa958c2865cf7879a514d68c7f"
+  },
+  "source_verification": {
+    "record": "validation_runs/management_extensions_october_dry_20261101/verification.json",
+    "note": "Current extension source hashes match the later October-dry validation record (19 tests and two B-scenario Oracle runs). Original commands and previous_sources describe the earlier four-scenario replay; candidate calibration was not rerun. Commit preparation additionally passed 27 workflow and prompt/weather checks."
+  }
+}

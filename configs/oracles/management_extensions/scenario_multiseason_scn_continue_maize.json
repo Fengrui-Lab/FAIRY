@@ -1,0 +1,2712 @@
+{
+  "history": {
+    "name": "history",
+    "content": {
+      "oracle_reason": "读取前季作物、收获记录与播前SCN实测题设。"
+    },
+    "op_type": "READ",
+    "tool_name": "SeasonPlanning__get_season_context",
+    "tool_args": {
+      "farm_id": "field"
+    },
+    "depends_on": [],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "options": {
+    "name": "options",
+    "content": {
+      "oracle_reason": "确认寄主/非寄主选项与各自种子和播种约束。"
+    },
+    "op_type": "READ",
+    "tool_name": "SeasonPlanning__get_crop_options",
+    "tool_args": {
+      "farm_id": "field"
+    },
+    "depends_on": [
+      "history"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "select": {
+    "name": "select",
+    "content": {
+      "oracle_reason": "12000枚卵/100cm³超过10000阈值，一季玉米后风险仍高，本季继续非寄主玉米。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "SeasonPlanning__select_crop",
+    "tool_args": {
+      "farm_id": "field",
+      "crop_id": "maize",
+      "cultivar_id": "MAIZE_201",
+      "report_id": "preplant-2019"
+    },
+    "depends_on": [
+      "options"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "capabilities": {
+    "name": "capabilities",
+    "content": {
+      "oracle_reason": "读取本场原生作物品种、播深、密度、机具和收获约束。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_crop_capabilities",
+    "tool_args": {},
+    "depends_on": [
+      "select"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "inventory": {
+    "name": "inventory",
+    "content": {
+      "oracle_reason": "确认种子、肥料与燃油实际库存。"
+    },
+    "op_type": "READ",
+    "tool_name": "Warehouse__get_inventory",
+    "tool_args": {},
+    "depends_on": [
+      "capabilities"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "weather": {
+    "name": "weather",
+    "content": {
+      "oracle_reason": "确认本日无雨且可作业。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "inventory"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "forecast": {
+    "name": "forecast",
+    "content": {
+      "oracle_reason": "查看随后天气，安排播种与出苗检查。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "weather"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "soil": {
+    "name": "soil",
+    "content": {
+      "oracle_reason": "读取本场土温和水分，不用另一场观测替代。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "forecast"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "tractor": {
+    "name": "tractor",
+    "content": {
+      "oracle_reason": "确认共享油箱、料斗和机具。"
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {},
+    "depends_on": [
+      "soil"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "grader": {
+    "name": "grader",
+    "content": {
+      "oracle_reason": "挂载共享平地机。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__attach_implement",
+    "tool_args": {
+      "implement": "grader"
+    },
+    "depends_on": [
+      "tractor"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "level": {
+    "name": "level",
+    "content": {
+      "oracle_reason": "整平64垄实际面积，燃油和耗时按面积计。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__level",
+    "tool_args": {
+      "farm_id": "field"
+    },
+    "depends_on": [
+      "grader"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "detach_grader": {
+    "name": "detach_grader",
+    "content": {
+      "oracle_reason": "整平后卸机具。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__detach_implement",
+    "tool_args": {},
+    "depends_on": [
+      "level"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "base_load_00": {
+    "name": "base_load_00",
+    "content": {
+      "oracle_reason": "按500kg撒肥器容量装入基肥；实际扣仓。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 364.48
+    },
+    "depends_on": [
+      "detach_grader"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "base_fertilize_00": {
+    "name": "base_fertilize_00",
+    "content": {
+      "oracle_reason": "全田均匀施入这一箱基肥；产品46%N、回收率0.7，非直接改肥力。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__base_fertilize",
+    "tool_args": {
+      "farm_id": "field",
+      "total_kg": 364.48
+    },
+    "depends_on": [
+      "base_load_00"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "ridger": {
+    "name": "ridger",
+    "content": {
+      "oracle_reason": "挂载起垄机。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__attach_implement",
+    "tool_args": {
+      "implement": "furrower"
+    },
+    "depends_on": [
+      "base_fertilize_00"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "ridges": {
+    "name": "ridges",
+    "content": {
+      "oracle_reason": "按本场真实垄宽完成64垄起垄。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__form_ridges",
+    "tool_args": {
+      "farm_id": "field",
+      "ridge_width_m": 0.75
+    },
+    "depends_on": [
+      "ridger"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "detach_ridger": {
+    "name": "detach_ridger",
+    "content": {
+      "oracle_reason": "起垄后卸机具。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__detach_implement",
+    "tool_args": {},
+    "depends_on": [
+      "ridges"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "planter": {
+    "name": "planter",
+    "content": {
+      "oracle_reason": "挂载已支持的播种机。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__attach_implement",
+    "tool_args": {
+      "implement": "seeder"
+    },
+    "depends_on": [
+      "detach_ridger"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "load_00": {
+    "name": "load_00",
+    "content": {
+      "oracle_reason": "按30万粒种箱容量装入85760粒；这一箱用完再补种。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_seeds",
+    "tool_args": {
+      "seed_type": "MAIZE_201",
+      "count": 85760
+    },
+    "depends_on": [
+      "planter"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_00": {
+    "name": "plant_00",
+    "content": {
+      "oracle_reason": "第1趟播种第0—3垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 0,
+      "end_ridge": 3,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "load_00"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_04": {
+    "name": "plant_04",
+    "content": {
+      "oracle_reason": "第2趟播种第4—7垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 4,
+      "end_ridge": 7,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_00"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_08": {
+    "name": "plant_08",
+    "content": {
+      "oracle_reason": "第3趟播种第8—11垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 8,
+      "end_ridge": 11,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_04"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_12": {
+    "name": "plant_12",
+    "content": {
+      "oracle_reason": "第4趟播种第12—15垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 12,
+      "end_ridge": 15,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_08"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_16": {
+    "name": "plant_16",
+    "content": {
+      "oracle_reason": "第5趟播种第16—19垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 16,
+      "end_ridge": 19,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_12"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_20": {
+    "name": "plant_20",
+    "content": {
+      "oracle_reason": "第6趟播种第20—23垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 20,
+      "end_ridge": 23,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_16"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_24": {
+    "name": "plant_24",
+    "content": {
+      "oracle_reason": "第7趟播种第24—27垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 24,
+      "end_ridge": 27,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_20"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_28": {
+    "name": "plant_28",
+    "content": {
+      "oracle_reason": "第8趟播种第28—31垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 28,
+      "end_ridge": 31,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_24"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_32": {
+    "name": "plant_32",
+    "content": {
+      "oracle_reason": "第9趟播种第32—35垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 32,
+      "end_ridge": 35,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_28"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_36": {
+    "name": "plant_36",
+    "content": {
+      "oracle_reason": "第10趟播种第36—39垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 36,
+      "end_ridge": 39,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_32"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_40": {
+    "name": "plant_40",
+    "content": {
+      "oracle_reason": "第11趟播种第40—43垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 40,
+      "end_ridge": 43,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_36"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_44": {
+    "name": "plant_44",
+    "content": {
+      "oracle_reason": "第12趟播种第44—47垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 44,
+      "end_ridge": 47,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_40"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_48": {
+    "name": "plant_48",
+    "content": {
+      "oracle_reason": "第13趟播种第48—51垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 48,
+      "end_ridge": 51,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_44"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_52": {
+    "name": "plant_52",
+    "content": {
+      "oracle_reason": "第14趟播种第52—55垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 52,
+      "end_ridge": 55,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_48"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_56": {
+    "name": "plant_56",
+    "content": {
+      "oracle_reason": "第15趟播种第56—59垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 56,
+      "end_ridge": 59,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_52"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "plant_60": {
+    "name": "plant_60",
+    "content": {
+      "oracle_reason": "第16趟播种第60—63垄；每垄1340粒、株距20cm、播深5cm。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__plant_seeds",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 60,
+      "end_ridge": 63,
+      "depth_cm": 5.0,
+      "seed_spacing_cm": 20.0
+    },
+    "depends_on": [
+      "plant_56"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "detach_planter": {
+    "name": "detach_planter",
+    "content": {
+      "oracle_reason": "64垄播完，种箱恰好用空后卸机具。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__detach_implement",
+    "tool_args": {},
+    "depends_on": [
+      "plant_60"
+    ],
+    "time": "2019-05-01 07:00:00+02:00"
+  },
+  "wait_establishment": {
+    "name": "wait_establishment",
+    "content": {
+      "oracle_reason": "等待至2019-06-01当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 2663358.0
+    },
+    "depends_on": [
+      "detach_planter"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "establishment_weather": {
+    "name": "establishment_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_establishment"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "establishment_forecast": {
+    "name": "establishment_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "establishment_weather"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "establishment_soil": {
+    "name": "establishment_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "establishment_forecast"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "establishment_stage": {
+    "name": "establishment_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "establishment_soil"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "canopy_establishment": {
+    "name": "canopy_establishment",
+    "content": {
+      "oracle_reason": "结合冠层与全部垄状态确认建植；不做未建模的病虫诊断。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_canopy_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "establishment_stage"
+    ],
+    "time": "2019-06-01 02:49:18+02:00"
+  },
+  "wait_nutrition": {
+    "name": "wait_nutrition",
+    "content": {
+      "oracle_reason": "等待至2019-06-10当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 777600.0
+    },
+    "depends_on": [
+      "canopy_establishment"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "nutrition_weather": {
+    "name": "nutrition_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_nutrition"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "nutrition_forecast": {
+    "name": "nutrition_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "nutrition_weather"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "nutrition_soil": {
+    "name": "nutrition_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "nutrition_forecast"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "nutrition_stage": {
+    "name": "nutrition_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "nutrition_soil"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "canopy_nutrition": {
+    "name": "canopy_nutrition",
+    "content": {
+      "oracle_reason": "交叉复核营养与群体生长；大豆不例行施氮。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_canopy_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "nutrition_stage"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_refuel": {
+    "name": "topdress_refuel",
+    "content": {
+      "oracle_reason": "追肥前从共同库存补足100L油箱；只转入剩余容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__refuel",
+    "tool_args": {
+      "liters": 100.0
+    },
+    "depends_on": [
+      "canopy_nutrition"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_00": {
+    "name": "topdress_load_00",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_refuel"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_00": {
+    "name": "topdress_00",
+    "content": {
+      "oracle_reason": "追肥第0—9垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 0,
+      "end_ridge": 9,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_00"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_10": {
+    "name": "topdress_load_10",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_00"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_10": {
+    "name": "topdress_10",
+    "content": {
+      "oracle_reason": "追肥第10—19垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 10,
+      "end_ridge": 19,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_10"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_20": {
+    "name": "topdress_load_20",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_10"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_20": {
+    "name": "topdress_20",
+    "content": {
+      "oracle_reason": "追肥第20—29垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 20,
+      "end_ridge": 29,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_20"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_30": {
+    "name": "topdress_load_30",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_20"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_30": {
+    "name": "topdress_30",
+    "content": {
+      "oracle_reason": "追肥第30—39垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 30,
+      "end_ridge": 39,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_30"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_40": {
+    "name": "topdress_load_40",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_30"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_40": {
+    "name": "topdress_40",
+    "content": {
+      "oracle_reason": "追肥第40—49垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 40,
+      "end_ridge": 49,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_40"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_50": {
+    "name": "topdress_load_50",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 56.95
+    },
+    "depends_on": [
+      "topdress_40"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_50": {
+    "name": "topdress_50",
+    "content": {
+      "oracle_reason": "追肥第50—59垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 50,
+      "end_ridge": 59,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_50"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_load_60": {
+    "name": "topdress_load_60",
+    "content": {
+      "oracle_reason": "仅装本趟所需肥料，受500kg容量限制。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__load_fertilizer",
+    "tool_args": {
+      "kg": 22.78
+    },
+    "depends_on": [
+      "topdress_50"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "topdress_60": {
+    "name": "topdress_60",
+    "content": {
+      "oracle_reason": "追肥第60—63垄，每趟最多10垄；全季产品总量728.96kg。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__apply_fertilizer",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 60,
+      "end_ridge": 63,
+      "kg_per_ridge": 5.695
+    },
+    "depends_on": [
+      "topdress_load_60"
+    ],
+    "time": "2019-06-10 02:49:18+02:00"
+  },
+  "wait_management_1": {
+    "name": "wait_management_1",
+    "content": {
+      "oracle_reason": "等待至2019-07-01当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 1813070.0
+    },
+    "depends_on": [
+      "topdress_60"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_weather": {
+    "name": "management_1_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_management_1"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_forecast": {
+    "name": "management_1_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "management_1_weather"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_soil": {
+    "name": "management_1_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_1_forecast"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_stage": {
+    "name": "management_1_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "management_1_soil"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_water": {
+    "name": "management_1_water",
+    "content": {
+      "oracle_reason": "全64垄补水43.75mm，实际用水562.8m³；受180mm全季额度约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Irrigation__irrigate",
+    "tool_args": {
+      "start": 0,
+      "end": 63,
+      "hours": 8.75
+    },
+    "depends_on": [
+      "management_1_stage"
+    ],
+    "time": "2019-07-01 02:27:08+02:00"
+  },
+  "management_1_settle": {
+    "name": "management_1_settle",
+    "content": {
+      "oracle_reason": "等待下一日原生结算，避免重复交付尚未生效的灌水。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "days": 1
+    },
+    "depends_on": [
+      "management_1_water"
+    ],
+    "time": "2019-07-02 02:27:08+02:00"
+  },
+  "management_1_recheck": {
+    "name": "management_1_recheck",
+    "content": {
+      "oracle_reason": "次日复核供水后的实际水分。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_1_settle"
+    ],
+    "time": "2019-07-02 02:27:08+02:00"
+  },
+  "wait_management_2": {
+    "name": "wait_management_2",
+    "content": {
+      "oracle_reason": "等待至2019-07-15当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 1091400.0
+    },
+    "depends_on": [
+      "management_1_recheck"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_weather": {
+    "name": "management_2_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_management_2"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_forecast": {
+    "name": "management_2_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "management_2_weather"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_soil": {
+    "name": "management_2_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_2_forecast"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_stage": {
+    "name": "management_2_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "management_2_soil"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_water": {
+    "name": "management_2_water",
+    "content": {
+      "oracle_reason": "全64垄补水43.75mm，实际用水562.8m³；受180mm全季额度约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Irrigation__irrigate",
+    "tool_args": {
+      "start": 0,
+      "end": 63,
+      "hours": 8.75
+    },
+    "depends_on": [
+      "management_2_stage"
+    ],
+    "time": "2019-07-14 17:37:08+02:00"
+  },
+  "management_2_settle": {
+    "name": "management_2_settle",
+    "content": {
+      "oracle_reason": "等待下一日原生结算，避免重复交付尚未生效的灌水。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "days": 1
+    },
+    "depends_on": [
+      "management_2_water"
+    ],
+    "time": "2019-07-15 17:37:08+02:00"
+  },
+  "management_2_recheck": {
+    "name": "management_2_recheck",
+    "content": {
+      "oracle_reason": "次日复核供水后的实际水分。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_2_settle"
+    ],
+    "time": "2019-07-15 17:37:08+02:00"
+  },
+  "wait_management_3": {
+    "name": "wait_management_3",
+    "content": {
+      "oracle_reason": "等待至2019-08-01当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 1350600.0
+    },
+    "depends_on": [
+      "management_2_recheck"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_weather": {
+    "name": "management_3_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_management_3"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_forecast": {
+    "name": "management_3_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "management_3_weather"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_soil": {
+    "name": "management_3_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_3_forecast"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_stage": {
+    "name": "management_3_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "management_3_soil"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_water": {
+    "name": "management_3_water",
+    "content": {
+      "oracle_reason": "全64垄补水43.75mm，实际用水562.8m³；受180mm全季额度约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Irrigation__irrigate",
+    "tool_args": {
+      "start": 0,
+      "end": 63,
+      "hours": 8.75
+    },
+    "depends_on": [
+      "management_3_stage"
+    ],
+    "time": "2019-07-31 08:47:08+02:00"
+  },
+  "management_3_settle": {
+    "name": "management_3_settle",
+    "content": {
+      "oracle_reason": "等待下一日原生结算，避免重复交付尚未生效的灌水。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "days": 1
+    },
+    "depends_on": [
+      "management_3_water"
+    ],
+    "time": "2019-08-01 08:47:08+02:00"
+  },
+  "management_3_recheck": {
+    "name": "management_3_recheck",
+    "content": {
+      "oracle_reason": "次日复核供水后的实际水分。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_3_settle"
+    ],
+    "time": "2019-08-01 08:47:08+02:00"
+  },
+  "wait_management_4": {
+    "name": "wait_management_4",
+    "content": {
+      "oracle_reason": "等待至2019-08-15当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 1091400.0
+    },
+    "depends_on": [
+      "management_3_recheck"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_weather": {
+    "name": "management_4_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_management_4"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_forecast": {
+    "name": "management_4_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "management_4_weather"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_soil": {
+    "name": "management_4_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_4_forecast"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_stage": {
+    "name": "management_4_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "management_4_soil"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_water": {
+    "name": "management_4_water",
+    "content": {
+      "oracle_reason": "全64垄补水43.75mm，实际用水562.8m³；受180mm全季额度约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Irrigation__irrigate",
+    "tool_args": {
+      "start": 0,
+      "end": 63,
+      "hours": 8.75
+    },
+    "depends_on": [
+      "management_4_stage"
+    ],
+    "time": "2019-08-13 23:57:08+02:00"
+  },
+  "management_4_settle": {
+    "name": "management_4_settle",
+    "content": {
+      "oracle_reason": "等待下一日原生结算，避免重复交付尚未生效的灌水。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "days": 1
+    },
+    "depends_on": [
+      "management_4_water"
+    ],
+    "time": "2019-08-14 23:57:08+02:00"
+  },
+  "management_4_recheck": {
+    "name": "management_4_recheck",
+    "content": {
+      "oracle_reason": "次日复核供水后的实际水分。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "management_4_settle"
+    ],
+    "time": "2019-08-14 23:57:08+02:00"
+  },
+  "wait_late_fill": {
+    "name": "wait_late_fill",
+    "content": {
+      "oracle_reason": "等待至2019-08-20当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 313800.0
+    },
+    "depends_on": [
+      "management_4_recheck"
+    ],
+    "time": "2019-08-18 15:07:08+02:00"
+  },
+  "late_fill_weather": {
+    "name": "late_fill_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_late_fill"
+    ],
+    "time": "2019-08-18 15:07:08+02:00"
+  },
+  "late_fill_forecast": {
+    "name": "late_fill_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "late_fill_weather"
+    ],
+    "time": "2019-08-18 15:07:08+02:00"
+  },
+  "late_fill_soil": {
+    "name": "late_fill_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "late_fill_forecast"
+    ],
+    "time": "2019-08-18 15:07:08+02:00"
+  },
+  "late_fill_stage": {
+    "name": "late_fill_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "late_fill_soil"
+    ],
+    "time": "2019-08-18 15:07:08+02:00"
+  },
+  "wait_harvest": {
+    "name": "wait_harvest",
+    "content": {
+      "oracle_reason": "等待至2019-09-20当地07:00；扣除先前工具真实耗时。"
+    },
+    "op_type": "READ",
+    "tool_name": "SystemApp__advance_time",
+    "tool_args": {
+      "seconds": 2678400.0
+    },
+    "depends_on": [
+      "late_fill_stage"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_weather": {
+    "name": "harvest_weather",
+    "content": {
+      "oracle_reason": "读取本日真实天气，核对作业窗口。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_current_weather",
+    "tool_args": {},
+    "depends_on": [
+      "wait_harvest"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_forecast": {
+    "name": "harvest_forecast",
+    "content": {
+      "oracle_reason": "读取近期降雨，交叉判断水分管理。"
+    },
+    "op_type": "READ",
+    "tool_name": "WeatherApp__get_forecast",
+    "tool_args": {
+      "days": 7
+    },
+    "depends_on": [
+      "harvest_weather"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_soil": {
+    "name": "harvest_soil",
+    "content": {
+      "oracle_reason": "读取本场根区水分与土温。"
+    },
+    "op_type": "READ",
+    "tool_name": "Sensor__read_soil_sensors",
+    "tool_args": {},
+    "depends_on": [
+      "harvest_forecast"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_stage": {
+    "name": "harvest_stage",
+    "content": {
+      "oracle_reason": "读取全部64垄实际阶段，不用日期代替生育状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_ridge_range_state",
+    "tool_args": {
+      "start": 0,
+      "end": 63
+    },
+    "depends_on": [
+      "harvest_soil"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_status": {
+    "name": "harvest_status",
+    "content": {
+      "oracle_reason": "收获前复核油量、空粮箱与机具。"
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {},
+    "depends_on": [
+      "harvest_stage"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_refuel": {
+    "name": "harvest_refuel",
+    "content": {
+      "oracle_reason": "收获前从共同仓库补足100L油箱；不重置油量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__refuel",
+    "tool_args": {
+      "liters": 100.0
+    },
+    "depends_on": [
+      "harvest_status"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "header": {
+    "name": "header",
+    "content": {
+      "oracle_reason": "挂载本场已支持的收割机。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__attach_implement",
+    "tool_args": {
+      "implement": "harvester"
+    },
+    "depends_on": [
+      "harvest_refuel"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_00": {
+    "name": "harvest_00",
+    "content": {
+      "oracle_reason": "第1趟收获第0—3垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 0,
+      "end_ridge": 3
+    },
+    "depends_on": [
+      "header"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_00": {
+    "name": "unload_00",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-00-03"
+    },
+    "depends_on": [
+      "harvest_00"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_00": {
+    "name": "dry_00",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-00-03",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_00"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_00": {
+    "name": "store_00",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-00-03"
+    },
+    "depends_on": [
+      "dry_00"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_04": {
+    "name": "harvest_04",
+    "content": {
+      "oracle_reason": "第2趟收获第4—7垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 4,
+      "end_ridge": 7
+    },
+    "depends_on": [
+      "store_00"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_04": {
+    "name": "unload_04",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-04-07"
+    },
+    "depends_on": [
+      "harvest_04"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_04": {
+    "name": "dry_04",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-04-07",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_04"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_04": {
+    "name": "store_04",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-04-07"
+    },
+    "depends_on": [
+      "dry_04"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_08": {
+    "name": "harvest_08",
+    "content": {
+      "oracle_reason": "第3趟收获第8—11垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 8,
+      "end_ridge": 11
+    },
+    "depends_on": [
+      "store_04"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_08": {
+    "name": "unload_08",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-08-11"
+    },
+    "depends_on": [
+      "harvest_08"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_08": {
+    "name": "dry_08",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-08-11",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_08"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_08": {
+    "name": "store_08",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-08-11"
+    },
+    "depends_on": [
+      "dry_08"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_12": {
+    "name": "harvest_12",
+    "content": {
+      "oracle_reason": "第4趟收获第12—15垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 12,
+      "end_ridge": 15
+    },
+    "depends_on": [
+      "store_08"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_12": {
+    "name": "unload_12",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-12-15"
+    },
+    "depends_on": [
+      "harvest_12"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_12": {
+    "name": "dry_12",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-12-15",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_12"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_12": {
+    "name": "store_12",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-12-15"
+    },
+    "depends_on": [
+      "dry_12"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_16": {
+    "name": "harvest_16",
+    "content": {
+      "oracle_reason": "第5趟收获第16—19垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 16,
+      "end_ridge": 19
+    },
+    "depends_on": [
+      "store_12"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_16": {
+    "name": "unload_16",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-16-19"
+    },
+    "depends_on": [
+      "harvest_16"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_16": {
+    "name": "dry_16",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-16-19",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_16"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_16": {
+    "name": "store_16",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-16-19"
+    },
+    "depends_on": [
+      "dry_16"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_20": {
+    "name": "harvest_20",
+    "content": {
+      "oracle_reason": "第6趟收获第20—23垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 20,
+      "end_ridge": 23
+    },
+    "depends_on": [
+      "store_16"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_20": {
+    "name": "unload_20",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-20-23"
+    },
+    "depends_on": [
+      "harvest_20"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_20": {
+    "name": "dry_20",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-20-23",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_20"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_20": {
+    "name": "store_20",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-20-23"
+    },
+    "depends_on": [
+      "dry_20"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_24": {
+    "name": "harvest_24",
+    "content": {
+      "oracle_reason": "第7趟收获第24—27垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 24,
+      "end_ridge": 27
+    },
+    "depends_on": [
+      "store_20"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_24": {
+    "name": "unload_24",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-24-27"
+    },
+    "depends_on": [
+      "harvest_24"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_24": {
+    "name": "dry_24",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-24-27",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_24"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_24": {
+    "name": "store_24",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-24-27"
+    },
+    "depends_on": [
+      "dry_24"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_28": {
+    "name": "harvest_28",
+    "content": {
+      "oracle_reason": "第8趟收获第28—31垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 28,
+      "end_ridge": 31
+    },
+    "depends_on": [
+      "store_24"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_28": {
+    "name": "unload_28",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-28-31"
+    },
+    "depends_on": [
+      "harvest_28"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_28": {
+    "name": "dry_28",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-28-31",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_28"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_28": {
+    "name": "store_28",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-28-31"
+    },
+    "depends_on": [
+      "dry_28"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_32": {
+    "name": "harvest_32",
+    "content": {
+      "oracle_reason": "第9趟收获第32—35垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 32,
+      "end_ridge": 35
+    },
+    "depends_on": [
+      "store_28"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_32": {
+    "name": "unload_32",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-32-35"
+    },
+    "depends_on": [
+      "harvest_32"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_32": {
+    "name": "dry_32",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-32-35",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_32"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_32": {
+    "name": "store_32",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-32-35"
+    },
+    "depends_on": [
+      "dry_32"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_36": {
+    "name": "harvest_36",
+    "content": {
+      "oracle_reason": "第10趟收获第36—39垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 36,
+      "end_ridge": 39
+    },
+    "depends_on": [
+      "store_32"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_36": {
+    "name": "unload_36",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-36-39"
+    },
+    "depends_on": [
+      "harvest_36"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_36": {
+    "name": "dry_36",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-36-39",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_36"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_36": {
+    "name": "store_36",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-36-39"
+    },
+    "depends_on": [
+      "dry_36"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_40": {
+    "name": "harvest_40",
+    "content": {
+      "oracle_reason": "第11趟收获第40—43垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 40,
+      "end_ridge": 43
+    },
+    "depends_on": [
+      "store_36"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_40": {
+    "name": "unload_40",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-40-43"
+    },
+    "depends_on": [
+      "harvest_40"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_40": {
+    "name": "dry_40",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-40-43",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_40"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_40": {
+    "name": "store_40",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-40-43"
+    },
+    "depends_on": [
+      "dry_40"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_44": {
+    "name": "harvest_44",
+    "content": {
+      "oracle_reason": "第12趟收获第44—47垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 44,
+      "end_ridge": 47
+    },
+    "depends_on": [
+      "store_40"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_44": {
+    "name": "unload_44",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-44-47"
+    },
+    "depends_on": [
+      "harvest_44"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_44": {
+    "name": "dry_44",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-44-47",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_44"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_44": {
+    "name": "store_44",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-44-47"
+    },
+    "depends_on": [
+      "dry_44"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_48": {
+    "name": "harvest_48",
+    "content": {
+      "oracle_reason": "第13趟收获第48—51垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 48,
+      "end_ridge": 51
+    },
+    "depends_on": [
+      "store_44"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_48": {
+    "name": "unload_48",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-48-51"
+    },
+    "depends_on": [
+      "harvest_48"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_48": {
+    "name": "dry_48",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-48-51",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_48"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_48": {
+    "name": "store_48",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-48-51"
+    },
+    "depends_on": [
+      "dry_48"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_52": {
+    "name": "harvest_52",
+    "content": {
+      "oracle_reason": "第14趟收获第52—55垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 52,
+      "end_ridge": 55
+    },
+    "depends_on": [
+      "store_48"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_52": {
+    "name": "unload_52",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-52-55"
+    },
+    "depends_on": [
+      "harvest_52"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_52": {
+    "name": "dry_52",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-52-55",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_52"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_52": {
+    "name": "store_52",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-52-55"
+    },
+    "depends_on": [
+      "dry_52"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_56": {
+    "name": "harvest_56",
+    "content": {
+      "oracle_reason": "第15趟收获第56—59垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 56,
+      "end_ridge": 59
+    },
+    "depends_on": [
+      "store_52"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_56": {
+    "name": "unload_56",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-56-59"
+    },
+    "depends_on": [
+      "harvest_56"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_56": {
+    "name": "dry_56",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-56-59",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_56"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_56": {
+    "name": "store_56",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-56-59"
+    },
+    "depends_on": [
+      "dry_56"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "harvest_60": {
+    "name": "harvest_60",
+    "content": {
+      "oracle_reason": "第16趟收获第60—63垄；工具检查真实成熟、天气、通行性和2t粮箱容量。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__harvest",
+    "tool_args": {
+      "farm_id": "field",
+      "start_ridge": 60,
+      "end_ridge": 63
+    },
+    "depends_on": [
+      "store_56"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "unload_60": {
+    "name": "unload_60",
+    "content": {
+      "oracle_reason": "每4垄卸一次，清空2t粮箱并记录来源，避免下一趟溢出。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Tractor__unload_grain",
+    "tool_args": {
+      "batch_id": "season-2019-60-63"
+    },
+    "depends_on": [
+      "harvest_60"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "dry_60": {
+    "name": "dry_60",
+    "content": {
+      "oracle_reason": "按作物标准水分干燥；共用20t/日额度，安全粮工具跳过。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__dry_grain",
+    "tool_args": {
+      "batch_id": "season-2019-60-63",
+      "target_moisture_pct": 14.0
+    },
+    "depends_on": [
+      "unload_60"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "store_60": {
+    "name": "store_60",
+    "content": {
+      "oracle_reason": "这4垄安全粮批次入库；受20t总库容约束。"
+    },
+    "op_type": "WRITE",
+    "tool_name": "Warehouse__store_grain",
+    "tool_args": {
+      "batch_id": "season-2019-60-63"
+    },
+    "depends_on": [
+      "dry_60"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "final_field": {
+    "name": "final_field",
+    "content": {
+      "oracle_reason": "逐垄核对最终收获状态。"
+    },
+    "op_type": "READ",
+    "tool_name": "Field__get_farm_overview",
+    "tool_args": {},
+    "depends_on": [
+      "store_60"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "final_inventory": {
+    "name": "final_inventory",
+    "content": {
+      "oracle_reason": "核对安全入库粮、种子、肥料和燃油账。"
+    },
+    "op_type": "READ",
+    "tool_name": "Warehouse__get_inventory",
+    "tool_args": {},
+    "depends_on": [
+      "final_field"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  },
+  "final_machine": {
+    "name": "final_machine",
+    "content": {
+      "oracle_reason": "确认空料斗、空粮箱，设备状态未重置。"
+    },
+    "op_type": "READ",
+    "tool_name": "Tractor__get_status",
+    "tool_args": {},
+    "depends_on": [
+      "final_inventory"
+    ],
+    "time": "2019-09-18 15:07:08+02:00"
+  }
+}

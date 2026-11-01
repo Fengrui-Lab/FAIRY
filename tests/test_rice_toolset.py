@@ -79,7 +79,7 @@ def test_machine_fuel_and_implement_preconditions_are_atomic():
 def test_partial_transplant_starts_native_crop_once_and_rejects_midnight():
     w = checkpoint("before_transplant", "equipment_limit")
     ops = PaddyOpsApp(w)
-    PaddyMachineryApp(w).refuel("transplanter", 10)
+    # The new source checkpoint already includes the required refuelling.
     ops.load_seedlings("ir72_standard", 37500)
     ops.transplant("p1", "ir72_standard", area_m2=500)
     assert not w.plot("p1").planted and w.backends["p1"].transplant_date is None

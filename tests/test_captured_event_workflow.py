@@ -8,9 +8,11 @@ from fairy.apps.farm_world.multi_farm import FarmFleet, FarmSite
 from fairy.apps.system import SystemApp
 from fairy.controllers.engine import CST, Engine
 from fairy.scenarios.scenario import Scenario
-from fairy.scenarios.workflow_validation import workflow_from_oracle_events
+from fairy.scenarios.workflow_validation import (
+    evaluate_workflows, workflow_from_event_log, workflow_from_oracle_events,
+)
 from fairy.tool_utils import OperationType, app_tool
-from fairy.types import EventRegisterer, event_registered
+from fairy.types import Action, CompletedEvent, EventRegisterer, EventType, event_registered
 
 
 class ElapsedToolApp(App):
@@ -138,6 +140,54 @@ def test_oracle_event_conversion_preserves_every_farm_app_namespace():
             "phase": "monitor",
             "oracle_reason": f"Read {step['tool_name'].split('__')[0]}.",
         }
+
+    # The same operations must retain their public identity after Agent replay.
+    # Both sites use the same implementation classes, but are distinct targets.
+    events = [
+        CompletedEvent(event_type=EventType.AGENT, event_time=float(i),
+            action=Action(app=event.app,
+                function=getattr(event.app, event.function.__name__),
+                args=workflow[f"step{i}"]["tool_args"]))
+        for i, event in enumerate(captured)
+    ]
+    replay = workflow_from_event_log(events)
+    assert {step["tool_name"] for step in replay.values()} == expected_tools
+    assert evaluate_workflows(workflow, replay)["coverage"] == 1.0
+    # Reading only North must not get credit for identical methods on South.
+    north_only = workflow_from_event_log(events[:5])
+    assert evaluate_workflows(workflow, north_only)["coverage"] == 0.5
+
+
+@pytest.mark.parametrize("name", [None, "Tractor"])
+def test_replay_tool_names_match_registered_tools_for_default_and_custom_names(name):
+    from fairy.agents.agent.toolset_builder import build_toolset
+
+    app = ElapsedToolApp()
+    app.name = name or app.__class__.__name__
+    _, schemas, _ = build_toolset([app])
+    event = CompletedEvent(event_type=EventType.AGENT,
+        action=Action(app=app, function=app.work, args={"seconds": 73}))
+    replay = workflow_from_event_log([event])
+    assert replay["step0"]["tool_name"] == schemas[0]["function"]["name"]
+    assert replay["step0"]["tool_name"] == f"{app.name}__work"
+
+
+@pytest.mark.parametrize("name_state", ["missing", None, ""])
+def test_oracle_and_replay_fall_back_to_class_when_public_name_is_unavailable(name_state):
+    app = ElapsedToolApp()
+    with EventRegisterer.capture_mode() as captured:
+        app.work().oracle()
+    if name_state == "missing":
+        del app.name
+    else:
+        app.name = name_state
+    oracle = workflow_from_oracle_events(Scenario(apps=[app], events=list(captured)))
+    replay = workflow_from_event_log([
+        CompletedEvent(event_type=EventType.AGENT,
+            action=Action(app=app, function=app.work))
+    ])
+    assert oracle["step0"]["tool_name"] == "ElapsedToolApp__work"
+    assert replay["step0"]["tool_name"] == "ElapsedToolApp__work"
 
 
 def test_event_conversion_keeps_distinct_reasons_for_consecutive_waits():

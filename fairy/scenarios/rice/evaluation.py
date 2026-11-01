@@ -13,7 +13,7 @@ METRICS = ("biological_dry_kg", "harvested_dry_kg", "stored_kg_at_14pct")
 
 
 def focus_units(scenario):
-    if scenario.task in {"puddle", "transplant", "irrigate", "drain", "harvest", "observe_water", "dry", "store", "fertilize", "repair_bund", "gap_fill"}:
+    if scenario.task in {"puddle", "transplant", "irrigate", "drain", "harvest", "observe_water", "dry", "store", "fertilize", "repair_bund", "gap_fill", "scout"}:
         return ["p1"]
     return [p.plot_id for p in scenario.get_typed_app(PaddyWorldApp).field.plots]
 
@@ -71,6 +71,10 @@ def build_baseline(scenario_id, *, include_donothing=True, max_days=220):
               "focus_unit_ids": focus_units(scenario), "projection_max_days": max_days,
               "oracle": project_outcome(world, max_days=max_days),
               "validation": validation.to_dict()}
+    if scenario.level in {"L1", "L2"}:
+        from fairy.scenarios.rice.farm_checkpoint_state import load_artifact
+        lineage = load_artifact("split_lineage.json")[scenario_id]
+        result.update({key: lineage[key] for key in ("source_l3_plan_sha256", "source_step_range")})
     if include_donothing:
         no_action = cls(crop_backend="wofost")
         no_action.setup()
@@ -89,6 +93,11 @@ def compare_outcome(scenario, baseline):
             baseline["initial_checkpoint_sha256"] != scenario._initial_state["sha256"] or
             baseline["focus_unit_ids"] != focus_units(scenario)):
         raise ValueError("Rice baseline scenario/checkpoint/focus-unit mismatch")
+    if scenario.level in {"L1", "L2"}:
+        from fairy.scenarios.rice.farm_checkpoint_state import load_artifact
+        lineage = load_artifact("split_lineage.json")[scenario.scenario_id]
+        if any(baseline.get(key) != lineage[key] for key in ("source_l3_plan_sha256", "source_step_range")):
+            raise ValueError("Rice baseline differs from installed L3 split; rebuild the oracle baseline")
     ids = focus_units(scenario)
     actual = totals(project_outcome(world, max_days=baseline["projection_max_days"]), ids)
     oracle = totals(baseline["oracle"], ids)

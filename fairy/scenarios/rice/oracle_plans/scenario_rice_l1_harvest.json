@@ -5,35 +5,58 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_harvest",
-  "initial_checkpoint_sha256": "77fe8262917843c2f9dcee56bfbf167664400a688d61887fdf0a18886cd78a47",
+  "initial_checkpoint_sha256": "1850baa0fe1e243ae842ea87b146db90f0a4455bd4389e71f7df9f6e58e794af",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "aecc73a38a31a25159e337a20c759d6e4352a10ca4eacbb7e4ac8657572f8df4",
+  "expected_final_state_sha256": "1c0af274e5723841ad3bcb7d726e7b09be4c5f9707fccbe157af091068bbda32",
   "checkpoint_steps": {},
   "steps": [
     {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__inspect_crop",
+      "tool_args": {
+        "plot_id": "p2"
+      },
+      "duration_seconds": 900.0
+    },
+    {
+      "tool_name": "PaddyObservationApp__read_water_sensors",
+      "tool_args": {
+        "plot_id": "p1"
+      },
+      "duration_seconds": 0.0
+    },
+    {
+      "tool_name": "WeatherApp__get_current_weather",
       "tool_args": {},
       "duration_seconds": 0.0
     },
     {
-      "tool_name": "PaddyMachineryApp__get_machine_status",
+      "tool_name": "PaddyObservationApp__measure_grain_moisture",
       "tool_args": {
-        "machine_id": "combine"
+        "plot_id": "p1"
       },
-      "duration_seconds": 0.0
+      "duration_seconds": 300.0
     },
     {
       "tool_name": "PaddyOpsApp__harvest",
       "tool_args": {
-        "plot_id": "p1"
+        "plot_id": "p1",
+        "area_m2": 1000.0
       },
       "duration_seconds": 1800.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    174,
+    180
   ]
 }
