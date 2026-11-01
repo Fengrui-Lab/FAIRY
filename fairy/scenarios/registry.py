@@ -53,16 +53,20 @@ def _import_known_scenarios() -> None:
         "fairy.scenarios.rice",
         "fairy.scenarios.maize",
         "fairy.scenarios.crop_challenges",
+        "fairy.scenarios.management_extensions",
     ):
         mod = importlib.import_module(package)
-        for info in pkgutil.walk_packages(mod.__path__, package + "."):
-            if not info.ispkg:
-                imported = importlib.import_module(info.name)
-                for value in vars(imported).values():
-                    if (
-                        isinstance(value, type)
-                        and issubclass(value, Scenario)
-                        and value is not Scenario
-                        and getattr(value, "scenario_id", "")
-                    ):
-                        _REGISTRY.setdefault(value.scenario_id, value)
+        explicit_modules = getattr(mod, "SCENARIO_MODULES", None)
+        module_names = ([package + "." + name for name in explicit_modules]
+                        if explicit_modules is not None else
+                        [info.name for info in pkgutil.walk_packages(mod.__path__, package + ".") if not info.ispkg])
+        for module_name in module_names:
+            imported = importlib.import_module(module_name)
+            for value in vars(imported).values():
+                if (
+                    isinstance(value, type)
+                    and issubclass(value, Scenario)
+                    and value is not Scenario
+                    and getattr(value, "scenario_id", "")
+                ):
+                    _REGISTRY.setdefault(value.scenario_id, value)
