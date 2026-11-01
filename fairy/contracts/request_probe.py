@@ -23,7 +23,15 @@ def probe_request(job):
     client = None
     transport = None
     try:
-        if provider == 'system-one-compatible':
+        if provider == 'typesafe':
+            from fairy.agents.llm.typesafe_client import TypeSafeJevClient
+            client = TypeSafeJevClient(service['model_id'], 0.0, base_url=service.get('endpoint'),
+                api_key_env=service.get('api_key_env'), timeout=timeout, max_retries=0)
+            result['http_request_count'] = 1
+            response = client.system_one(job['state'], job['questions'])
+            result.update(response=asdict(response), usage=response.usage.tokens(),
+                          returned_model=response.model, max_retries=client.sdk_max_retries)
+        elif provider == 'system-one-compatible':
             # No question limit: exactly one batch (or zero for local singletons).
             client = SystemOneCompatibleClient(service['model_id'], base_url=service['endpoint'],
                 api_key_env=service.get('api_key_env'), timeout=timeout)
@@ -31,7 +39,7 @@ def probe_request(job):
             response = client.system_one(job['state'], job['questions'])
             result.update(response=asdict(response), usage=response.usage.tokens(),
                           returned_model=response.model, http_request_count=len(response.batches))
-        elif provider in ('vllm', 'openai-compatible'):
+        elif provider in ('vllm', 'openai-compatible', 'deepseek'):
             transport = httpx.Client(timeout=timeout, follow_redirects=False)
             config = {k: service[k] for k in ('temperature', 'max_output_tokens', 'enable_thinking',
                       'output_token_parameter', 'send_temperature', 'reasoning_effort') if k in service}
@@ -71,8 +79,8 @@ def probe_request(job):
         result.update(error_category=category, error_type=name, status_code=status)
     finally:
         if client:
-            if provider == 'system-one-compatible': client.close()
-            else: client.api_client.close()
-        if transport: transport.close()
+            client.api_client.close() if provider in ('vllm', 'openai-compatible', 'deepseek') else client.close()
+        if transport:
+            transport.close()
     result['request_seconds'] = time.perf_counter() - started
     return result

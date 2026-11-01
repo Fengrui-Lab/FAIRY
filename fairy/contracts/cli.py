@@ -55,24 +55,16 @@ def probe(service):
     p = service['provider']
     if p == 'typesafe':
         from fairy.agents.llm.typesafe_client import TypeSafeJevClient
-        key = service.get('api_key_env') or 'TYPESAFE_API_KEY'
-        if not os.environ.get(key):
-            raise ValueError('Missing service credential')
-        previous = os.environ.get('TYPESAFE_API_KEY')
-        os.environ['TYPESAFE_API_KEY'] = os.environ[key]
-        try:
-            client = TypeSafeJevClient(service['model_id'], 0.0, timeout=service.get('timeout',60),
-                                      max_retries=0, base_url=service.get('endpoint'))
-        finally:
-            if previous is None: os.environ.pop('TYPESAFE_API_KEY',None)
-            else: os.environ['TYPESAFE_API_KEY'] = previous
+        client = TypeSafeJevClient(service['model_id'], 0.0, timeout=service.get('timeout',60),
+                                  max_retries=0, base_url=service.get('endpoint'),
+                                  api_key_env=service.get('api_key_env'))
         import time
         started = time.perf_counter()
         try:
             result = client.system_one({'label':'a'}, {'probe':{'type':'choice','instructions':'Choose a', 'criteria':{'a':'a','b':'b'}}})
         finally:
             client.close()
-        match = result.choices['probe'].choice == 'a'
+        match = result.choices['probe'].choice == 'a' and result.model == service['model_id']
         return {'status':'passed' if match else 'semantic_probe_failed', 'contract_ok':True,
                 'semantic_match':match, 'provider':p, 'requested_model':service['model_id'],
                 'returned_model':result.model, 'usage':result.usage.tokens(),
@@ -87,7 +79,7 @@ def probe(service):
         chat_provider=p, max_output_tokens=service.get('max_output_tokens',128),
         enable_thinking=service.get('enable_thinking'), output_token_parameter=service.get('output_token_parameter','max_tokens'),
         temperature=service.get('temperature',0.0), send_temperature=service.get('send_temperature',True), reasoning_effort=service.get('reasoning_effort'))
-    if p not in {'vllm','openai-compatible','system-one-compatible'}:
+    if p not in {'vllm','openai-compatible','deepseek','system-one-compatible'}:
         raise ValueError('Unsupported provider')
     result = check_decision(args) if p == 'system-one-compatible' else check_chat(args)
     result['status'] = 'passed' if result['semantic_match'] else 'semantic_probe_failed'

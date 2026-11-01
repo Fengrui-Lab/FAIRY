@@ -96,7 +96,7 @@ def main(argv=None) -> int:
     parser.add_argument("--max-questions-per-request", type=int, default=None)
     parser.add_argument("--question-count", type=int, default=2)
     parser.add_argument("--option-count", type=int, default=2)
-    parser.add_argument("--chat-provider", choices=["vllm", "openai-compatible"], default="vllm")
+    parser.add_argument("--chat-provider", choices=["vllm", "openai-compatible", "deepseek"], default="vllm")
     parser.add_argument("--max-output-tokens", type=int, default=1024)
     parser.add_argument("--enable-thinking", type=_coerce_optional_bool_arg, default=None)
     args = parser.parse_args(argv)

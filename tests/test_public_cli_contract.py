@@ -45,7 +45,7 @@ def test_typesafe_probe_custom_environment(monkeypatch):
     class Client:
         def __init__(self,**kwargs):
             import os
-            calls.append((kwargs,os.environ['TYPESAFE_API_KEY']))
+            calls.append((kwargs,kwargs['api_key']))
         def system_one(self,**kwargs):
             return {'model':'actual-returned','choices':{'probe':{'choice':'a','probabilities':{'a':.9,'b':.1},'confidence':.9}}}
     monkeypatch.setattr(Client, 'close', lambda self: None, raising=False)
@@ -53,7 +53,7 @@ def test_typesafe_probe_custom_environment(monkeypatch):
     monkeypatch.setitem(sys.modules,'typesafe_sdk.constants',SimpleNamespace(BASE_URL_ENV='TYPESAFE_BASE_URL',DEFAULT_BASE_URL='https://api.typesafe.ai',DEFAULT_TIMEOUT=10.0))
     monkeypatch.setenv('CUSTOM_TYPESAFE','fixture-key')
     result=probe({'provider':'typesafe','model_id':'served','api_key_env':'CUSTOM_TYPESAFE'})
-    assert result['status']=='passed'
+    assert result['status']=='semantic_probe_failed'  # Returned model differs.
     assert calls[0][1]=='fixture-key'
     assert calls[0][0]['timeout']==60 and calls[0][0]['retry'].max_retries==0
     assert result['max_retries']==0 and result['timeout_seconds']==60

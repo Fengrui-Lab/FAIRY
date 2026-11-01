@@ -166,7 +166,7 @@ def _fallback_config(args: argparse.Namespace) -> dict[str, Any]:
     from fairy.agents.llm.system_one_client import api_key_from_env, api_root
 
     provider = args.fallback_provider or "openai"
-    if args.fallback_enable_thinking is not None and provider not in ("vllm", "openai-compatible", "llama-api"):
+    if args.fallback_enable_thinking is not None and provider not in ("vllm", "openai-compatible", "llama-api", "deepseek"):
         raise ValueError("--fallback-enable-thinking requires vllm or openai-compatible")
     config = {
         "provider": provider, "model": args.fallback_model,
@@ -397,7 +397,7 @@ def main() -> None:
         from fairy.agents.llm.system_one_client import api_key_from_env
         if args.request_max_retries is not None and args.request_max_retries < 0:
             raise ValueError("request-max-retries must be nonnegative")
-        if args.enable_thinking is not None and args.provider not in {"vllm", "openai-compatible", "llama-api"}:
+        if args.enable_thinking is not None and args.provider not in {"vllm", "openai-compatible", "llama-api", "deepseek"}:
             raise ValueError("thinking requires a compatible chat provider")
         llm = BaseLLM.llm_builder(
             {
@@ -483,6 +483,9 @@ def main() -> None:
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
         )
+        reasoning_log_path = output_dir / f"{args.scenario}.reasoning.jsonl"
+        reasoning_log_path.write_text("")
+        agent.reasoning_event_sink = lambda event: _append_live_progress(reasoning_log_path, event)
         engine = Engine(agent=agent, scenario=scenario)
         workflow = None
         final_message = None
@@ -534,6 +537,8 @@ def main() -> None:
 
         runtime_log_path = output_dir / f"{args.scenario}.runtime_log.jsonl"
         write_jsonl(runtime_log_path, _runtime_log_rows(agent.runtime_events))
+        write_jsonl(reasoning_log_path, _runtime_log_rows(agent.reasoning_events))
+        artifacts["reasoning_log"] = str(reasoning_log_path)
         artifacts["runtime_log"] = str(runtime_log_path)
 
         if a2a_metadata.get("enabled"):

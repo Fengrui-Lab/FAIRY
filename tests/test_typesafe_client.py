@@ -43,7 +43,7 @@ def test_defaults_are_not_overridden(sdk):
 @pytest.mark.parametrize('probabilities',[{'a':.8,'b':.199},{'a':.8,'b':.201}])
 def test_explicit_options_and_raw_probabilities(sdk,probabilities):
     seen,options,mode=sdk;mode['probabilities']=probabilities
-    c=TypeSafeJevClient('jev-1.14.0',.1,timeout=60,max_retries=0,base_url='http://local.test')
+    c=TypeSafeJevClient('jev-1.14.0',.1,timeout=60,max_retries=0,base_url='http://local.test',api_key_env='TYPESAFE_API_KEY')
     try:
         result=c.system_one({},Q)
         assert result.choices['probe'].probabilities==probabilities
@@ -91,3 +91,43 @@ def test_service_probe_reports_effective_settings(sdk):
     assert result['usage']['total_tokens']==11 and result['endpoint']=='http://local.test'
     assert 'test-only-key' not in json.dumps(result)
     assert len(sdk[0])==1
+
+
+def test_custom_endpoint_does_not_inherit_cloud_key(sdk):
+    seen, options, _ = sdk
+    c = TypeSafeJevClient('vllm-sr/d3', 0, base_url='http://local.test', max_retries=0)
+    try:
+        c.system_one('中文 English', Q)
+        assert seen[0].headers['authorization'] == 'Bearer local-no-auth'
+        assert json.loads(seen[0].content)['state'] == '中文 English'
+    finally:
+        c.close()
+
+
+def test_explicit_credential_env_is_required(sdk, monkeypatch):
+    monkeypatch.delenv('D3_TEST_KEY', raising=False)
+    with pytest.raises(ValueError, match='Missing service credential'):
+        TypeSafeJevClient('vllm-sr/d3', 0, base_url='http://local.test', api_key_env='D3_TEST_KEY')
+
+
+def test_singletons_and_multiple_questions_use_sdk_unchanged(monkeypatch):
+    requests=[]
+    real=typesafe_sdk.TypeSafeClient
+    def handler(request):
+        payload=json.loads(request.content); requests.append(payload)
+        return httpx2.Response(200,json={'model':payload['model'],'usage':{'input_tokens':3,'output_tokens':0},
+            'answers':{k:{'type':'choice','choice':next(iter(q['criteria'])),
+                'confidence':1.,'probabilities':{o:float(i==0) for i,o in enumerate(q['criteria'])}}
+                for k,q in payload['questions'].items()}})
+    monkeypatch.setattr(typesafe_sdk,'TypeSafeClient',lambda **kw:real(**kw,transport=httpx2.MockTransport(handler)))
+    questions={**Q,'singleton':{'type':'choice','instructions':'唯一选项','criteria':{'only':'only'}}}
+    for model in ['vllm-sr/d3','jev-1.14.0']:
+        c=TypeSafeJevClient(model,0,base_url='http://local.test',max_retries=0)
+        try:
+            r=c.system_one('中文 English',questions)
+            assert not r.choices['singleton'].deterministic
+            assert r.usage.output_tokens==0 and r.usage.cached_tokens is None
+        finally:c.close()
+    assert len(requests)==2
+    assert requests[0]['questions']==requests[1]['questions']==questions
+    assert requests[0]['state']==requests[1]['state']=='中文 English'
