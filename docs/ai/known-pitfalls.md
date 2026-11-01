@@ -135,6 +135,17 @@
   subsequent requests. Existing historical logs are not rewritten.
   `llm_call_start.enable_thinking_override=null` means no client override;
   it does not prove whether the server enabled thinking.
+- As of 2026-11-01, `gpt-6-luna` uses Responses with explicit `medium`
+  reasoning. Inspect `llm_config.api_mode=responses` and
+  `llm_config.reasoning_effort=medium`; actual usage is normalized to
+  `llm_call_end.usage.completion_tokens_details.reasoning_tokens`.
+  `reasoning_history_policy=encrypted_tool_context` means encrypted protocol
+  items for tool turns are replayed from client memory, without being added to
+  public message history, logs or exports. This cache is process-local, so
+  exported transcripts alone do not restore encrypted reasoning after restart.
+  Other providers retain the existing exclusion policy. The output-token cap
+  still covers both reasoning and visible output; truncation remains a rejected,
+  billed attempt and does not execute partial tools.
 - On 2026-10-20, the user requested full console diagnostics specifically for
   `empty_response`: `BaseAgent.chat_completion()` prints the returned `reasoning`
   and `reasoning_content` fields as JSON before raising the existing retryable

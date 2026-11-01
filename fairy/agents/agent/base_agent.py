@@ -82,8 +82,10 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            "api_mode": getattr(self.llm, "api_mode", None),
+            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
-            "reasoning_history_policy": "exclude",
+            "reasoning_history_policy": getattr(self.llm, "reasoning_history_policy", "exclude"),
         }
 
     def chat_completion(self, messages, tools=None):
@@ -104,7 +106,7 @@ class BaseAgent:
             max_output_tokens=getattr(self.llm, "max_output_tokens", None),
             parallel_tool_calls=getattr(self.llm, "parallel_tool_calls", None),
             enable_thinking_override=getattr(self.llm, "enable_thinking", None),
-            reasoning_history_policy="exclude",
+            reasoning_history_policy=getattr(self.llm, "reasoning_history_policy", "exclude"),
             llm_config=self.llm_config(),
             message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
@@ -128,7 +130,10 @@ class BaseAgent:
         raw_message = getattr(choice, "message", None)
         raw_tool_calls = list(getattr(raw_message, "tool_calls", None) or [])
         finish_reason = getattr(choice, "finish_reason", None)
-        rejection_reason = self._response_rejection_reason(raw_message, finish_reason)
+        rejection_reason = (
+            getattr(response, "response_rejection_reason", None)
+            or self._response_rejection_reason(raw_message, finish_reason)
+        )
         # Rejected replies are logged/accounted for but never become history
         # or executable tool calls, including partially generated tool calls.
         message = (
