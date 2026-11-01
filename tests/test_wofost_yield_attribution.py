@@ -28,7 +28,7 @@ def _harvested_scenario(*, dry_matter: bool, recovery_fraction: float = 0.95):
     state.recovered_yield_g_m2_at_market_moisture = (
         100.0 if dry_matter else 87.0
     ) * recovery_fraction
-    farm_world = SimpleNamespace(_physics=physics)
+    farm_world = SimpleNamespace(_physics=physics, ridge_area_m2=RIDGE_AREA_M2)
     scenario = SimpleNamespace(get_typed_app=lambda _: farm_world)
     return scenario, physics
 
@@ -105,3 +105,69 @@ def test_unharvested_mature_ridge_stays_in_recovery_ratio_denominator():
     assert breakdown.yield_ratio == pytest.approx(0.95 / 2.0)
     assert breakdown.unharvested_mature_count == 1
     assert breakdown.agent_biological_kg == pytest.approx(174.0 * RIDGE_AREA_M2 / 1000.0)
+
+
+@pytest.fixture(params=[(268.0, 0.75, 201.0), (268.0, 1.1, 294.8), (100.0, 0.75, 75.0)])
+def geometry_yield_world(request):
+    from fairy.apps.farm_world.farm_world_app import FarmWorldApp
+
+    length, width, expected_area = request.param
+    world = FarmWorldApp(num_ridges=2, field_length_m=length, ridge_width_m=width)
+    physics = FarmPhysicsState(num_ridges=2)
+    physics.engines_active = True
+    for rid, biological in enumerate((100.0, 200.0)):
+        physics.phenology.states[rid].planted = True
+        state = physics.yield_recovery.states[rid]
+        state.biological_yield_g_m2 = biological
+        state.recovered_yield_g_m2_at_market_moisture = biological * 0.9 if rid == 0 else 0.0
+        state.r8_reached = True
+        state.harvested = rid == 0
+    world._physics = physics
+    return world, expected_area
+
+
+def test_outcome_and_focus_use_actual_field_geometry(geometry_yield_world, monkeypatch):
+    from fairy.scenarios.fos import evaluation
+
+    world, area = geometry_yield_world
+    scenario = SimpleNamespace(scenario_id="geometry_test", get_typed_app=lambda _: world)
+    baseline = {
+        "crop_backend_provenance": {"backend": "legacy"},
+        "biological_yield_g_m2_per_ridge": [200.0, 400.0],
+        "donothing": {
+            "crop_backend_provenance": {"backend": "legacy"},
+            "biological_yield_g_m2_per_ridge": [50.0, 100.0],
+        },
+    }
+    monkeypatch.setattr(evaluation, "_load_oracle_baseline_data", lambda *args: baseline)
+    _, outcome = _compute_outcome(
+        scenario, env=None, crop_loss_threshold=0.5,
+        oracle_biological_kg=600.0 * area / 1000.0,
+        donothing_biological_kg=150.0 * area / 1000.0,
+        focus_ridge_ids=[1],
+    )
+    assert outcome.agent_biological_kg == pytest.approx(300.0 * area / 1000.0)
+    assert outcome.agent_recovered_yield_kg == pytest.approx(90.0 * area / 1000.0)
+    assert outcome.unharvested_mature_count == 1
+    assert outcome.yield_preserved_ratio == pytest.approx(0.5)
+    assert outcome.normalized_yield_score == pytest.approx(1.0 / 3.0)
+    assert outcome.focus_agent_biological_kg == pytest.approx(200.0 * area / 1000.0)
+    assert outcome.focus_oracle_biological_kg == pytest.approx(400.0 * area / 1000.0)
+    assert outcome.focus_donothing_biological_kg == pytest.approx(100.0 * area / 1000.0)
+
+
+@pytest.mark.parametrize("with_per_ridge", [False, True])
+def test_inline_donothing_uses_actual_field_geometry(
+    geometry_yield_world, monkeypatch, with_per_ridge,
+):
+    from fairy.scenarios.fos import evaluation
+
+    world, area = geometry_yield_world
+    monkeypatch.setattr(evaluation, "_initialize_donothing_scenario", lambda *args: (world, world._physics))
+    monkeypatch.setattr(evaluation, "_advance_donothing_to_maturity", lambda *args: None)
+    if with_per_ridge:
+        total, per_ridge = evaluation.compute_donothing_per_ridge_yields("geometry_test")
+        assert per_ridge == [100.0, 200.0]
+    else:
+        total = evaluation.compute_donothing_biological_kg("geometry_test")
+    assert total == pytest.approx(300.0 * area / 1000.0)
