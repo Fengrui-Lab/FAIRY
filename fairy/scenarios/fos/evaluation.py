@@ -1169,7 +1169,7 @@ def _count_safety_violations(env: Any) -> tuple[int, list[dict[str, Any]]]:
                 violations += 1
                 details.append(
                     {
-                        "tool": f"{action.class_name}__{action.function_name}",
+                        "tool": f"{action.app_name or action.class_name}__{action.function_name}",
                         "error": error_msg,
                         "event_time": getattr(event, "event_time", None),
                     }
