@@ -98,6 +98,37 @@ def test_seed_varieties_do_not_mix_and_failed_load_does_not_change_type(tractor_
     assert tractor.get_status()["seed_hopper"] == 100
 
 
+@pytest.mark.parametrize(
+    "remaining,stock,requested,transferred,response_key",
+    [
+        (82_880, 1_000, 100, 100, "status"),
+        (299_950, 1_000, 100, 50, "status"),
+        (300_000, 1_000, 100, 0, "msg"),
+        (82_880, 0, 100, 0, "error"),
+    ],
+)
+@pytest.mark.parametrize("via_tool", [False, True])
+def test_single_farm_seed_switch_preserves_original_loading_order(
+    remaining, stock, requested, transferred, response_key, via_tool,
+):
+    world = FarmWorldApp()
+    tractor = TractorApp(world, WeatherApp())
+    tractor.seed_type = "HEINONG84"
+    tractor._seed_hopper = remaining
+    world._inventory.seed_stock["HEINONG58"] = stock
+    before = dict(world._inventory.seed_stock)
+    load = (next(tool for tool in tractor.get_tools() if tool.name == "load_seeds")
+            if via_tool else tractor.load_seeds)
+
+    result = load(seed_type="HEINONG58", count=requested)
+
+    assert response_key in result
+    assert tractor.get_status()["seed_type"] == "HEINONG58"
+    assert tractor.get_status()["seed_hopper"] == remaining + transferred
+    expected_stock = {**before, "HEINONG58": stock - transferred}
+    assert world._inventory.seed_stock == expected_stock
+
+
 def test_harvest_keeps_origin_and_unloads_to_named_warehouse_batch(tractor_scene):
     environment, tractor, farm_a, farm_b = tractor_scene
     for world in (farm_a, farm_b):
