@@ -1,0 +1,3860 @@
+{
+  "scope": "Finite candidates: maize fertilizer product [0,300,600] kg/ha, each crop irrigation [0,60,120,180] mm; fixed dates, cultivar, weather, geometry and public prices. No claim of global optimum. Plus full adjacent dose combinations at steps (75kg product/ha,15mm,15mm), and center-dose irrigation-date alternatives {-7,0,+7} days; two starts (best refined and best zero-fertilizer), both stopped only after no improving neighbor. No optimization over sowing date, density, field geometry, N timing or arbitrary management schedules.",
+  "candidate_count": 122,
+  "feasible_count": 83,
+  "selected": {
+    "candidate": [
+      450.0,
+      165.0,
+      75.0,
+      0
+    ],
+    "feasible": true,
+    "error": null,
+    "currency": "DEMO",
+    "prices": {
+      "maize_per_kg": 0.25,
+      "soybean_per_kg": 0.45,
+      "maize_seed_per_unit": 0.002,
+      "soybean_seed_per_unit": 0.0003,
+      "fertilizer_per_kg": 0.8,
+      "fuel_per_liter": 1.5,
+      "water_per_m3": 0.2,
+      "drying_per_kg": 0.03
+    },
+    "stored_kg_by_crop": {
+      "maize": 4184.44,
+      "soybean": 1960.04
+    },
+    "consumed_seeds": {
+      "MAIZE_201": 21440,
+      "SOYBEAN_901": 188672
+    },
+    "fertilizer_product_kg": 144.72000000000003,
+    "fuel_liters": 44.090909090909065,
+    "water_m3": 884.4,
+    "shared_water_capacity_m3": 900.0,
+    "shared_water_remaining_m3": 15.600000000000023,
+    "drying_throughput_kg": 6144.479999999999,
+    "cost_components": {
+      "seed": 99.4816,
+      "fertilizer": 115.77600000000002,
+      "fuel": 66.1363636363636,
+      "water": 176.88,
+      "drying": 184.33439999999996
+    },
+    "production_cost": 642.6083636363636,
+    "stored_grain_value": 1928.128,
+    "net_operating_margin": 1285.5196363636364
+  },
+  "cropwise_max_kg_not_jointly_attainable": {
+    "maize": 4350.2,
+    "soybean": 2031.52
+  },
+  "maximum_joint_grain_value": {
+    "candidate": [
+      600.0,
+      165.0,
+      75.0,
+      0
+    ],
+    "feasible": true,
+    "error": null,
+    "currency": "DEMO",
+    "prices": {
+      "maize_per_kg": 0.25,
+      "soybean_per_kg": 0.45,
+      "maize_seed_per_unit": 0.002,
+      "soybean_seed_per_unit": 0.0003,
+      "fertilizer_per_kg": 0.8,
+      "fuel_per_liter": 1.5,
+      "water_per_m3": 0.2,
+      "drying_per_kg": 0.03
+    },
+    "stored_kg_by_crop": {
+      "maize": 4332.08,
+      "soybean": 1960.04
+    },
+    "consumed_seeds": {
+      "MAIZE_201": 21440,
+      "SOYBEAN_901": 188672
+    },
+    "fertilizer_product_kg": 192.96000000000004,
+    "fuel_liters": 44.090909090909065,
+    "water_m3": 884.4,
+    "shared_water_capacity_m3": 900.0,
+    "shared_water_remaining_m3": 15.600000000000023,
+    "drying_throughput_kg": 6292.120000000001,
+    "cost_components": {
+      "seed": 99.4816,
+      "fertilizer": 154.36800000000005,
+      "fuel": 66.1363636363636,
+      "water": 176.88,
+      "drying": 188.76360000000003
+    },
+    "production_cost": 685.6295636363636,
+    "stored_grain_value": 1965.038,
+    "net_operating_margin": 1279.4084363636364
+  },
+  "pareto": [
+    {
+      "candidate": [
+        300.0,
+        60.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2366.76,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 475.96799999999996,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 424.03200000000004,
+      "drying_throughput_kg": 4216.960000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 95.1936,
+        "drying": 126.50880000000002
+      },
+      "production_cost": 464.5043636363636,
+      "stored_grain_value": 1424.2800000000002,
+      "net_operating_margin": 959.7756363636365
+    },
+    {
+      "candidate": [
+        600.0,
+        120.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3874.44,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 385.92,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 514.0799999999999,
+      "drying_throughput_kg": 5197.16,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 77.18400000000001,
+        "drying": 155.91479999999999
+      },
+      "production_cost": 553.0847636363636,
+      "stored_grain_value": 1563.834,
+      "net_operating_margin": 1010.7492363636364
+    },
+    {
+      "candidate": [
+        600.0,
+        60.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2608.4,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 192.96,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 707.04,
+      "drying_throughput_kg": 3931.12,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 38.592000000000006,
+        "drying": 117.9336
+      },
+      "production_cost": 476.51156363636363,
+      "stored_grain_value": 1247.324,
+      "net_operating_margin": 770.8124363636364
+    },
+    {
+      "candidate": [
+        300.0,
+        180.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3978.4,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 578.88,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 321.12,
+      "drying_throughput_kg": 5301.120000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 115.77600000000001,
+        "drying": 159.0336
+      },
+      "production_cost": 517.6115636363636,
+      "stored_grain_value": 1589.824,
+      "net_operating_margin": 1072.2124363636365
+    },
+    {
+      "candidate": [
+        600.0,
+        0.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 1362.28,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 0.0,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 900.0,
+      "drying_throughput_kg": 2685.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 0.0,
+        "drying": 80.55
+      },
+      "production_cost": 400.53596363636365,
+      "stored_grain_value": 935.7940000000001,
+      "net_operating_margin": 535.2580363636364
+    },
+    {
+      "candidate": [
+        300.0,
+        120.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3551.64,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 385.92,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 514.0799999999999,
+      "drying_throughput_kg": 4874.36,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 77.18400000000001,
+        "drying": 146.2308
+      },
+      "production_cost": 466.21676363636357,
+      "stored_grain_value": 1483.134,
+      "net_operating_margin": 1016.9172363636364
+    },
+    {
+      "candidate": [
+        600.0,
+        120.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3874.44,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 668.928,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 231.072,
+      "drying_throughput_kg": 5724.639999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 133.78560000000002,
+        "drying": 171.73919999999998
+      },
+      "production_cost": 625.5107636363637,
+      "stored_grain_value": 1801.2,
+      "net_operating_margin": 1175.6892363636364
+    },
+    {
+      "candidate": [
+        0.0,
+        120.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3193.8,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 668.928,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 231.072,
+      "drying_throughput_kg": 5044.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 133.78560000000002,
+        "drying": 151.32
+      },
+      "production_cost": 442.6781090909091,
+      "stored_grain_value": 1631.04,
+      "net_operating_margin": 1188.3618909090908
+    },
+    {
+      "candidate": [
+        600.0,
+        180.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4348.04,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 578.88,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 321.12,
+      "drying_throughput_kg": 5670.76,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 115.77600000000001,
+        "drying": 170.1228
+      },
+      "production_cost": 605.8847636363637,
+      "stored_grain_value": 1682.234,
+      "net_operating_margin": 1076.3492363636362
+    },
+    {
+      "candidate": [
+        600.0,
+        60.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2608.4,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 475.96799999999996,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 424.03200000000004,
+      "drying_throughput_kg": 4458.6,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 95.1936,
+        "drying": 133.758
+      },
+      "production_cost": 548.9375636363636,
+      "stored_grain_value": 1484.69,
+      "net_operating_margin": 935.7524363636364
+    },
+    {
+      "candidate": [
+        0.0,
+        60.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2030.2,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 192.96,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 707.04,
+      "drying_throughput_kg": 3352.9200000000005,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 38.592000000000006,
+        "drying": 100.58760000000001
+      },
+      "production_cost": 296.75210909090913,
+      "stored_grain_value": 1102.7740000000001,
+      "net_operating_margin": 806.021890909091
+    },
+    {
+      "candidate": [
+        0.0,
+        60.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2030.2,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 475.96799999999996,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 424.03200000000004,
+      "drying_throughput_kg": 3880.4000000000005,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 95.1936,
+        "drying": 116.412
+      },
+      "production_cost": 369.1781090909092,
+      "stored_grain_value": 1340.14,
+      "net_operating_margin": 970.9618909090909
+    },
+    {
+      "candidate": [
+        300.0,
+        120.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3551.64,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 668.928,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 231.072,
+      "drying_throughput_kg": 5401.84,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 133.78560000000002,
+        "drying": 162.05519999999999
+      },
+      "production_cost": 538.6427636363636,
+      "stored_grain_value": 1720.5,
+      "net_operating_margin": 1181.8572363636363
+    },
+    {
+      "candidate": [
+        0.0,
+        180.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3604.0,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 578.88,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 321.12,
+      "drying_throughput_kg": 4926.72,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 115.77600000000001,
+        "drying": 147.8016
+      },
+      "production_cost": 421.15010909090915,
+      "stored_grain_value": 1496.2240000000002,
+      "net_operating_margin": 1075.073890909091
+    },
+    {
+      "candidate": [
+        0.0,
+        120.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3193.8,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 385.92,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 514.0799999999999,
+      "drying_throughput_kg": 4516.5199999999995,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 77.18400000000001,
+        "drying": 135.49559999999997
+      },
+      "production_cost": 370.25210909090913,
+      "stored_grain_value": 1393.674,
+      "net_operating_margin": 1023.4218909090908
+    },
+    {
+      "candidate": [
+        300.0,
+        60.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 2366.76,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 192.96,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 707.04,
+      "drying_throughput_kg": 3689.4800000000005,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 38.592000000000006,
+        "drying": 110.68440000000001
+      },
+      "production_cost": 392.07836363636363,
+      "stored_grain_value": 1186.9140000000002,
+      "net_operating_margin": 794.8356363636366
+    },
+    {
+      "candidate": [
+        300.0,
+        180.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3978.4,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 861.8879999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 38.11200000000008,
+      "drying_throughput_kg": 5828.6,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 172.3776,
+        "drying": 174.858
+      },
+      "production_cost": 590.0375636363635,
+      "stored_grain_value": 1827.19,
+      "net_operating_margin": 1237.1524363636365
+    },
+    {
+      "candidate": [
+        0.0,
+        0.0,
+        120.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 969.52,
+        "soybean": 2031.52
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 566.016,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 333.98400000000004,
+      "drying_throughput_kg": 3001.0400000000004,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 113.2032,
+        "drying": 90.03120000000001
+      },
+      "production_cost": 360.80690909090913,
+      "stored_grain_value": 1156.5639999999999,
+      "net_operating_margin": 795.7570909090907
+    },
+    {
+      "candidate": [
+        300.0,
+        0.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 1310.48,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 96.47999999999996,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 0.0,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 900.0,
+      "drying_throughput_kg": 2633.2,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 77.18399999999997,
+        "fuel": 66.1363636363636,
+        "water": 0.0,
+        "drying": 78.996
+      },
+      "production_cost": 321.7979636363636,
+      "stored_grain_value": 922.844,
+      "net_operating_margin": 601.0460363636364
+    },
+    {
+      "candidate": [
+        0.0,
+        0.0,
+        0.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 969.52,
+        "soybean": 1322.72
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 0.0,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 900.0,
+      "drying_throughput_kg": 2292.2400000000002,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 0.0,
+        "drying": 68.7672
+      },
+      "production_cost": 226.33970909090914,
+      "stored_grain_value": 837.604,
+      "net_operating_margin": 611.264290909091
+    },
+    {
+      "candidate": [
+        600.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4332.08,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 6182.280000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 185.4684
+      },
+      "production_cost": 668.1839636363636,
+      "stored_grain_value": 1915.6100000000001,
+      "net_operating_margin": 1247.4260363636365
+    },
+    {
+      "candidate": [
+        525.0,
+        150.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4181.92,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 694.656,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 205.34400000000005,
+      "drying_throughput_kg": 5908.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 138.9312,
+        "drying": 177.23999999999998
+      },
+      "production_cost": 616.8611636363636,
+      "stored_grain_value": 1822.216,
+      "net_operating_margin": 1205.3548363636364
+    },
+    {
+      "candidate": [
+        525.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4181.92,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 6032.120000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 153.08159999999998,
+        "drying": 180.9636
+      },
+      "production_cost": 634.7351636363636,
+      "stored_grain_value": 1878.0700000000002,
+      "net_operating_margin": 1243.3348363636364
+    },
+    {
+      "candidate": [
+        525.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4181.92,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 6141.959999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 167.232,
+        "drying": 184.25879999999998
+      },
+      "production_cost": 652.1807636363635,
+      "stored_grain_value": 1927.498,
+      "net_operating_margin": 1275.3172363636365
+    },
+    {
+      "candidate": [
+        525.0,
+        165.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4260.92,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 742.896,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 157.10400000000004,
+      "drying_throughput_kg": 5987.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 148.5792,
+        "drying": 179.60999999999999
+      },
+      "production_cost": 628.8791636363636,
+      "stored_grain_value": 1841.966,
+      "net_operating_margin": 1213.0868363636364
+    },
+    {
+      "candidate": [
+        525.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4260.92,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 6111.120000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 183.33360000000002
+      },
+      "production_cost": 646.7531636363636,
+      "stored_grain_value": 1897.8200000000002,
+      "net_operating_margin": 1251.0668363636364
+    },
+    {
+      "candidate": [
+        525.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4260.92,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6220.959999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 186.62879999999996
+      },
+      "production_cost": 664.1987636363635,
+      "stored_grain_value": 1947.248,
+      "net_operating_margin": 1283.0492363636365
+    },
+    {
+      "candidate": [
+        600.0,
+        150.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4251.48,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 694.656,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 205.34400000000005,
+      "drying_throughput_kg": 5977.5599999999995,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 138.9312,
+        "drying": 179.3268
+      },
+      "production_cost": 638.2439636363636,
+      "stored_grain_value": 1839.6059999999998,
+      "net_operating_margin": 1201.3620363636362
+    },
+    {
+      "candidate": [
+        600.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4251.48,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 6101.679999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 153.08159999999998,
+        "drying": 183.05039999999997
+      },
+      "production_cost": 656.1179636363636,
+      "stored_grain_value": 1895.46,
+      "net_operating_margin": 1239.3420363636365
+    },
+    {
+      "candidate": [
+        600.0,
+        165.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4332.08,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 742.896,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 157.10400000000004,
+      "drying_throughput_kg": 6058.16,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 148.5792,
+        "drying": 181.7448
+      },
+      "production_cost": 650.3099636363636,
+      "stored_grain_value": 1859.7559999999999,
+      "net_operating_margin": 1209.4460363636363
+    },
+    {
+      "candidate": [
+        600.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4251.48,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 6211.5199999999995,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 167.232,
+        "drying": 186.3456
+      },
+      "production_cost": 673.5635636363636,
+      "stored_grain_value": 1944.888,
+      "net_operating_margin": 1271.3244363636363
+    },
+    {
+      "candidate": [
+        600.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4332.08,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6292.120000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 188.76360000000003
+      },
+      "production_cost": 685.6295636363636,
+      "stored_grain_value": 1965.038,
+      "net_operating_margin": 1279.4084363636364
+    },
+    {
+      "candidate": [
+        600.0,
+        165.0,
+        60.0,
+        7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4249.92,
+        "soybean": 1869.56
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 192.96000000000004,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 6119.48,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 154.36800000000005,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 183.5844
+      },
+      "production_cost": 666.2999636363636,
+      "stored_grain_value": 1903.7820000000002,
+      "net_operating_margin": 1237.4820363636366
+    },
+    {
+      "candidate": [
+        450.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4108.72,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 6068.760000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 167.232,
+        "drying": 182.06280000000004
+      },
+      "production_cost": 630.6887636363637,
+      "stored_grain_value": 1909.198,
+      "net_operating_margin": 1278.5092363636363
+    },
+    {
+      "candidate": [
+        450.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4108.72,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 5958.920000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 153.08159999999998,
+        "drying": 178.76760000000002
+      },
+      "production_cost": 613.2431636363636,
+      "stored_grain_value": 1859.77,
+      "net_operating_margin": 1246.5268363636364
+    },
+    {
+      "candidate": [
+        450.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4184.44,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 6034.639999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 181.03919999999997
+      },
+      "production_cost": 625.1627636363636,
+      "stored_grain_value": 1878.6999999999998,
+      "net_operating_margin": 1253.537236363636
+    },
+    {
+      "candidate": [
+        450.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4184.44,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6144.479999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 184.33439999999996
+      },
+      "production_cost": 642.6083636363636,
+      "stored_grain_value": 1928.128,
+      "net_operating_margin": 1285.5196363636364
+    },
+    {
+      "candidate": [
+        525.0,
+        165.0,
+        75.0,
+        -7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4269.08,
+        "soybean": 1930.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6199.16,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 185.9748
+      },
+      "production_cost": 663.5447636363635,
+      "stored_grain_value": 1935.806,
+      "net_operating_margin": 1272.2612363636365
+    },
+    {
+      "candidate": [
+        525.0,
+        165.0,
+        75.0,
+        7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4179.8,
+        "soybean": 1970.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 168.84000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6150.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 135.07200000000003,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 184.5
+      },
+      "production_cost": 662.0699636363636,
+      "stored_grain_value": 1931.54,
+      "net_operating_margin": 1269.4700363636364
+    },
+    {
+      "candidate": [
+        375.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4003.88,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 120.60000000000002,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 5854.080000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 96.48000000000002,
+        "fuel": 66.1363636363636,
+        "water": 153.08159999999998,
+        "drying": 175.62240000000003
+      },
+      "production_cost": 590.8019636363636,
+      "stored_grain_value": 1833.56,
+      "net_operating_margin": 1242.7580363636364
+    },
+    {
+      "candidate": [
+        375.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4075.6,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 120.60000000000002,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 5925.799999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 96.48000000000002,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 177.77399999999997
+      },
+      "production_cost": 602.6015636363636,
+      "stored_grain_value": 1851.49,
+      "net_operating_margin": 1248.8884363636364
+    },
+    {
+      "candidate": [
+        375.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4003.88,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 120.60000000000002,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 5963.920000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 96.48000000000002,
+        "fuel": 66.1363636363636,
+        "water": 167.232,
+        "drying": 178.91760000000002
+      },
+      "production_cost": 608.2475636363636,
+      "stored_grain_value": 1882.988,
+      "net_operating_margin": 1274.7404363636365
+    },
+    {
+      "candidate": [
+        375.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4075.6,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 120.60000000000002,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6035.639999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 96.48000000000002,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 181.06919999999997
+      },
+      "production_cost": 620.0471636363636,
+      "stored_grain_value": 1900.9180000000001,
+      "net_operating_margin": 1280.8708363636365
+    },
+    {
+      "candidate": [
+        450.0,
+        165.0,
+        75.0,
+        -7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4191.72,
+        "soybean": 1930.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6121.800000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 183.65400000000002
+      },
+      "production_cost": 641.9279636363636,
+      "stored_grain_value": 1916.466,
+      "net_operating_margin": 1274.5380363636364
+    },
+    {
+      "candidate": [
+        450.0,
+        165.0,
+        75.0,
+        7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 4107.76,
+        "soybean": 1970.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 144.72000000000003,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 6077.960000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 115.77600000000002,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 182.33880000000002
+      },
+      "production_cost": 640.6127636363636,
+      "stored_grain_value": 1913.5300000000002,
+      "net_operating_margin": 1272.9172363636367
+    },
+    {
+      "candidate": [
+        0.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3588.92,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 5439.120000000001,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 162.7296,
+        "drying": 163.17360000000002
+      },
+      "production_cost": 483.47570909090916,
+      "stored_grain_value": 1729.8200000000002,
+      "net_operating_margin": 1246.344290909091
+    },
+    {
+      "candidate": [
+        0.0,
+        165.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3588.92,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 742.896,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 157.10400000000004,
+      "drying_throughput_kg": 5315.0,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 148.5792,
+        "drying": 159.45
+      },
+      "production_cost": 465.6017090909091,
+      "stored_grain_value": 1673.966,
+      "net_operating_margin": 1208.3642909090909
+    },
+    {
+      "candidate": [
+        0.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3588.92,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 5548.959999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 176.88,
+        "drying": 166.46879999999996
+      },
+      "production_cost": 500.92130909090906,
+      "stored_grain_value": 1779.248,
+      "net_operating_margin": 1278.326690909091
+    },
+    {
+      "candidate": [
+        75.0,
+        165.0,
+        45.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3697.64,
+        "soybean": 1726.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 24.120000000000005,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 742.896,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 157.10400000000004,
+      "drying_throughput_kg": 5423.719999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 19.296000000000006,
+        "fuel": 66.1363636363636,
+        "water": 148.5792,
+        "drying": 162.71159999999998
+      },
+      "production_cost": 496.20476363636357,
+      "stored_grain_value": 1701.146,
+      "net_operating_margin": 1204.9412363636363
+    },
+    {
+      "candidate": [
+        75.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3697.64,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 24.120000000000005,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 813.6479999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 86.35200000000009,
+      "drying_throughput_kg": 5547.84,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 19.296000000000006,
+        "fuel": 66.1363636363636,
+        "water": 162.7296,
+        "drying": 166.4352
+      },
+      "production_cost": 514.0787636363636,
+      "stored_grain_value": 1757.0,
+      "net_operating_margin": 1242.9212363636364
+    },
+    {
+      "candidate": [
+        75.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3697.64,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 24.120000000000005,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 5657.679999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 19.296000000000006,
+        "fuel": 66.1363636363636,
+        "water": 176.88,
+        "drying": 169.73039999999997
+      },
+      "production_cost": 531.5243636363637,
+      "stored_grain_value": 1806.4279999999999,
+      "net_operating_margin": 1274.9036363636362
+    },
+    {
+      "candidate": [
+        0.0,
+        165.0,
+        75.0,
+        -7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3598.6,
+        "soybean": 1930.08
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 5528.679999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 176.88,
+        "drying": 165.86039999999997
+      },
+      "production_cost": 500.3129090909091,
+      "stored_grain_value": 1768.186,
+      "net_operating_margin": 1267.873090909091
+    },
+    {
+      "candidate": [
+        0.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3525.68,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 5375.88,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 153.08159999999998,
+        "drying": 161.2764
+      },
+      "production_cost": 471.93050909090914,
+      "stored_grain_value": 1714.01,
+      "net_operating_margin": 1242.079490909091
+    },
+    {
+      "candidate": [
+        0.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3525.68,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 5485.72,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 167.232,
+        "drying": 164.5716
+      },
+      "production_cost": 489.37610909090915,
+      "stored_grain_value": 1763.438,
+      "net_operating_margin": 1274.0618909090908
+    },
+    {
+      "candidate": [
+        0.0,
+        165.0,
+        75.0,
+        7
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3508.12,
+        "soybean": 1970.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 0.0,
+      "fuel_liters": 38.72727272727275,
+      "water_m3": 884.4,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 15.600000000000023,
+      "drying_throughput_kg": 5478.32,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 0.0,
+        "fuel": 58.09090909090912,
+        "water": 176.88,
+        "drying": 164.34959999999998
+      },
+      "production_cost": 498.8021090909091,
+      "stored_grain_value": 1763.62,
+      "net_operating_margin": 1264.8178909090907
+    },
+    {
+      "candidate": [
+        75.0,
+        150.0,
+        60.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3628.12,
+        "soybean": 1850.2
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 24.120000000000005,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 765.4079999999999,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 134.5920000000001,
+      "drying_throughput_kg": 5478.32,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 19.296000000000006,
+        "fuel": 66.1363636363636,
+        "water": 153.08159999999998,
+        "drying": 164.34959999999998
+      },
+      "production_cost": 502.3451636363636,
+      "stored_grain_value": 1739.62,
+      "net_operating_margin": 1237.2748363636363
+    },
+    {
+      "candidate": [
+        75.0,
+        150.0,
+        75.0,
+        0
+      ],
+      "feasible": true,
+      "error": null,
+      "currency": "DEMO",
+      "prices": {
+        "maize_per_kg": 0.25,
+        "soybean_per_kg": 0.45,
+        "maize_seed_per_unit": 0.002,
+        "soybean_seed_per_unit": 0.0003,
+        "fertilizer_per_kg": 0.8,
+        "fuel_per_liter": 1.5,
+        "water_per_m3": 0.2,
+        "drying_per_kg": 0.03
+      },
+      "stored_kg_by_crop": {
+        "maize": 3628.12,
+        "soybean": 1960.04
+      },
+      "consumed_seeds": {
+        "MAIZE_201": 21440,
+        "SOYBEAN_901": 188672
+      },
+      "fertilizer_product_kg": 24.120000000000005,
+      "fuel_liters": 44.090909090909065,
+      "water_m3": 836.16,
+      "shared_water_capacity_m3": 900.0,
+      "shared_water_remaining_m3": 63.84000000000003,
+      "drying_throughput_kg": 5588.159999999999,
+      "cost_components": {
+        "seed": 99.4816,
+        "fertilizer": 19.296000000000006,
+        "fuel": 66.1363636363636,
+        "water": 167.232,
+        "drying": 167.64479999999998
+      },
+      "production_cost": 519.7907636363636,
+      "stored_grain_value": 1789.048,
+      "net_operating_margin": 1269.2572363636364
+    }
+  ],
+  "search_starts": [
+    [
+      600.0,
+      165.0,
+      60.0,
+      0
+    ],
+    [
+      0.0,
+      180.0,
+      60.0,
+      0
+    ]
+  ],
+  "local_optima": [
+    {
+      "center": [
+        450.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "net_operating_margin": 1285.5196363636364,
+      "neighbor_count": 28,
+      "all_neighbors_evaluated": true
+    },
+    {
+      "center": [
+        0.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "net_operating_margin": 1278.326690909091,
+      "neighbor_count": 19,
+      "all_neighbors_evaluated": true
+    }
+  ],
+  "search_history": [
+    {
+      "branch": 0,
+      "iteration": 0,
+      "center": [
+        600.0,
+        165.0,
+        60.0,
+        0
+      ],
+      "center_margin": 1247.4260363636365,
+      "neighbors": [
+        [
+          525.0,
+          150.0,
+          45.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          45.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          45.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          45.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          165.0,
+          45.0,
+          0
+        ],
+        [
+          600.0,
+          165.0,
+          60.0,
+          -7
+        ],
+        [
+          600.0,
+          165.0,
+          60.0,
+          7
+        ],
+        [
+          600.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          45.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          75.0,
+          0
+        ]
+      ],
+      "new_evaluations": 15,
+      "best": [
+        525.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "best_margin": 1283.0492363636365,
+      "improved": true
+    },
+    {
+      "branch": 0,
+      "iteration": 1,
+      "center": [
+        525.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "center_margin": 1283.0492363636365,
+      "neighbors": [
+        [
+          450.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          450.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          450.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          450.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          75.0,
+          -7
+        ],
+        [
+          525.0,
+          165.0,
+          75.0,
+          7
+        ],
+        [
+          525.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          90.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          600.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          600.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          600.0,
+          180.0,
+          90.0,
+          0
+        ]
+      ],
+      "new_evaluations": 17,
+      "best": [
+        450.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "best_margin": 1285.5196363636364,
+      "improved": true
+    },
+    {
+      "branch": 0,
+      "iteration": 2,
+      "center": [
+        450.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "center_margin": 1285.5196363636364,
+      "neighbors": [
+        [
+          375.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          375.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          375.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          375.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          375.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          375.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          375.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          375.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          375.0,
+          180.0,
+          90.0,
+          0
+        ],
+        [
+          450.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          450.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          450.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          165.0,
+          75.0,
+          -7
+        ],
+        [
+          450.0,
+          165.0,
+          75.0,
+          7
+        ],
+        [
+          450.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          450.0,
+          180.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          525.0,
+          180.0,
+          90.0,
+          0
+        ]
+      ],
+      "new_evaluations": 11,
+      "best": [
+        450.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "best_margin": 1285.5196363636364,
+      "improved": false
+    },
+    {
+      "branch": 1,
+      "iteration": 0,
+      "center": [
+        0.0,
+        180.0,
+        60.0,
+        0
+      ],
+      "center_margin": 1240.013890909091,
+      "neighbors": [
+        [
+          0.0,
+          165.0,
+          45.0,
+          0
+        ],
+        [
+          0.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          0.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          0.0,
+          180.0,
+          45.0,
+          0
+        ],
+        [
+          0.0,
+          180.0,
+          60.0,
+          -7
+        ],
+        [
+          0.0,
+          180.0,
+          60.0,
+          7
+        ],
+        [
+          0.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          45.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          45.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          75.0,
+          0
+        ]
+      ],
+      "new_evaluations": 13,
+      "best": [
+        0.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "best_margin": 1278.326690909091,
+      "improved": true
+    },
+    {
+      "branch": 1,
+      "iteration": 1,
+      "center": [
+        0.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "center_margin": 1278.326690909091,
+      "neighbors": [
+        [
+          0.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          0.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          0.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          0.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          0.0,
+          165.0,
+          75.0,
+          -7
+        ],
+        [
+          0.0,
+          165.0,
+          75.0,
+          7
+        ],
+        [
+          0.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          0.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          0.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          0.0,
+          180.0,
+          90.0,
+          0
+        ],
+        [
+          75.0,
+          150.0,
+          60.0,
+          0
+        ],
+        [
+          75.0,
+          150.0,
+          75.0,
+          0
+        ],
+        [
+          75.0,
+          150.0,
+          90.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          60.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          75.0,
+          0
+        ],
+        [
+          75.0,
+          165.0,
+          90.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          60.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          75.0,
+          0
+        ],
+        [
+          75.0,
+          180.0,
+          90.0,
+          0
+        ]
+      ],
+      "new_evaluations": 12,
+      "best": [
+        0.0,
+        165.0,
+        75.0,
+        0
+      ],
+      "best_margin": 1278.326690909091,
+      "improved": false
+    }
+  ],
+  "prices": {
+    "maize_per_kg": 0.25,
+    "soybean_per_kg": 0.45,
+    "maize_seed_per_unit": 0.002,
+    "soybean_seed_per_unit": 0.0003,
+    "fertilizer_per_kg": 0.8,
+    "fuel_per_liter": 1.5,
+    "water_per_m3": 0.2,
+    "drying_per_kg": 0.03
+  },
+  "input_manifest_sha256": "846c921aad1931d2282344c925df2dd965b1be332741af5c6a6c1fe76e2d6eab",
+  "candidate_results_sha256": {
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_60_60_0.json": "0ca9778a3794547e6cd8c637cf60b74e5a0471bbca6169830cc5bebe4a0358e4",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_0_180_0.json": "8bc4ed05c599e97ded3d398958c5c86c19b276986affb0558195d6afe4b8491c",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_120_0_0.json": "bc65e1641ff3511f66f68c230c9b30168a0d4055e98b8ed71b192b66893585eb",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_60_0_0.json": "4822e6ff2d951cc824f981ec078822c80f56a791645dbc294eded1eec25988d5",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_0_120_0.json": "1960d713e6229b81386f8c95a8fdeedd6ba3fa5a1fcb6e1ec080e354d49b1e91",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_180_60_0.json": "ca1aded37d282298f35170fdc1802035e376a8416e60cae7b732d9e853b562fc",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_60_180_0.json": "eed90737dd1f2c7e75bdca8ed306a7be4dc1638dd6a677c45a8eb293cd78f0a9",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_180_60_0.json": "c3997fd97193fbe36ff993aa103fbb7a1a3af1c27777ee11557e37e701c79860",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_180_0_0.json": "d7241347ccb150006f6529f9988d453117dfba5e37a70890ecc6cc0cdc677518",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_0_0_0.json": "6967a1c25d0c632afbc06f90d6649bc628bd8105d50f537015255df73ddc1e10",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_60_180_0.json": "f9984689b90143b2a1068154fb22cb5e83656b81b4badb1088dcfffb7c539dbb",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_120_0_0.json": "877fa6e9136ee48856ec02f3b52cf4751b7115f78343ae02c7469604e6ee0304",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_0_120_0.json": "68b80ee02b9d9f40504e6af44eda4ec8be740919298dd233eedb693ca1be4c7d",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_120_60_0.json": "e7125002b26f8fd9af4893cfaea832d5826186f27c275f5b0d2cf56284425afa",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_120_60_0.json": "26c93c9616c5eeedffda5005f3c1ee04e467d76afe7995bca1d7861bb076ce92",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_180_0_0.json": "42f1a049803f1d227a25511a601cc6416a80bc3db86fa68ac016bea5e6623e27",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_0_60_0.json": "dacebc2121ddbdea05daec0994bd6244c23299d490b735b2a9263f533bb347b9",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_60_60_0.json": "ea6914aa0ac44b7120919cff35b1e767fbcd204ee02ff91c41425d0af8fa0786",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_60_0_0.json": "1925b7ea6f5185d343da46226e5d40fff7c7430e7a572d463f4bfb2dd6909d9d",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_0_180_0.json": "b3d5816f51ce055de6f55106219d9a7b7f5f368e92032433e47e76f72afb5acb",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_60_120_0.json": "6dc12c5b32f84deac0534d0a961b4e11d01e786d7f0bd1d7018095c43298f19b",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_60_120_0.json": "367c6eac5f5b322eacc19f0d6a09542367ee568b631813fdce4788f556b7c57f",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_60_60_0.json": "5bd56fe8a4527d0be2c128dec7391047dd3c110a1a125cba9996564a73a2be35",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_120_120_0.json": "fd38de46e334de29829661b75cf59e96fd126b7107994bc2bc1c8273665376c0",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_120_180_0.json": "b241fe18e02973d796de578fb18811fe0432489a166bead6af089661f1d19c1f",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_60_120_0.json": "b036d16e2b6eb07ea9619da21fad2e61c81ab96c55b69545135b64a514289c90",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_0_180_0.json": "f25327421b1f7d5c055d043a06bdb9d62f07dc509c8bac9885d18a8ed926ff74",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_180_120_0.json": "f41a1b587e2156c1341cb9b9e767e55ffd9699cf075f1c9c544df462f48e9d88",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_120_60_0.json": "81f4ca679760f7c12184fbef65c7a12ede56bd352442afff15373cb6eb2389c2",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_180_120_0.json": "3ffb993fd8f9367f8f2408c5e154bc280e933d01e0c1ab4c9ca3ed9083dc8b45",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_180_180_0.json": "ee21602202caa0a57124a7fec3ce7268253855d84ec9afe2a525ea035c866760",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_120_180_0.json": "65f9f151845f3e53981f7d4041995a4247fb3519e5a3f483d070aa778916fdac",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_0_60_0.json": "7edf6eb0990f04fb620fc3369a6bd1a250ae3d0a35aa757bfcd1acf713425b9d",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_180_0_0.json": "5b9cdb640c10f5edb143c21f00715a21d81b7f78324ae53dac84ac180c907aa2",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_120_0_0.json": "a4478d6e7f4e28a7bc1586c74af4d8989830252f22bb7a1a53d7bb7fd4604fcc",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_120_180_0.json": "882579a46c361a949b6c4479830b6d364e199fc45eac2674cfd2bfa090f3a8cd",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_60_0_0.json": "d8c120e3c4acf503bda9cb2c6f462ff44044e858650a2bb8e28d733f67b82d3a",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_120_120_0.json": "b71c23704e5a9a518dbc39c4cf7195c47fd5653ec4ccd543bca14289695cd4b6",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_60_180_0.json": "9ddb5d56f6b00cd7e6028071f19ae238fe4694f2be5ecf769e2ecd69e14dd1f4",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_180_60_0.json": "4dd975487ab35b87ed09ad9bbf03b7c8bef4d56e595a53dd9aca804ab1285f87",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_0_120_0.json": "0ce1c61e9b19b77c942b9abb243951bf8d977b7a8ec4a117662892ae539eece5",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_180_180_0.json": "21e485424e7971e27402003e91e5c1f62e1820eadd9d7c9fdc7e61818f74fbc9",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_0_0_0.json": "a710bcd2d3cf2d4198371610442f9d90428dcef97204f817704c810706c16194",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_0_0_0.json": "cbfed6a1d0f40647bab505739224fc0f1c8de19311d2ca48dfd520a4f048c9da",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_180_180_0.json": "ca32eb63079e31db2a0c879de62a4d6153eff710c0fc35d093d33091eefa08b7",
+    "validation_runs/management_v2_development_20261102/l3/coarse/600_180_120_0.json": "2725ec2a79f657edd74312b5a05c693fb994c1dbc628b0a0a7472ce63d721d07",
+    "validation_runs/management_v2_development_20261102/l3/coarse/300_120_120_0.json": "8cd50afd524fd27e244343e6e5ea54a939b417c8810d36e1dd2fd28bb637f17c",
+    "validation_runs/management_v2_development_20261102/l3/coarse/0_0_60_0.json": "a66f2ce06defd20f62cb0286355cba9ca7cdf580b33131540a270c5b7d0702da",
+    "validation_runs/management_v2_development_20261102/l3/refinement/525_180_60_0.json": "203cea0bb9ae1a3e2082e1f7d25e1ebe07eea775a69fa5faf6663ba8c63f9171",
+    "validation_runs/management_v2_development_20261102/l3/refinement/600_165_60_0.json": "93d9a469f6ab430d7be3756e2cb7c6200b0f58b9705584304f71b447d73133c9",
+    "validation_runs/management_v2_development_20261102/l3/refinement/600_180_60_7.json": "04a8bb2d8d6b54da75df065e4abccb65f1dc817d0e20d88514dfb0100ed7a8ff",
+    "validation_runs/management_v2_development_20261102/l3/refinement/600_180_45_0.json": "e0d4a431aacab84aa212c5b9ea93cec03bc4c6919c73b77ae5a77fe0d13f3584",
+    "validation_runs/management_v2_development_20261102/l3/refinement/600_180_60_-7.json": "245376f10832a05693b34af91ef6e6f5093166971302b3267401e19bf9d0e6c8",
+    "validation_runs/management_v2_development_20261102/l3/refinement/600_180_75_0.json": "86efee8800ba69cc96ec1a0c6a7c264a8ff40d1eca541d9383bc5cfe66f5263a",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_150_45_0.json": "d0b174025852d38a20ad15459875e3d7597909fdc808204926620e945ff045ae",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_150_60_0.json": "4bf76eb7928c1402128505884750e8ebd59a0d23ce7bd28f2b187412432a002e",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_150_75_0.json": "5ae789b83dcf84c7356477a7d5fae2956d4dfa66fa90abe5925498a17da1ab87",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_45_0.json": "0073c966e1172ef359e1dcc7364923c3df7bdbb5697ee556b0c5ee9c9d9ff09c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_180_75_0.json": "5ed12877a939ec3b2e3f2f81e07b46abf7b7a8179948f86aa43f72b01c4b8735",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_60_0.json": "072697a929de18387006aa2ac7ab4fc2fe94513a399178746ceb1e7c0a71a885",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_75_0.json": "a12f2f709e1db12d6980b9b60b403fa2c1f8be26d8bb77cfd363b13bcdb26246",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_180_45_0.json": "bf4c573493ecc6adeea6bbd5083ea1c497a791f3109a6b399e9e94b7d3a17589",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_150_45_0.json": "04e7aa20594fae075b4fdd3d6f4e9d7c5363d4764a9f5a42cd47f2dcb95e349d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_150_60_0.json": "dec3fc240742e4dd0b89c1b7a3d56e906b2823641f3111a12333326540aa2505",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_165_45_0.json": "2dd621bfae8435458e7892355db10f192ea1c420659a36b26e11b5efb2aaeca1",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_150_75_0.json": "92dae88bbb98850a0d41dea38d72b0616ade8c5d1b52f6daff6959e89ab6b665",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_165_60_-7.json": "21475b80151f152bf917a5ff7cc3eee718cf59e08656ad54feb5c5b7baa1268b",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_165_75_0.json": "fc4422f4cf39e60d09430c748e35ba98b3b92d709f1c3009f55110b7a37d86b5",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_165_60_7.json": "cc27b262c19d27105162e39b857fbab1433afe9b686e37de59282b3b43976af1",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_150_90_0.json": "752eb034573c58ca6b22d3256fa7b878d810c8531b2857fdd5b0adaaa3d54fb7",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_150_75_0.json": "9a8ed9e3f4af79e686dcd692c44f0f62b37dd65789a4b6183683627a6da0bf8c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_150_60_0.json": "82afb8aad94120b9e88845f15ea0fa7f2c72fc015dbea92ee048185abb316a9f",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_165_60_0.json": "4fab14c325932ffeac89193bc00d074cc752c88c95eb86e44e3d8ad170780224",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_165_75_0.json": "8e229c9284af1f1f459213346a580d95735a69c613e82f04fea04943e7a2c08c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_165_90_0.json": "c0203f8a1ed79047fd4813a38493b78179789850adb1c18e907d7126752d967f",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_180_75_0.json": "1de02ccc6a9f602be296ee3afaed497b400037093d02b671db11bd6755989b1c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_180_60_0.json": "fc8783a1786dcb8edd11dc49856dfea722a6aead6d68a160a0701a73d0d2c742",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_180_90_0.json": "87d1eb07f550917ebd04435c62fa4e4c0c249c3d8ecc590c40e777927367fdfc",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_150_90_0.json": "6410b18117981f98899a55c37558034c25c8394b88bca21c848063b0611eda0f",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_75_-7.json": "e4f12f4d5ad69525a1b7205f4e9c7f33371c82a785274792c42f26d13635818d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_75_7.json": "c6014c5c8e52dabde6feb1512fc09b7ec2fca2faa7f767fa4bad6395b11a77d3",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_165_90_0.json": "f4199f86ab5c0a782a180d562a4ef365bf80ddebc1b2adc14ffcfa88fa49aa9b",
+    "validation_runs/management_v2_development_20261102/l3/local_search/525_180_90_0.json": "088e29e1ac4b78d165eafac73cb1429b4ad4ac7792db74f7115865902def806c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_150_90_0.json": "0fada1667c06fb66fb49c1f49e402774de9e4d6a63931b18936f2a4d850e5895",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_165_90_0.json": "574eef9709f51ac297a7791ee9910685f759b3388e1c9cfb552e8c1dabd860cb",
+    "validation_runs/management_v2_development_20261102/l3/local_search/600_180_90_0.json": "41c488a620b8ada72f8be890588e05954e915e1b6bb75895064231f069b3d1df",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_150_90_0.json": "91ed31067a05c1580602b165c496b4d3a9756044c802a945e86d736eba9f1968",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_150_60_0.json": "ef2d6d51c4387f0d7908bd192d576c9f23caab79bf35cc15882081ea4960885d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_165_60_0.json": "936bf620271afb0249d8860f79cff80c043092adf48167ee67bb214e6f30adba",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_150_75_0.json": "d1e0f49c7c99bdb4b86400a499b9d76d433464ea251701ae92661f86d0820dfb",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_165_75_0.json": "9439894e9f5929531a142de30613e998d76f02b57bbf686f528ffe4e82383c81",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_165_90_0.json": "475cb6085c306c763900fdbcb3fa7c901f7cce6bbf50910d48409ed136bb2d4d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_180_75_0.json": "c135de0b2141aceeecc2e565b5c924f1c74c1bf9714cb50918f6121a83cce623",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_180_60_0.json": "7cb4629c0227a4a301019f81e89914b0123fb751ee6b6760a7eb3887bb78376d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/375_180_90_0.json": "45cf66c07aa64de44de9fc9274fc644070446de01086d97cc22fa690ad8f2e0b",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_165_75_-7.json": "0877c31b4be70a9fa77be8921b76e0b3efda286edd39a313940f7346e2bbe0db",
+    "validation_runs/management_v2_development_20261102/l3/local_search/450_165_75_7.json": "2e391aa6dbb66573e285ae90eff2a1d305a078d580d6eb8fd4b5e0bc50a03f0d",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_180_45_0.json": "b7760dea9d643e68fab06f245ffae3d142845b8210f7a498008665aab8b8c7ff",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_60_0.json": "2421cef7639ba26a1de821315c8c8342a3b0382e47727e3e03d1c70ea4744ad5",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_45_0.json": "73de969859c23b186c958e591832e4fdb1e94808ebcf9bff0d3c780716370451",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_75_0.json": "819913db983e23be0149daded58ad621f7c4f79b71c23572dc789e1c039d49c9",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_180_75_0.json": "41f9bbf939977ebcf578cc5fec18e1026fe6dd3c53a0a1ea28e08ba5365a9e60",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_180_60_-7.json": "dbb3763187d2d753a8cae5c5495b22fac1112e399021ad8d64624e96972d3340",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_165_45_0.json": "7da6ae346335b13b243dfceb36da30d493dd6f7701650dbccd19c21f5170c3b4",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_180_60_7.json": "71128652d8268c7b028a6652721ee8335348229cca7d8a5fa444f179e7ca160e",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_165_60_0.json": "274de672dc494b77959e347ee4b3a4d436e89c6feef3c1062e3a4701074bbcb9",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_165_75_0.json": "fcabe59c287cc5c81aa2b948768d94e56e99c816b5e21ac83c4524d728c95e65",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_180_45_0.json": "9c11d5b4f8c6812ad76fffecce85d2b7227ad9840caf180df8db39c749ce7b71",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_180_60_0.json": "f3ec5b006a1267e1447040d0edf4abbc0d9b76bac7ff11cafc4914bdebd1cbbb",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_180_75_0.json": "7571833b808a096d5693244fa096799ae74e8e533ff8d85c8481a449c59d59f0",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_150_90_0.json": "fb107a287214e5fe43e3f335b94f15debbdb7e0d4cfeb4a5342e06147308ae72",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_75_-7.json": "2f9983cab7166311354ebfe22ca4b94daa1b249aadf788ab23434d58aab61e5c",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_150_60_0.json": "750470010a3a6bcce20519ba66bf8571acf8a615ea75f4c18bdddd2fb87cfde1",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_150_75_0.json": "85fbbab576527e72d3caa05df5a3491e5d2a9c1c69fd3d974d7d68581ec49513",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_90_0.json": "88d2a006033c1e301b23f1d64aeb879601b70837b890c0b8486f69bb4952f870",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_180_90_0.json": "a5370c9fa81a19b1ba636bd961107a65944e3efbc4e9fbdcb9fbaac93aa85038",
+    "validation_runs/management_v2_development_20261102/l3/local_search/0_165_75_7.json": "95af46d7b3aff9201fe134ec862b085e84bb43894716d59f65d1e994b629622f",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_150_60_0.json": "87bab16615ee7fa95ce14a3c4661d15f55827df335775568faca6b96486c4ff2",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_150_90_0.json": "1c52ee3d5640a7c253325e0a4a9476eb9434f480b8c1fd67c590794d665625aa",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_165_90_0.json": "b586fa78fe0faffe8f5fbcbf92d014ef0567bdafe8e078178346271db2e6841e",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_150_75_0.json": "174f87fcb3a44b3ea6cdc4ba3a9bcd92d5ceff8c0685bf1018d1006e3cda9200",
+    "validation_runs/management_v2_development_20261102/l3/local_search/75_180_90_0.json": "0c09072f77a1b775f6d2aba5cb7da1209f14d963e80f1d5b6c93c57eaf99fd0d"
+  },
+  "notes": [
+    "Cropwise maximum yields are marginal bounds and need not be jointly achievable.",
+    "Harvest follows publicly observed maturity/moisture and rain-free dates after September check windows.",
+    "No preset yield threshold; report feasibility, margin regret, crop-specific yields, costs and shared water separately."
+  ],
+  "input_signature": {
+    "prices": {
+      "maize_per_kg": 0.25,
+      "soybean_per_kg": 0.45,
+      "maize_seed_per_unit": 0.002,
+      "soybean_seed_per_unit": 0.0003,
+      "fertilizer_per_kg": 0.8,
+      "fuel_per_liter": 1.5,
+      "water_per_m3": 0.2,
+      "drying_per_kg": 0.03
+    },
+    "initial_resources": {
+      "warehouse_stock": {
+        "seed_stock": {
+          "MAIZE_201": 21440,
+          "SOYBEAN_901": 188672
+        },
+        "pesticide_liters": 0.0,
+        "fertilizer_kg": 500.0,
+        "fuel_liters": 300.0
+      },
+      "tractor_fuel_liters": 100.0,
+      "tractor_equipment": {
+        "implements": [
+          "grader",
+          "furrower",
+          "harvester",
+          "sprayer",
+          "cultivator",
+          "seeder"
+        ],
+        "planting_max_ridges_per_pass": 4,
+        "harvest_max_ridges_per_pass": 4,
+        "ridging_implement": "furrower"
+      },
+      "warehouse_storage_capacity_kg": 15000.0,
+      "warehouse_drying_capacity_kg_per_day": 10000.0,
+      "warehouse_max_storage_moisture_pct": 14.0
+    },
+    "shared_water_capacity_m3": 900.0,
+    "start_time": 1556686800.0,
+    "duration": 18403200,
+    "farms": [
+      {
+        "farm_id": "maize",
+        "area_m2": 3216.0,
+        "ridge_count": 16,
+        "crop_backend": {
+          "backend": "wofost",
+          "model": "Wofost81_NWLP_CWB_CNB",
+          "pcse_version": "6.0.13",
+          "adapter_schema": 1,
+          "config": {
+            "crop_name": "maize",
+            "variety_name": "Grain_maize_201",
+            "cultivar_map": {
+              "MAIZE_201": "Grain_maize_201"
+            },
+            "cultivar_profile": null,
+            "cultivar_profiles": {},
+            "parameter_overrides": {},
+            "require_explicit_cultivar_parameters": true,
+            "fertilizer_n_fraction": 0.46,
+            "fertilizer_n_recovery": 0.7,
+            "irrigation_efficiency": 0.92,
+            "reference_density_plants_m2": 6.666666666666667,
+            "latitude_deg": 49.4,
+            "longitude_deg": 6.2,
+            "elevation_m": 277.87,
+            "relative_humidity_pct": 55.0,
+            "co2_ppm": 420.0,
+            "initial_available_n_kg_ha": 30.0,
+            "base_soil_n_kg_ha": 50.0,
+            "soil_n_mineralization_fraction": 0.002,
+            "soil_overrides": {},
+            "site_overrides": {},
+            "max_duration_days": 366,
+            "external_biotic_coupling": false,
+            "allow_external_runon": false,
+            "external_runon_source": null
+          },
+          "soil_assumptions": {
+            "parameters": {
+              "top_depth_m": 0.1,
+              "root_depth_m": 1.2,
+              "wilting_point_vwc": 0.1,
+              "field_capacity_vwc": 0.3,
+              "saturation_vwc": 0.45,
+              "max_infiltration_mm_day": 50.0,
+              "top_drainage_rate": 0.65,
+              "root_drainage_rate": 0.45,
+              "irrigation_efficiency": 0.92,
+              "rainfall_capture_efficiency": 1.0,
+              "top_root_redistribution_rate": 0.18,
+              "top_root_redistribution_deadband_vwc": 0.03,
+              "planting_temp_min_c": 10.0,
+              "planting_vwc_min": 0.2,
+              "planting_vwc_max": 0.35,
+              "planting_vwc_too_dry": 0.15,
+              "planting_vwc_too_wet": 0.39999999999999997,
+              "water_stress_vwc": 0.2,
+              "irrigation_trigger_vwc": 0.18,
+              "top_temp_response": 0.4,
+              "root_temp_response": 0.18,
+              "rain_cooling_coeff_c_per_10mm": 0.25,
+              "radiation_et_coeff": 0.42,
+              "min_temp_factor": 0.4,
+              "max_temp_factor": 1.25,
+              "bare_soil_evap_fraction": 0.42,
+              "max_crop_coefficient": 1.2
+            },
+            "hydraulic_modifiers": {}
+          },
+          "crop_data": {
+            "repository": "https://github.com/ajwdewit/WOFOST_crop_parameters",
+            "commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+            "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/maize.yaml",
+            "sha256": "f1bf8e3202418f294873bb3236727e07a10cd2b91c297b3660d46341a84f469d",
+            "license": "European Union Public License (EUPL)",
+            "license_note": "Upstream maize.yaml metadata declares EUPL without a version. Copyright/attribution and metadata are preserved in the bundled file.",
+            "crop_name": "maize",
+            "variety_name": "Grain_maize_201",
+            "calibration": "Uncalibrated European reference cultivar; synthetic Harbin scenarios do not establish Northeast China calibration."
+          },
+          "units": {
+            "water_mm_to_cm": 0.1,
+            "kg_ha_to_g_m2": 0.1,
+            "fertilizer": "actual kg/ridge * N fraction / area_m2 * 10000"
+          },
+          "calibration": "uncalibrated",
+          "external_biotic_coupling": "disabled; soybean biotic models are not adapted to maize",
+          "config_fingerprint": "0c334b350ef324f35e3c293549ca90d3a15a4428abdfcb0144db23b1d4671fab"
+        },
+        "weather": {
+          "daily_settlement": "completed_calendar_day",
+          "reference_id": "thionville",
+          "weather_sha256": "513558ecad8fd8b267daac281de382c4f882564e896c87763abdc4eaa5d0ba3f",
+          "weather_extension_sha256": "286b795177700d35b93808e7a06f6f543baa646ba968f8f8e76c033baa63866c",
+          "weather_operations_end": "2019-12-31",
+          "weather_forecast_buffer_end": "2020-01-07",
+          "scn_dynamics": false,
+          "field_trial_validation": false
+        }
+      },
+      {
+        "farm_id": "soybean",
+        "area_m2": 4716.8,
+        "ridge_count": 16,
+        "crop_backend": {
+          "backend": "wofost",
+          "model": "Wofost81_NWLP_CWB_CNB",
+          "pcse_version": "6.0.13",
+          "adapter_schema": 1,
+          "config": {
+            "crop_name": "soybean",
+            "variety_name": "Soybean_901",
+            "cultivar_map": {
+              "SOYBEAN_901": "Soybean_901"
+            },
+            "cultivar_profile": null,
+            "cultivar_profiles": {},
+            "parameter_overrides": {},
+            "require_explicit_cultivar_parameters": true,
+            "fertilizer_n_fraction": 0.46,
+            "fertilizer_n_recovery": 0.7,
+            "irrigation_efficiency": 0.92,
+            "reference_density_plants_m2": 40.0,
+            "latitude_deg": 49.4,
+            "longitude_deg": 6.2,
+            "elevation_m": 277.87,
+            "relative_humidity_pct": 55.0,
+            "co2_ppm": 420.0,
+            "initial_available_n_kg_ha": 50.0,
+            "base_soil_n_kg_ha": 50.0,
+            "soil_n_mineralization_fraction": 0.025,
+            "soil_overrides": {},
+            "site_overrides": {},
+            "max_duration_days": 366,
+            "external_biotic_coupling": false,
+            "allow_external_runon": false,
+            "external_runon_source": null
+          },
+          "soil_assumptions": {
+            "parameters": {
+              "top_depth_m": 0.1,
+              "root_depth_m": 1.2,
+              "wilting_point_vwc": 0.1,
+              "field_capacity_vwc": 0.3,
+              "saturation_vwc": 0.45,
+              "max_infiltration_mm_day": 50.0,
+              "top_drainage_rate": 0.65,
+              "root_drainage_rate": 0.45,
+              "irrigation_efficiency": 0.92,
+              "rainfall_capture_efficiency": 1.0,
+              "top_root_redistribution_rate": 0.18,
+              "top_root_redistribution_deadband_vwc": 0.03,
+              "planting_temp_min_c": 10.0,
+              "planting_vwc_min": 0.2,
+              "planting_vwc_max": 0.3,
+              "planting_vwc_too_dry": 0.15,
+              "planting_vwc_too_wet": 0.35,
+              "water_stress_vwc": 0.18,
+              "irrigation_trigger_vwc": 0.17,
+              "top_temp_response": 0.4,
+              "root_temp_response": 0.18,
+              "rain_cooling_coeff_c_per_10mm": 0.25,
+              "radiation_et_coeff": 0.42,
+              "min_temp_factor": 0.4,
+              "max_temp_factor": 1.25,
+              "bare_soil_evap_fraction": 0.42,
+              "max_crop_coefficient": 1.05
+            },
+            "hydraulic_modifiers": {}
+          },
+          "crop_data": {
+            "repository": "https://github.com/ajwdewit/WOFOST_crop_parameters",
+            "commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+            "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml",
+            "sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+            "license": "European Union Public License (EUPL)",
+            "license_note": "Upstream soybean.yaml metadata declares EUPL without a version. Copyright/attribution and metadata are preserved in the bundled file.",
+            "calibration": "Uncalibrated transfer of European soybean parameter sets; Chinese FAIRY seed labels use an explicitly reported fallback unless configured."
+          },
+          "units": {
+            "water_mm_to_cm": 0.1,
+            "kg_ha_to_g_m2": 0.1,
+            "fertilizer": "actual kg/ridge * N fraction / area_m2 * 10000"
+          },
+          "calibration": "uncalibrated",
+          "external_biotic_coupling": "PGASS multiplier before respiration",
+          "config_fingerprint": "e46ab50078ba029ff527097d77d7571a1ead11b658a94ebe1c9fb0434e3ec408"
+        },
+        "weather": {
+          "daily_settlement": "completed_calendar_day",
+          "reference_id": "thionville",
+          "weather_sha256": "513558ecad8fd8b267daac281de382c4f882564e896c87763abdc4eaa5d0ba3f",
+          "weather_extension_sha256": "286b795177700d35b93808e7a06f6f543baa646ba968f8f8e76c033baa63866c",
+          "weather_operations_end": "2019-12-31",
+          "weather_forecast_buffer_end": "2020-01-07",
+          "scn_dynamics": false,
+          "field_trial_validation": false
+        }
+      }
+    ]
+  },
+  "input_fingerprint": "56918cfc09d806eb7116d93e375445b74c65875db5ae62cb50198c8fcc641ea1",
+  "rejection_counts": {
+    "shared_water_supply_exceeded": 39
+  },
+  "workflow_steps": 160,
+  "local_neighborhood_definition": {
+    "maize_fertilizer_step_kg_product_ha": 75,
+    "maize_water_step_mm": 15,
+    "soybean_water_step_mm": 15,
+    "dose_combinations": "full adjacent Cartesian product",
+    "center_dose_irrigation_shift_days": [
+      -7,
+      0,
+      7
+    ],
+    "stopping_rule": "No feasible evaluated neighbor improves margin by more than 1e-8 DEMO."
+  }
+}
