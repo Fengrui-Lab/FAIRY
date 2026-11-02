@@ -25,6 +25,12 @@ Optional LLM fallback: when Jev's action confidence is below a threshold, when
 Jev repeats an action that changed nothing, or when "done" was refused twice,
 an LLM gets the same state and FAIRY's normal tool schemas and calls one action
 itself (it can write values that are not on Jev's menu).
+
+Reflex mode (--hybrid-mode reflex, after REFLEX, arXiv 2609.26532): Jev always
+picks the tool. Only Jev's confidence on the tool counts: at or above the
+threshold Jev also picks the arguments; below it the LLM gets only Jev's tool
+and fills in its arguments. Repeats and "done" refused twice still go to the
+LLM as in the default mode.
 """
 
 from __future__ import annotations
@@ -86,6 +92,11 @@ FALLBACK_MEMORY_INSTRUCTIONS = (
     "decisions in this run and their results are in this conversation, with the actions Jev "
     "took in between. Do not repeat a read whose result above is still current."
 )
+FILL_INSTRUCTIONS = (
+    "Jev has already chosen the next action: `{tool}`. Call exactly that tool; you only "
+    "choose its arguments."
+)
+HYBRID_MODES = ("full", "reflex")
 
 # Fallback memory (Part 2, Step 11): earlier fallback requests and the LLM's calls
 # stay in its input, append-only, so each request is the previous one plus new
@@ -134,6 +145,7 @@ class JevAgent(Agent):
         state_mode: str = "snapshot",
         confidence_source: str = "provider",
         qwen_context_policy: str = "bounded_history",
+        hybrid_mode: str = "full",
     ) -> None:
         if state_mode not in ("snapshot", "history"):
             raise ValueError(f"Unknown Jev state mode: {state_mode}")
@@ -146,6 +158,9 @@ class JevAgent(Agent):
         if confidence_source not in ("provider", "max_probability"):
             raise ValueError("Unknown decision confidence source")
         self.confidence_source = confidence_source
+        if hybrid_mode not in HYBRID_MODES:
+            raise ValueError(f"Unknown hybrid mode: {hybrid_mode}")
+        self.hybrid_mode = hybrid_mode
         super().__init__(
             name=name,
             llm=llm,
@@ -191,6 +206,7 @@ class JevAgent(Agent):
         self._llm_tokens = {"prompt_tokens": 0, "cached_tokens": 0, "completion_tokens": 0}
         self._fallbacks: dict[str, int] = {}
         self._llm_decisions = 0
+        self._llm_argument_fills = 0
         self._llm_turns: list[dict[str, Any]] = []
         self._llm_seen_steps = 0
         self._last_tool_probabilities: dict[str, float] = {}
@@ -212,6 +228,7 @@ class JevAgent(Agent):
                 "max_output_tokens": getattr(self.fallback_llm, "max_output_tokens", None),
                 "enable_thinking": getattr(self.fallback_llm, "enable_thinking", None),
             } if self.fallback_llm else None,
+            "hybrid_mode": self.hybrid_mode,
         }
 
     def record_event(self, event_type: str, **payload: Any):
@@ -282,6 +299,7 @@ class JevAgent(Agent):
                 "decision_model_actions": self._decision_model_actions,
                 "llm_fallback_triggers": dict(self._fallbacks),
                 "llm_decisions": self._llm_decisions,
+                "llm_argument_fills": self._llm_argument_fills,
                 "llm_tokens": dict(self._llm_tokens),
                 "max_state_chars": max(chars) if chars else None,
                 "avg_state_chars": round(sum(chars) / len(chars)) if chars else None,
@@ -295,11 +313,16 @@ class JevAgent(Agent):
 
     def chat_completion(self, messages, tools=None):
         self._logical_turn += 1
+        reflex = self.hybrid_mode == "reflex" and self.fallback_llm is not None
         while True:
             while True:
                 state = self._state()
-                pick, arguments, confidences = self._decide(state)
+                # Reflex: Jev is not asked for arguments the LLM will fill in.
+                pick, arguments, confidences = self._decide(
+                    state, skip_args_below=self.fallback_confidence if reflex else None
+                )
                 action_confidence = min(confidences.values())
+                tool_confidence = confidences[TOOL_QUESTION_ID]
                 reason = None
                 if pick == DONE_OPTION:
                     problems = self._done_problems(state["task"])
@@ -311,14 +334,30 @@ class JevAgent(Agent):
                         continue
                     if problems:
                         reason = "done_refused_twice"
-                elif action_confidence < self.fallback_confidence:
+                elif reflex and tool_confidence < self.fallback_confidence:
+                    reason = "low_tool_confidence"
+                elif not reflex and action_confidence < self.fallback_confidence:
                     reason = "low_confidence"
                 elif self._is_stuck(pick, arguments):
                     reason = "repeat_without_change"
                 break
 
             source = "jev"
-            if reason and self.fallback_llm is not None:
+            if reason == "low_tool_confidence":
+                # Reflex: Jev's tool stays; the LLM only fills in its arguments.
+                if self.tool_menus[pick].args:
+                    self._fallbacks[reason] = self._fallbacks.get(reason, 0) + 1
+                    decided = self._llm_decide(state, reason, fill_tool=pick)
+                    if decided is not None:
+                        arguments = decided[1]
+                        source = "llm_arguments"
+                        self._llm_argument_fills += 1
+                    elif arguments is None:
+                        # LLM error or another tool: Jev picks the arguments after all.
+                        arguments, arg_confidences = self._jev_arguments(state, pick)
+                        confidences.update(arg_confidences)
+                        action_confidence = min(confidences.values())
+            elif reason and self.fallback_llm is not None:
                 self._fallbacks[reason] = self._fallbacks.get(reason, 0) + 1
                 decided = self._llm_decide(state, reason)
                 if decided is not None and decided[0] == DONE_OPTION:
@@ -346,6 +385,7 @@ class JevAgent(Agent):
             action=pick,
             arguments=arguments,
             action_confidence=action_confidence,
+            tool_confidence=tool_confidence,
             question_confidences=confidences,
             source=source,
             deterministic=source == "jev" and self._last_tool_deterministic,
@@ -378,7 +418,10 @@ class JevAgent(Agent):
         )
         return SimpleNamespace(role="assistant", content=None, tool_calls=[tool_call])
 
-    def _decide(self, state: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, float]]:
+    def _decide(
+        self, state: dict[str, Any], skip_args_below: float | None = None
+    ) -> tuple[str, dict[str, Any] | None, dict[str, float]]:
+        """Jev's tool and arguments; arguments are None when skip_args_below skipped them."""
         tool_question = {
             "type": "choice",
             "instructions": TOOL_INSTRUCTIONS if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
@@ -403,22 +446,30 @@ class JevAgent(Agent):
         confidences = {TOOL_QUESTION_ID: tool_answer["confidence"]}
         if pick == DONE_OPTION or not self.tool_menus[pick].args:
             return pick, {}, confidences
+        if pick not in prepared and skip_args_below is not None and confidences[TOOL_QUESTION_ID] < skip_args_below:
+            return pick, None, confidences
+        arguments, arg_confidences = self._jev_arguments(state, pick, prepared.get(pick), answers)
+        confidences.update(arg_confidences)
+        return pick, arguments, confidences
 
+    def _jev_arguments(
+        self,
+        state: dict[str, Any],
+        pick: str,
+        options: dict[str, tuple[str, dict[str, Any]]] | None = None,
+        answers: dict[str, dict[str, Any]] | None = None,
+    ) -> tuple[dict[str, Any], dict[str, float]]:
+        """Jev's arguments for pick: from the fan-out answers, or one more request."""
         menu = self.tool_menus[pick]
         if dependent_menu(self.tools_map[pick]):
-            arguments, arg_confidences = self._dependent_values(menu, state)
-            confidences.update(arg_confidences)
-            return pick, arguments, confidences
-        if pick in prepared:
+            return self._dependent_values(menu, state)
+        if options is not None:
             self._fanout["hits"] += 1
-            options = prepared[pick]
         else:
             self._fanout["misses"] += 1
             arg_questions, options = self._value_questions(menu)
             answers = self._ask("arguments", state, arg_questions)
-        arguments, arg_confidences = self._read_values(menu, options, answers)
-        confidences.update(arg_confidences)
-        return pick, arguments, confidences
+        return self._read_values(menu, options, answers)
 
     def _likely_tools(self, offered: dict[str, Any]) -> list[str]:
         """Tools with arguments that Jev ranked high last time or used in the last few actions."""
@@ -571,22 +622,33 @@ class JevAgent(Agent):
             return False
         return all(_failed(s) for s in steps) or _result_data(steps[0].content) == _result_data(steps[1].content)
 
-    def _llm_decide(self, state: dict[str, Any], reason: str) -> tuple[str, dict[str, Any]] | None:
-        """One decision by the fallback LLM; None keeps Jev's choice (LLM error or unknown tool)."""
+    def _llm_decide(
+        self, state: dict[str, Any], reason: str, fill_tool: str | None = None
+    ) -> tuple[str, dict[str, Any]] | None:
+        """One decision by the fallback LLM; None keeps Jev's choice (LLM error or unknown tool).
+
+        With fill_tool the LLM sees only that tool's schema and picks its arguments;
+        any other answer (no call, another tool) is None.
+        """
         self._request_serial += 1
         self._active_request_id = f"request_{self._request_serial}"
-        messages = self._fallback_messages(state, reason)
+        messages = self._fallback_messages(state, reason, fill_tool)
+        tools = (
+            [t for t in self.tool_schemas if t["function"]["name"] == fill_tool]
+            if fill_tool else self.tool_schemas
+        )
         self.record_event(
             "llm_fallback_start",
             status="running",
             reason=reason,
+            fill_tool=fill_tool,
             model=getattr(self.fallback_llm, "model", None),
             provider=getattr(self.fallback_llm, "provider", None),
             messages=messages,
         )
         started = time.perf_counter()
         try:
-            response = self.fallback_llm.chat_completion(messages, tools=self.tool_schemas)
+            response = self.fallback_llm.chat_completion(messages, tools=tools)
         except Exception as exc:
             self.record_event(
                 "llm_fallback_error",
@@ -595,6 +657,7 @@ class JevAgent(Agent):
                 wall_time_seconds=round(time.perf_counter() - started, 6),
                 error_type=type(exc).__name__,
                 error_message="Fallback request failed; inspect the service separately",
+                status_code=getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None),
             )
             self.messages.runtime_metrics.append({"role": "assistant", "source": "llm_fallback",
                 "accepted": False, "time": time.perf_counter() - started,
@@ -623,7 +686,7 @@ class JevAgent(Agent):
         calls = list(getattr(message, "tool_calls", None) or [])
         invalid_shape = getattr(self, "strict_qwen", False) and (len(response.choices) != 1 or len(calls) > 1)
         if not calls:
-            decided: tuple[str, dict[str, Any]] | None = (DONE_OPTION, {})
+            decided: tuple[str, dict[str, Any]] | None = None if fill_tool else (DONE_OPTION, {})
         else:
             name = calls[0].function.name
             try:
@@ -631,6 +694,8 @@ class JevAgent(Agent):
             except json.JSONDecodeError:
                 args = None
             decided = (name, args) if name in self.tools_map and isinstance(args, dict) else None
+        if fill_tool and decided is not None and decided[0] != fill_tool:
+            decided = None
         if getattr(self, "strict_qwen", False):
             invalid_done = not calls and str(getattr(message, "content", "") or "").strip().lower() != DONE_OPTION
             if invalid_shape or invalid_done or decided is None:
@@ -645,6 +710,7 @@ class JevAgent(Agent):
             "llm_fallback_end",
             status="ok" if decided else "rejected",
             reason=reason,
+            fill_tool=fill_tool,
             wall_time_seconds=latency,
             provider=getattr(self.fallback_llm, "provider", None),
             model=getattr(self.fallback_llm, "model", None),
@@ -655,20 +721,23 @@ class JevAgent(Agent):
         )
         return decided
 
-    def _fallback_messages(self, state: dict[str, Any], reason: str) -> list[dict[str, Any]]:
+    def _fallback_messages(
+        self, state: dict[str, Any], reason: str, fill_tool: str | None = None
+    ) -> list[dict[str, Any]]:
         """Fixed rules and task, then the LLM's earlier turns, then the current state."""
+        fill = "\n" + FILL_INSTRUCTIONS.format(tool=fill_tool) if fill_tool else ""
         system = next(
             (m["content"] for m in self.messages.messages if isinstance(m, dict) and m.get("role") == "system"),
             "",
         )
         if self.qwen_context_policy == "snapshot_only":
             return [{"role": "system", "content": system},
-                    {"role": "user", "content": FALLBACK_INSTRUCTIONS + "\n\n" + json.dumps(state, ensure_ascii=False, default=str)}]
+                    {"role": "user", "content": FALLBACK_INSTRUCTIONS + fill + "\n\n" + json.dumps(state, ensure_ascii=False, default=str)}]
         if self.state_mode != "snapshot":
             # Part 1 input: no memory (the full history is already in the state).
             return [
                 {"role": "system", "content": system},
-                {"role": "user", "content": FALLBACK_INSTRUCTIONS + "\n\n" + json.dumps(state, ensure_ascii=False, default=str)},
+                {"role": "user", "content": FALLBACK_INSTRUCTIONS + fill + "\n\n" + json.dumps(state, ensure_ascii=False, default=str)},
             ]
         messages = [
             {"role": "system", "content": system},
@@ -706,6 +775,7 @@ class JevAgent(Agent):
             "role": "user",
             "content": self._since_last_llm_turn(steps)
             + f"\nYou are asked now because: {reason.replace('_', ' ')}."
+            + fill
             + "\n\nCurrent state:\n"
             + json.dumps(current, ensure_ascii=False, default=str),
         })

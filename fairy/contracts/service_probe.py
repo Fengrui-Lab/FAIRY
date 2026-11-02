@@ -53,6 +53,8 @@ def check_chat(args: argparse.Namespace) -> dict:
         config["enable_thinking"] = args.enable_thinking
     for key in ("output_token_parameter", "send_temperature", "reasoning_effort"):
         value = getattr(args, key, None)
+        if key in {"output_token_parameter", "send_temperature"} and args.chat_provider not in {"vllm", "openai-compatible", "llama-api"}:
+            continue
         if value is not None: config[key] = value
     config["max_retries"] = 0
     if not args.api_key_env: config["api_key"] = "EMPTY"

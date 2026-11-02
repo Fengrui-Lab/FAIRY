@@ -41,6 +41,7 @@ CONTROLLER_FAMILIES = [
     "farm_critic_refiner",
     "farm_graph_memory",
     "farm_jev",
+    "farm_llm_jev",
     "farm_qwen_snapshot",
     "farm_llm_snapshot",
 ]
@@ -382,10 +383,25 @@ def build_controller_agent(
     done_check: bool = False,
     decision_confidence_source: str = "provider",
     qwen_context_policy: str = "bounded_history",
+    hybrid_mode: str = "full",
+    jev_llm: Any = None,
+    jev_prompt_note: bool = False,
 ) -> ResearchARESimulationAgent:
     explicit_system_message = system_message is not None
     if system_message is None:
         system_message = get_farm_world_system_prompt_for_apps(toolsets)
+    if family_id == "farm_llm_jev":
+        if fallback_llm is not None or hybrid_mode != "full":
+            raise ValueError("farm_llm_jev does not use fallback or hybrid-mode")
+        from fairy.agents.jev.llm_driven_agent import build_llm_driven_jev_agent
+        agent = build_llm_driven_jev_agent(family_id, llm=llm, jev_llm=jev_llm,
+            toolsets=toolsets, system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            prompt_note=jev_prompt_note)
+        if done_check:
+            agent.enable_done_check(toolsets or [])
+        return agent
+    if jev_llm is not None or jev_prompt_note:
+        raise ValueError("--jev-model and --jev-prompt-note require farm_llm_jev")
     if family_id in {"farm_qwen_snapshot", "farm_llm_snapshot"}:
         from fairy.agents.jev.qwen_agent import QwenSnapshotAgent
         if fallback_llm is not None:
@@ -411,9 +427,12 @@ def build_controller_agent(
             state_mode=jev_state,
             confidence_source=decision_confidence_source,
             qwen_context_policy=qwen_context_policy,
+            hybrid_mode=hybrid_mode,
         )
     if fallback_llm is not None:
         raise ValueError("--fallback-model is only used by the farm_jev controller")
+    if hybrid_mode != "full":
+        raise ValueError("--hybrid-mode is only used by the farm_jev controller")
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)

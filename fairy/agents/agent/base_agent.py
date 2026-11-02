@@ -125,6 +125,7 @@ class BaseAgent:
                 wall_time_seconds=elapsed_time,
                 error_type=type(exc).__name__,
                 error_message=str(exc),
+                status_code=getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None),
             )
             raise
         elapsed_time = round(time.perf_counter() - start_time, 6)

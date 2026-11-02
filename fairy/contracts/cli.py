@@ -19,7 +19,7 @@ CONTRACT_VERSION = 1
 def fingerprint():
     package = Path(__file__).resolve().parents[1]
     root = package.parent
-    files = sorted(package.rglob('*.py')) + [root/'pyproject.toml', root/'uv.lock']
+    files = sorted(package.rglob('*.py')) + [root/'pyproject.toml', root/'uv.lock', root/'scripts/rebatch_fos_from_traces.py']
     files += sorted(p for p in package.rglob('*') if p.is_file() and p.suffix.lower() in {'.json','.txt','.md','.yaml','.yml','.csv','.npz','.npy','.pkl','.pickle','.gz','.conf'})
     hashes = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files if p.is_file()}
     head = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, capture_output=True, text=True)
@@ -40,8 +40,8 @@ def capabilities():
     from fairy.controllers.agent_builder import AgentBuilder
     return dict(contract_version=CONTRACT_VERSION, identity=fingerprint(),
                 scenarios=list(list_scenarios()), controllers=list(AgentBuilder().list_agents()),
-                providers=['typesafe','system-one-compatible','vllm','openai-compatible'],
-                features=['run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
+                providers=['typesafe','system-one-compatible','vllm','openai-compatible','deepseek'],
+                features=['hybrid-reflex-v1','llm-jev-tool-v1','run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
 
 
 def scrub(text, secrets):
@@ -96,11 +96,11 @@ def run_cli(argv):
     output = Path(value('--output-dir','runs')).resolve()
     scenario = value('--scenario', value('-s'))
     secrets = [os.environ.get(k) for k in json.loads(meta.credential_envs)]
-    for flag in ('--api-key-env','--fallback-api-key-env','--decision-api-key-env'):
+    for flag in ('--api-key-env','--fallback-api-key-env','--decision-api-key-env','--jev-api-key-env'):
         if value(flag): secrets.append(os.environ.get(value(flag)))
     secrets.extend(os.environ.get(k) for k in ('TYPESAFE_API_KEY','OPENAI_API_KEY','VLLM_API_KEY','LLAMA_API_KEY'))
     secrets = [x for x in secrets if x and x != 'EMPTY']
-    os.environ["FAIRY_REDACT_ENV_NAMES"] = json.dumps(json.loads(meta.credential_envs) + [value(f) for f in ("--api-key-env","--fallback-api-key-env","--decision-api-key-env") if value(f)])
+    os.environ["FAIRY_REDACT_ENV_NAMES"] = json.dumps(json.loads(meta.credential_envs) + [value(f) for f in ("--api-key-env","--fallback-api-key-env","--decision-api-key-env","--jev-api-key-env") if value(f)])
     buffer = io.StringIO(); code = 0
     oldargv = sys.argv
     def terminate(*_): raise SystemExit(143)
@@ -192,7 +192,7 @@ def main(argv=None):
         print(scrub(json.dumps(result, ensure_ascii=False), secrets))
         return 0 if result.get('status','passed') == 'passed' else 1
     except Exception as exc:
-        print(json.dumps({'status':'failed','error_type':type(exc).__name__}))
+        print(json.dumps({'status':'failed','error_type':type(exc).__name__, 'status_code':getattr(exc,'status_code',None) or getattr(getattr(exc,'response',None),'status_code',None)}))
         return 1
 
 

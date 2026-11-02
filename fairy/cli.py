@@ -161,6 +161,20 @@ def _str_to_bool(value: str | bool | None) -> bool:
     raise argparse.ArgumentTypeError(f"Expected boolean value, got {value!r}")
 
 
+def _role_timeout(provider: str) -> dict[str, float]:
+    """Keep Jev and chat request budgets independent when both clients coexist."""
+    import os
+    import math
+    name = "FAIRY_DECISION_REQUEST_TIMEOUT_S" if provider in {"typesafe", "system-one-compatible"} else "FAIRY_LLM_REQUEST_TIMEOUT_S"
+    value = os.environ.get(name)
+    if value in (None, ""):
+        return {}
+    timeout = float(value)
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError(f"Invalid request timeout in {name}")
+    return {"timeout": timeout}
+
+
 def _fallback_config(args: argparse.Namespace) -> dict[str, Any]:
     """Build an independent fallback config without copying the decision endpoint."""
     from fairy.agents.llm.system_one_client import api_key_from_env, api_root
@@ -169,7 +183,7 @@ def _fallback_config(args: argparse.Namespace) -> dict[str, Any]:
     if args.fallback_enable_thinking is not None and provider not in ("vllm", "openai-compatible", "llama-api", "deepseek"):
         raise ValueError("--fallback-enable-thinking requires vllm or openai-compatible")
     config = {
-        "provider": provider, "model": args.fallback_model,
+        "provider": provider, "model": args.fallback_model, **_role_timeout(provider),
         "temperature": args.temperature, "parallel_tool_calls": False,
         "max_output_tokens": (args.fallback_max_output_tokens
                               if args.fallback_max_output_tokens is not None else args.max_output_tokens),
@@ -246,6 +260,11 @@ def main() -> None:
     parser.add_argument("--fallback-enable-thinking", type=_str_to_bool, default=None, help="Explicit thinking setting for vllm/openai-compatible fallback; omitted preserves server defaults")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
     parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
+    parser.add_argument("--hybrid-mode", choices=["full", "reflex"], default="full", help="farm_jev with --fallback-model: the LLM takes the whole decision (full, default) or only fills in the arguments of Jev's tool when Jev is unsure of the tool (reflex)")
+    parser.add_argument("--jev-model", default=None)
+    parser.add_argument("--jev-endpoint", default=None)
+    parser.add_argument("--jev-api-key-env", default=None)
+    parser.add_argument("--jev-prompt-note", type=_str_to_bool, default=False)
     parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
     parser.add_argument("--run-oracle-tools", action="store_true", help="Execute tools while building oracle")
@@ -402,6 +421,7 @@ def main() -> None:
         llm = BaseLLM.llm_builder(
             {
                 "provider": args.provider,
+                **_role_timeout(args.provider),
                 "model": args.model,
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
@@ -464,6 +484,15 @@ def main() -> None:
             if args.request_max_retries is not None:
                 fallback_config["max_retries"] = args.request_max_retries
             fallback_llm = BaseLLM.llm_builder(fallback_config)
+        jev_llm = None
+        if args.jev_model:
+            jev_llm = BaseLLM.llm_builder({
+                "provider": "typesafe", "model": args.jev_model, "temperature": args.temperature,
+                **_role_timeout("typesafe"),
+                "max_retries": args.request_max_retries,
+                **({"base_url": args.jev_endpoint} if args.jev_endpoint else {}),
+                **({"api_key_env": args.jev_api_key_env} if args.jev_api_key_env else {}),
+            })
         agent = build_controller_agent(
             args.controller,
             llm=llm,
@@ -479,6 +508,9 @@ def main() -> None:
             done_check=args.done_check,
             decision_confidence_source=args.decision_confidence_source,
             qwen_context_policy=args.qwen_context_policy,
+            hybrid_mode=args.hybrid_mode,
+            jev_llm=jev_llm,
+            jev_prompt_note=args.jev_prompt_note,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
