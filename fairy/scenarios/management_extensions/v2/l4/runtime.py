@@ -121,8 +121,10 @@ class SeasonCycle(App):
         """Start the next annual crop ledger after real harvest; preserve live soil and stocks.
 
         All intervening days must already have run. The new sowing window is
-        seven days. Whole-horizon consumed counters persist; the newly available seasonal cap
-        is bounded by the original 1200 kg / 400 mm horizon limits.
+        seven days. Whole-horizon consumed counters persist. Inputs consumed after
+        the previous close, including fallow-period inputs, count toward the next
+        season; opening never grants a fresh allowance for those inputs. Unused
+        seed and fertilizer payloads remain on the same tractor.
 
         Args:
             year: Next calendar crop year, fixed to 2027 in this experiment.
@@ -134,12 +136,8 @@ class SeasonCycle(App):
             raise ValueError("This scenario opens its second crop in May 2027")
         if not all(r.harvested for r in self.farm._ridges):
             raise ValueError("Previous crop was not fully harvested")
-        if (
-            self.tractor._seed_hopper
-            or self.tractor._fertilizer_spreader_kg
-            or self.tractor._grain_bin_kg
-        ):
-            raise ValueError("Settle device payload before opening the next crop")
+        if self.tractor._grain_bin_kg:
+            raise ValueError("Unload harvested grain before opening the next crop")
         physics = self.farm.physics
         backend = physics.crop_backend
         backend.authorize_next_season(physics, range(self.farm.num_ridges), today)
@@ -148,6 +146,11 @@ class SeasonCycle(App):
         }
         inventory = deepcopy(self.farm._inventory.to_dict())
         fuel = self.tractor._fuel_tank_l
+        payloads = (
+            self.tractor.seed_type,
+            self.tractor._seed_hopper,
+            self.tractor._fertilizer_spreader_kg,
+        )
         params = physics.yield_recovery.params
         physics.crop = create_crop_dynamics(None, physics.num_ridges, crop_type="maize")
         physics.phenology = physics.crop.phenology
@@ -163,15 +166,23 @@ class SeasonCycle(App):
         self.farm._field_preparation_ops.clear()
         self.tractor._completed_prep_ops = []
         regime = self.farm._management_regime
-        regime.fertilizer_quota_kg = min(1200.0, regime.fertilizer_used_kg + 800.0)
+        previous_close = self.closed[-1]
+        regime.fertilizer_quota_kg = min(
+            1200.0, previous_close["fertilizer_used_kg_cumulative"] + 800.0
+        )
         regime.irrigation_quota_mm_total = min(
-            400.0, regime.irrigation_used_mm_total + 300.0
+            400.0, previous_close["irrigation_used_mm_cumulative"] + 300.0
         )
         self.current_year = year
         self.opened.append(year)
         assert (
             inventory == self.farm._inventory.to_dict()
             and fuel == self.tractor._fuel_tank_l
+        )
+        assert payloads == (
+            self.tractor.seed_type,
+            self.tractor._seed_hopper,
+            self.tractor._fertilizer_spreader_kg,
         )
         assert soil_before == {
             rid: backend._soil_pools(run.model) for rid, run in backend._runs.items()

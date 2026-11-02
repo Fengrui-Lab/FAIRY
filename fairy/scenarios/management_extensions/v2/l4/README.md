@@ -18,7 +18,7 @@ YieldLoss = 100 * (1 - actual_two_season_stored_kg / reference_two_season_stored
 
 `ContinuousSeasonBackend` 继承既有 WOFOST 后端，仅此家族 opt in。作物结束后，同一个 PCSE model、CWB 和 CNB 对象在整个休耕期继续逐日结算。翌年显式发 `crop_start`，仅更换作物状态；信号前后 W/WLOW/SS/NAVAIL/NSOIL 必须完全一致。每个原生 journal 保存第二季开始记录，恢复时从最初播种重放全部真实日驱动。没有 monkeypatch，也没有改共享后端的默认复种禁令。
 
-`ContinuousFarm` 显式处理本地后端 checkpoint，保留共享 FarmWorld 其他状态的正常解码。`SeasonCycle` 检查上一季真收获，清理下一作物的兼容生育状态和田间作业标记；库存、拖拉机、油箱、土壤、历史粮账、累计投入均不重建。没有新增现金补助；本场尚未定义经营现金账户。
+`ContinuousFarm` 显式处理本地后端 checkpoint，保留共享 FarmWorld 其他状态的正常解码。`SeasonCycle` 检查上一季真收获，清理下一作物的兼容生育状态和田间作业标记；库存、拖拉机、油箱、土壤、历史粮账、累计投入均不重建。第一季关闭后发生的休耕期水肥投入计入第二季额度；开季额度以关闭账为锚，不能再次增发。机上未用的同品种种子和肥料原样保留，只有未卸粮会阻止开季。没有新增现金补助；本场尚未定义经营现金账户。
 
 天气是 seed 101 的连续合成哈尔滨气候，含所有月份；2026/2027 使用不同日历日期的可复现生成值，不把某一实测年复制成另一个实测年。仅声明两年各自 5 月 5 日开始的 5 天播种干燥窗口。天气当前读数、七日预报和物理输入经 550 日一致性检查。使用现成 `completed_calendar_day` 结算方式，每个已经过去的日历日恰结算一次。
 

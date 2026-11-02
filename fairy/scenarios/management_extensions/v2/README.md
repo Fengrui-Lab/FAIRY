@@ -111,8 +111,10 @@ PYTHONPATH=. .venv/bin/python -m fairy.cli \
 
 - 两个场景均通过原 `fairy.cli --build-oracle --replay --evaluate` 入口；使用不同进程哈希时仍复现参考指标。
 - 两条静态Oracle都通过纯捕获、真实执行、保存JSON后全新实例回放；状态比较排除随机操作ID并把浮点规范到9位。
-- 注册后80项旧入口/历史错误回放/天气描述与新增场景测试全部通过。
+- 注册后84项旧入口/历史错误回放/天气描述与新增场景测试全部通过。
 - 原有4个management_extensions场景的完整Oracle执行与全新实例回放全部通过。
 - 起始1550个已跟踪文件中，仅显式场景注册列表变化；旧场景、公共工具和引擎源码不变。
 
-可核验证据位于 `validation_runs/management_v2_development_20261102/`：L3最新独立报告为 `l3/verification_drying_ledger/verification.json`，L4为 `l4/verified/verification.json`；各家族的 `parent_candidate_audit.json` 保存独立候选复核结果。运行报告中的 `evaluation.validation.metadata` 给出对应家族指标。两套真实basic/detail任务文本分别保存在 `l3/task_descriptions.json`、`l4/task_descriptions.json`。
+可核验证据位于 `validation_runs/management_v2_development_20261102/`：L3最新独立报告为 `l3/verification_drying_ledger/verification.json`，L4为 `l4/verified_quota_anchor/verification.json`；各家族的 `parent_candidate_audit.json` 保存独立候选复核结果。运行报告中的 `evaluation.validation.metadata` 给出对应家族指标。两套真实basic/detail任务文本分别保存在 `l3/task_descriptions.json`、`l4/task_descriptions.json`。
+
+L4季间预算锚定上一季关闭账，关闭后的休耕施水肥计入下一季；重新开季不会增发额度。同品种未用种肥在机具中原样结转，已收获粮仍须卸下并安全入库。两项边界修复后，参考JSON和Oracle逐字节未变，最终CLI与独立回放再次通过；对应证据为 `l4/quota_anchor_candidate_audit.json`、`l4/cli_quota_anchor/`、`l4/verified_quota_anchor/`。
