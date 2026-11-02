@@ -659,6 +659,7 @@ fairy-run \
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用允许的最大 completion token 数；以 `max_tokens` 传给 provider。 |
 | `--endpoint` | URL | provider 默认 | 覆盖 OpenAI-compatible base URL。会传成 client 的 `base_url`。 |
 | `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
+| `--enable-thinking` | `true` / `false` | 不指定 | 主 Agent 的 DeepSeek/Qwen/vLLM 推理开关；省略时使用服务端默认，A2A 专家保持独立默认。 |
 | `--max-tool-calls` | int | `300` | 主 agent 最多允许多少次工具调用。到达后 `run_report.status=stopped`，`stopped_reason=max_tool_calls`。 |
 | `--timeout-seconds` | float | `1200.0` | 主 agent 最大 wall time。到达后 `stopped_reason=timeout`。 |
 | `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。`detailed_briefing` / detail-context 模式就放这里。 |
@@ -1265,6 +1266,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--agent-max-iterations` | int | `200`                            | 传给 `fairy-run --max-tool-calls`。 |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用的最大 completion token 数；传给 provider，并记录在每个 run report 中。 |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
+| `--enable-thinking` | `true` / `false` | 不指定 | 主 Agent 的 DeepSeek/Qwen/vLLM 推理开关；省略时使用服务端默认，A2A 专家保持独立默认。 |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | 传给 `fairy-run`，并记录在 `run_report.json` 和 `results.csv`。`are` 迁移与 FAIRY 兼容的旧 ARE 行为规则，但不会恢复相冲突的文本 JSON `Action:`/`<end_action>` 协议或内嵌工具目录。 |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | 透传给 FAIRY CLI。 |
@@ -1363,3 +1365,13 @@ import guard 没输出且返回码为 1 表示没有匹配到外部框架 runtim
 - `fairy.types` 中若干 ARE 兼容名称只是可导入 shim，例如 `ConditionCheckEvent`、`Hint` 等。当前迁移场景不依赖其行为；新代码不能把它们当作已经实现的事件循环原语。
 - A2A on 会显著增加 wall time 和专家 token。比较 A2A on/off 时必须同时看主 agent token 和 `a2a.expert_metrics`。
 - Oracle baseline 中的 `tool_errors` 可能是场景设计的一部分，不一定代表 baseline 构建失败。
+
+### 推理开关
+
+CLI 和 `scripts/iclr_validation_runner.py` 均支持 `--enable-thinking true` 或 `--enable-thinking false`。批量 JSON 配置使用 `"enable_thinking": true/false/null`；CLI 显式值优先。省略/null 不传开关。
+
+DeepSeek 映射为 `extra_body={"thinking":{"type":"enabled"/"disabled"}}`；Qwen 映射为 `extra_body={"enable_thinking":true/false}`；vLLM 沿用 `chat_template_kwargs.enable_thinking`。开关要求模型支持混合推理模式；Qwen 客户端当前使用非流式接口，选择支持非流式的模型。OpenAI 请使用其独立的 reasoning 配置，不支持此开关。
+
+运行报告和 runtime log 的 `llm_config.enable_thinking_override` 记录请求值，runner CSV 的 `enable_thinking` 记录批次设置；null/空白不等于关闭推理。
+
+协议依据：[DeepSeek](https://api-docs.deepseek.com/guides/thinking_mode/)、[Qwen](https://www.alibabacloud.com/help/en/model-studio/deep-thinking)。

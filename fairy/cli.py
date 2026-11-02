@@ -183,6 +183,8 @@ def main() -> None:
         default=DEFAULT_MAX_OUTPUT_TOKENS,
         help="Maximum completion tokens per LLM call",
     )
+    parser.add_argument("--enable-thinking", type=_str_to_bool, default=None,
+                        help="Main agent thinking override for DeepSeek/Qwen/vLLM; omitted uses server default")
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
     parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
@@ -349,6 +351,7 @@ def main() -> None:
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
+                "enable_thinking": args.enable_thinking,
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
         )

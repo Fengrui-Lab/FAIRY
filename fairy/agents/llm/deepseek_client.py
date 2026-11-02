@@ -2,7 +2,7 @@
 import os
 from openai import OpenAI
 
-from fairy.agents.llm.base_llm import BaseLLM
+from fairy.agents.llm.base_llm import BaseLLM, _coerce_optional_bool
 
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_API_BASE = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com")
@@ -21,6 +21,7 @@ class DeepSeekClient(BaseLLM):
         """
         super().__init__(model, temperature, **kwargs)
         self.provider = "deepseek"
+        self.enable_thinking = _coerce_optional_bool(kwargs.get("enable_thinking"), "enable_thinking")
         self.api_key = api_key or DEEPSEEK_API_KEY
         self.model = model
         self.reasoning_history_policy = "provider_required_transport_only"
@@ -65,6 +66,7 @@ class DeepSeekClient(BaseLLM):
             temperature=self.temperature,
             **self.output_token_options(),
             **self.tool_call_options(tools),
+            **({"extra_body": {"thinking": {"type": "enabled" if self.enable_thinking else "disabled"}}} if self.enable_thinking is not None else {}),
         )
 
         if response.choices:
@@ -82,4 +84,5 @@ class DeepSeekClient(BaseLLM):
             'temperature': self.temperature,
             'parallel_tool_calls': self.parallel_tool_calls,
             'max_output_tokens': self.max_output_tokens,
+            "enable_thinking": self.enable_thinking,
         }

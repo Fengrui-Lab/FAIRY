@@ -92,6 +92,7 @@ RUNNER_DEFAULTS = {
     "max_output_tokens": DEFAULT_MAX_OUTPUT_TOKENS,
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
+    "enable_thinking": None,
     "system_prompt_mode": "fairy",
     "scenario_kwargs": None,
     "crop_backend": None,
@@ -138,6 +139,7 @@ def _build_cell_command(
     a2a_model: str | None = None,
     a2a_provider: str | None = None,
     a2a_endpoint: str | None = None,
+    enable_thinking: bool | None = None,
 ) -> list[str]:
     cmd = [
         PYTHON_BIN,
@@ -165,6 +167,8 @@ def _build_cell_command(
         "--system-prompt-mode",
         system_prompt_mode,
     ]
+    if enable_thinking is not None:
+        cmd.extend(["--enable-thinking", "true" if enable_thinking else "false"])
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
     if a2a_enabled:
@@ -497,7 +501,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
             config[field_name] = _serialize_json_arg(config[field_name], field_name)
     if "detail" in config:
         config["detail"] = _normalize_detail_arg(config["detail"])
-    for field_name in ("a2a", "parallel_tool_calls"):
+    for field_name in ("a2a", "parallel_tool_calls", "enable_thinking"):
         if field_name in config:
             config[field_name] = _str_to_bool(config[field_name])
     return config
@@ -766,6 +770,9 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         type=float,
         default=defaults.get("wait_for_user_input_timeout"),
     )
+    parser.add_argument("--enable-thinking", type=_str_to_bool,
+                        default=defaults.get("enable_thinking"),
+                        help="Main agent thinking override for DeepSeek/Qwen/vLLM; omitted uses server default")
     parser.add_argument(
         "--parallel-tool-calls",
         type=_str_to_bool,
@@ -898,6 +905,7 @@ def run_cell(
     a2a_endpoint: str | None,
     timeout_grace_s: int = 60,
     progress_interval_s: float = 60.0,
+    enable_thinking: bool | None = None,
 ) -> dict:
     """Run one cell as a subprocess; capture output and parse FOS / workflow."""
     cell_dir = output_root / f"{cell.family}__{cell.scenario}__r{cell.repeat}"
@@ -926,6 +934,7 @@ def run_cell(
             "a2a_enabled": a2a_enabled,
             "system_prompt_mode": system_prompt_mode,
             "max_output_tokens": max_output_tokens,
+            "enable_thinking": enable_thinking,
             "detail_enabled": detail_enabled,
             "wall_s": 0.0,
             "return_code": -3,
@@ -953,6 +962,7 @@ def run_cell(
         max_output_tokens=max_output_tokens,
         wait_for_user_input_timeout=wait_for_user_input_timeout,
         parallel_tool_calls=parallel_tool_calls,
+        enable_thinking=enable_thinking,
         system_prompt_mode=system_prompt_mode,
         a2a_enabled=a2a_enabled,
         a2a_app_prop=a2a_app_prop,
@@ -1079,6 +1089,7 @@ def run_cell(
         "parallel_tool_calls": parallel_tool_calls,
         "system_prompt_mode": system_prompt_mode,
         "max_output_tokens": max_output_tokens,
+        "enable_thinking": enable_thinking,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
         "scenario_initialization_kwargs": scenario_initialization_kwargs or "",
@@ -1140,6 +1151,7 @@ def main() -> int:
         f"a2a={bool(args.a2a)}, detail={detail_enabled}, "
         f"system_prompt_mode={args.system_prompt_mode}, "
         f"max_output_tokens={args.max_output_tokens}, "
+        f"enable_thinking={args.enable_thinking}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
     )
 
@@ -1179,6 +1191,7 @@ def main() -> int:
                 args.a2a_endpoint,
                 args.cell_timeout_grace_s,
                 args.progress_interval_s,
+                enable_thinking=args.enable_thinking,
             ): cell
             for cell in cells
         }

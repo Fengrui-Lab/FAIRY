@@ -734,6 +734,7 @@ Parameters:
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; passed to the provider as `max_tokens`. |
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
 | `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
+| `--enable-thinking` | `true` / `false` | unset | Main-agent DeepSeek/Qwen/vLLM thinking override; omitted uses server defaults. A2A experts keep independent defaults. |
 | `--max-tool-calls` | int | `300` | Maximum main-agent tool calls. If reached, `run_report.status=stopped` and `stopped_reason=max_tool_calls`. |
 | `--timeout-seconds` | float | `1200.0` | Maximum main-agent wall time. If reached, `stopped_reason=timeout`. |
 | `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Put `detailed_briefing` / detail-context mode here. |
@@ -1346,6 +1347,7 @@ Parameters:
 | `--agent-max-iterations` | int | `200`                            | Passed to `fairy-run --max-tool-calls`. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; forwarded to the provider and recorded in each run report. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
+| `--enable-thinking` | `true` / `false` | unset | Main-agent DeepSeek/Qwen/vLLM thinking override; omitted uses server defaults. A2A experts keep independent defaults. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
@@ -1444,3 +1446,13 @@ For the import guard, no output and return code 1 means no external framework ru
 - Several ARE compatibility names in `fairy.types` are import-only shims (`ConditionCheckEvent`, `Hint`, and related classes). Current migrated scenarios do not rely on their behavior; new code must not treat them as implemented event-loop primitives.
 - A2A on can significantly increase wall time and expert tokens. Always compare both main-agent token usage and `a2a.expert_metrics`.
 - `tool_errors` in oracle baselines may be part of the intended scenario management plan; they do not always mean baseline construction failed.
+
+### Thinking mode override
+
+Both the CLI and `scripts/iclr_validation_runner.py` accept `--enable-thinking true` or `--enable-thinking false`. Runner JSON accepts `"enable_thinking": true/false/null`; explicit CLI values override it. Unset/null omits the API override.
+
+DeepSeek sends `extra_body={"thinking":{"type":"enabled"/"disabled"}}`; Qwen sends `extra_body={"enable_thinking":true/false}`; vLLM uses `chat_template_kwargs.enable_thinking`. Select a model supporting switchable thinking and, for Qwen, non-streaming requests. OpenAI uses its separate reasoning configuration and rejects this switch.
+
+Run reports and runtime logs record the requested override in `llm_config.enable_thinking_override`; runner CSV records `enable_thinking`. Null/blank means unspecified, not disabled.
+
+Protocol references: [DeepSeek](https://api-docs.deepseek.com/guides/thinking_mode/), [Qwen](https://www.alibabacloud.com/help/en/model-studio/deep-thinking).
