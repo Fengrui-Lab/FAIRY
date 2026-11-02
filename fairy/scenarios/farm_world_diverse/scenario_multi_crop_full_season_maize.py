@@ -426,6 +426,12 @@ _SEASON_TOOLS = {
 @dataclass
 class ScenarioMultiCropFullSeasonMaize(Scenario):
     """两场玉米全季管理：第二场错期播种并经历局地干旱。"""
+    BASIC_BRIEFING = (
+        'maize_a场：5垄，每垄长120米、垄宽0.75米，作物为玉米，种子标识MAIZE_STANDARD。\n'
+        'maize_b场：7垄，每垄长140米、垄宽0.75米，作物为玉米，种子标识MAIZE_STANDARD。\n'
+        '完成两场玉米的建植、全季管理与分别安全入库。'
+    )
+
 
     farm_configs: list[dict[str, Any]] | None = None
     season_length_days: int | None = None
@@ -551,6 +557,9 @@ class ScenarioMultiCropFullSeasonMaize(Scenario):
     environment_description: ClassVar[str] = ""
 
     def __post_init__(self) -> None:
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
         super().__post_init__()
         if self.farm_configs is not None:
             self.farm_plans = tuple(parse_farm_config(config) for config in self.farm_configs)
@@ -626,6 +635,13 @@ class ScenarioMultiCropFullSeasonMaize(Scenario):
         self._initial_states = {
             site.spec.farm_id: site.farm.get_state() for site in self.fleet.sites
         }
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
 
     def _create_fleet(self) -> None:
         """农场保存土地状态；本场景显式声明三项可跨场复用的设备资产。"""

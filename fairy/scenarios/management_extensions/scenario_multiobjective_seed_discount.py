@@ -13,6 +13,10 @@ SCENARIO_ID = "scenario_multiobjective_seed_discount"
 
 @register_scenario(SCENARIO_ID)
 class ScenarioSeedDiscount(FullSeasonExtension):
+    BASIC_BRIEFING = (
+        '田地共64垄，每垄长268米、垄宽1.1米，种植大豆，种子标识SOYBEAN_901。比较种子采购方案，完成全季管理，在满足产量要求的同时控制总成本，并完成安全入库。'
+    )
+
     def init_and_populate_apps(self):
         self.scenario_input = '管理同一块18867.2m²田的2019完整种植季。同品种大豆种子折扣采购与高产全季管理。先读取历史/报告或预算/报价，再执行选择。使用公开工具整地、播种、巡查、根据水分与营养管理，实际成熟后收割、卸粮、干燥、安全入库。播种每次最多4垄；核对品种、数量、株距、播深。原生玉米不支持病虫草处理。禁止无依据施药。天气采用固定真实逐日数据；所有等待和作业消耗共同时间。种子采购预算12578.13 DEMO，单独核算；全季成本按种子实付+50分/kg肥料+100分/L燃油+2分/m³灌水+10分/kg实际干燥粮计算。选择满足已测试最高安全入库产量99%的最低总成本参考方案。'
         self.initialize_world(
@@ -25,6 +29,13 @@ class ScenarioSeedDiscount(FullSeasonExtension):
             fertilizer_kg=1200.0,
             fuel_liters=800.0,
         )
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
 
     # 已测试候选最高安全入库量 8126.080000000kg；99%门槛 8044.819200000kg。
     best_tested_yield_kg = 8126.080000000001
@@ -189,3 +200,9 @@ class ScenarioSeedDiscount(FullSeasonExtension):
             previous = capture_step(previous, self.tractor.get_status(), 'final_machine', '确认空料斗、空粮箱，设备状态未重置。')
             previous = capture_step(previous, self.market.get_budget(), 'final_budget', '核对种子预算余额及实付价格。')
         return finish_capture(self, events)
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()

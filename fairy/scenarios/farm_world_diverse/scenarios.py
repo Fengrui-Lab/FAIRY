@@ -308,55 +308,231 @@ class DiverseFarmScenario(Scenario):
 
 @register_scenario("scenario_multi_farm_uneven_planting")
 class ScenarioMultiFarmUnevenPlanting(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'north场：5垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'east场：9垄，每垄长180米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'west场：3垄，每垄长90米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        '完成所有农场的大豆播种，并确认出苗。'
+    )
+
     purpose = "Complete soybean planting across three independently stocked farms with unequal layouts."
     orders = (WorkOrder("north", "North", 5, 120), WorkOrder("east", "East", 9, 180), WorkOrder("west", "West", 3, 90))
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
 
 
 @register_scenario("scenario_multi_farm_targeted_irrigation")
 class ScenarioMultiFarmTargetedIrrigation(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'north场：7垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'south场：11垄，每垄长180米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        '对north的2–4垄、south的7–10垄完成定向灌溉并复查，保持其他垄不变。'
+    )
+
     purpose = "Apply limited local irrigation to different dry patches; preserve the healthy ridges at both farms."
     orders = (WorkOrder("north", "North", 7, 120, task="irrigate", irrigation_range=(2, 4)),
               WorkOrder("south", "South", 11, 180, task="irrigate", irrigation_range=(7, 10), irrigation_hours=1.5))
 
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
+
 
 @register_scenario("scenario_multi_farm_harvest_storage")
 class ScenarioMultiFarmHarvestStorage(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'north场：5垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'south场：7垄，每垄长180米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        '完成两场大豆的收获与分别安全入库，保持粮食归属清楚，并清空粮箱和拖车。'
+    )
+
     purpose = "Harvest and close separate soybean grain batches without mixing local warehouse inventories."
     orders = (WorkOrder("north", "North", 5, 120, task="harvest", grain_moisture_pct=16),
               WorkOrder("south", "South", 7, 180, task="harvest", grain_moisture_pct=17))
 
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
+
 
 @register_scenario("scenario_multi_farm_weather_isolation")
 class ScenarioMultiFarmWeatherIsolation(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'dry场：5垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'rainy场：9垄，每垄长180米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        '完成dry场的收获与本场安全入库；仅观察rainy场，保持其作物、库存和设备状态不变。'
+    )
+
     purpose = "Harvest only the dry farm; defer the other farm because its own weather station reports rain."
     orders = (WorkOrder("dry", "Dry", 5, 120, task="harvest"),
               WorkOrder("rainy", "Rainy", 9, 180, task="hold", rainfall_mm=12))
 
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
+
 
 @register_scenario("scenario_multi_crop_maize_planting")
 class ScenarioMultiCropMaizePlanting(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'maize场：7垄，每垄长140米、垄宽0.75米，作物为玉米，种子标识MAIZE_STANDARD。\n'
+        '完成maize场全田玉米播种，并确认出苗。'
+    )
+
     purpose = "Establish maize using its own seed, row count, sowing depth, density and crop phenology."
     orders = (WorkOrder("maize", "Maize", 7, 140, 0.75, "maize"),)
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
 
 
 @register_scenario("scenario_multi_crop_rice_planting")
 class ScenarioMultiCropRicePlanting(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'rice场：9垄，每垄长100米、垄宽1米，作物为旱直播水稻，种子标识RICE_STANDARD。\n'
+        '完成rice场全田旱直播水稻播种，并确认出苗。'
+    )
+
     purpose = "Establish dry direct-seeded aerobic rice in shallow, densely planted rows, and observe the crop after seven days."
     orders = (WorkOrder("rice", "Rice", 9, 100, 1.0, "rice"),)
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
 
 
 @register_scenario("scenario_multi_crop_mixed_planting")
 class ScenarioMultiCropMixedPlanting(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'soy场：5垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'maize场：7垄，每垄长140米、垄宽0.75米，作物为玉米，种子标识MAIZE_STANDARD。\n'
+        'rice场：9垄，每垄长100米、垄宽1米，作物为旱直播水稻，种子标识RICE_STANDARD。\n'
+        '完成各场指定作物的播种，并分别确认出苗。'
+    )
+
     purpose = "Coordinate soybean, maize and rice establishment with separate crop profiles and inventories under one clock."
     orders = (WorkOrder("soy", "Soy", 5, 120), WorkOrder("maize", "Maize", 7, 140, 0.75, "maize"),
               WorkOrder("rice", "Rice", 9, 100, 1.0, "rice"))
 
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
+
 
 @register_scenario("scenario_multi_crop_harvest_storage")
 class ScenarioMultiCropHarvestStorage(DiverseFarmScenario):
+    BASIC_BRIEFING = (
+        'maize场：7垄，每垄长140米、垄宽0.75米，作物为玉米，种子标识MAIZE_STANDARD。\n'
+        'rice场：9垄，每垄长100米、垄宽1米，作物为旱直播水稻，种子标识RICE_STANDARD。\n'
+        '完成玉米和水稻的收获，将粮食分别安全存入本场仓库，并清空粮箱和拖车。'
+    )
+
     purpose = "Harvest mature maize and rice using each crop's stage and grain-moisture rules, dry and store each local batch."
     orders = (WorkOrder("maize", "Maize", 7, 140, 0.75, "maize", "harvest", 22),
               WorkOrder("rice", "Rice", 9, 100, 1.0, "rice", "harvest", 23))
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
 
 
 SCENARIO_IDS = (

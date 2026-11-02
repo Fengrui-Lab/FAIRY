@@ -27,6 +27,38 @@ from fairy.scenarios.farm_world_fullseason_v2.farm_checkpoint_state import (
 START = date(2026, 6, 1)
 
 
+@pytest.mark.parametrize("kind,parameters", [
+    ("cold_spell", {"temp_delta_c": -3}),
+    ("wind_event", {"wind_ms": 8}),
+    ("rain_event", {"rain_mm": 0}),
+    ("rain_event", {"total_rain_mm": 0}),
+    ("rain_event", {"rain_mm": 30}),
+    ("rain_event", {"total_rain_mm": 30}),
+])
+def test_crop_snapshot_keeps_legacy_empty_rain_shape_and_explicit_rain_modes(kind, parameters):
+    from fairy.apps.farm_world import FarmWorldApp
+    from fairy.apps.farm_world.crop_snapshot import restore_physics, snapshot_physics
+
+    farm = FarmWorldApp(num_ridges=1)
+    farm.configure_physics_profile("harbin_baseline_2026_seed_101")
+    farm.physics.profile = deepcopy(farm.physics.profile)
+    storm = WeatherEvent(kind, START, 3, **parameters)
+    farm.physics.profile.weather_events = [storm]
+    snapshot = snapshot_physics(farm.physics)
+    saved = snapshot["profile"]["weather_events"][0]
+    if storm.rain_mm is None and storm.total_rain_mm is None:
+        expected = asdict(storm)
+        expected.pop("rain_mm")
+        expected["start_date"] = START.isoformat()
+        assert saved == expected
+    else:
+        assert saved["rain_mm"] == storm.rain_mm
+        assert saved["total_rain_mm"] == storm.total_rain_mm
+    restored = restore_physics(json.loads(json.dumps(snapshot)), num_ridges=1)
+    assert restored.profile.weather_events == [storm]
+    assert snapshot_physics(restored)["profile"]["weather_events"] == [saved]
+
+
 def generator(*, seed=17, background_rain=0):
     return WeatherGenerator(
         WeatherGeneratorConfig(monthly={

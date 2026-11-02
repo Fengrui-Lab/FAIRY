@@ -15,6 +15,12 @@ FARMING_PLAN = ('4/27两场整地，4/28早场、5/11晚场分别播种；每场
 
 @register_scenario(SCENARIO_ID)
 class ScenarioTwoFarmWofostStaggeredHarvestRainWindow_V2(WofostMultiFarmScenario):
+    BASIC_BRIEFING = (
+        'early场：32垄，每垄长2000米、垄宽1.1米，作物为大豆，品种Soybean_901，种子标识SOYBEAN_901。\n'
+        'late场：32垄，每垄长2000米、垄宽1.1米，作物为大豆，品种Soybean_901，种子标识SOYBEAN_901。\n'
+        '完成early、late两场错期大豆的全季管理，协调共享收割机与天气窗口，并分别安全收储。'
+    )
+
     REFERENCE_ID = 'lille'
     START_DATE = date.fromisoformat('2019-04-27')
     END_DATE = date(2019, 11, 15)
@@ -96,6 +102,13 @@ class ScenarioTwoFarmWofostStaggeredHarvestRainWindow_V2(WofostMultiFarmScenario
         # 播期是世界公开约束；不靠 Oracle 自己等待来暗中创造错期。
         self.farms['early'].configure_planting_windows([dict(label='early_sowing', start=0, end=31, seed_type='SOYBEAN_901', earliest_date='2019-04-28')])
         self.farms['late'].configure_planting_windows([dict(label='late_sowing', start=0, end=31, seed_type='SOYBEAN_901', earliest_date='2019-05-11')])
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
 
     def build_events_flow(self):
         # 世界事件已经在初始化时安装；这些公共工具步骤不会触发或改写灾害。
@@ -1140,3 +1153,9 @@ class ScenarioTwoFarmWofostStaggeredHarvestRainWindow_V2(WofostMultiFarmScenario
             event.record_runtime_timing = True
         self.events = list(captured)
         return self.events
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()

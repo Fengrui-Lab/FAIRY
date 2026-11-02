@@ -15,6 +15,12 @@ FARMING_PLAN = ('4/28分别整地播种；6/1检查两场建立。',
 
 @register_scenario(SCENARIO_ID)
 class ScenarioTwoFarmWofostSharedSprayDiagnosis_V2(WofostMultiFarmScenario):
+    BASIC_BRIEFING = (
+        'west场：32垄，每垄长268米、垄宽1.1米，作物为大豆，品种Soybean_901，种子标识SOYBEAN_901。\n'
+        'east场：32垄，每垄长268米、垄宽1.1米，作物为大豆，品种Soybean_901，种子标识SOYBEAN_901。\n'
+        '完成west、east两场大豆的全季管理。诊断叶片异常，在共享资源条件下按需处理，并分别安全收储。'
+    )
+
     REFERENCE_ID = 'lille'
     START_DATE = date.fromisoformat('2019-04-28')
     END_DATE = date(2019, 11, 15)
@@ -632,3 +638,19 @@ class ScenarioTwoFarmWofostSharedSprayDiagnosis_V2(WofostMultiFarmScenario):
             event.record_runtime_timing = True
         self.events = list(captured)
         return self.events
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()

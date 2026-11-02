@@ -13,6 +13,10 @@ SCENARIO_ID = "scenario_multiseason_scn_switch_to_maize"
 
 @register_scenario(SCENARIO_ID)
 class ScenarioScnSwitch(FullSeasonExtension):
+    BASIC_BRIEFING = (
+        '田地共64垄，每垄长268米、垄宽0.75米，上季种植大豆。本季候选为玉米MAIZE_201或大豆SOYBEAN_901。依据历史、土壤报告和轮作规则选择作物，提交选择依据，完成全季管理与安全入库，并兼顾产量和成本目标。'
+    )
+
     def init_and_populate_apps(self):
         self.scenario_input = (
             '管理同一块12864.0m²田的2019完整种植季。该地块上季种植大豆。'
@@ -45,6 +49,13 @@ class ScenarioScnSwitch(FullSeasonExtension):
             fertilizer_kg=800.0,
             fuel_liters=800.0,
         )
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
 
     # 已测试候选最高安全入库量 17392.160000000kg；99%门槛 17218.238400000kg。
     best_tested_yield_kg = 17392.16
@@ -230,3 +241,9 @@ class ScenarioScnSwitch(FullSeasonExtension):
             previous = capture_step(previous, self.warehouse.get_inventory(), 'final_inventory', '核对安全入库粮、种子、肥料和燃油账。')
             previous = capture_step(previous, self.tractor.get_status(), 'final_machine', '确认空料斗、空粮箱，设备状态未重置。')
         return finish_capture(self, events)
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()

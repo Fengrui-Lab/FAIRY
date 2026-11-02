@@ -426,6 +426,13 @@ _SEASON_TOOLS = {
 @dataclass
 class ScenarioMultiFarmFullSeasonStaggeredWindows(Scenario):
     """三场大豆全季管理：分别在第 0、7、14 天开放播种。"""
+    BASIC_BRIEFING = (
+        'north场：3垄，每垄长120米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'east场：5垄，每垄长140米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        'west场：7垄，每垄长160米、垄宽1.1米，作物为大豆，种子标识STANDARD。\n'
+        '协调各场不同的播种窗口，完成所有农场大豆的全季管理与分别安全入库。'
+    )
+
 
     farm_configs: list[dict[str, Any]] | None = None
     season_length_days: int | None = None
@@ -598,6 +605,9 @@ class ScenarioMultiFarmFullSeasonStaggeredWindows(Scenario):
     environment_description: ClassVar[str] = ""
 
     def __post_init__(self) -> None:
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
         super().__post_init__()
         if self.farm_configs is not None:
             self.farm_plans = tuple(parse_farm_config(config) for config in self.farm_configs)
@@ -673,6 +683,13 @@ class ScenarioMultiFarmFullSeasonStaggeredWindows(Scenario):
         self._initial_states = {
             site.spec.farm_id: site.farm.get_state() for site in self.fleet.sites
         }
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
 
     def _create_fleet(self) -> None:
         """农场保存土地状态；本场景显式声明三项可跨场复用的设备资产。"""

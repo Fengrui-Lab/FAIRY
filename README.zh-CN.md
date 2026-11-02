@@ -200,6 +200,13 @@ validation_runs/quickstart/oracle_replay/scenario_farm_world_field_prep_physics_
 
 full-season 的 detailed context 通过 `--scenario-kwargs` 传入场景构造器。
 
+53个多农场、玉米子任务、玉米挑战、管理扩展与WOFOST双农场场景在各自的
+场景类内定义 `BASIC_BRIEFING`，支持 `{"detailed_briefing": false}`：简短版保留
+田地几何、品种与任务目标，不直接提供播深、密度、水肥剂量等操作参数。
+`true`（默认）保留原有专家描述。该列表仅接受JSON布尔值，不接受字符串
+`"false"`、拼写错误 `"fasle"` 或其他context模式；下表其他模式适用于各自支持它们的L3场景。
+显式传入 `scenario_input` 时，以自定义任务为准。描述模式不改变世界状态、参考方案或验收规则。
+
 ```bash
 PYTHONPATH=. uv run python -m fairy.cli \
   -s scenario_full_season_hb_base_hn84_std_normal \

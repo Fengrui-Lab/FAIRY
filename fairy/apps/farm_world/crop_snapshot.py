@@ -39,7 +39,7 @@ def snapshot_physics(physics) -> dict | None:
         return None
     from fairy.apps.farm_world.runtime_state import encode_state
     generator = physics.weather_generator
-    return _encode({
+    snapshot = _encode({
         "version": 1, "crop_id": physics.crop_id, "num_ridges": len(physics.soil.states),
         "crop_type": physics.crop_type,
         "crop_profile": encode_state(physics.crop_profile),
@@ -73,6 +73,17 @@ def snapshot_physics(physics) -> dict | None:
         "pending_treatments": physics.pending_treatments_by_ridge,
         "pending_harvest": physics.pending_harvest_actions_by_ridge,
     })
+    # The legacy weather-event schema had only total_rain_mm. Preserve its
+    # serialized shape when both rainfall modes are unused (e.g. cold spells),
+    # so existing checkpoint digests remain valid. An explicit whole-event
+    # total MUST retain rain_mm=None: from_state uses that key to distinguish
+    # the new mode from historical query-window rainfall.
+    profile = snapshot["profile"]
+    if isinstance(profile, dict):
+        for event in profile.get("weather_events", []):
+            if event.get("rain_mm") is None and event.get("total_rain_mm") is None:
+                event.pop("rain_mm", None)
+    return snapshot
 
 
 def _restore_states(raw: dict, state_type, num_ridges: int, date_fields=()) -> dict:

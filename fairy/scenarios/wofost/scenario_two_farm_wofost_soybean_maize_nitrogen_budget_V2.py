@@ -15,6 +15,12 @@ FARMING_PLAN = ('5/1大豆不施例行氮；玉米施100kg基肥产品。分别�
 
 @register_scenario(SCENARIO_ID)
 class ScenarioTwoFarmWofostSoybeanMaizeNitrogenBudget_V2(WofostMultiFarmScenario):
+    BASIC_BRIEFING = (
+        'soybean场：32垄，每垄长268米、垄宽1.1米，作物为大豆，品种Soybean_901，种子标识SOYBEAN_901。\n'
+        'maize场：32垄，每垄长268米、垄宽0.75米，作物为玉米，品种Grain_maize_201，种子标识MAIZE_201。\n'
+        '完成soybean大豆场与maize玉米场的全季管理，合理分配共享肥料资源，并分别安全收储。'
+    )
+
     REFERENCE_ID = 'thionville'
     START_DATE = date.fromisoformat('2019-05-01')
     END_DATE = date(2019, 11, 15)
@@ -761,3 +767,19 @@ class ScenarioTwoFarmWofostSoybeanMaizeNitrogenBudget_V2(WofostMultiFarmScenario
             event.record_runtime_timing = True
         self.events = list(captured)
         return self.events
+
+    def init_and_populate_apps(self, *args, **kwargs):
+        super().init_and_populate_apps(*args, **kwargs)
+        original_briefing = self.scenario_input
+        if self._briefing_input_override:
+            self.scenario_input = self._briefing_input_override
+        elif not self.detailed_briefing:
+            self.scenario_input = self.BASIC_BRIEFING
+        if self.additional_system_prompt == original_briefing:
+            self.additional_system_prompt = self.scenario_input
+
+    def __post_init__(self):
+        if type(self.detailed_briefing) is not bool:
+            raise ValueError("detailed_briefing must be a JSON boolean: false or true")
+        self._briefing_input_override = self.scenario_input
+        super().__post_init__()
