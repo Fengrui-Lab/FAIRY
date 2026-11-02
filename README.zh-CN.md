@@ -1370,7 +1370,7 @@ import guard 没输出且返回码为 1 表示没有匹配到外部框架 runtim
 
 CLI 和 `scripts/iclr_validation_runner.py` 均支持 `--enable-thinking true` 或 `--enable-thinking false`。批量 JSON 配置使用 `"enable_thinking": true/false/null`；CLI 显式值优先。省略/null 不传开关。
 
-DeepSeek 映射为 `extra_body={"thinking":{"type":"enabled"/"disabled"}}`；Qwen 映射为 `extra_body={"enable_thinking":true/false}`；vLLM 沿用 `chat_template_kwargs.enable_thinking`。开关要求模型支持混合推理模式；Qwen 客户端当前使用非流式接口，选择支持非流式的模型。OpenAI 请使用其独立的 reasoning 配置，不支持此开关。
+DeepSeek 映射为 `extra_body={"thinking":{"type":"enabled"/"disabled"}}`；Qwen 映射为 `extra_body={"enable_thinking":true/false}`；vLLM 沿用 `chat_template_kwargs.enable_thinking`。开关要求模型支持混合推理模式；Qwen 客户端当前使用非流式接口，选择支持非流式的模型。OpenAI 请使用其独立的 reasoning 配置；当前客户端会忽略此开关。
 
 运行报告和 runtime log 的 `llm_config.enable_thinking_override` 记录请求值，runner CSV 的 `enable_thinking` 记录批次设置；null/空白不等于关闭推理。
 

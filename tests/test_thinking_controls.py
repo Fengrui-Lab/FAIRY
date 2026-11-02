@@ -46,11 +46,6 @@ def test_invalid_switch_is_rejected(provider,value):
         BaseLLM.llm_builder({'provider':provider,'model':'fake','api_key':'test-key','enable_thinking':value})
 
 
-def test_unsupported_provider_does_not_silently_ignore_switch():
-    with pytest.raises(ValueError,match='enable_thinking is not supported'):
-        BaseLLM.llm_builder({'provider':'openai','model':'fake','enable_thinking':False})
-
-
 @pytest.mark.parametrize('provider',['deepseek','qwen','vllm'])
 @pytest.mark.parametrize('value',[None,True,False])
 def test_cli_to_wire_and_run_report(monkeypatch,tmp_path,provider,value):

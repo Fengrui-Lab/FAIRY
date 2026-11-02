@@ -1451,7 +1451,7 @@ For the import guard, no output and return code 1 means no external framework ru
 
 Both the CLI and `scripts/iclr_validation_runner.py` accept `--enable-thinking true` or `--enable-thinking false`. Runner JSON accepts `"enable_thinking": true/false/null`; explicit CLI values override it. Unset/null omits the API override.
 
-DeepSeek sends `extra_body={"thinking":{"type":"enabled"/"disabled"}}`; Qwen sends `extra_body={"enable_thinking":true/false}`; vLLM uses `chat_template_kwargs.enable_thinking`. Select a model supporting switchable thinking and, for Qwen, non-streaming requests. OpenAI uses its separate reasoning configuration and rejects this switch.
+DeepSeek sends `extra_body={"thinking":{"type":"enabled"/"disabled"}}`; Qwen sends `extra_body={"enable_thinking":true/false}`; vLLM uses `chat_template_kwargs.enable_thinking`. Select a model supporting switchable thinking and, for Qwen, non-streaming requests. OpenAI uses its separate reasoning configuration; its current client ignores this switch.
 
 Run reports and runtime logs record the requested override in `llm_config.enable_thinking_override`; runner CSV records `enable_thinking`. Null/blank means unspecified, not disabled.
 
