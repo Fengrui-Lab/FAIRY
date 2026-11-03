@@ -1,0 +1,19 @@
+{
+  "version": "development_actual_0700_v3",
+  "timezone": "Asia/Shanghai",
+  "grid_anchor": "2026-05-05T07:00:00+08:00",
+  "grid_step_days": 3,
+  "first_regular_grid": "first anchor+3k days at or after completed planting; never backfill missed preplant management",
+  "missed_grid": "observe immediately once, record lateness; next strictly future original grid, no catchup irrigation for multiple missed slots",
+  "zone_merging": "merge all adjacent eligible probe zones into maximal contiguous ridge ranges; ascending first ridge; each range one call",
+  "max_observation_age_seconds": 21600,
+  "cross_local_date": "always refresh before any remaining range; refreshed decisions restricted to previously selected but unattempted ridges for this grid",
+  "settlement_recheck": "confirmation only; cannot initiate a new irrigation decision",
+  "daily_maturity_switch": "first public overview showing at least1 MATURE ridge; latch true, thereafter next local08:00 daily; matured ridges never receive irrigation",
+  "commit_daily_physics": "not used; advances24h, never treated as refresh",
+  "pending_lock": "operation type+overlapping ridge set+unreconciled dispatch, independent of dispatch ID; partial/unknown locks remain",
+  "stale_observation": "ETA arrival/lock release never validates old observation; irrigation requires current grid decision and fresh observation",
+  "sensor_noise": "same initial seed, actual call order saved; extra settlement reads may consume different RNG draws; never reset RNG",
+  "same_environment_scope": "within each pair only; design fingerprint != development ID != realized initial hash",
+  "original_protocol_deviation": "Original v2 08:00 not followed; retained. This explicit protocol registers actual development timing, not retroactive compliance."
+}

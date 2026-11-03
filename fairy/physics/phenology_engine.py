@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS
+
 from dataclasses import dataclass, field, replace
 from datetime import date
 from enum import Enum
@@ -74,6 +76,10 @@ class SeedType(str, Enum):
     SOYBEAN_902 = "SOYBEAN_902"
     SOYBEAN_903 = "SOYBEAN_903"
     SOYBEAN_905 = "SOYBEAN_905"
+    MAIZE_202 = "MAIZE_202"
+    MAIZE_203 = "MAIZE_203"
+    MAIZE_204 = "MAIZE_204"
+    MAIZE_205 = "MAIZE_205"
     MAIZE_201 = "MAIZE_201"
 
 
@@ -516,7 +522,7 @@ class ThermalTimePhenologyEngine:
                 ["incomplete_planting_metadata"],
             )
 
-        if state.seed_type == SeedType.MAIZE_201:
+        if state.seed_type in MAIZE_WOFOST_VARIANTS:
             raise ValueError("MAIZE_201 requires the native WOFOST backend; the legacy soybean engine cannot grow maize")
         seed_params = self.seed_type_params[state.seed_type]
 

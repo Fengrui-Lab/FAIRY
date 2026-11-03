@@ -1,6 +1,8 @@
 """Shared maize configuration and readable, side-effect-free Oracle builders."""
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 import copy
 import hashlib
 from dataclasses import replace
@@ -26,6 +28,7 @@ class MaizeScenario(Scenario):
 
     spec: MaizeScenarioSpec
     crop_name = "maize"
+    public_seed_type = "MAIZE_201"
     level = "L3"
     task = "season"
 
@@ -33,9 +36,13 @@ class MaizeScenario(Scenario):
         backend = kwargs.pop("crop_backend", "wofost")
         if backend != "wofost":
             raise ValueError("Maize scenarios require the WOFOST crop backend")
-        options = {**self.spec.backend_options(), **kwargs.pop("crop_backend_options", {})}
-        if options["crop_name"] != "maize" or options["variety_name"] != "Grain_maize_201":
-            raise ValueError("Maize scenarios require maize / Grain_maize_201")
+        defaults = self.spec.backend_options()
+        defaults["variety_name"] = native_variety(self.public_seed_type)
+        if self.public_seed_type != "MAIZE_201":
+            defaults["cultivar_map"] = {self.public_seed_type: defaults["variety_name"]}
+        options = {**defaults, **kwargs.pop("crop_backend_options", {})}
+        if options["crop_name"] != "maize" or options["variety_name"] != native_variety(self.public_seed_type):
+            raise ValueError("Maize scenario requires its fixed native variety")
         if options.get("external_biotic_coupling"):
             raise ValueError("Maize v1 does not enable soybean biotic coupling")
         start = date.fromisoformat(self.spec.start_date)
@@ -71,11 +78,11 @@ def init_maize_apps(scenario: Scenario, spec: MaizeScenarioSpec) -> None:
         profile_name=f"maize_reference_{spec.variant}_v1",
         location="Synthetic Harbin climate; European reference maize, uncalibrated",
         scenario_type="maize_full_season", random_seed=spec.weather_seed,
-        seed_type="MAIZE_201", cultivar="Grain_maize_201", start_date=spec.start_date,
+        seed_type=scenario.public_seed_type, cultivar=native_variety(scenario.public_seed_type), start_date=spec.start_date,
         density_target_plants_m2=1.0 / (0.75 * 0.20),
     )
     farm.configure_crop_backend("wofost", **scenario.crop_backend_options)
-    farm._inventory.seed_stock = {"MAIZE_201": 100000}
+    farm._inventory.seed_stock = {scenario.public_seed_type: 100000}
     farm._inventory.fertilizer_kg = spec.fertilizer_stock_kg
     farm._inventory.fuel_liters = 500.0
     farm._inventory.pesticide_liters = 0.0

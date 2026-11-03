@@ -386,7 +386,12 @@ def build_controller_agent(
     hybrid_mode: str = "full",
     jev_llm: Any = None,
     jev_prompt_note: bool = False,
+    enforced_tool_adaptor: bool = False,
 ) -> ResearchARESimulationAgent:
+    if type(enforced_tool_adaptor) is not bool:
+        raise ValueError("enforced_tool_adaptor must be boolean")
+    if enforced_tool_adaptor and family_id != "farm_jev":
+        raise ValueError("enforced_tool_adaptor requires farm_jev")
     explicit_system_message = system_message is not None
     if system_message is None:
         system_message = get_farm_world_system_prompt_for_apps(toolsets)
@@ -409,6 +414,9 @@ def build_controller_agent(
         return QwenSnapshotAgent(name=family_id, llm=llm, fallback_llm=llm,
             system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
             toolsets=toolsets, hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            # The snapshot LLM inherited guidance before this Jev-only switch.
+            # Preserve its existing inputs; do not silently change the LLM control.
+            enforced_tool_adaptor=True,
             qwen_context_policy=qwen_context_policy)
     if family_id == "farm_jev":
         # Jev picks actions from a menu instead of generating tool calls.
@@ -428,6 +436,7 @@ def build_controller_agent(
             confidence_source=decision_confidence_source,
             qwen_context_policy=qwen_context_policy,
             hybrid_mode=hybrid_mode,
+            enforced_tool_adaptor=enforced_tool_adaptor,
         )
     if fallback_llm is not None:
         raise ValueError("--fallback-model is only used by the farm_jev controller")

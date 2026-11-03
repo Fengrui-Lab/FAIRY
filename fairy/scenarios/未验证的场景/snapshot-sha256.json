@@ -1,0 +1,11 @@
+{
+  "cultivar_instances.py": "bc96ebd6f5fd879ece0aa7b5e706355e9e30850a0815eeeebfc00e182d95e83d",
+  "scenario_basic_w01_v1.py": "83617f32786bf6b4ffbd8254eb41b706de0395bb55e475c6fca16f7cc6ce7522",
+  "scenario_full_season_maize_water_limit.py": "0b1e8c5c563a8ed38773ce56fc0bf707d9a5eb295b8da014f6f9b58d48dbe36e",
+  "scenario_full_season_maize_nitrogen_limit.py": "d74ef93e1f90315d7c85392bbaf66fb1ab31801c8c1b3f266ab8185b419fc3da",
+  "fairy/scenarios/rice/scenario_full_season_rice_equipment_limit.py": "e8cdd523eb38a71eb6b78cec9da4bd67af119c37ed22bf3e2d8e49fe7e630655",
+  "fairy/scenarios/crop_challenges/catalog.py": "26ea8e3baf729b342c94301d8a0a942cb47d3aa051e76b4625e6bdc1712186da",
+  "fairy/scenarios/crop_challenges/runtime.py": "0eada0d5a54feef745c898bc9ed9fc5c4630ef2fb20733edcac05e47e8b8b66b",
+  "fairy/scenarios/crop_challenges/worlds.py": "2dfad72094557a41b942c283abd47ef564f79a420e3785d840c7dfc7e9f086cb",
+  "fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_crop_protection.json.gz": "31f349ce505e7d9cc3c87b9091443fe78e0673a48e6d4f7c87bd4c5358200328"
+}

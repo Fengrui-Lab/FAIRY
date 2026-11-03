@@ -1,0 +1,476 @@
+..............................................................           [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/anyio/pytest_plugin.py:14
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/anyio/pytest_plugin.py:14: PytestRemovedIn10Warning: _pytest.python.CallSpec2 has been renamed to CallSpec.
+  The CallSpec2 alias will be removed in pytest 10.
+  Update imports to use CallSpec instead.
+  See https://docs.pytest.org/en/stable/deprecations.html#callspec2-renamed
+    from _pytest.python import CallSpec2
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:254: DeprecationWarning: Passing unrecoginized arguments to super(AgroManager).__init__([{datetime.date(2026, 5, 2): {'CropCalendar': {'crop_name': 'maize', 'variety_name': 'Grain_maize_201', 'crop_start_date': datetime.date(2026, 5, 2), 'crop_start_type': 'sowing', 'crop_end_date': None, 'crop_end_type': 'maturity', 'max_duration': 366}, 'TimedEvents': None, 'StateEvents': None}}, {datetime.date(2037, 5, 10): None}]).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:254: DeprecationWarning: Passing unrecoginized arguments to super(Timer).__init__(datetime.date(2026, 5, 2), datetime.date(2037, 5, 10), <pcse.base.config_loader.ConfigurationLoader object at 0x10fb9a6c0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(SoilModuleWrapper_NWLP_CWB_CNB).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WaterbalanceFD).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Soil_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(Wofost81).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Phenology).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Partitioning_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST81_Assimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Maintenance_Respiration).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationWrapper).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationCO2).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Root_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Stem_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Storage_Organ_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Leaf_Dynamics_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Crop_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Demand_Uptake).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Stress).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_native_stage_progression_skips_soybean_biotic_dynamics
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(ExternalStressAssimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fb9acf0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:254: DeprecationWarning: Passing unrecoginized arguments to super(Timer).__init__(datetime.date(2026, 5, 2), datetime.date(2037, 5, 10), <pcse.base.config_loader.ConfigurationLoader object at 0x10faa9af0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(SoilModuleWrapper_NWLP_CWB_CNB).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WaterbalanceFD).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Soil_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(Wofost81).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Phenology).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Partitioning_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST81_Assimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Maintenance_Respiration).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationWrapper).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationCO2).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Root_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Stem_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Storage_Organ_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Leaf_Dynamics_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Crop_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Demand_Uptake).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Stress).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_reset_retains_crop_and_rejects_partial_crosscrop_restore
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(ExternalStressAssimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10faa8560>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:254: DeprecationWarning: Passing unrecoginized arguments to super(Timer).__init__(datetime.date(2026, 5, 2), datetime.date(2037, 5, 10), <pcse.base.config_loader.ConfigurationLoader object at 0x10fab4410>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(SoilModuleWrapper_NWLP_CWB_CNB).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WaterbalanceFD).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Soil_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(Wofost81).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Phenology).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Partitioning_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST81_Assimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Maintenance_Respiration).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationWrapper).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationCO2).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Root_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Stem_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Storage_Organ_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Leaf_Dynamics_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Crop_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Demand_Uptake).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Stress).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_maize_robot_observes_real_emergence_and_marks_biotics_unmodeled
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(ExternalStressAssimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10fab6360>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:254: DeprecationWarning: Passing unrecoginized arguments to super(Timer).__init__(datetime.date(2026, 5, 2), datetime.date(2037, 5, 10), <pcse.base.config_loader.ConfigurationLoader object at 0x10ced07a0>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(SoilModuleWrapper_NWLP_CWB_CNB).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WaterbalanceFD).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Soil_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(Wofost81).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Phenology).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(DVS_Partitioning_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST81_Assimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Maintenance_Respiration).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationWrapper).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(EvapotranspirationCO2).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Root_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Stem_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Storage_Organ_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(WOFOST_Leaf_Dynamics_N).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Crop_Dynamics).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Demand_Uptake).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(N_Stress).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+tests/test_native_maize_tools.py::test_native_irrigation_receipt_points_to_actual_daily_settlement
+  /Users/ouyangkun/PHD/Project/HSCC/FAIRY/.venv/lib/python3.12/site-packages/pcse/base/simulationobject.py:37: DeprecationWarning: Passing unrecoginized arguments to super(ExternalStressAssimilation).__init__(<pcse.base.parameter_providers.ParameterProvider object at 0x10ced0710>).
+  object.__init__() takes exactly one argument (the instance to initialize)
+  This is deprecated in traitlets 4.2.This error will be raised in a future release of traitlets.
+    HasTraits.__init__(self, *args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+62 passed, 81 warnings in 2.45s

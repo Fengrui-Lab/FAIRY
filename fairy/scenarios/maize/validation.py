@@ -93,7 +93,7 @@ def _audit(scenario, state, workflow):
     planted_seeds = sum(item.get("seeds_used", 0) for item in tractor._operation_log
                         if item.get("operation") in {"plant_seeds", "replant_seeds"})
     initial = scenario._maize_initial_inventory
-    if inventory.seed_stock.get("MAIZE_201", 0) + state["seed_hopper"] + planted_seeds != initial["seed_stock"]["MAIZE_201"]:
+    if inventory.seed_stock.get(getattr(scenario, "public_seed_type", "MAIZE_201"), 0) + state["seed_hopper"] + planted_seeds != initial["seed_stock"][getattr(scenario, "public_seed_type", "MAIZE_201")]:
         failures.append("seed inventory and planting accounting disagree")
     recovered = sum(s.recovered_yield_g_m2_at_market_moisture
                     for s in farm.physics.yield_recovery.states.values() if s.harvested) * 268 * farm.ridge_width_m / 1000
@@ -169,7 +169,7 @@ def validate_maize_task(scenario, *, workflow=None):
             failures.append("new planting must cover exactly the target ridges")
         for rid in target:
             ridge = farm._ridges[rid]
-            if ridge.seed_type != "MAIZE_201" or ridge.seed_spacing_cm != 20 or ridge.seeds_planted != 1340:
+            if ridge.seed_type != getattr(scenario, "public_seed_type", "MAIZE_201") or ridge.seed_spacing_cm != 20 or ridge.seeds_planted != 1340:
                 failures.append("incorrect seed identity, spacing or stand density")
                 break
         planting = [op for op in new_ops if op.get("operation") == "plant_seeds"]

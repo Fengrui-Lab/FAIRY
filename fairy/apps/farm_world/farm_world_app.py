@@ -9,6 +9,8 @@ Legacy default layout: 268 m × 71 m, 64 ridges, ridge width 1.1 m. [PDF-p1]
 
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 import logging
 import json
 import math
@@ -332,7 +334,8 @@ class FarmWorldApp(App):
         if backend is None:
             return None
         from fairy.physics.crop_profiles import get_crop_profile as get_native_profile
-        return get_native_profile(backend.config.crop_name)
+        profile = get_native_profile(backend.config.crop_name)
+        return replace(profile, seed_type=public_seed(backend.config.variety_name)) if backend.config.crop_name == "maize" else profile
 
     @property
     def is_native_maize(self) -> bool:
@@ -371,7 +374,7 @@ class FarmWorldApp(App):
         elif self._explicit_crop_id is not None:
             definition = get_crop_definition(self._explicit_crop_id, self._cultivar_id)
         else:
-            seed = ("MAIZE_201" if self.is_native_maize else
+            seed = (public_seed(self.variety_name) if self.is_native_maize else
                     self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id)
             definition = get_crop_definition(self.crop_type, seed)
         # Scenario preparation remains an explicit field-level contract.
@@ -387,7 +390,7 @@ class FarmWorldApp(App):
         if self._explicit_crop_id is not None:
             base = get_crop_definition(self._explicit_crop_id, self._cultivar_id)
         else:
-            seed = "MAIZE_201" if self.is_native_maize else self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id
+            seed = public_seed(self.variety_name) if self.is_native_maize else self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id
             base = get_crop_definition(self.crop_type, seed)
         self._validate_definition_override(definition, base)
         self._crop_definition_override = definition
@@ -679,7 +682,7 @@ class FarmWorldApp(App):
             selected = config.get("crop_id")
             native = (state_dict.get("physics_state") or {}).get("crop_backend_name") == "wofost"
             seed = (config.get("cultivar_id") if selected is not None else
-                    "MAIZE_201" if native and config["crop_type"] == "maize" else
+                    public_seed((state_dict.get("physics_state") or {})["crop_backend_state"]["config"]["variety_name"]) if native and config["crop_type"] == "maize" else
                     get_crop_profile(config["crop_type"]).seed_type if config["crop_type"] != "soybean" else None)
             self._validate_definition_override(override, get_crop_definition(selected or config["crop_type"], seed))
         inventory = InventoryState.from_dict(state_dict["inventory"]) if self.shared_warehouse is None else None
@@ -1297,11 +1300,14 @@ class FarmWorldApp(App):
         if backend is not None and backend.config.crop_name != self.crop_name:
             return "Crop identity does not match the native backend; restore a complete farm checkpoint"
         if self.is_native_maize:
-            return None if seed_type == "MAIZE_201" else "The native maize crop requires MAIZE_201 seeds"
+            expected = public_seed(self.variety_name)
+            if seed_type != expected or seed_type not in self.crop_definition.seed_types:
+                return f"The native maize crop requires {expected} seeds"
+            return official_seed_backend_error(seed_type, self._physics)
         if self._explicit_crop_id is not None and seed_type not in self.crop_definition.seed_types:
             return f"Seed {seed_type} is not permitted by the selected crop/cultivar rules"
-        if seed_type == "MAIZE_201":
-            return "MAIZE_201 seeds require crop_name='maize' with the WOFOST backend"
+        if seed_type in MAIZE_WOFOST_VARIANTS:
+            return f"{seed_type} seeds require crop_name='maize' with the WOFOST backend"
         if seed_type not in self.crop_definition.seed_types:
             return f"Seed {seed_type!r} is not supported by this farm's crop rules"
         if seed_crop_type(seed_type) != self.crop_type:

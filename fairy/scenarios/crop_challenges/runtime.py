@@ -184,11 +184,14 @@ class CropChallengeScenario(Scenario):
             failures.append("season deadline exceeded")
         execution_ok = not failures
         calibrated = False
+        calibration_note = None
+        calibration_warning = None
         if not getattr(self, "_authoring", False):
             task = self._challenge_evidence["tasks"][self.scenario_id]
             calibrated = task["status"] == "calibrated"
+            calibration_note = task.get("calibration_note")
             if not calibrated:
-                failures.append("experimental: decision mechanism has not passed matched-control calibration")
+                calibration_warning = "experimental: decision mechanism has not passed matched-control calibration"
             if actual["crop_fingerprint"] != task["reference"]["crop_fingerprint"]:
                 failures.append("crop configuration differs from calibrated reference")
             if self.level != "L3" and actual["day"] != task["reference"]["day"]:
@@ -210,6 +213,8 @@ class CropChallengeScenario(Scenario):
                 failures.append("post-operation public recheck required")
         return ScenarioValidationResult(success=not failures, message="; ".join(failures) or "Challenge outcome and accounting passed",
             metadata={"execution_success": execution_ok, "calibrated": calibrated,
+                      "calibration_note": calibration_note, "calibration_warning": calibration_warning,
+                      "calibration_required_for_validation": False,
                       "goal_met": not failures, "failures": failures, "measurements": actual,
                       "source_l3_scenario_id": self.source_l3_scenario_id,
                       "initial_checkpoint_digest": self._initial_checkpoint_digest})

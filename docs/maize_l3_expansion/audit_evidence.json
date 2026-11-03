@@ -1,0 +1,386 @@
+{
+  "time": "2026-11-03T11:14:23.952312+08:00",
+  "head": "cc00de087c4ed73ddedd8023f4796891971a0db5",
+  "branch": "jev",
+  "python": "3.12.15 (main, Oct 14 2026, 00:55:37) [Clang 23.1.3 ]",
+  "pcse": "6.0.13",
+  "dirty_before": " M fairy/contracts/cli.py\n M fairy/controllers/engine.py\n M fairy/scenarios/crop_challenges/artifacts/manifest.json\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_compound_water_n_limit.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rain_aware_irrigation.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rainy_harvest_window.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_staggered_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_nitrogen_recovery.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_infrastructure_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_rainy_harvest_capacity.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_crop_protection.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_water_n_allocation.json.gz\n M fairy/scenarios/crop_challenges/runtime.py\n D scripts/fullseason/selected_l2_l1_20_30_scenario_ids1.txt\n M scripts/rebatch_fos_from_traces.py\n M tests/test_replay_contract.py\n?? fairy/contracts/score_batch.py\n?? fairy/parallel.py\n?? tests/test_crop_challenge_calibration_policy.py\n?? tests/test_score_batch.py\n",
+  "dirty_file_hashes_before": {
+    "fairy/contracts/cli.py": "77391ff7368e679427fefe973378c113db011219e763553f66fe0217f6d747b7",
+    "fairy/controllers/engine.py": "db3e6b8becfefa9eabc23bf04dfec779d9bd39740cd0ceacb68d27db7505e5d4",
+    "fairy/scenarios/crop_challenges/artifacts/manifest.json": "45b2a9576630566d65046fe9d2174dc9c9930dfae78c96d805205a9a2cc63e06",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_compound_water_n_limit.json.gz": "b22f53b16e3fb0dd865ac3350e7533c4efd0a4e3cb14fafbc17fa71514ad81e8",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rain_aware_irrigation.json.gz": "f6489f8642627fc580148769d56f11d7d465c885bd64538774d4d039a7f0b73d",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rainy_harvest_window.json.gz": "d5c81d5f69c8e3f36bbcde05dc7fbec3b9d4c8691cbe02309a811dc2f4598c09",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_staggered_water_priority.json.gz": "292f03bbbbb0665a2e1cd149161027d26dda921124700d8500b6cbd10920a77b",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_nitrogen_recovery.json.gz": "a4154fb52ccb268ea8ccf0815facee7efff317b620a0c0e629117d73a741498d",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_water_priority.json.gz": "c10f6282e00278f44427e9c2234d275cb037150ae1b5216ecefc8fd2707a5c9c",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_infrastructure_water_priority.json.gz": "b865a6d21e7df7e4b02b23a19964f1c037884d09bfa023931ca6930a9bb9c893",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_rainy_harvest_capacity.json.gz": "2fc2b052d5a2922fbead24a17d598ca1b1ab216755149aa21836f8d89f244fb4",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_crop_protection.json.gz": "31f349ce505e7d9cc3c87b9091443fe78e0673a48e6d4f7c87bd4c5358200328",
+    "fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_water_n_allocation.json.gz": "746676ca625b0e2c3137dfd2c1b9860c5064e0c0c2183877116b8e1bd6329018",
+    "fairy/scenarios/crop_challenges/runtime.py": "0eada0d5a54feef745c898bc9ed9fc5c4630ef2fb20733edcac05e47e8b8b66b",
+    "scripts/fullseason/selected_l2_l1_20_30_scenario_ids1.txt": null,
+    "scripts/rebatch_fos_from_traces.py": "1bbe9274f4c8cedf5ebb268184446c99fd84215e10ebbfc8c356e68805ec6aca",
+    "tests/test_replay_contract.py": "89a48827d63c8dadec142620ffefb004a09a8830fc08a81c34500a40fd243778",
+    "fairy/contracts/score_batch.py": "aa448561914616f25d88f1b36a8e3a2407de1a88fe0b7ea0e96a497ca8b84336",
+    "fairy/parallel.py": "30054f2a596b15fe0e9635a5e387fddfba8e46ddda7391fb47f2b8cc60894c04",
+    "tests/test_crop_challenge_calibration_policy.py": "904cc1a1436822e7a9fc822b5c078477b181a42fc688a9e2a5496971ab6769f4",
+    "tests/test_score_batch.py": "b0c801eca33c63123d5e36ad425c3d5dc3dbb9a9098bc0bf39e4d0a6c6e7ee6c"
+  },
+  "registered_maize": [
+    "scenario_maize_l1_base_fertilize",
+    "scenario_maize_l1_dry",
+    "scenario_maize_l1_fertilize",
+    "scenario_maize_l1_form_ridges",
+    "scenario_maize_l1_harvest",
+    "scenario_maize_l1_irrigate",
+    "scenario_maize_l1_level",
+    "scenario_maize_l1_plant",
+    "scenario_maize_l1_refuel",
+    "scenario_maize_l1_store",
+    "scenario_maize_l1_targeted_fertilization",
+    "scenario_maize_l1_targeted_irrigation",
+    "scenario_maize_l1_unload",
+    "scenario_maize_l2_compound_water_n_limit",
+    "scenario_maize_l2_establishment",
+    "scenario_maize_l2_harvest_storage",
+    "scenario_maize_l2_irrigation_management",
+    "scenario_maize_l2_nutrition_management",
+    "scenario_maize_l2_rain_aware_irrigation",
+    "scenario_maize_l2_rainy_harvest_window",
+    "scenario_maize_l2_staggered_water_priority",
+    "scenario_maize_l2_zonal_nitrogen_recovery",
+    "scenario_maize_l2_zonal_water_priority",
+    "scenario_maize_l3_compound_water_n_limit",
+    "scenario_maize_l3_nitrogen_limit",
+    "scenario_maize_l3_normal",
+    "scenario_maize_l3_rain_aware_irrigation",
+    "scenario_maize_l3_rainy_harvest_window",
+    "scenario_maize_l3_staggered_water_priority",
+    "scenario_maize_l3_water_limit",
+    "scenario_maize_l3_zonal_nitrogen_recovery",
+    "scenario_maize_l3_zonal_water_priority",
+    "scenario_multi_crop_full_season_maize",
+    "scenario_multi_crop_maize_planting",
+    "scenario_multiseason_scn_continue_maize",
+    "scenario_multiseason_scn_switch_to_maize",
+    "scenario_single_farm_maize_full_season",
+    "scenario_single_farm_maize_normal_management",
+    "scenario_two_farm_maize_soybean_full_season",
+    "scenario_two_farm_wofost_soybean_maize_full_season",
+    "scenario_two_farm_wofost_soybean_maize_nitrogen_budget_V2"
+  ],
+  "scenarios": {
+    "scenario_maize_l3_normal": {
+      "apps_tools": {
+        "AgentUserInterface": [
+          "send_message_to_agent",
+          "send_message_to_user"
+        ],
+        "FarmWorldApp": [
+          "get_farm_overview",
+          "get_ridge_state",
+          "get_ridge_range_state",
+          "get_inventory",
+          "commit_daily_physics",
+          "apply_fertigation",
+          "dry_grain",
+          "store_grain",
+          "get_crop_capabilities"
+        ],
+        "WeatherApp": [
+          "get_current_weather",
+          "get_forecast"
+        ],
+        "SensorApp": [
+          "read_root_zone_sensors",
+          "read_soil_sensors",
+          "read_canopy_sensors",
+          "read_soil_sensor",
+          "read_canopy_sensor"
+        ],
+        "Mavic3M": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Matrice4T": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Robot0": [
+          "inspect_ridge",
+          "inspect_pests",
+          "inspect_crop_health",
+          "inspect_emergence",
+          "check_status",
+          "charge"
+        ],
+        "TractorApp": [
+          "attach_implement",
+          "detach_implement",
+          "refuel",
+          "refill_pesticide_tank",
+          "load_fertilizer",
+          "load_seeds",
+          "get_status",
+          "level",
+          "base_fertilize",
+          "form_ridges",
+          "apply_fertilizer",
+          "plant_seeds",
+          "apply_pesticide",
+          "load_pesticide",
+          "spray_pesticide",
+          "load_fungicide",
+          "apply_fungicide",
+          "apply_herbicide",
+          "mechanical_weed_control",
+          "replant_seeds",
+          "incorporate_residue",
+          "harvest",
+          "unload_grain"
+        ],
+        "FieldOpsApp": [
+          "apply_pesticide_manual",
+          "irrigate_ridge",
+          "irrigate",
+          "irrigate_range",
+          "get_irrigation_log"
+        ],
+        "SystemApp": [
+          "get_current_time",
+          "advance_time",
+          "wait_for_notification"
+        ]
+      },
+      "planted_ridges": 0,
+      "ridge_count": 64,
+      "required_preparation": [
+        "level",
+        "base_fertilize",
+        "form_ridges"
+      ],
+      "briefing": "正常资源条件下完成玉米全季种植、收获和安全入库。\n农田有64垄（0–63），每垄268米、宽0.75米，每垄一行；使用MAIZE_201种子，播深4厘米、株距20厘米，目标密度约6.67株/平方米。先整平、施基肥200公斤、起垄，再完成全田播种。参考品种Grain_maize_201尚未经过本地标定。\n肥料库存及全季配额分别为800和800公斤，灌溉总配额为300毫米（全田等效水深）。根据天气、土壤和作物观测安排水肥，5月开始种植，成熟后结合籽粒水分选择收获窗口。每次播种/收获最多4垄，保持设备燃油和料仓容量充足。\n仅在作物达到成熟且籽粒水分不高于25%时收获，卸粮后干燥至14%或更低再入库。完成全部64垄收获及安全入库，并报告产量、灌溉和肥料使用。玉米首版不模拟病虫草害，不需要施药。\n\n详细管理参考：在原资源上限内，争取较高的安全入库产量。以下是管理窗口参考，不是无条件执行指令；每次作业都应核对实际天气、土壤、作物和设备状态。\n1. 建植：先复查天气、墒情、种子、肥料、燃油和设备。按顺序完成整平、200公斤基肥和0.75米起垄，再以MAIZE_201、播深4厘米、株距20厘米播完0–63垄。每次最多4垄，全田预计用种85760粒；播种后持续检查出苗和全田覆盖。\n2. 营养管理：参考追肥安排为第25日300公斤、第50日300公斤，加上200公斤基肥，全季共800公斤肥料产品。肥料产品重量不等于纯氮量。追肥前检查营养与剩余库存，追肥后核对实际投入并观察响应；单独追肥不额外添加灌溉水。\n3. 水分管理：参考灌溉安排为第20日50毫米、第60日50毫米、第70日50毫米、第80日50毫米，全季参考用水200毫米，上限300毫米。灌溉前检查土壤和近期预报，为后续关键生长阶段保留水量；土壤已经过湿时不要继续灌溉，根据实际生育和水分状况调整，并在处理后复查。\n4. 等待与复查：没有立即需要执行的作业时，可一次等待到下一个检查窗口，不需要每天重复发送等待命令；出现异常或接近收获门槛时缩短复查间隔。这里的日期编号对应建植后的管理窗口，作业本身也耗时，应以实际模拟日期和作物状态为准。\n5. 收获：约第98日复查成熟、籽粒水分、天气和田间条件，参考第99日收获。只有实际达到成熟、籽粒水分不高于25%且天气和通行条件允许时才操作；不满足时等待并复查。检查燃油，每次最多收获4垄，及时卸粮，核对全部64垄覆盖和粮箱容量。\n6. 干燥、入库与报告：卸粮后检查水分及处理容量，需要时实际干燥至14%或更低再入库。核对粮箱、接粮区和仓库的转移记录，报告真实入库产量、全田完成情况、水肥及燃油使用，不能把计划产量或口头完成声明当作已入库粮食。",
+      "backend": {
+        "crop_name": "maize",
+        "variety_name": "Grain_maize_201",
+        "reference_density_plants_m2": 6.666666666666666,
+        "initial_available_n_kg_ha": 50.0,
+        "base_soil_n_kg_ha": 50.0,
+        "soil_n_mineralization_fraction": 0.002,
+        "external_biotic_coupling": false
+      }
+    },
+    "scenario_maize_l3_water_limit": {
+      "apps_tools": {
+        "AgentUserInterface": [
+          "send_message_to_agent",
+          "send_message_to_user"
+        ],
+        "FarmWorldApp": [
+          "get_farm_overview",
+          "get_ridge_state",
+          "get_ridge_range_state",
+          "get_inventory",
+          "commit_daily_physics",
+          "apply_fertigation",
+          "dry_grain",
+          "store_grain",
+          "get_crop_capabilities"
+        ],
+        "WeatherApp": [
+          "get_current_weather",
+          "get_forecast"
+        ],
+        "SensorApp": [
+          "read_root_zone_sensors",
+          "read_soil_sensors",
+          "read_canopy_sensors",
+          "read_soil_sensor",
+          "read_canopy_sensor"
+        ],
+        "Mavic3M": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Matrice4T": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Robot0": [
+          "inspect_ridge",
+          "inspect_pests",
+          "inspect_crop_health",
+          "inspect_emergence",
+          "check_status",
+          "charge"
+        ],
+        "TractorApp": [
+          "attach_implement",
+          "detach_implement",
+          "refuel",
+          "refill_pesticide_tank",
+          "load_fertilizer",
+          "load_seeds",
+          "get_status",
+          "level",
+          "base_fertilize",
+          "form_ridges",
+          "apply_fertilizer",
+          "plant_seeds",
+          "apply_pesticide",
+          "load_pesticide",
+          "spray_pesticide",
+          "load_fungicide",
+          "apply_fungicide",
+          "apply_herbicide",
+          "mechanical_weed_control",
+          "replant_seeds",
+          "incorporate_residue",
+          "harvest",
+          "unload_grain"
+        ],
+        "FieldOpsApp": [
+          "apply_pesticide_manual",
+          "irrigate_ridge",
+          "irrigate",
+          "irrigate_range",
+          "get_irrigation_log"
+        ],
+        "SystemApp": [
+          "get_current_time",
+          "advance_time",
+          "wait_for_notification"
+        ]
+      },
+      "planted_ridges": 0,
+      "ridge_count": 64,
+      "required_preparation": [
+        "level",
+        "base_fertilize",
+        "form_ridges"
+      ],
+      "briefing": "低降雨和限额供水条件下管理玉米，完成收获与安全入库。\n农田有64垄（0–63），每垄268米、宽0.75米，每垄一行；使用MAIZE_201种子，播深4厘米、株距20厘米，目标密度约6.67株/平方米。先整平、施基肥200公斤、起垄，再完成全田播种。参考品种Grain_maize_201尚未经过本地标定。\n肥料库存及全季配额分别为800和800公斤，灌溉总配额为150毫米（全田等效水深）。根据天气、土壤和作物观测安排水肥，5月开始种植，成熟后结合籽粒水分选择收获窗口。每次播种/收获最多4垄，保持设备燃油和料仓容量充足。\n仅在作物达到成熟且籽粒水分不高于25%时收获，卸粮后干燥至14%或更低再入库。完成全部64垄收获及安全入库，并报告产量、灌溉和肥料使用。玉米首版不模拟病虫草害，不需要施药。\n\n详细管理参考：在原资源上限内，争取较高的安全入库产量。以下是管理窗口参考，不是无条件执行指令；每次作业都应核对实际天气、土壤、作物和设备状态。\n1. 建植：先复查天气、墒情、种子、肥料、燃油和设备。按顺序完成整平、200公斤基肥和0.75米起垄，再以MAIZE_201、播深4厘米、株距20厘米播完0–63垄。每次最多4垄，全田预计用种85760粒；播种后持续检查出苗和全田覆盖。\n2. 营养管理：参考方案不额外追肥，全季仅使用200公斤基肥；缺水时不要用追加肥料代替有效供水。肥料产品重量不等于纯氮量。追肥前检查营养与剩余库存，追肥后核对实际投入并观察响应；单独追肥不额外添加灌溉水。\n3. 水分管理：参考灌溉安排为第38日50毫米、第58日50毫米、第78日50毫米，全季参考用水150毫米，上限150毫米。灌溉前检查土壤和近期预报，为后续关键生长阶段保留水量；土壤已经过湿时不要继续灌溉，根据实际生育和水分状况调整，并在处理后复查。\n4. 等待与复查：没有立即需要执行的作业时，可一次等待到下一个检查窗口，不需要每天重复发送等待命令；出现异常或接近收获门槛时缩短复查间隔。这里的日期编号对应建植后的管理窗口，作业本身也耗时，应以实际模拟日期和作物状态为准。\n5. 收获：约第100日复查成熟、籽粒水分、天气和田间条件，参考第100日收获。只有实际达到成熟、籽粒水分不高于25%且天气和通行条件允许时才操作；不满足时等待并复查。检查燃油，每次最多收获4垄，及时卸粮，核对全部64垄覆盖和粮箱容量。\n6. 干燥、入库与报告：卸粮后检查水分及处理容量，需要时实际干燥至14%或更低再入库。核对粮箱、接粮区和仓库的转移记录，报告真实入库产量、全田完成情况、水肥及燃油使用，不能把计划产量或口头完成声明当作已入库粮食。",
+      "backend": {
+        "crop_name": "maize",
+        "variety_name": "Grain_maize_201",
+        "reference_density_plants_m2": 6.666666666666666,
+        "initial_available_n_kg_ha": 50.0,
+        "base_soil_n_kg_ha": 50.0,
+        "soil_n_mineralization_fraction": 0.002,
+        "external_biotic_coupling": false
+      }
+    },
+    "scenario_maize_l3_nitrogen_limit": {
+      "apps_tools": {
+        "AgentUserInterface": [
+          "send_message_to_agent",
+          "send_message_to_user"
+        ],
+        "FarmWorldApp": [
+          "get_farm_overview",
+          "get_ridge_state",
+          "get_ridge_range_state",
+          "get_inventory",
+          "commit_daily_physics",
+          "apply_fertigation",
+          "dry_grain",
+          "store_grain",
+          "get_crop_capabilities"
+        ],
+        "WeatherApp": [
+          "get_current_weather",
+          "get_forecast"
+        ],
+        "SensorApp": [
+          "read_root_zone_sensors",
+          "read_soil_sensors",
+          "read_canopy_sensors",
+          "read_soil_sensor",
+          "read_canopy_sensor"
+        ],
+        "Mavic3M": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Matrice4T": [
+          "fly_survey",
+          "check_status",
+          "charge"
+        ],
+        "Robot0": [
+          "inspect_ridge",
+          "inspect_pests",
+          "inspect_crop_health",
+          "inspect_emergence",
+          "check_status",
+          "charge"
+        ],
+        "TractorApp": [
+          "attach_implement",
+          "detach_implement",
+          "refuel",
+          "refill_pesticide_tank",
+          "load_fertilizer",
+          "load_seeds",
+          "get_status",
+          "level",
+          "base_fertilize",
+          "form_ridges",
+          "apply_fertilizer",
+          "plant_seeds",
+          "apply_pesticide",
+          "load_pesticide",
+          "spray_pesticide",
+          "load_fungicide",
+          "apply_fungicide",
+          "apply_herbicide",
+          "mechanical_weed_control",
+          "replant_seeds",
+          "incorporate_residue",
+          "harvest",
+          "unload_grain"
+        ],
+        "FieldOpsApp": [
+          "apply_pesticide_manual",
+          "irrigate_ridge",
+          "irrigate",
+          "irrigate_range",
+          "get_irrigation_log"
+        ],
+        "SystemApp": [
+          "get_current_time",
+          "advance_time",
+          "wait_for_notification"
+        ]
+      },
+      "planted_ridges": 0,
+      "ridge_count": 64,
+      "required_preparation": [
+        "level",
+        "base_fertilize",
+        "form_ridges"
+      ],
+      "briefing": "低土壤供氮和限量肥料条件下管理玉米，完成收获与安全入库。\n农田有64垄（0–63），每垄268米、宽0.75米，每垄一行；使用MAIZE_201种子，播深4厘米、株距20厘米，目标密度约6.67株/平方米。先整平、施基肥200公斤、起垄，再完成全田播种。参考品种Grain_maize_201尚未经过本地标定。\n肥料库存及全季配额分别为360和360公斤，灌溉总配额为300毫米（全田等效水深）。根据天气、土壤和作物观测安排水肥，5月开始种植，成熟后结合籽粒水分选择收获窗口。每次播种/收获最多4垄，保持设备燃油和料仓容量充足。\n仅在作物达到成熟且籽粒水分不高于25%时收获，卸粮后干燥至14%或更低再入库。完成全部64垄收获及安全入库，并报告产量、灌溉和肥料使用。玉米首版不模拟病虫草害，不需要施药。\n\n详细管理参考：在原资源上限内，争取较高的安全入库产量。以下是管理窗口参考，不是无条件执行指令；每次作业都应核对实际天气、土壤、作物和设备状态。\n1. 建植：先复查天气、墒情、种子、肥料、燃油和设备。按顺序完成整平、200公斤基肥和0.75米起垄，再以MAIZE_201、播深4厘米、株距20厘米播完0–63垄。每次最多4垄，全田预计用种85760粒；播种后持续检查出苗和全田覆盖。\n2. 营养管理：参考追肥安排为第15日80公斤、第30日80公斤，加上200公斤基肥，全季共360公斤肥料产品。肥料产品重量不等于纯氮量。追肥前检查营养与剩余库存，追肥后核对实际投入并观察响应；单独追肥不额外添加灌溉水。\n3. 水分管理：参考灌溉安排为第20日50毫米、第60日50毫米、第70日50毫米、第80日50毫米，全季参考用水200毫米，上限300毫米。灌溉前检查土壤和近期预报，为后续关键生长阶段保留水量；土壤已经过湿时不要继续灌溉，根据实际生育和水分状况调整，并在处理后复查。\n4. 等待与复查：没有立即需要执行的作业时，可一次等待到下一个检查窗口，不需要每天重复发送等待命令；出现异常或接近收获门槛时缩短复查间隔。这里的日期编号对应建植后的管理窗口，作业本身也耗时，应以实际模拟日期和作物状态为准。\n5. 收获：约第98日复查成熟、籽粒水分、天气和田间条件，参考第99日收获。只有实际达到成熟、籽粒水分不高于25%且天气和通行条件允许时才操作；不满足时等待并复查。检查燃油，每次最多收获4垄，及时卸粮，核对全部64垄覆盖和粮箱容量。\n6. 干燥、入库与报告：卸粮后检查水分及处理容量，需要时实际干燥至14%或更低再入库。核对粮箱、接粮区和仓库的转移记录，报告真实入库产量、全田完成情况、水肥及燃油使用，不能把计划产量或口头完成声明当作已入库粮食。",
+      "backend": {
+        "crop_name": "maize",
+        "variety_name": "Grain_maize_201",
+        "reference_density_plants_m2": 6.666666666666666,
+        "initial_available_n_kg_ha": 5.0,
+        "base_soil_n_kg_ha": 15.0,
+        "soil_n_mineralization_fraction": 0.002,
+        "external_biotic_coupling": false
+      }
+    }
+  },
+  "preservation_check": {
+    "preexisting_dirty_file_changes": [],
+    "git_status_after": " M fairy/contracts/cli.py\n M fairy/controllers/engine.py\n M fairy/scenarios/crop_challenges/artifacts/manifest.json\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_compound_water_n_limit.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rain_aware_irrigation.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_rainy_harvest_window.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_staggered_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_nitrogen_recovery.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_maize_l3_zonal_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_infrastructure_water_priority.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_rainy_harvest_capacity.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_crop_protection.json.gz\n M fairy/scenarios/crop_challenges/artifacts/scenario_rice_l3_zonal_water_n_allocation.json.gz\n M fairy/scenarios/crop_challenges/runtime.py\n D scripts/fullseason/selected_l2_l1_20_30_scenario_ids1.txt\n M scripts/rebatch_fos_from_traces.py\n M tests/test_replay_contract.py\n?? docs/maize_l3_expansion/\n?? fairy/contracts/score_batch.py\n?? fairy/parallel.py\n?? tests/test_crop_challenge_calibration_policy.py\n?? tests/test_score_batch.py\n"
+  }
+}

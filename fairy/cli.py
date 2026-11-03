@@ -264,6 +264,7 @@ def main() -> None:
     parser.add_argument("--jev-model", default=None)
     parser.add_argument("--jev-endpoint", default=None)
     parser.add_argument("--jev-api-key-env", default=None)
+    parser.add_argument("--enforced-tool-adaptor", type=_str_to_bool, default=False, help="Opt into enhanced Jev parameter adaptation and execution guidance; false retains manos-compatible baseline")
     parser.add_argument("--jev-prompt-note", type=_str_to_bool, default=False)
     parser.add_argument("--jev-state", choices=["snapshot", "history"], default="snapshot", help="farm_jev input: farm snapshot (default) or Part 1 full history")
     parser.add_argument("--build-oracle", action="store_true", help="Build and save oracle workflow")
@@ -509,6 +510,7 @@ def main() -> None:
             decision_confidence_source=args.decision_confidence_source,
             qwen_context_policy=args.qwen_context_policy,
             hybrid_mode=args.hybrid_mode,
+            enforced_tool_adaptor=args.enforced_tool_adaptor,
             jev_llm=jev_llm,
             jev_prompt_note=args.jev_prompt_note,
         )

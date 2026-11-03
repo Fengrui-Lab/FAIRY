@@ -106,7 +106,12 @@ def _verify_replay_response(step: WorkflowStep, content: Any, tool: Any) -> bool
     expected_failure = _returned_failure(step.content, tool)
     actual_failure = _returned_failure(content, tool)
     if expected_failure:
-        if not actual_failure or content != step.content:
+        # Mission identifiers are generated anew on replay, not physical outcomes.
+        # Keep raw responses intact in logs and compare every other field.
+        expected = {k: v for k, v in step.content.items() if k != "mission_id"}
+        actual = ({k: v for k, v in content.items() if k != "mission_id"}
+                  if isinstance(content, dict) else content)
+        if not actual_failure or actual != expected:
             raise ReplayDivergenceError(
                 f"Workflow step {step.name!r}: recorded failure {step.content!r}; "
                 f"actual response {content!r}"

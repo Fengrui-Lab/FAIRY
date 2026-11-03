@@ -6,6 +6,8 @@ ponded-water and transplanting dynamics are deliberately outside this model.
 """
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 import math
 from dataclasses import asdict, dataclass
 
@@ -26,15 +28,17 @@ def official_seed_backend_error(seed_type: str | None, physics) -> str | None:
     Read the already configured backend only; rejecting an unconfigured legacy
     farm must not initialize its physical state as a side effect.
     """
-    variety = ("Grain_maize_201" if seed_type == "MAIZE_201" else
-               OFFICIAL_WOFOST_SEED_VARIETIES.get(seed_type))
+    if isinstance(seed_type, str) and seed_type.startswith("MAIZE_20") and seed_type not in MAIZE_WOFOST_VARIANTS:
+        return f"Unknown native maize seed {seed_type}"
+    variety = MAIZE_WOFOST_VARIANTS.get(seed_type, OFFICIAL_WOFOST_SEED_VARIETIES.get(seed_type))
     if variety is None:
         return None
     backend = getattr(physics, "crop_backend", None)
     if getattr(physics, "crop_backend_name", "legacy") != "wofost" or backend is None:
         return f"Seed {seed_type} requires the native WOFOST backend; legacy growth is not supported"
-    if seed_type == "MAIZE_201":
-        if backend.config.crop_name != "maize" or backend.config.variety_name != variety:
+    if seed_type in MAIZE_WOFOST_VARIANTS:
+        if (backend.config.crop_name != "maize" or backend.config.variety_name != variety
+                or backend.config.cultivar_map.get(seed_type, variety) != variety):
             return f"Seed {seed_type} requires native maize cultivar {variety}"
         return None
     if backend.config.cultivar_map.get(seed_type) != variety:
@@ -132,7 +136,7 @@ def get_crop_profile(crop_type: str) -> CropProfile:
 
 
 def seed_crop_type(seed_type: str) -> str:
-    if seed_type in {"MAIZE_STANDARD", "MAIZE_201", "MAIZE_EARLY_2026"}:
+    if seed_type in MAIZE_WOFOST_VARIANTS or seed_type in {"MAIZE_STANDARD", "MAIZE_EARLY_2026"}:
         return "maize"
     if seed_type == "RICE_STANDARD":
         return "rice"

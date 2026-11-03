@@ -6,6 +6,8 @@ those environmental transitions have a single owner in physics_orchestrator.
 """
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS
+
 from datetime import date, datetime, timedelta
 from math import isfinite
 from dataclasses import replace
@@ -45,7 +47,7 @@ class SoybeanDynamics:
         except ValueError as exc:
             raise ValueError(f"Unknown seed for the compatibility crop engines: {event.seed_type!r}") from exc
         expected_crop = getattr(getattr(self, "crop_profile", None), "crop_type", "soybean")
-        actual_crop = ("maize" if seed in {SeedType.MAIZE_STANDARD, SeedType.MAIZE_201}
+        actual_crop = ("maize" if seed in MAIZE_WOFOST_VARIANTS or seed == SeedType.MAIZE_STANDARD
                        else "rice" if seed == SeedType.RICE_STANDARD else "soybean")
         if actual_crop != expected_crop:
             raise ValueError(f"Seed {event.seed_type!r} does not match crop {expected_crop!r}")

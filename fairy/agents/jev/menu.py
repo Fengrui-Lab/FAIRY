@@ -224,6 +224,7 @@ def build_arg_menu(
     arguments: dict[str, Any] | None = None,
     steps: list[Any] | tuple = (),
     task_text: str = "",
+    enforced_tool_adaptor: bool = False,
 ) -> ArgMenu:
     schema = getattr(tool, "parameters_schema", {}).get("properties", {}).get(arg.name, {})
     if arg.arg_type == "Annotated":
@@ -266,6 +267,15 @@ def build_arg_menu(
         values, source = scene_numeric_values(tool, arg, numbers, arguments=arguments, steps=steps, task_text=task_text) or _numeric_values(key, arg_type, numbers)
     else:
         raise ValueError(f"No menu rule for {key} of type {arg.arg_type}")
+
+    if enforced_tool_adaptor and key == ("TractorApp", "load_seeds", "count"):
+        from fairy.agents.jev.seed_candidates import seed_amount_hint
+        hint, note = seed_amount_hint(scene_world(tool), (arguments or {}).get("seed_type"),
+                                      task_text, steps, _tractor._SEED_HOPPER_MAX_PLANTS)
+        if hint is not None:
+            values.append(hint)
+        if note:
+            description += " " + note
 
     if arg_type == "int":
         values = [int(v) for v in values if float(v).is_integer()]
@@ -346,6 +356,7 @@ def _text_values(tool: Any, arg: Any) -> tuple[list[Any], str]:
 def build_tool_menus(
     tools_map: dict[str, Any], *, task_text: str, num_ridges: int,
     steps: list[Any] | tuple = (),
+    enforced_tool_adaptor: bool = False,
 ) -> dict[str, ToolMenu]:
     """One ToolMenu per tool, in the same order the LLM agent sees them."""
     numbers = task_numbers(task_text)
@@ -358,7 +369,7 @@ def build_tool_menus(
             try:
                 args = [
                     build_arg_menu(
-                        tool, arg, descriptions=docs, numbers=numbers, num_ridges=tool_ridge_count(tool, num_ridges), steps=steps, task_text=task_text
+                        tool, arg, descriptions=docs, numbers=numbers, num_ridges=tool_ridge_count(tool, num_ridges), steps=steps, task_text=task_text, enforced_tool_adaptor=enforced_tool_adaptor
                     )
                     for arg in tool.args
                 ]
@@ -607,8 +618,10 @@ def scene_numeric_values(tool: Any, arg: Any, numbers: list[float], *, arguments
     return None
 
 
-def dependent_menu(tool: Any) -> bool:
+def dependent_menu(tool: Any, *, enforced_tool_adaptor: bool = False) -> bool:
     names = {a.name for a in tool.args}
+    if enforced_tool_adaptor and tool.class_name == "TractorApp" and tool.name == "load_seeds":
+        return True
     return extended_scene_tool(tool) and (("farm_id" in names or "asset_id" in names) or
         tool.name == "measure_grain_moisture" and {"plot_id", "batch_id"} <= names or
         tool.class_name.startswith("Paddy") and (tool.name in (*RICE_OBS_AMOUNTS, "irrigate") or "machine_id" in names))

@@ -1379,6 +1379,16 @@ class TractorOperations:
             "ridge_ids": list(range(start_ridge, end_ridge + 1)),
         }
 
+    def _tractor_harvest_quality_for_pass(
+        self, farm: FarmContext, ridge_ids: list[int],
+    ) -> float:
+        """Snapshot the quality of a legal pass before its time advances.
+
+        Candidate devices may override this boundary. The historical default
+        remains 0.95; the recovery engine continues to own the loss formula.
+        """
+        return 0.95
+
     def _operate_harvest(
         self,
         farm: FarmContext,
@@ -1396,7 +1406,11 @@ class TractorOperations:
         if err:
             return {"error": err}
         if farm.weather.rainfall_mm > 0.0:
-            return {"error": "Cannot harvest in rainy conditions"}
+            result = {"error": "Cannot harvest in rainy conditions"}
+            if farm.world.crop_type == "maize":
+                from fairy.apps.farm_world.maize_harvest_feedback import rain_feedback
+                result.update(rain_feedback())
+            return result
         traffic_error = self._tractor_trafficability_error(farm, "harvest")
         if traffic_error:
             return {"error": traffic_error}
@@ -1420,9 +1434,13 @@ class TractorOperations:
             if not farm.world.is_ridge_mature(r.ridge_id)
         ]
         if immature_ridges:
-            return {
+            result = {
                 "error": f"Ridges are not mature enough for harvest: {immature_ridges}"
             }
+            if farm.world.crop_type == "maize":
+                from fairy.apps.farm_world.maize_harvest_feedback import maturity_feedback
+                result.update(maturity_feedback(farm.world, immature_ridges))
+            return result
         bad_moisture = [r.ridge_id for r in ridges if r.grain_moisture_pct > max_moisture]
         if bad_moisture:
             return {
@@ -1448,6 +1466,10 @@ class TractorOperations:
             }
 
         ridge_ids = list(range(start_ridge, end_ridge + 1))
+        q_pass = self._tractor_harvest_quality_for_pass(farm, ridge_ids)
+        if (isinstance(q_pass, bool) or not isinstance(q_pass, (int, float))
+                or not isfinite(q_pass) or not 0.0 <= q_pass <= 1.0):
+            raise ValueError("Harvest quality must be a finite number in [0, 1]")
         self._fuel_tank_l = self._tractor_balance_after_use(
             farm, self._fuel_tank_l, _fuel_per_pass(farm.world)
         )
@@ -1497,6 +1519,7 @@ class TractorOperations:
             # and shattering — not a fixed kg per ridge.
             grain_added = self._tractor_register_harvest_with_physics(farm,
                 ridge_ids=ridge_ids,
+                machine_quality=q_pass,
             )
         else:
             for r in ridges:
@@ -1708,6 +1731,9 @@ class TractorOperations:
         self,
         farm: FarmContext,
         ridge_ids: list[int],
+        *,
+        machine_quality: float = 0.95,
+        operation_id: str | None = None,
     ) -> float:
         """Run a yield-recovery harvest pass and return total kg recovered.
 
@@ -1729,7 +1755,7 @@ class TractorOperations:
         for ridge_id in ridge_ids:
             physics.queue_harvest(
                 ridge_id,
-                HarvestAction(machine_quality=0.95, pass_completed=True),
+                HarvestAction(machine_quality=machine_quality, pass_completed=True),
             )
 
         # Submit the harvest queue even at an unchanged timestamp. The
@@ -1755,12 +1781,12 @@ class TractorOperations:
 
         farm.world.record_action(
             FarmActionRecord(
-                action_id=str(uuid.uuid4())[:8],
+                action_id=operation_id or str(uuid.uuid4())[:8],
                 timestamp=float(self.time_manager.time()),
                 actor_app=self.name,
                 action_type="harvest",
                 ridge_ids=list(ridge_ids),
-                parameters={"machine_quality": 0.95},
+                parameters={"machine_quality": machine_quality},
                 direct_effect_summary={
                     "recovered_yield_kg": round(total_kg, 2),
                     "yield_engine_used": True,

@@ -1,0 +1,214 @@
+schema_version: 1
+status: Phase1 run design only; no executable campaign submitted
+environment_id: maize-l3-design-7e61d49459e59da7ace77ce44849e02373a6a83279528465e20d678627bcd3c0
+field_area_ha: 1.2864
+doses:
+  N60_product_kg: 167.79130434782607
+  N120_product_kg: 335.58260869565214
+  old200_product_actual_kgN_ha: 71.51741293532338
+  rounding: use fullprecision JSON numeric calls; display2decimals only; record actual
+    receipt, tolerance1e-6kgN/ha for target ledger
+runs:
+- run_id: W01-threshold-N120
+  development_config: DEV-W01-v1
+  seed: 0
+  replicates: 1
+  execution_status: planned_not_started
+  model_requests: 0
+  initial_checkpoint: new current-environment preplant snapshot, created in Phase2,
+    not a reused old checkpoint
+  nitrogen:
+    target_total_external_kgN_ha: 120
+    product_n_fraction: 0.46
+    recovery_fraction: 0.7
+    product_kg: 335.58260869565214
+    product_kg_display: 335.58
+    modeled_recovered_added_kgN_ha: 84.0
+    base_product_kg: 335.58260869565214
+    topdress_product_kg: 0
+    public_calls:
+    - tool: TractorApp.load_fertilizer
+      args:
+        kg: 335.58260869565214
+    - tool: TractorApp.base_fertilize
+      args:
+        total_kg: 335.58260869565214
+    accounting: all accepted external base+topdress, before recovery, excluding initial
+      soil N
+    capacity_check: both<500kg spreader capacity; actual receipt/inventory still checked
+  water_policy: water_threshold_v1
+  irrigation_gross_mm: observed, <=150 field-equivalent
+  irrigation_effective_mm: observed gross ×0.92, reconcile native log, not storage/ET
+  observation_policy: shared_grid_v1
+  executor: shared_public_executor_v1; specified only
+  runtime_limits:
+    agricultural_tool_calls: 500
+    wall_timeout_seconds: 1800
+  closed_lifecycle_required: true
+- run_id: W01-no-water-N120
+  development_config: DEV-W01-v1
+  seed: 0
+  replicates: 1
+  execution_status: planned_not_started
+  model_requests: 0
+  initial_checkpoint: new current-environment preplant snapshot, created in Phase2,
+    not a reused old checkpoint
+  nitrogen:
+    target_total_external_kgN_ha: 120
+    product_n_fraction: 0.46
+    recovery_fraction: 0.7
+    product_kg: 335.58260869565214
+    product_kg_display: 335.58
+    modeled_recovered_added_kgN_ha: 84.0
+    base_product_kg: 335.58260869565214
+    topdress_product_kg: 0
+    public_calls:
+    - tool: TractorApp.load_fertilizer
+      args:
+        kg: 335.58260869565214
+    - tool: TractorApp.base_fertilize
+      args:
+        total_kg: 335.58260869565214
+    accounting: all accepted external base+topdress, before recovery, excluding initial
+      soil N
+    capacity_check: both<500kg spreader capacity; actual receipt/inventory still checked
+  water_policy: none
+  irrigation_gross_mm: 0
+  irrigation_effective_mm: 0
+  observation_policy: shared_grid_v1
+  executor: shared_public_executor_v1; specified only
+  runtime_limits:
+    agricultural_tool_calls: 500
+    wall_timeout_seconds: 1800
+  closed_lifecycle_required: true
+- run_id: N01-N60-no-water
+  development_config: DEV-N01-v1
+  seed: 0
+  replicates: 1
+  execution_status: planned_not_started
+  model_requests: 0
+  initial_checkpoint: new current-environment preplant snapshot, created in Phase2,
+    not a reused old checkpoint
+  nitrogen:
+    target_total_external_kgN_ha: 60
+    product_n_fraction: 0.46
+    recovery_fraction: 0.7
+    product_kg: 167.79130434782607
+    product_kg_display: 167.79
+    modeled_recovered_added_kgN_ha: 42.0
+    base_product_kg: 167.79130434782607
+    topdress_product_kg: 0
+    public_calls:
+    - tool: TractorApp.load_fertilizer
+      args:
+        kg: 167.79130434782607
+    - tool: TractorApp.base_fertilize
+      args:
+        total_kg: 167.79130434782607
+    accounting: all accepted external base+topdress, before recovery, excluding initial
+      soil N
+    capacity_check: both<500kg spreader capacity; actual receipt/inventory still checked
+  water_policy: none
+  irrigation_gross_mm: 0
+  irrigation_effective_mm: 0
+  observation_policy: shared_grid_v1
+  executor: shared_public_executor_v1; specified only
+  runtime_limits:
+    agricultural_tool_calls: 500
+    wall_timeout_seconds: 1800
+  closed_lifecycle_required: true
+- run_id: N01-N120-no-water
+  development_config: DEV-N01-v1
+  seed: 0
+  replicates: 1
+  execution_status: planned_not_started
+  model_requests: 0
+  initial_checkpoint: new current-environment preplant snapshot, created in Phase2,
+    not a reused old checkpoint
+  nitrogen:
+    target_total_external_kgN_ha: 120
+    product_n_fraction: 0.46
+    recovery_fraction: 0.7
+    product_kg: 335.58260869565214
+    product_kg_display: 335.58
+    modeled_recovered_added_kgN_ha: 84.0
+    base_product_kg: 335.58260869565214
+    topdress_product_kg: 0
+    public_calls:
+    - tool: TractorApp.load_fertilizer
+      args:
+        kg: 335.58260869565214
+    - tool: TractorApp.base_fertilize
+      args:
+        total_kg: 335.58260869565214
+    accounting: all accepted external base+topdress, before recovery, excluding initial
+      soil N
+    capacity_check: both<500kg spreader capacity; actual receipt/inventory still checked
+  water_policy: none
+  irrigation_gross_mm: 0
+  irrigation_effective_mm: 0
+  observation_policy: shared_grid_v1
+  executor: shared_public_executor_v1; specified only
+  runtime_limits:
+    agricultural_tool_calls: 500
+    wall_timeout_seconds: 1800
+  closed_lifecycle_required: true
+pairs:
+- id: MZ-W01
+  runs:
+  - W01-threshold-N120
+  - W01-no-water-N120
+  fixed_N_kg_ha: 120
+  estimand: total management effect of available supplemental irrigation vs none under
+    identical N
+  no_claim: does not isolate forecast/diagnosis/timing value
+- id: MZ-N01
+  runs:
+  - N01-N60-no-water
+  - N01-N120-no-water
+  identical_actual_irrigation_gross_mm: 0
+  estimand: external N dose response under same realized zero artificial irrigation
+    and identical rainfall forcing
+  no_claim: not same threshold rule with different realized water; no split-N superiority
+    claim
+shared_track_count: 0
+why_four_runs: W01 uses existing low-rain50/50soilN; N01 uses normal-rain5/15soilN.
+  Different environments must not share a reference trajectory.
+policies:
+  shared_grid_v1:
+    grid_days: 3
+    reads:
+    - SensorApp.read_root_zone_sensors
+    - FarmWorldApp.get_farm_overview
+    - WeatherApp.get_current_weather
+    settlement_rechecks: after effect_ready_at through public time and root-zone/log
+      receipts
+    harvest: daily recheck once public maturity/moisture indicates imminent gate;
+      no hidden DVS
+    symmetry: both arms same grid; irrigation action time must not independently shift
+      meteorological forcing; compare actual sow/native days and daily weather hashes
+  water_threshold_v1:
+    id: water_threshold_v1
+    vwc_trigger: 0.18
+    dose_gross_mm_per_ridge: 20
+    last_dose_rule: min(20, remaining_field_equivalent_mm*64/number_of_target_ridges),
+      positive only
+    max_field_equivalent_gross_mm: 150
+    eligible_ridges: public root-zone sensor zones whose VWC <0.18; crop publicly
+      planted and not mature
+    call: FieldOpsApp.irrigate(start,end,hours=dose_mm/5)
+    batching: eligible contiguous zone ranges only; field-equivalent usage weighted
+      by ridges/64
+    pending: never dispatch same ridge before native settlement reconciled; public
+      refusal counts0; partial/unknown classified explicitly
+    legal_guard: respect current tool stop_vwc0.30; noisy reading is not guarantee
+      actual acceptance; refusals diagnosed
+    uses_forecast: false
+    tuning: predeclared developer threshold, not agronomic optimum; no search after
+      seeing result without new design revision
+  none: no irrigation and no water-carrying fertilizer
+executor_contract: shared_executor_contract.md
+result_rules: result_decision_rules.md
+retry: no automatic retries or matrix expansion; retain partial/failure/weak/no effect
+  with reason; followup requires explicit revised design
+no_unseen_holdout_run: true

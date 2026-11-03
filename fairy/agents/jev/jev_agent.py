@@ -5,15 +5,16 @@ still executes the tool, enforces max_tool_calls / timeout, and records the
 workflow and runtime log, so run_report.json and agent_workflow.json have the
 same format as for the LLM agents.
 
-Each action takes one Jev request, sometimes two (fan-out; Jev bills the
+Independent arguments share Jev requests (fan-out; Jev bills the
 state once per request, so questions that do not depend on each other share one):
   1. one Choice over the scenario's tools plus "done", together with the
      argument questions of the likely tools (Jev's top tools in the previous
      request and the last few actions); answers for tools not picked are ignored;
   2. only if the picked tool takes arguments and was not among the likely
      tools, one Choice per argument, sent together.
-A ridge range is asked as start + "how many ridges" (independent questions);
-the code turns the count into the end ridge within the allowed ridges.
+A ridge range is asked as start, then a dependent "how many ridges" question.
+The latter uses the selected farm boundary and native pass limit; it is never
+speculatively requested before the start is known (ridge-range-bounded-v1).
 The action's confidence is the lowest confidence among the picked tool's questions.
 
 Part 2 (docs/jev/PROGRESS.md): Jev sees the task, a short farm snapshot built
@@ -55,21 +56,28 @@ from fairy.agents.jev.menu import (
     build_tool_menus,
     task_numbers,
 )
+from fairy.agents.jev.baseline_parameters import BaselineParameters
+from fairy.agents.jev.execution_guidance import (
+    EXECUTION_GUIDANCE_VERSION, EXECUTION_GUIDANCE_SHA256, execution_guidance,
+)
 from fairy.agents.jev.done_check import MAX_DONE_REFUSALS, REPORT_TOOL, done_problems
 from fairy.agents.jev.menu import dependent_menu, extended_scene_tool, scene_world, build_arg_menu, arg_descriptions, MAX_CHOICE_OPTIONS
 from fairy.agents.jev.snapshot import RESULT_CHARS, _failed, _result_data, _short, build_snapshot, ridge_ranges
 
 TOOL_QUESTION_ID = "next_action"
 PART1_TOOL_INSTRUCTIONS = "Which action should the farm agent take next?"
-TOOL_INSTRUCTIONS = (
+BASELINE_TOOL_INSTRUCTIONS = (
     "Which action should the farm agent take next? Take the next step of the task that is not "
     "done yet; steps_so_far lists every action already taken. Do not repeat an action whose "
     "result is already shown unless the farm has changed since."
 )
 
+TOOL_INSTRUCTIONS = BASELINE_TOOL_INSTRUCTIONS + " Follow jev_execution_guidance in the state for task scope, failure recovery and waiting."
+
 # End-of-range argument -> its start argument. The end is asked after the start.
 RANGE_END_TO_START = {"end_ridge": "start_ridge", "end": "start"}
 RANGE_STARTS = frozenset(RANGE_END_TO_START.values())
+RIDGE_RANGE_ADAPTER_VERSION = "ridge-range-bounded-v1"
 
 # Tools whose ridge options leave out ridges the farm overview shows as done.
 RIDGE_FILTERS = {
@@ -146,11 +154,15 @@ class JevAgent(Agent):
         confidence_source: str = "provider",
         qwen_context_policy: str = "bounded_history",
         hybrid_mode: str = "full",
+        enforced_tool_adaptor: bool = False,
     ) -> None:
         if state_mode not in ("snapshot", "history"):
             raise ValueError(f"Unknown Jev state mode: {state_mode}")
         if qwen_context_policy not in ("bounded_history", "snapshot_only"):
             raise ValueError("Unknown Qwen context policy")
+        if type(enforced_tool_adaptor) is not bool:
+            raise ValueError("enforced_tool_adaptor must be boolean")
+        self.enforced_tool_adaptor = enforced_tool_adaptor
         self.qwen_context_policy = qwen_context_policy
         self.fallback_llm = fallback_llm
         self.fallback_confidence = fallback_confidence
@@ -229,6 +241,24 @@ class JevAgent(Agent):
                 "enable_thinking": getattr(self.fallback_llm, "enable_thinking", None),
             } if self.fallback_llm else None,
             "hybrid_mode": self.hybrid_mode,
+            **self._adaptor_metadata(),
+        }
+
+    def _adaptor_metadata(self):
+        enabled = self.enforced_tool_adaptor
+        if self.name in {"farm_llm_snapshot", "farm_qwen_snapshot"}:
+            return {"enforced_tool_adaptor": None, "tool_adaptor_profile": "not-applicable",
+                    "completion_language_version": "zh-en-done-v1",
+                    "execution_guidance_version": EXECUTION_GUIDANCE_VERSION,
+                    "execution_guidance_sha256": EXECUTION_GUIDANCE_SHA256}
+        return {
+            "enforced_tool_adaptor": enabled,
+            "tool_adaptor_profile": "enforced-v1" if enabled else "manos-compatible-v1",
+            "completion_language_version": "zh-en-done-v1",
+            "ridge_range_adapter_version": RIDGE_RANGE_ADAPTER_VERSION if enabled else "legacy-count-v1",
+            "seed_amount_adapter_version": "task_seed_demand_v1" if enabled else None,
+            "execution_guidance_version": EXECUTION_GUIDANCE_VERSION if enabled else None,
+            "execution_guidance_sha256": EXECUTION_GUIDANCE_SHA256 if enabled else None,
         }
 
     def record_event(self, event_type: str, **payload: Any):
@@ -245,11 +275,13 @@ class JevAgent(Agent):
     def run(self, input, **kwargs):
         self._reset_telemetry()
         self.tool_menus = build_tool_menus(
-            self.tools_map, task_text=str(input), num_ridges=self._num_ridges
+            self.tools_map, task_text=str(input), num_ridges=self._num_ridges,
+            enforced_tool_adaptor=self.enforced_tool_adaptor
         )
         self.record_event(
             "jev_menu",
             status="ok",
+            **self._adaptor_metadata(),
             task_numbers=task_numbers(str(input)),
             tool_option_count=len(self.tool_menus) + 1,
             tools={
@@ -424,7 +456,7 @@ class JevAgent(Agent):
         """Jev's tool and arguments; arguments are None when skip_args_below skipped them."""
         tool_question = {
             "type": "choice",
-            "instructions": TOOL_INSTRUCTIONS if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
+            "instructions": (TOOL_INSTRUCTIONS if self.enforced_tool_adaptor else BASELINE_TOOL_INSTRUCTIONS) if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
             "criteria": {
                 **{
                     name: menu.description
@@ -460,16 +492,61 @@ class JevAgent(Agent):
         answers: dict[str, dict[str, Any]] | None = None,
     ) -> tuple[dict[str, Any], dict[str, float]]:
         """Jev's arguments for pick: from the fan-out answers, or one more request."""
+        if not self.enforced_tool_adaptor:
+            return BaselineParameters._jev_arguments(self, state, pick, options, answers)
         menu = self.tool_menus[pick]
-        if dependent_menu(self.tools_map[pick]):
-            return self._dependent_values(menu, state)
+        if dependent_menu(self.tools_map[pick], enforced_tool_adaptor=self.enforced_tool_adaptor):
+            arguments, confidences = self._dependent_values(menu, state)
+            self._validate_ridge_ranges(menu, arguments)
+            return arguments, confidences
         if options is not None:
             self._fanout["hits"] += 1
         else:
             self._fanout["misses"] += 1
             arg_questions, options = self._value_questions(menu)
             answers = self._ask("arguments", state, arg_questions)
-        return self._read_values(menu, options, answers)
+        arguments, confidences = self._read_values(menu, options, answers)
+        # Start and unrelated arguments may be pre-requested together. The end
+        # depends on the selected start, so it must be a subsequent question.
+        for arg in self._range_ends(menu):
+            start_name = RANGE_END_TO_START[arg.name]
+            opts = self._range_options(menu, arguments, start_name)
+            qid = _arg_question_id(arg.name, None)
+            question = {
+                "type": "choice",
+                "instructions": self._arg_instructions(menu, arg, count_from=start_name)
+                    + " Selected arguments: " + json.dumps(arguments),
+                "criteria": {k: None for k in opts},
+            }
+            answer = self._ask("arguments", state, {qid: question})[qid]
+            arguments[arg.name] = opts[answer["choice"]]
+            confidences[qid] = answer["confidence"]
+        self._validate_ridge_ranges(menu, arguments)
+        return arguments, confidences
+
+    @staticmethod
+    def _range_ends(menu: ToolMenu):
+        names = {a.name for a in menu.args}
+        return [a for a in menu.args if RANGE_END_TO_START.get(a.name) in names]
+
+    def _range_options(self, menu: ToolMenu, arguments: dict[str, Any], start_name: str):
+        """Structural constraints only: no maturity, weather or charging policy."""
+        native = self.tools_map[menu.tool_name]
+        world = scene_world(native, arguments)
+        size = getattr(world, "num_ridges", self._num_ridges)
+        start = arguments[start_name]
+        if type(start) is not int or not 0 <= start < size:
+            raise ValueError(f"Invalid ridge start for {menu.tool_name}: {start!r} (size {size})")
+        width = min(self._menu_width(menu, arguments), size - start)
+        return {_count_key(n): start + n - 1 for n in range(1, width + 1)}
+
+    def _validate_ridge_ranges(self, menu: ToolMenu, arguments: dict[str, Any]):
+        """Fail closed on an adapter invariant violation; never clamp a choice."""
+        for arg in self._range_ends(menu):
+            valid = self._range_options(menu, arguments, RANGE_END_TO_START[arg.name])
+            end = arguments.get(arg.name)
+            if type(end) is not int or end not in valid.values():
+                raise ValueError(f"Invalid adapted ridge range for {menu.tool_name}: {arguments!r}")
 
     def _likely_tools(self, offered: dict[str, Any]) -> list[str]:
         """Tools with arguments that Jev ranked high last time or used in the last few actions."""
@@ -478,7 +555,7 @@ class JevAgent(Agent):
         recent = [s.tool_name for s in self._facts.get("steps", [])[-LIKELY_RECENT_ACTIONS:]]
         out: list[str] = []
         for name in likely + recent[::-1]:
-            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out and not dependent_menu(self.tools_map[name]):
+            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out and not dependent_menu(self.tools_map[name], enforced_tool_adaptor=self.enforced_tool_adaptor):
                 out.append(name)
         return out
 
@@ -487,10 +564,11 @@ class JevAgent(Agent):
     ) -> tuple[dict[str, dict[str, Any]], dict[str, tuple[str, dict[str, Any]]]]:
         """One question per argument, none depending on another's answer.
 
-        A range end is asked as "how many ridges" from the start; _read_values turns
-        it into the end ridge. Returns the questions and, per argument, its
-        question id and options.
+        Range ends are omitted until the start has been selected. Returns the
+        questions and, per independent argument, its question id and options.
         """
+        if not self.enforced_tool_adaptor:
+            return BaselineParameters._value_questions(self, menu, tool_key)
         names = {a.name for a in menu.args}
         questions: dict[str, dict[str, Any]] = {}
         options: dict[str, tuple[str, dict[str, Any]]] = {}
@@ -498,10 +576,8 @@ class JevAgent(Agent):
             qid = _arg_question_id(a.name, tool_key)
             count_from = RANGE_END_TO_START.get(a.name) if RANGE_END_TO_START.get(a.name) in names else None
             if count_from:
-                width = self._menu_width(menu)
-                opts: dict[str, Any] = {_count_key(n): n for n in range(1, width + 1)}
-            else:
-                opts = self._arg_options(menu, a, {})
+                continue
+            opts = self._arg_options(menu, a, {})
             questions[qid] = {
                 "type": "choice",
                 "instructions": self._arg_instructions(
@@ -512,31 +588,53 @@ class JevAgent(Agent):
             options[a.name] = (qid, opts)
         return questions, options
 
-    def _menu_width(self, menu: ToolMenu) -> int:
+    def _menu_width(self, menu: ToolMenu, arguments: dict[str, Any] | None = None) -> int:
+        if not self.enforced_tool_adaptor:
+            return BaselineParameters._menu_width(self, menu)
         native = self.tools_map[menu.tool_name]
         if extended_scene_tool(native):
             if native.class_name == "ManualOpsApp":
                 return 2
             if native.class_name in ("SharedTractorApp", "TractorService"):
                 return PASS_WIDTH.get(("TractorApp", native.name), self._num_ridges)
-            world = scene_world(native)
+            world = scene_world(native, arguments)
             return PASS_WIDTH.get((native.class_name, native.name), getattr(world, "num_ridges", self._num_ridges))
         return PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
 
     def _dependent_values(self, menu: ToolMenu, state: dict[str, Any]):
         """Same Choice/value mapping, resolving entity selectors before dependants."""
+        if not self.enforced_tool_adaptor:
+            return BaselineParameters._dependent_values(self, menu, state)
         native = self.tools_map[menu.tool_name]
         arguments, confidences = {}, {}
-        scope_order = {"farm_id": 0, "asset_id": 1, "plot_id": 2, "machine_id": 2}
-        args = sorted(menu.args, key=lambda a: (scope_order.get(a.name, 3), a.name == "batch_id"))
+        scope_order = {"farm_id": 0, "asset_id": 1, "plot_id": 2, "machine_id": 2, "seed_type": 2}
+        ends = self._range_ends(menu)
+        args = sorted(menu.args, key=lambda a: (scope_order.get(a.name, 4 if a in ends else 3), a.name == "batch_id"))
         for arg in args:
+            if native.class_name == "TractorApp" and native.name == "load_seeds" and arg.name == "count":
+                from fairy.agents.jev.seed_candidates import seed_amount_hint
+                from fairy.apps.farm_world import tractor_app as tractor_constants
+                machine = self._facts.get("machines", {}).get(native.class_instance.name, {})
+                amount, reason = seed_amount_hint(
+                    scene_world(native), arguments.get("seed_type"), str(state.get("task", "")),
+                    self._facts.get("steps", []), tractor_constants._SEED_HOPPER_MAX_PLANTS,
+                    snapshot={"machine": machine, "inventory": self._facts.get("inventory", {}),
+                              "ridges": self._facts.get("ridges", [])})
+                if amount is not None:
+                    arguments["count"] = amount
+                    self.record_event("jev_derived_argument", tool_name=menu.tool_name,
+                                      argument="count", value=amount, source="task_seed_demand_v1",
+                                      reason=reason)
+                    continue
+            scoped = None
             opts = self._arg_options(menu, arg, arguments)
             if arg.name in ("water_mm", "quantity", "liters", "count", "kg"):
                 raw_arg = next(a for a in native.args if a.name == arg.name)
                 scoped = build_arg_menu(native, raw_arg,
                     descriptions=arg_descriptions(native.function_description),
                     numbers=task_numbers(str(state.get("task", ""))), num_ridges=self._num_ridges,
-                    arguments=arguments, steps=self._facts.get("steps", []), task_text=str(state.get("task", "")))
+                    arguments=arguments, steps=self._facts.get("steps", []), task_text=str(state.get("task", "")),
+                    enforced_tool_adaptor=self.enforced_tool_adaptor)
                 opts = scoped.options
             count_from = RANGE_END_TO_START.get(arg.name)
             runtime = getattr(native.class_instance, "runtime", None)
@@ -553,10 +651,7 @@ class JevAgent(Agent):
                     lo, hi = caps["planting"]["depth_cm_range"]
                     opts = {**{f"{round(lo+(hi-lo)*i/9,3):g}": round(lo+(hi-lo)*i/9,3) for i in range(10)}, **opts}
             if count_from in arguments:
-                world = scene_world(native, arguments)
-                width = self._menu_width(menu)
-                width = min(width, world.num_ridges - arguments[count_from])
-                opts = {_count_key(n): arguments[count_from] + n - 1 for n in range(1, width + 1)}
+                opts = self._range_options(menu, arguments, count_from)
             if native.name == "measure_grain_moisture":
                 if arg.name == "plot_id":
                     batches = next(a for a in menu.args if a.name == "batch_id").options
@@ -569,6 +664,8 @@ class JevAgent(Agent):
             qid = _arg_question_id(arg.name, None)
             question = {"type": "choice", "instructions": self._arg_instructions(menu, arg, count_from=count_from if count_from in arguments else None),
                         "criteria": {k: None for k in opts}}
+            if scoped is not None and scoped.description:
+                question["instructions"] += " " + scoped.description
             # Include selected scope in the question, not hidden simulator facts.
             question["instructions"] += " Selected arguments: " + json.dumps(arguments)
             answer = self._ask("arguments", state, {qid: question})[qid]
@@ -582,20 +679,17 @@ class JevAgent(Agent):
         options: dict[str, tuple[str, dict[str, Any]]],
         answers: dict[str, dict[str, Any]],
     ) -> tuple[dict[str, Any], dict[str, float]]:
-        names = {a.name for a in menu.args}
-        ends = [a for a in menu.args if RANGE_END_TO_START.get(a.name) in names]
+        if not self.enforced_tool_adaptor:
+            return BaselineParameters._read_values(self, menu, options, answers)
+        ends = self._range_ends(menu)
         arguments: dict[str, Any] = {}
         confidences: dict[str, float] = {}
-        for a in [a for a in menu.args if a not in ends] + ends:
+        for a in [a for a in menu.args if a not in ends]:
             qid, opts = options[a.name]
             answer = answers[qid]
             value = opts[answer["choice"]]
             confidences[qid] = answer["confidence"]
-            if a in ends:
-                # Count -> end ridge, unchanged even if it does not fit: the farm
-                # refuses it, as for the LLM agent (Part 2, Step 15).
-                arguments[a.name] = arguments[RANGE_END_TO_START[a.name]] + value - 1
-            elif a.name == DURATION_ARG:
+            if a.name == DURATION_ARG:
                 arguments.update(value)
             else:
                 arguments[a.name] = value
@@ -929,7 +1023,7 @@ class JevAgent(Agent):
         if any(extended_scene_tool(t) for t in self.tools_map.values()):
             # Dynamic entities (especially grain batches) can appear after a tool.
             self.tool_menus = build_tool_menus(self.tools_map, task_text=str(task), num_ridges=self._num_ridges,
-                                              steps=self._facts.get("steps", []))
+                                              steps=self._facts.get("steps", []), enforced_tool_adaptor=self.enforced_tool_adaptor)
         if self.state_mode == "history":
             # Part 1 input (diagnostic): every action with its full result, no snapshot.
             # The snapshot is still built for the menus and the done check.
@@ -942,6 +1036,10 @@ class JevAgent(Agent):
             }
         else:
             state = {"task": task, **self._snapshot}
+        # Enhanced policy is opt-in and independent of scenario detail.
+        # Keep the original task intact: it also feeds task-derived value menus.
+        if self.enforced_tool_adaptor:
+            state["jev_execution_guidance"] = execution_guidance()
         if self._notes:
             state["notes"] = list(self._notes)
         self._state_chars.append(len(json.dumps(state, default=str, ensure_ascii=False)))

@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-03",
+  "scope": "Current workspace scenario discovery and explicit registry lookup; historical frozen runtimes unchanged",
+  "scenarios": {
+    "scenario_maize_l3_basic_w01_maize201_v1": {
+      "reason": "两组模型在本轮出现极低产出；原因及重放一致性待查。Oracle技术自重放已通过，不等于场景已证实有缺陷。",
+      "category": "pending_diagnosis"
+    },
+    "scenario_maize_l3_basic_w01_maize202_v1": {
+      "reason": "两组模型在本轮出现极低产出；原因及重放一致性待查。Oracle技术自重放已通过，不等于场景已证实有缺陷。",
+      "category": "pending_diagnosis"
+    },
+    "scenario_maize_l3_basic_w01_maize203_v1": {
+      "reason": "两组模型在本轮出现极低产出；原因及重放一致性待查。Oracle技术自重放已通过，不等于场景已证实有缺陷。",
+      "category": "pending_diagnosis"
+    },
+    "scenario_maize_l3_basic_w01_maize204_v1": {
+      "reason": "两组模型在本轮出现极低产出；原因及重放一致性待查。Oracle技术自重放已通过，不等于场景已证实有缺陷。",
+      "category": "pending_diagnosis"
+    },
+    "scenario_maize_l3_basic_w01_maize205_v1": {
+      "reason": "两组模型在本轮出现极低产出；原因及重放一致性待查。Oracle技术自重放已通过，不等于场景已证实有缺陷。",
+      "category": "pending_diagnosis"
+    },
+    "scenario_maize_l3_water_limit": {
+      "reason": "用户从当前九场景实验集合移除，暂停后续使用；并非依据低分判定场景无效。",
+      "category": "user_deferred"
+    },
+    "scenario_maize_l3_nitrogen_limit": {
+      "reason": "用户从当前九场景实验集合移除，暂停后续使用；并非依据低分判定场景无效。",
+      "category": "user_deferred"
+    },
+    "scenario_maize_l3_basic_w01_v1": {
+      "reason": "W01-maize201的历史别名，与规范入口同步隔离。",
+      "category": "alias",
+      "canonical_id": "scenario_maize_l3_basic_w01_maize201_v1"
+    },
+    "scenario_rice_l3_equipment_limit": {
+      "reason": "用户已从结果矩阵移除，并明确要求暂停后续使用；暂存未验证目录，尚未判定场景本身无效。",
+      "category": "user_deferred"
+    },
+    "scenario_rice_l3_zonal_crop_protection": {
+      "reason": "用户已从结果矩阵移除，并明确要求暂停后续使用；暂存未验证目录，尚未判定场景本身无效。",
+      "category": "user_deferred"
+    }
+  }
+}

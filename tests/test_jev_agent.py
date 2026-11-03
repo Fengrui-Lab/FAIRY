@@ -78,12 +78,12 @@ class _ScriptedLLM:
         )
 
 
-def _run(script, max_tool_calls=20, task=TASK, fallback=None, hybrid_mode="full"):
+def _run(script, max_tool_calls=20, task=TASK, fallback=None, hybrid_mode="full", enforced_tool_adaptor=False):
     scenario = ScenarioFarmWorldFieldPrep(scenario_input=task)
     scenario.setup()
     llm = _ScriptedJev(script)
     agent = build_controller_agent(
-        "farm_jev", llm=llm, toolsets=scenario.apps, fallback_llm=fallback, hybrid_mode=hybrid_mode
+        "farm_jev", llm=llm, toolsets=scenario.apps, fallback_llm=fallback, hybrid_mode=hybrid_mode, enforced_tool_adaptor=enforced_tool_adaptor
     )
     engine = Engine(agent=agent, scenario=scenario)
     try:
@@ -136,23 +136,23 @@ def test_ridge_count_becomes_an_end_within_the_field() -> None:
     agent, workflow, llm = _run(
         [
             {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
-            {"arg__start": "ridge 20", "arg__end": "6 ridges"},
-            # Fan-out: the last action's arguments ride along with the tool question.
-            {
-                TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state",
-                "arg__FarmWorldApp__get_ridge_range_state__start": "ridge 60",
-                "arg__FarmWorldApp__get_ridge_range_state__end": "10 ridges",
-            },
+            {"arg__start": "ridge 20"},
+            {"arg__end": "6 ridges"},
+            # Only independent arguments may ride along with tool selection.
+            {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state",
+             "arg__FarmWorldApp__get_ridge_range_state__start": "ridge 60"},
+            {"arg__end": "4 ridges"},
             {TOOL_QUESTION_ID: "done"},
-        ]
+        ], enforced_tool_adaptor=True
     )
-    counts = list(llm.requests[1][1]["arg__end"]["criteria"])
-    assert counts[0] == "1 ridge" and len(counts) == 64  # no pass limit
+    assert "arg__end" not in llm.requests[1][1]
+    assert len(llm.requests[2][1]["arg__end"]["criteria"]) == 44
+    assert "arg__FarmWorldApp__get_ridge_range_state__end" not in llm.requests[3][1]
+    assert list(llm.requests[4][1]["arg__end"]["criteria"]) == ["1 ridge", "2 ridges", "3 ridges", "4 ridges"]
     steps = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
-    assert steps[0].tool_args == {"start": 20, "end": 25}
-    assert steps[1].tool_args == {"start": 60, "end": 69}  # sent as Jev chose it, not changed to fit
-    assert "ridges 20-25 (6 ridges)" in llm.requests[2][1]["arg__FarmWorldApp__get_ridge_range_state__end"]["instructions"]
-    assert len(llm.requests) == 4  # 2 + 1 + 1
+    assert [s.tool_args for s in steps] == [{"start": 20, "end": 25}, {"start": 60, "end": 63}]
+    assert "ridges 20-25 (6 ridges)" in llm.requests[4][1]["arg__end"]["instructions"]
+    assert len(llm.requests) == 6
     assert agent.telemetry["fanout_hits"] == 1 and agent.telemetry["fanout_misses"] == 1
 
 
@@ -181,16 +181,18 @@ def test_done_is_refused_twice_while_ridges_are_unplanted() -> None:
     assert len(llm.requests) == 3
 
 
-def test_ridge_range_is_start_plus_count_in_one_request() -> None:
+def test_ridge_range_count_follows_start_and_preserves_pass_limit() -> None:
     agent, workflow, llm = _run(
         [
             {TOOL_QUESTION_ID: "TractorApp__apply_fertilizer"},
-            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3", "arg__end_ridge": "10 ridges"},
+            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3"},
+            {"arg__end_ridge": "10 ridges"},
             {TOOL_QUESTION_ID: "done"},
-        ]
+        ], enforced_tool_adaptor=True
     )
     args = llm.requests[1][1]
-    assert set(args) == {"arg__start_ridge", "arg__kg_per_ridge", "arg__end_ridge"}
+    assert set(args) == {"arg__start_ridge", "arg__kg_per_ridge"}
+    args = llm.requests[2][1]
     assert "How many ridges" in args["arg__end_ridge"]["instructions"]
     # apply_fertilizer covers at most 10 ridges per pass.
     assert list(args["arg__end_ridge"]["criteria"]) == ["1 ridge"] + [f"{n} ridges" for n in range(2, 11)]

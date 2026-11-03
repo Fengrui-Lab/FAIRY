@@ -1,0 +1,304 @@
+{
+  "DEV-W01-v1": {
+    "id": "DEV-W01-v1",
+    "environment_id": "maize-l3-design-7e61d49459e59da7ace77ce44849e02373a6a83279528465e20d678627bcd3c0",
+    "role": "development",
+    "source_variant": "water_limit",
+    "source_spec": {
+      "variant": "water_limit",
+      "description": "低降雨和限额供水条件下管理玉米，完成收获与安全入库。",
+      "precipitation_factor": 0.25,
+      "initial_available_n_kg_ha": 50.0,
+      "base_soil_n_kg_ha": 50.0,
+      "fertilizer_stock_kg": 800.0,
+      "fertilizer_quota_kg": 800.0,
+      "irrigation_quota_mm": 150.0,
+      "topdress_kg": 0.0,
+      "irrigation_days": [
+        38,
+        58,
+        78
+      ],
+      "irrigation_mm": 50.0,
+      "harvest_day": 100,
+      "irrigation_schedule": null,
+      "topdress_schedule": null,
+      "harvest_window_day": 100,
+      "start_date": "2026-05-05",
+      "weather_seed": 101
+    },
+    "start_date": "2026-05-05",
+    "weather_seed": 101,
+    "weather_source": "existing synthetic Harbin WeatherGenerator + explicit field-prep/late-harvest dry events",
+    "precipitation_factor": 0.25,
+    "synthetic_dry_events": [
+      {
+        "offset_days": 0,
+        "duration_days": 4,
+        "label": "field_preparation_window"
+      },
+      {
+        "offset_days": 130,
+        "duration_days": 35,
+        "label": "harvest_operation_window"
+      }
+    ],
+    "backend_config": {
+      "crop_name": "maize",
+      "variety_name": "Grain_maize_201",
+      "cultivar_map": {},
+      "cultivar_profile": null,
+      "cultivar_profiles": {},
+      "parameter_overrides": {},
+      "require_explicit_cultivar_parameters": false,
+      "fertilizer_n_fraction": 0.46,
+      "fertilizer_n_recovery": 0.7,
+      "irrigation_efficiency": 0.92,
+      "reference_density_plants_m2": 6.666666666666666,
+      "latitude_deg": 45.7,
+      "longitude_deg": 126.6,
+      "elevation_m": 150.0,
+      "relative_humidity_pct": 55.0,
+      "co2_ppm": 420.0,
+      "initial_available_n_kg_ha": 50.0,
+      "base_soil_n_kg_ha": 50.0,
+      "soil_n_mineralization_fraction": 0.002,
+      "soil_overrides": {},
+      "site_overrides": {},
+      "max_duration_days": 366,
+      "external_biotic_coupling": false,
+      "allow_external_runon": false,
+      "external_runon_source": null
+    },
+    "soil_parameters": {
+      "top_depth_m": 0.1,
+      "root_depth_m": 0.4,
+      "wilting_point_vwc": 0.14,
+      "field_capacity_vwc": 0.36,
+      "saturation_vwc": 0.48,
+      "max_infiltration_mm_day": 35.0,
+      "top_drainage_rate": 0.65,
+      "root_drainage_rate": 0.45,
+      "irrigation_efficiency": 0.92,
+      "rainfall_capture_efficiency": 0.85,
+      "top_root_redistribution_rate": 0.18,
+      "top_root_redistribution_deadband_vwc": 0.03,
+      "planting_temp_min_c": 10.0,
+      "planting_vwc_min": 0.2,
+      "planting_vwc_max": 0.35,
+      "planting_vwc_too_dry": 0.15,
+      "planting_vwc_too_wet": 0.39999999999999997,
+      "water_stress_vwc": 0.2,
+      "irrigation_trigger_vwc": 0.18,
+      "top_temp_response": 0.4,
+      "root_temp_response": 0.18,
+      "rain_cooling_coeff_c_per_10mm": 0.25,
+      "radiation_et_coeff": 0.42,
+      "min_temp_factor": 0.4,
+      "max_temp_factor": 1.25,
+      "bare_soil_evap_fraction": 0.42,
+      "max_crop_coefficient": 1.2
+    },
+    "initial_vwc": 0.28,
+    "initial_soil_temperature_c": 16,
+    "area_ha": 1.2864,
+    "inventory": {
+      "seed_MAIZE_201": 100000,
+      "fertilizer_product_kg": 360,
+      "warehouse_fuel_l": 500,
+      "tractor_fuel_l": 100,
+      "pesticide_l": 0
+    },
+    "management_quotas": {
+      "fertilizer_product_kg": 360,
+      "irrigation_field_equivalent_mm": 150
+    },
+    "postharvest": {
+      "market_and_safe_moisture_pct": 14,
+      "harvest_max_moisture_pct": 25,
+      "drying_capacity_kg_per_day": 20000,
+      "storage_capacity_kg": 20000
+    },
+    "required_preparation": [
+      "level",
+      "base_fertilize",
+      "form_ridges"
+    ],
+    "unplanted_ridges": 64,
+    "scenario_simulation_duration_days": 180,
+    "runtime_budgets": {
+      "agricultural_tool_calls": 500,
+      "wall_timeout_seconds": 1800
+    },
+    "no_parameter_changes": true,
+    "policy_config_overrides_only": [
+      "explicit base fertilizer dose",
+      "disable all old topdress_schedule",
+      "new answer-free briefing",
+      "inventory/quotas as declared"
+    ],
+    "deployment_status": "specified, not implemented or simulated"
+  },
+  "DEV-N01-v1": {
+    "id": "DEV-N01-v1",
+    "environment_id": "maize-l3-design-7e61d49459e59da7ace77ce44849e02373a6a83279528465e20d678627bcd3c0",
+    "role": "development",
+    "source_variant": "nitrogen_limit",
+    "source_spec": {
+      "variant": "nitrogen_limit",
+      "description": "低土壤供氮和限量肥料条件下管理玉米，完成收获与安全入库。",
+      "precipitation_factor": 1.0,
+      "initial_available_n_kg_ha": 5.0,
+      "base_soil_n_kg_ha": 15.0,
+      "fertilizer_stock_kg": 360.0,
+      "fertilizer_quota_kg": 360.0,
+      "irrigation_quota_mm": 300.0,
+      "topdress_kg": 160.0,
+      "irrigation_days": [],
+      "irrigation_mm": 30.0,
+      "harvest_day": 99,
+      "irrigation_schedule": [
+        [
+          20,
+          50.0
+        ],
+        [
+          60,
+          50.0
+        ],
+        [
+          70,
+          50.0
+        ],
+        [
+          80,
+          50.0
+        ]
+      ],
+      "topdress_schedule": [
+        [
+          15,
+          80.0
+        ],
+        [
+          30,
+          80.0
+        ]
+      ],
+      "harvest_window_day": 98,
+      "start_date": "2026-05-05",
+      "weather_seed": 101
+    },
+    "start_date": "2026-05-05",
+    "weather_seed": 101,
+    "weather_source": "existing synthetic Harbin WeatherGenerator + explicit field-prep/late-harvest dry events",
+    "precipitation_factor": 1.0,
+    "synthetic_dry_events": [
+      {
+        "offset_days": 0,
+        "duration_days": 4,
+        "label": "field_preparation_window"
+      },
+      {
+        "offset_days": 130,
+        "duration_days": 35,
+        "label": "harvest_operation_window"
+      }
+    ],
+    "backend_config": {
+      "crop_name": "maize",
+      "variety_name": "Grain_maize_201",
+      "cultivar_map": {},
+      "cultivar_profile": null,
+      "cultivar_profiles": {},
+      "parameter_overrides": {},
+      "require_explicit_cultivar_parameters": false,
+      "fertilizer_n_fraction": 0.46,
+      "fertilizer_n_recovery": 0.7,
+      "irrigation_efficiency": 0.92,
+      "reference_density_plants_m2": 6.666666666666666,
+      "latitude_deg": 45.7,
+      "longitude_deg": 126.6,
+      "elevation_m": 150.0,
+      "relative_humidity_pct": 55.0,
+      "co2_ppm": 420.0,
+      "initial_available_n_kg_ha": 5.0,
+      "base_soil_n_kg_ha": 15.0,
+      "soil_n_mineralization_fraction": 0.002,
+      "soil_overrides": {},
+      "site_overrides": {},
+      "max_duration_days": 366,
+      "external_biotic_coupling": false,
+      "allow_external_runon": false,
+      "external_runon_source": null
+    },
+    "soil_parameters": {
+      "top_depth_m": 0.1,
+      "root_depth_m": 0.4,
+      "wilting_point_vwc": 0.14,
+      "field_capacity_vwc": 0.36,
+      "saturation_vwc": 0.48,
+      "max_infiltration_mm_day": 35.0,
+      "top_drainage_rate": 0.65,
+      "root_drainage_rate": 0.45,
+      "irrigation_efficiency": 0.92,
+      "rainfall_capture_efficiency": 0.85,
+      "top_root_redistribution_rate": 0.18,
+      "top_root_redistribution_deadband_vwc": 0.03,
+      "planting_temp_min_c": 10.0,
+      "planting_vwc_min": 0.2,
+      "planting_vwc_max": 0.35,
+      "planting_vwc_too_dry": 0.15,
+      "planting_vwc_too_wet": 0.39999999999999997,
+      "water_stress_vwc": 0.2,
+      "irrigation_trigger_vwc": 0.18,
+      "top_temp_response": 0.4,
+      "root_temp_response": 0.18,
+      "rain_cooling_coeff_c_per_10mm": 0.25,
+      "radiation_et_coeff": 0.42,
+      "min_temp_factor": 0.4,
+      "max_temp_factor": 1.25,
+      "bare_soil_evap_fraction": 0.42,
+      "max_crop_coefficient": 1.2
+    },
+    "initial_vwc": 0.28,
+    "initial_soil_temperature_c": 16,
+    "area_ha": 1.2864,
+    "inventory": {
+      "seed_MAIZE_201": 100000,
+      "fertilizer_product_kg": 360,
+      "warehouse_fuel_l": 500,
+      "tractor_fuel_l": 100,
+      "pesticide_l": 0
+    },
+    "management_quotas": {
+      "fertilizer_product_kg": 360,
+      "irrigation_field_equivalent_mm": 0
+    },
+    "postharvest": {
+      "market_and_safe_moisture_pct": 14,
+      "harvest_max_moisture_pct": 25,
+      "drying_capacity_kg_per_day": 20000,
+      "storage_capacity_kg": 20000
+    },
+    "required_preparation": [
+      "level",
+      "base_fertilize",
+      "form_ridges"
+    ],
+    "unplanted_ridges": 64,
+    "scenario_simulation_duration_days": 180,
+    "runtime_budgets": {
+      "agricultural_tool_calls": 500,
+      "wall_timeout_seconds": 1800
+    },
+    "no_parameter_changes": true,
+    "policy_config_overrides_only": [
+      "explicit base fertilizer dose",
+      "disable all old topdress_schedule",
+      "new answer-free briefing",
+      "inventory/quotas as declared"
+    ],
+    "deployment_status": "specified, not implemented or simulated"
+  }
+}

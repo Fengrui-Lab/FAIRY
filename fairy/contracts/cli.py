@@ -41,7 +41,7 @@ def capabilities():
     return dict(contract_version=CONTRACT_VERSION, identity=fingerprint(),
                 scenarios=list(list_scenarios()), controllers=list(AgentBuilder().list_agents()),
                 providers=['typesafe','system-one-compatible','vllm','openai-compatible','deepseek'],
-                features=['hybrid-reflex-v1','llm-jev-tool-v1','run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
+                features=['jev-adaptor-profiles-v1','score-batch-v1','hybrid-reflex-v1','llm-jev-tool-v1','run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
 
 
 def scrub(text, secrets):
@@ -167,7 +167,7 @@ def describe_scenario(job):
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    if not argv or argv[0] not in {'capabilities','check-service','score','describe-scenario','probe-request'}:
+    if not argv or argv[0] not in {'capabilities','check-service','score','score-batch','describe-scenario','probe-request'}:
         return run_cli(argv)
     operation = argv.pop(0)
     parser = argparse.ArgumentParser()
@@ -179,7 +179,11 @@ def main(argv=None):
         else:
             job = json.loads(args.job.read_text())
             with contextlib.redirect_stdout(io.StringIO()):
-                if operation == 'probe-request':
+                if operation == 'score-batch':
+                    from .score_batch import run_batch
+                    batch = run_batch(job)
+                    result = {'status':'passed' if batch['status']=='complete' else 'failed', 'output':job['output']}
+                elif operation == 'probe-request':
                     from .request_probe import probe_request
                     result = probe_request(job)
                 elif operation == 'check-service': result = probe(job)

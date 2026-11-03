@@ -1,0 +1,25 @@
+{
+  "version": "basic-management-v1.1",
+  "source_evidence_zip": "/Users/ouyangkun/PHD/Project/HSCC/exports/FAIRY_Maize_L3_Phase2_With_Zero_Closure_20261103.zip",
+  "source_evidence_sha256": "c2389cb9059a39b269266bc8aa26b83e631d8b35048f43355aa7b504cc17d7d3",
+  "files": {
+    "fairy/scenarios/maize/basic_management.py": "63fcd7e1483f93a90f5ec289583735a308ee2aad22ed31b1db2aeda0e70f22b4",
+    "fairy/scenarios/maize/scenario_basic_w01_v1.py": "ef63c46fe181babe61c06183f51cb49abaf66c84478647e15d1e525200553443",
+    "fairy/scenarios/maize/scenario_basic_n01_v1.py": "bc73bb87303516b595762e7b7398b77e7b004994b07a144c69d0f7af5093d4ce",
+    "scripts/run_maize_basic_reference.py": "b2ed5d744ce5460c1518f982a502538d05b186d40ef346405b83e4e439bcde2c",
+    "tests/test_maize_basic_management.py": "42443ae9b7af20002199979918ef3a47ff5dd156b6b60a17f2ff3a9fb203aa23",
+    "fairy/scenarios/maize/basic_management_v1/N01.zh.txt": "e6a01f68f566b909170c541101cb3f9a5807f00825adf7e977266c4c5882d7ff",
+    "fairy/scenarios/maize/basic_management_v1/W01.reference.json": "82ba07d14676fb175210c7132c03211e87fcfa9a5d5e634524e3aa115711540c",
+    "fairy/scenarios/maize/basic_management_v1/W01.zh.txt": "02071ab12d33e13442406821a5c6b2c88e8a8fe80256a76e47d83df7ea96e39e",
+    "fairy/scenarios/maize/basic_management_v1/schedule.json": "08c9c74eec0479803473addf67f84f937c0b1d9d51dfb59126a00abb0f4d3cbe",
+    "fairy/scenarios/maize/basic_management_v1/N01.reference.json": "62148d80bca14ba9fdc90b3bffd2a5656db21714bce5f1dfb539b19ceb3acb77"
+  },
+  "full_season_runs_this_phase": 0,
+  "model_requests": 0,
+  "tests_passed": 62,
+  "change": "Candidate-only mixed zero/positive grain storage validation",
+  "preflight_files": {
+    "W01.preflight.json": "5b3635c00883ecfe63e565f0d1d2216667fff3c2b09764b7e6d7ed1d034c9e5d",
+    "N01.preflight.json": "0e0649483b605f0eab94c9d384257184f99be3076e5a2051ff2210d0154d5984"
+  }
+}

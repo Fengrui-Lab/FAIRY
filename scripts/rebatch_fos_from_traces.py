@@ -57,7 +57,6 @@ import os
 import re
 import sys
 import traceback
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -1385,7 +1384,20 @@ def replay_one_cell(
                 workflow_from_oracle_events,
             )
 
-            oracle_wf = workflow_from_oracle_events(scenario)
+            # Dynamic maize references are supplied by the offline CLI. Their
+            # full workflow is not represented by the scenario briefing events.
+            # Match the oracle already used by FOS/v1; preserve other scenarios.
+            explicit_maize_oracle = (
+                getattr(scenario, "_cached_oracle_workflow", None)
+                if str(getattr(scenario, "scenario_id", "")).startswith("scenario_maize_l3_basic_")
+                else None
+            )
+            if explicit_maize_oracle is not None:
+                if not any(step.get("tool_name") for step in explicit_maize_oracle.values()):
+                    raise ValueError("Explicit maize oracle has no tool steps")
+                oracle_wf = explicit_maize_oracle
+            else:
+                oracle_wf = workflow_from_oracle_events(scenario)
             agent_wf = workflow_from_event_log(list(env.event_log.list_view()))
 
             evaluate_workflows(oracle_wf, agent_wf)
@@ -1497,6 +1509,10 @@ def replay_one_cell(
         row["farm_fos_traceback"] = _tb.format_exc(limit=3)
 
     return row
+
+
+def _replay_cell_job(args):
+    return _replay_one_cell_safe(*args)
 
 
 def _replay_one_cell_safe(*args, **kwargs) -> dict[str, Any]:
@@ -2034,42 +2050,16 @@ def main() -> int:
                 f"{dn_part}{pc2_part}{focus_part}"
             )
     else:
-        # ProcessPool first (true parallelism). Fall back to ThreadPool
-        # if the runtime denies semaphore allocation (e.g. sandboxed
-        # environments). The replay path holds the GIL most of the
-        # time during _orch_advance, so threading still helps for the
-        # I/O-bound JSON parse / FOS export portions.
-        try:
-            executor = ProcessPoolExecutor(max_workers=args.workers)
-        except (PermissionError, OSError) as exc:
-            from concurrent.futures import ThreadPoolExecutor
-
-            print(
-                f"  [warn] ProcessPoolExecutor unavailable ({exc!r}); "
-                f"falling back to ThreadPoolExecutor"
-            )
-            executor = ThreadPoolExecutor(max_workers=args.workers)
-        with executor as ex:
-            fut_to_cell = {
-                ex.submit(
-                    _replay_one_cell_safe,
-                    c,
-                    args.out_root,
-                    args.extrapolate,
-                    args.extrapolation_max_days,
-                    oracle_dir,
-                    args.donothing_inline,
-                    args.path_correctness_v2,
-                    args.pc2_tol,
-                    focus_ridges_config,
-                    output_rel,
-                ): (c, output_rel)
-                for c, output_rel in cell_items
-            }
-            for fut in as_completed(fut_to_cell):
-                row = fut.result()
+        from fairy.parallel import run_process_jobs
+        jobs = [(c, args.out_root, args.extrapolate, args.extrapolation_max_days,
+                 oracle_dir, args.donothing_inline, args.path_correctness_v2,
+                 args.pc2_tol, focus_ridges_config, output_rel)
+                for c, output_rel in cell_items]
+        for outcome in run_process_jobs(_replay_cell_job, jobs, args.workers):
+                cell, _output_rel = cell_items[outcome['index']]
+                row = outcome.get('value') or dict(status=outcome['status'],
+                    error=outcome.get('error'), cell=cell.name, cell_dir=str(cell))
                 rows.append(row)
-                cell, _output_rel = fut_to_cell[fut]
                 dn_part = (
                     f"  dn_kg={row.get('donothing_biological_kg_inline', '-')}"
                     f"  norm_yield={row.get('normalized_yield_score(%)', '-')}"

@@ -23,6 +23,10 @@ class SeedType(str, Enum):
 
     MAIZE_STANDARD = "MAIZE_STANDARD"
     RICE_STANDARD = "RICE_STANDARD"
+    MAIZE_202 = "MAIZE_202"
+    MAIZE_203 = "MAIZE_203"
+    MAIZE_204 = "MAIZE_204"
+    MAIZE_205 = "MAIZE_205"
     MAIZE_201 = "MAIZE_201"  # WOFOST Grain_maize_201 reference cultivar
     EARLY_COLD = "EARLY_COLD"  # 早熟耐寒, 100-110 days, tolerates <10°C
     STANDARD = "STANDARD"  # 标准型,   110-115 days, typical window

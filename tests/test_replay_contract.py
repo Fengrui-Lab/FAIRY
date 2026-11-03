@@ -454,3 +454,26 @@ def test_old_bundle_recovers_scenario_kwargs_from_results_csv(tmp_path: Path) ->
     assert bundle is not None
     assert bundle["scenario_kwargs"] == {"detailed_briefing": True}
     assert bundle["init_kwargs"] == {"sensor_count": 2}
+
+
+def test_replay_refusal_ignores_only_mission_id() -> None:
+    from copy import deepcopy
+    from fairy.controllers.engine import _verify_replay_response, ReplayDivergenceError
+
+    recorded = {"status": "partial", "mission_id": "original",
+                "surveyed_ridges": [], "observations": [],
+                "battery_remaining_pct": 23.5, "duration_minutes": 0.5,
+                "warning": "Battery low", "farm_id": "FarmWorldApp"}
+    step = SimpleNamespace(name="step65", content=recorded)
+    tool = SimpleNamespace(class_instance=object(), name="fly_survey")
+    actual = {**recorded, "mission_id": "replayed"}
+    before = deepcopy(recorded), deepcopy(actual)
+    assert _verify_replay_response(step, actual, tool) is True
+    assert (recorded, actual) == before
+    without_id = {k: v for k, v in actual.items() if k != "mission_id"}
+    assert _verify_replay_response(step, without_id, tool) is True
+    for field, value in [("battery_remaining_pct", 20.0),
+                         ("surveyed_ridges", [51]), ("warning", "Different refusal"),
+                         ("farm_id", "AnotherFarm"), ("status", "ok")]:
+        with pytest.raises(ReplayDivergenceError):
+            _verify_replay_response(step, {**actual, field: value}, tool)

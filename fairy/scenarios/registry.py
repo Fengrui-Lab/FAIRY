@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 from typing import Type
+from pathlib import Path
+import json
 
 from fairy.scenarios.scenario import Scenario
 
 _REGISTRY: dict[str, Type[Scenario]] = {}
+
+
+def _quarantined_scenarios() -> dict:
+    manifest = Path(__file__).with_name("未验证的场景") / "manifest.json"
+    if not manifest.exists():
+        return {}
+    return json.loads(manifest.read_text(encoding="utf-8"))["scenarios"]
+
 
 
 def register_scenario(scenario_id: str):
@@ -17,6 +27,12 @@ def register_scenario(scenario_id: str):
 
 
 def get_scenario_class(scenario_id: str) -> Type[Scenario]:
+    excluded = _quarantined_scenarios()
+    if scenario_id in excluded:
+        raise ValueError(
+            f"Scenario {scenario_id} is quarantined in 未验证的场景: "
+            + excluded[scenario_id]["reason"]
+        )
     if scenario_id not in _REGISTRY:
         _import_known_scenarios()
     return _REGISTRY[scenario_id]
@@ -24,7 +40,7 @@ def get_scenario_class(scenario_id: str) -> Type[Scenario]:
 
 def list_scenarios() -> list[str]:
     _import_known_scenarios()
-    return sorted(_REGISTRY)
+    return sorted(set(_REGISTRY) - set(_quarantined_scenarios()))
 
 
 class _RegistryCompat:

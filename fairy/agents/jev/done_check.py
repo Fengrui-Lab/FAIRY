@@ -31,19 +31,19 @@ def done_problems(task: str, facts: dict[str, Any], tools_map: dict[str, Any] | 
         problems.extend(f"{farm_id}: {p}" for p in done_problems(task,
             {"ridges": farm["ridges"], "inventory": farm.get("inventory", {})}, None))
     for plot in facts.get("plots", []):
-        if re.search(r"\bharvest", text) and plot["planted"] and not plot["harvested"]:
+        if re.search(r"\bharvest|收获|收割", text) and plot["planted"] and not plot["harvested"]:
             problems.append(f"plot {plot['plot_id']} is planted but not harvested yet.")
-        if re.search(r"\bplant ridges\b|\bplant\b", text) and not plot["planted"] and not plot["harvested"]:
+        if re.search(r"\bplant ridges\b|\bplant\b|播种|种植|移栽", text) and not plot["planted"] and not plot["harvested"]:
             problems.append(f"plot {plot['plot_id']} is not planted yet.")
-    if re.search(r"\bstor", text):
+    if re.search(r"\bstor|入库|储藏|储存", text):
         for batch in facts.get("inventory", {}).get("grain_batches", []):
             if batch["location"] != "stored" and batch["wet_kg"] > 0:
                 problems.append(f"grain batch {batch['batch_id']} is not stored yet.")
-    if re.search(r"\bharvest", text):
+    if re.search(r"\bharvest|收获|收割", text):
         left = [r["ridge_id"] for r in ridges if r["planted"] and not r["harvested"]]
         if left:
             problems.append(f"ridges {ridge_ranges(left)} are planted but not harvested yet.")
-    if re.search(r"\bplant ridges\b|\bplant\b", text):
+    if re.search(r"\bplant ridges\b|\bplant\b|播种|种植|移栽", text):
         left = [r["ridge_id"] for r in ridges if not r["planted"] and not r["harvested"]]
         if left:
             problems.append(f"ridges {ridge_ranges(left)} are not planted yet.")
@@ -51,9 +51,9 @@ def done_problems(task: str, facts: dict[str, Any], tools_map: dict[str, Any] | 
         if (status.get("grain_bin_kg") or 0) > 0:
             problems.append(f"the {name} grain bin still holds {status['grain_bin_kg']} kg; unload it.")
     unstored = (facts.get("inventory") or {}).get("harvest_grain_kg") or 0
-    if unstored > 0 and re.search(r"\bstor", text):
+    if unstored > 0 and re.search(r"\bstor|入库|储藏|储存", text):
         problems.append(f"{unstored} kg of harvested grain is not stored yet.")
-    if re.search(r"\breport\b", text) and tools_map and REPORT_TOOL in tools_map:
+    if re.search(r"\breport\b|提交报告|汇报结果", text) and tools_map and REPORT_TOOL in tools_map:
         sent = any(s.tool_name == REPORT_TOOL and s.op_type == "TOOL" for s in facts.get("steps", []))
         if not sent:
             problems.append("the final report has not been sent to the user.")
