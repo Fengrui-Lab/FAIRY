@@ -1,0 +1,4 @@
+# SHA-pinned upstream inputs must retain their exact downloaded bytes.
+* -text
+weather.csv whitespace=cr-at-eol
+wheat.yaml whitespace=-trailing-space

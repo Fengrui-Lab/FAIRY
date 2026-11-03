@@ -1,0 +1,88 @@
+{
+  "schema": "fairy.winter_wheat.inputs.v1",
+  "season": {
+    "start": "2019-10-01",
+    "sowing_open": "2019-10-05",
+    "sowing_close": "2019-10-25",
+    "deadline": "2020-07-15",
+    "timezone": "Asia/Shanghai"
+  },
+  "parameter_status": "uncalibrated_reference",
+  "crop": {
+    "path": "wheat.yaml",
+    "sha256": "b75108b7f075cee6e417a329caabe5850366edc0f9d15edf8bc64c2dcb13ff85",
+    "cultivar": "Winter_wheat_104",
+    "source": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/wheat.yaml",
+    "commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+    "region": "European reference; NOT a Chinese calibrated cultivar"
+  },
+  "weather": {
+    "path": "weather.csv",
+    "sha256": "c67e77dce1185ba0af2474df240c63912182b3cd60b9513087575fd27776278c",
+    "source": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CT2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN%2CWS2M%2CRH2M&community=AG&longitude=114.5&latitude=38.05&start=20191001&end=20200716&format=JSON&time-standard=LST",
+    "product": "NASA POWER daily grid",
+    "time_standard": "LST",
+    "calendar_note": "LST dates used as daily model dates; not hourly China civil-time data"
+  },
+  "raw_weather": {
+    "path": "power_raw.json",
+    "sha256": "a0d627673222158d09dd5c51109b563fff1a1d39065f6c5c7f11ca35b4e8e9ac"
+  },
+  "site": {
+    "latitude": 38.05,
+    "longitude": 114.5,
+    "elevation_m": 80,
+    "identity": "illustrative Shijiazhuang-area grid; not matched to a Zenodo station"
+  },
+  "native_soil_parameters": {
+    "SMW": 0.12,
+    "SMFCF": 0.3,
+    "SM0": 0.45,
+    "CRAIRC": 0.06,
+    "SOPE": 10.0,
+    "KSUB": 1.0,
+    "K0": 10.0,
+    "RDMSOL": 120.0
+  },
+  "native_site_parameters": {
+    "WAV": 20.0,
+    "NAVAILI": 40.0,
+    "CO2": 410.0,
+    "NSOILBASE": 40.0,
+    "NSOILBASE_FR": 0.01,
+    "SMLIM": 0.3,
+    "NOTINF": 0.0,
+    "SSI": 0.0,
+    "SSMAX": 0.0,
+    "IFUNRN": 0
+  },
+  "soil_status": "generic engineering assumptions; NOT measured at a Chinese validation station",
+  "management": {
+    "irrigation_efficiency": 0.85,
+    "nitrogen_recovery_fraction": 0.7
+  },
+  "observations": {
+    "doi": "10.5281/zenodo.14785961",
+    "status": "archives_downloaded_not_mapped_not_calibrated",
+    "license_note": "consult original record and data-use terms; no license invented",
+    "files": [
+      {
+        "path": "observations/Phenology data.zip",
+        "sha256": "7c723968d289416cecfa46c469fc5d5238f2b8fe3d5bd5b9315982e57e0f377c",
+        "md5": "12b04f2543fdf287fd63c12a0088821c",
+        "source": "https://zenodo.org/records/14785961/files/Phenology%20data.zip?download=1"
+      },
+      {
+        "path": "observations/Yield data.zip",
+        "sha256": "f82d2994ecc61f9aa6947433f8a77a7c6502c5935ae6a9f4c3a416fa09606aa6",
+        "md5": "cbdaf83f7ed4df7e35564e99271ee5dc",
+        "source": "https://zenodo.org/records/14785961/files/Yield%20data.zip?download=1"
+      }
+    ]
+  },
+  "notes": [
+    "Weather and crop YAML are actual downloads; soil/prices/calendar are benchmark assumptions.",
+    "This bundle does not reproduce the Zenodo author's training or validation experiment.",
+    "Never compare a single grid simulation to a county yield without a justified spatial aggregation."
+  ]
+}

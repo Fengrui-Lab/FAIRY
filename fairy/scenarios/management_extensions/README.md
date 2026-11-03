@@ -1,10 +1,12 @@
 # 管理扩展场景：阅读入口
 
+当前共20个场景：此前16个玉米／大豆管理场景，加4个冬小麦场景。冬小麦的独立原生适配、场级服务、数据语义及运行方法见 [WINTER_WHEAT.md](WINTER_WHEAT.md)；新增内容仍按L3、App、引擎和评估分别放在本目录。
+
 ## 美元核算与2025年中国价格
 
-16个场景的默认任务描述（`detail=true/false`）只提供价格查询入口，不重复列出单价表。基础价格分别通过 `OperatingAccounts.get_accounts`、`CropRotation.get_crop_options`、`SeasonCycle.get_season_ledger`、`SeasonPlanning.get_season_context` 或 `SeedMarket.get_budget` 查询；药剂及服务报价查 `CropProtection.get_products`，肥料供应合同报价和有效期查 `FertilizerMarket.get_offers`，种子采购方案查 `SeedMarket.list_offers`。任务保留经营目标、资源约束与管理指导，具体额度和预算数值从工具查询；实际价格、Oracle管理动作和评估口径不变。
+此前16个玉米／大豆场景的默认任务描述（`detail=true/false`）只提供价格查询入口，不重复列出单价表。基础价格分别通过 `OperatingAccounts.get_accounts`、`CropRotation.get_crop_options`、`SeasonCycle.get_season_ledger`、`SeasonPlanning.get_season_context` 或 `SeedMarket.get_budget` 查询；药剂及服务报价查 `CropProtection.get_products`，肥料供应合同报价和有效期查 `FertilizerMarket.get_offers`，种子采购方案查 `SeedMarket.list_offers`。任务保留经营目标、资源约束与管理指导，具体额度和预算数值从工具查询；实际价格、Oracle管理动作和评估口径不变。
 
-本目录全部16个拓展场景使用 **USD**。本目录以外的旧L1/L2/L3及通用农场工具不改价。所有单价、预算、现金、粮值和经营收益使用同一固定汇率：**1 USD = 7.1757 CNY**（中国人民银行公布的2025年6月美元兑人民币月均值）。这是实验固定口径，不重建2019/2024/2026年各自的历史价格或汇率。
+此前16个玉米／大豆拓展场景使用 **USD**；新增冬小麦也使用USD，其独立价格表及服务核算见冬小麦说明。本目录以外的旧L1/L2/L3及通用农场工具不改价。所有单价、预算、现金、粮值和经营收益使用同一固定汇率：**1 USD = 7.1757 CNY**（中国人民银行公布的2025年6月美元兑人民币月均值）。这是实验固定口径，不重建2019/2024/2026年各自的历史价格或汇率。
 
 - `china_market_prices.py`：人民币到美元换算及工具账本使用的固定基础价格。
 - `data/china_market_2025.json`：每项人民币原价、资料日期、链接、计量单位；实测价格、类别代理和合同估价分别注明。
@@ -43,7 +45,7 @@ relative_difference_pct = 100 * (agent - oracle) / oracle
 
 ## 任务描述的粒度
 
-16个场景的默认任务描述仅保留面积、垄距的具体数值。`detail=false`给出目标、必要情境与查询入口；`detail=true`增加观测、判断、处理、响应后复查的指导，保留每场的采购、选药、政策、跨季或产量目标，不预告Oracle日期、剂量、品种答案或未来收益。具体播种参数、额度、报价、年度日程与验收数值从现有工具读取。冠层和营养代理值不能当成独立养分化验；根区工具返回土壤氮模型估计时须核对来源、日期与覆盖。
+此前16个玉米／大豆场景的默认任务描述仅保留面积、垄距的具体数值。`detail=false`给出目标、必要情境与查询入口；`detail=true`增加观测、判断、处理、响应后复查的指导，保留每场的采购、选药、政策、跨季或产量目标，不预告Oracle日期、剂量、品种答案或未来收益。具体播种参数、额度、报价、年度日程与验收数值从现有工具读取。冠层和营养代理值不能当成独立养分化验；根区工具返回土壤氮模型估计时须核对来源、日期与覆盖。
 
 为避免移走数字后信息不可查询，`OperatingAccounts.get_accounts`补充既有截止时间，`SeasonCycle.get_season_ledger`补充既有季节计划与总额度，原四场的`Field.get_crop_capabilities`统一提供既有验收目标。只是查询信息的补齐，价格、物理规则、Oracle管理动作及评估条件不变。当前Oracle仍是冻结的有限搜索参考，不因本次描述修改自动变为观测分支策略。
 

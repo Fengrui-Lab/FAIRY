@@ -16,4 +16,8 @@ SCENARIO_MODULES = (
     "L3.scenario_soybean_variety_high_water_price",
     "L4.scenario_two_year_crop_nitrogen_allocation",
     "L4.scenario_two_year_soybean_cyst_rotation",
+    "L3.scenario_winter_wheat_full_season",
+    "L3.scenario_winter_wheat_water_limit",
+    "L3.scenario_winter_wheat_nitrogen_limit",
+    "L3.scenario_winter_wheat_high_water_price",
 )
