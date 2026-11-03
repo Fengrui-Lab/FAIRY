@@ -1,0 +1,151 @@
+{
+  "price_book_id": "china_northeast_2025_usd_v1",
+  "currency": "USD",
+  "source_currency": "CNY",
+  "exchange_rate": {
+    "cny_per_usd": 7.1757,
+    "period": "2025-06 monthly average",
+    "source": "https://www.pbc.gov.cn/diaochatongjisi/attachDir/2025/12/2025121517172677839.pdf",
+    "rule": "USD = CNY / 7.1757. Fixed experiment exchange rate; not a live FX quote."
+  },
+  "cny_prices": {
+    "crop_per_kg": {
+      "maize": 2.16,
+      "soybean": 4.32
+    },
+    "seed_per_unit": {
+      "MAIZE_201": 0.01904761904761905,
+      "SOYBEAN_901": 0.00152,
+      "SOYBEAN_902": 0.00152,
+      "SOYBEAN_903": 0.00152
+    },
+    "fertilizer_per_kg": 2.05,
+    "fuel_per_liter": 6.63,
+    "water_per_m3": 0.2,
+    "high_water_per_m3": 0.8,
+    "drying_per_kg": 0.04
+  },
+  "sources": [
+    {
+      "id": "fertilizer_fuel",
+      "url": "https://www.chinaprice.cn/zgscjgjcbg/56767.jhtml",
+      "publisher": "国家发展改革委价格监测中心 / 中国价格信息网",
+      "period": "2025-06",
+      "observations": {
+        "jilin_46pct_n_urea_cny_kg": 2.05,
+        "jilin_0_diesel_cny_l": 6.63
+      },
+      "basis": "Retail product mass, not kg N; diesel is per litre, not wholesale CNY/t."
+    },
+    {
+      "id": "maize_grain",
+      "url": "https://grain.jl.gov.cn/ywpd/xqzx/ymsc/202512/t20251231_9386324.html",
+      "publisher": "吉林省粮食和物资储备局",
+      "period": "2025-12-30",
+      "observations": {
+        "changchun_grade3_purchase_cny_t": 2160
+      },
+      "basis": "Processor acquisition benchmark, not consumer retail. Applied to simulator maize stored at its 14% market-moisture basis; no added quality premium."
+    },
+    {
+      "id": "soybean_grain",
+      "url": "https://grain.jl.gov.cn/ywpd/xqzx/ddsc/202507/t20250704_9273234.html",
+      "publisher": "吉林省粮食和物资储备局",
+      "period": "2025-06-30",
+      "observations": {
+        "jiaohe_purchase_cny_t": 4320
+      },
+      "basis": "Domestic soybean acquisition, not imported crushing soybean or seed. Simulator stored grain uses 13% market moisture; no unmodelled protein premium."
+    },
+    {
+      "id": "maize_seed",
+      "url": "https://www.ccgp-neimenggu.gov.cn/gpx-bid-file/ZF_JGBM_000001/150522/2025/4/7/402881e195a444f001960dd017584af7/gpx-bidconfirm/402881ef967ef7330196858b0099153e.pdf?accessCode=9ac41e475e07bb8eb249a58429c8361f",
+      "publisher": "内蒙古政府采购网，科尔沁左翼后旗农技推广项目成交报价表",
+      "period": "2025-04-30",
+      "observations": {
+        "package_grains": 4200,
+        "procurement_quote_cny_per_mu": 80
+      },
+      "basis": "The procurement table quotes 80 CNY/mu with 4200-grain/bag specification. Treating one such bag per mu and 80 CNY per 4200 grains is an explicit accounting assumption/category proxy, not an observed retail bag quote. Official WUR Grain_maize_201 is not the Chinese cultivar in that procurement; its biology is unchanged."
+    },
+    {
+      "id": "soybean_seed",
+      "url": "https://www.7hcn.com/article/471091-1.html",
+      "original_report_url": "https://mp.weixin.qq.com/s/W9vh28_AzA5_3GY7aylCFg",
+      "publisher": "广发期货黑龙江调研报告（七禾转载）",
+      "period": "2025 growing season",
+      "observations": {
+        "wudalianchi_farmer_seed_cny_jin": 3.8
+      },
+      "basis": "7.6 CNY/kg retail sowing-seed category proxy. An explicit 200 g/1000 seeds accounting assumption converts kg to grains; not a measured WUR cultivar seed mass or a source for crop parameters. No extra seed subsidy credited."
+    },
+    {
+      "id": "water_rule",
+      "url": "https://xxgk.jlcity.gov.cn/gzbm/fgw_2/xbgkml/202201/t20220120_1014956.html",
+      "publisher": "吉林市发展改革委",
+      "period": "2022 tariff notice used as pricing-rule reference",
+      "observations": {
+        "headworks_cny_m3": [
+          0.038,
+          0.056
+        ]
+      },
+      "basis": "Headworks supply fee and actual pumping fuel/electricity are separate. The 0.20/0.80 CNY/m3 all-in service contracts below are declared estimates, not the regulated headworks tariff or observed 2025 farm-delivered quotes."
+    },
+    {
+      "id": "drying",
+      "url": "https://www.7hcn.com/article/467746-1.html",
+      "publisher": "永安期货2025-02-17至23日东北走访（七禾转载，2025-03-06）",
+      "period": "2025-02",
+      "observations": {
+        "siping_drying_cost_cny_t_approx": 40
+      },
+      "basis": "40 CNY/t throughput benchmark adopted as a fixed contracted batch-service assumption. Not a universal per-moisture-point tariff; only actual processing throughput charged; safe grain skipped at no charge."
+    },
+    {
+      "id": "protection_cost_scale",
+      "url": "https://nanyang.zfcg.henan.gov.cn/cmsweb81e27e/nas/webfile2024/nanyang/rootfiles/2025/08/13/384994ab86f142c8964ebcd8a225db89.pdf",
+      "publisher": "河南省政府采购网，镇平县2025年防灾救灾采购需求",
+      "period": "2025-08",
+      "observations": {
+        "mixed_40pct_prothioconazole_tebuconazole_cny_8000g": 800,
+        "uav_service_cny_mu": 7
+      },
+      "basis": "China-wide cost-scale cross-check only, not Northeast observations, not the retained US product SKUs, not formulation equivalence and not field efficacy evidence. Product and ground-service estimates remain explicitly declared."
+    }
+  ],
+  "contract_assumptions": {
+    "water": {
+      "normal_cny_m3": 0.2,
+      "high_cny_m3": 0.8,
+      "headworks_cny_m3": 0.056,
+      "normal_pumping_service_cny_m3": 0.144,
+      "high_pumping_service_cny_m3": 0.744,
+      "explanation": "Purchased irrigation service includes pumping energy and conveyance. High-price fields use higher-lift/costlier pumping. The engine meters delivered water; pumping service is not charged again as tractor fuel. Neither is a provincial unified agricultural tariff. Physical caps forbid overquota use; no invented progressive surcharge."
+    },
+    "seed_discount_fraction": 0.1,
+    "maize_low_sticker_cny_per_grain": 0.018,
+    "maize_delivery_cny": 100,
+    "legacy_total_budget_cny": {
+      "maize": 6000,
+      "soybean": 3500
+    },
+    "fertilizer_advance_cny_kg": 1.95,
+    "fertilizer_spring_cny_kg": 2.05,
+    "fertilizer_purchase_cash_cny": 341.25,
+    "protection_cash_cny": 700,
+    "protection_service_cny_ha": 75,
+    "protection_product_cny_per_unit": {
+      "transform_wg": 1.0,
+      "sefina": 0.5,
+      "tebustar_36l": 0.06,
+      "proline_480sc": 0.3
+    },
+    "protection_price_status": "Unverified product-specific China price estimates. US brands/labels retained for continuity; do not claim these are registered Chinese soybean SKUs or observed 2025 Northeast quotes. A source-verified Chinese product catalogue is a separate agronomic change.",
+    "legacy_seed_cash_cny": {
+      "maize": 2000,
+      "soybean": 1500
+    }
+  },
+  "scope": "2025 Northeast economic benchmarks in fixed USD, applied to the existing experimental farms. Source observations, category proxies and declared service/supplier estimates are distinguished. This does not calibrate WOFOST varieties, soil, climate or pesticide efficacy to Chinese farms. No VAT, FX speculation, rent, ordinary labour or depreciation model added; contracted protection service is charged once."
+}

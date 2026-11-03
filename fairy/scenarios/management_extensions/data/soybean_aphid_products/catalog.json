@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "scope": "Two actual US commercial products and retained US manufacturer soybean-aphid directions. Reference simulation only; not a Chinese registration or complete regulatory label model.",
+  "facts_checked_on": "2026-11-03",
+  "products": [
+    {
+      "product_id": "transform_wg",
+      "name": "Transform WG",
+      "manufacturer": "Corteva",
+      "active_ingredient": "sulfoxaflor",
+      "irac_group": "4C",
+      "unit": "g",
+      "target_crop": "soybean",
+      "target_pest": "soybean_aphid",
+      "min_rate_per_ha": 52.53989794661513,
+      "max_rate_per_ha": 70.0531972621535,
+      "min_interval_days": 14,
+      "preharvest_interval_days": 7,
+      "max_applications": 4,
+      "max_season_rate_per_ha": 595.4521767283048,
+      "source_url": "https://www.corteva.com/content/dam/dpagco/corteva/na/us/en/products/files/TransformWG_Soybean_FS.pdf",
+      "product_url": "https://www.corteva.com/us/products-and-solutions/crop-protection/transform-wg.html",
+      "source_rates": "0.75–1.0 oz product/acre; minimum interval14d; PHI7d; max4 applications; max8.5oz/acre/year. Manufacturer soybean fact sheet dated08/2019. No more than two consecutive applications per crop.",
+      "max_consecutive_applications": 2
+    },
+    {
+      "product_id": "sefina",
+      "name": "Sefina Inscalis",
+      "manufacturer": "BASF",
+      "active_ingredient": "afidopyropen",
+      "irac_group": "9D",
+      "unit": "mL",
+      "target_crop": "soybean",
+      "target_pest": "soybean_aphid",
+      "min_rate_per_ha": 219.23334911616163,
+      "max_rate_per_ha": 219.23334911616163,
+      "min_interval_days": 7,
+      "preharvest_interval_days": 7,
+      "max_applications": 2,
+      "max_season_rate_per_ha": 438.46669823232327,
+      "source_url": "https://agriculture.basf.us/content/dam/cxm/agriculture/crop-protection/products/documents/sefina/BASF_TechBulletin_Sefina_Soybean_2019_medres.pdf",
+      "product_url": "https://agriculture.basf.us/crop-protection/products/insecticides/sefina.html",
+      "source_rates": "3fl oz product/acre; minimum interval7d; PHI7d; seasonal6fl oz/acre implies at most2 applications at listed rate. Manufacturer soybean bulletin2019.",
+      "max_consecutive_applications": 2
+    }
+  ],
+  "observation_reference": {
+    "url": "https://extension.umn.edu/agriculture/crop-production/soybean/insecticide-options-for-resistant-soybean-aphid",
+    "rule": "250aphids/plant,80% infested and increasing through R5; simulator returns aphid-equivalent diagnostics, not real field counts."
+  },
+  "simulation_assumptions": {
+    "currency": "USD",
+    "price_per_unit": {
+      "transform_wg": 0.13935922627757572,
+      "sefina": 0.06967961313878786
+    },
+    "price_source": "Unverified product-specific China price estimates. US brands/labels retained for continuity; do not claim these are registered Chinese soybean SKUs or observed 2025 Northeast quotes. A source-verified Chinese product catalogue is a separate agronomic change.",
+    "service_cost_per_ha": 10.451941970818178,
+    "carrier_water_l_per_ha": 100.0,
+    "service_minutes_per_ha": 120.0,
+    "effect_source": "Both products use the same existing FAIRY reduced insecticide effect at an allowed dose:65% initial pressure reduction,10d residual,55% growth suppression,weather dependent. No product-specific field efficacy or resistance claim.",
+    "efficacy_multiplier": 1.0,
+    "standalone_natural_enemy_model": false,
+    "minimum_service_interval_days": 7,
+    "service_scope": "Contracted ground application, one product per ridge per seven days; no tank mixtures. This service rule is a declared operating condition, separate from manufacturer directions.",
+    "price_book_id": "china_northeast_2025_usd_v1",
+    "cny_per_usd": 7.1757
+  },
+  "source_files": {
+    "transform_soybean_2019.pdf": "af2220c2a5c6b00a5abb1951d0f81ecfacea20bb7df5dd2bfe3dd8197a396e93",
+    "sefina_soybean_2019.pdf": "b97af1546e03dc97107360b6d716ac4a754e3daef92f1301dc29e5eaca75dc24"
+  }
+}

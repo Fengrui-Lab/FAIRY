@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "treatment_type": "FUNGICIDE",
+  "scope": "US manufacturer soybean-grain label reference: Asian soybean rust. Only listed dose, interval, annual and PHI constraints are represented; not local registration or a complete regulatory/epidemic model.",
+  "facts_checked_on": "2026-11-03",
+  "products": [
+    {
+      "product_id": "tebustar_36l",
+      "name": "TebuStar 3.6L",
+      "manufacturer": "Albaugh",
+      "active_ingredient": "tebuconazole",
+      "frac_group": "3",
+      "unit": "mL",
+      "target_crop": "soybean",
+      "target_pest": "asian_soybean_rust_reference",
+      "min_rate_per_ha": 219.2333491161616,
+      "max_rate_per_ha": 292.31113215488216,
+      "min_interval_days": 10,
+      "preharvest_interval_days": 21,
+      "max_applications": 3,
+      "max_season_rate_per_ha": 876.9333964646464,
+      "max_consecutive_applications": 3,
+      "source_url": "https://www.albaugh.com/docs/unitedstateslibraries/productfiles/tebustar-3.6l-specimen-label---spanish-.pdf?sfvrsn=ec83e2c5_1",
+      "source_rates": "Soybean rust;3-4US fl oz/acre;repeat10-14d;PHI21d;max3 applications and12US fl oz/acre/year;ground minimum10gpa;required spray surfactant. Printedp13."
+    },
+    {
+      "product_id": "proline_480sc",
+      "name": "Proline 480 SC",
+      "manufacturer": "Bayer",
+      "active_ingredient": "prothioconazole",
+      "frac_group": "3",
+      "unit": "mL",
+      "target_crop": "soybean",
+      "target_pest": "asian_soybean_rust_reference",
+      "min_rate_per_ha": 182.69445759680136,
+      "max_rate_per_ha": 219.2333491161616,
+      "min_interval_days": 10,
+      "preharvest_interval_days": 21,
+      "max_applications": 3,
+      "max_season_rate_per_ha": 942.703401199495,
+      "max_consecutive_applications": 3,
+      "source_url": "https://cs-assets.bayer.com/is/content/bayer/Proline_480_SC1n_Fungicide_Labelpdf",
+      "source_rates": "Manufacturer2019 soybean grain table printedp16:Asian soybean rust2.5-3.0US fl oz/acre;repeat10-21d;PHI21d;max3/year including soil and foliar;max12.9US fl oz/acre/year. Preventive or first visible symptoms. General ground minimum10gpa."
+    }
+  ],
+  "observation_reference": {
+    "url": "https://extension.umn.edu/agriculture/crop-production/soybean/soybean-rust",
+    "rule": "Scouting returns reduced disease pressure, not measured rust incidence or a laboratory diagnosis. Both retained manufacturer products permit preventive or first-visible-symptom treatment."
+  },
+  "simulation_assumptions": {
+    "currency": "USD",
+    "price_per_unit": {
+      "tebustar_36l": 0.008361553576654543,
+      "proline_480sc": 0.04180776788327271
+    },
+    "price_source": "Unverified product-specific China price estimates. US brands/labels retained for continuity; do not claim these are registered Chinese soybean SKUs or observed 2025 Northeast quotes. A source-verified Chinese product catalogue is a separate agronomic change.",
+    "service_cost_per_ha": 10.451941970818178,
+    "carrier_water_l_per_ha": 100.0,
+    "service_minutes_per_ha": 120.0,
+    "minimum_service_interval_days": 7,
+    "service_scope": "Contracted ground service including required surfactant for TebuStar at its manufacturer minimum; water, fuel and adjuvant included in service charge. No tank mixtures of active products. Both products are FRAC3; switching between these brands is NOT a rotation of fungicide mode of action.",
+    "effect_source": "Unchanged FAIRY generic fungicide proxy:45% initial disease-pressure reduction,14-day residual,45% growth suppression,weather dependent. Equal parameters for both products are a model assumption, not evidence of equal real efficacy. Disease pressure is not a species-specific rust infection process.",
+    "efficacy_multiplier": 1.0,
+    "standalone_natural_enemy_model": false,
+    "price_book_id": "china_northeast_2025_usd_v1",
+    "cny_per_usd": 7.1757
+  },
+  "source_files": {
+    "tebustar_us_label.pdf": "f85eec366ca3083bf496afb12a725f049b036883c9f8bd03c8e74ffc83c8d231",
+    "proline_us_label.pdf": "e51c31bd9fc7ed61de9c01019d425868442a3ee6f0134bc232675fec4980278c"
+  }
+}

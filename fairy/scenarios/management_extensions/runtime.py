@@ -1,4 +1,5 @@
 """Episode-local planning and money tools; existing farm classes stay unchanged."""
+
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from dataclasses import replace
@@ -16,10 +17,20 @@ from fairy.types import event_registered
 SEEDS = {"soybean": "SOYBEAN_901", "maize": "MAIZE_201"}
 VARIETIES = {"soybean": "Soybean_901", "maize": "Grain_maize_201"}
 OPTIONS = {
-    "soybean": {"seed_type": SEEDS["soybean"], "depth_cm": 4., "spacing_cm": 20/3,
-                "rows_per_ridge": 2, "required_seeds": 514560},
-    "maize": {"seed_type": SEEDS["maize"], "depth_cm": 5., "spacing_cm": 20.,
-              "rows_per_ridge": 1, "required_seeds": 85760},
+    "soybean": {
+        "seed_type": SEEDS["soybean"],
+        "depth_cm": 4.0,
+        "spacing_cm": 20 / 3,
+        "rows_per_ridge": 2,
+        "required_seeds": 514560,
+    },
+    "maize": {
+        "seed_type": SEEDS["maize"],
+        "depth_cm": 5.0,
+        "spacing_cm": 20.0,
+        "rows_per_ridge": 1,
+        "required_seeds": 85760,
+    },
 }
 
 
@@ -27,10 +38,18 @@ def crop_options(farm):
     """Exact seed demand at the existing full-season geometry and target density."""
     options = deepcopy(OPTIONS)
     for crop, opt in options.items():
-        opt["spacing_cm"] = 100*opt["rows_per_ridge"]/(farm.ridge_width_m*(40. if crop == "soybean" else 20/3))
-        per_ridge = round(farm.field_length_m*opt["rows_per_ridge"]*100/opt["spacing_cm"])
-        opt["required_seeds"] = per_ridge*farm.num_ridges
+        opt["spacing_cm"] = (
+            100
+            * opt["rows_per_ridge"]
+            / (farm.ridge_width_m * (40.0 if crop == "soybean" else 20 / 3))
+        )
+        per_ridge = round(
+            farm.field_length_m * opt["rows_per_ridge"] * 100 / opt["spacing_cm"]
+        )
+        opt["required_seeds"] = per_ridge * farm.num_ridges
     return options
+
+
 SCN_SOURCE = "https://extension.umn.edu/agriculture/crop-production/soybean/soybean-cyst-nematode-management-guide"
 WEATHER_EXTENSION_DIR = Path(__file__).with_name("data") / "thionville_december2019_v1"
 
@@ -58,16 +77,24 @@ def configure_weather(farm):
     """Family-local forcing, including weather before the crop is selected."""
     farm._sim_date = "2019-05-01"
     farm.set_season_phase("full_season")
-    data = Path(__file__).resolve().parents[2] / "physics/data/wofost/research/thionville_nasa2019_v1"
+    data = (
+        Path(__file__).resolve().parents[2]
+        / "physics/data/wofost/research/thionville_nasa2019_v1"
+    )
     manifest = json.loads((data / "manifest.json").read_text())
     path = data / manifest["weather_path"]
     if hashlib.sha256(path.read_bytes()).hexdigest() != manifest["weather_sha256"]:
         raise ValueError("Pinned weather checksum mismatch")
-    extension_manifest = json.loads((WEATHER_EXTENSION_DIR / "manifest.json").read_text())
+    extension_manifest = json.loads(
+        (WEATHER_EXTENSION_DIR / "manifest.json").read_text()
+    )
     extension_path = WEATHER_EXTENSION_DIR / extension_manifest["weather_path"]
     extension_bytes = extension_path.read_bytes()
-    if (hashlib.sha256(extension_bytes).hexdigest() != extension_manifest["weather_sha256"]
-            or extension_manifest["base_weather_sha256"] != manifest["weather_sha256"]):
+    if (
+        hashlib.sha256(extension_bytes).hexdigest()
+        != extension_manifest["weather_sha256"]
+        or extension_manifest["base_weather_sha256"] != manifest["weather_sha256"]
+    ):
         raise ValueError("Pinned extension weather checksum mismatch")
     weather_rows = json.loads(path.read_text())["daily"]
     extension_rows = json.loads(extension_bytes)["daily"]
@@ -77,25 +104,42 @@ def configure_weather(farm):
         raise ValueError("Extension weather must not replace base-period days")
     generator = WeatherGenerator(default_harbin_soybean_config(), seed=0)
     from datetime import date
+
     for row in weather_rows + extension_rows:
-        generator.set_day_override(date.fromisoformat(row["date"]),
-            air_temp_mean_c=(row["tmin_c"]+row["tmax_c"])/2,
-            air_temp_min_c=row["tmin_c"], air_temp_max_c=row["tmax_c"],
-            rain_mm=0. if farm.episode.rain_free_october and row["date"].startswith("2019-10-") else row["rain_mm"],
+        generator.set_day_override(
+            date.fromisoformat(row["date"]),
+            air_temp_mean_c=(row["tmin_c"] + row["tmax_c"]) / 2,
+            air_temp_min_c=row["tmin_c"],
+            air_temp_max_c=row["tmax_c"],
+            rain_mm=(
+                0.0
+                if farm.episode.rain_free_october and row["date"].startswith("2019-10-")
+                else row["rain_mm"]
+            ),
             wind_ms=row["wind_2m_m_s"],
-            solar_rad_mj_m2=row["shortwave_mj_m2_day"], relative_humidity_pct=row["relative_humidity_pct"])
+            solar_rad_mj_m2=row["shortwave_mj_m2_day"],
+            relative_humidity_pct=row["relative_humidity_pct"],
+        )
     physics = farm.physics
     physics.weather_generator = generator
     physics.latitude_deg = 49.4
-    physics.scenario_metadata = {"daily_settlement": "completed_calendar_day",
-        "reference_id": "thionville", "weather_sha256": manifest["weather_sha256"],
+    physics.scenario_metadata = {
+        "daily_settlement": "completed_calendar_day",
+        "reference_id": "thionville",
+        "weather_sha256": manifest["weather_sha256"],
         "weather_extension_sha256": extension_manifest["weather_sha256"],
-        "weather_operations_end": "2019-12-31", "weather_forecast_buffer_end": "2020-01-07",
-        "scn_dynamics": False, "field_trial_validation": False}
+        "weather_operations_end": "2019-12-31",
+        "weather_forecast_buffer_end": "2020-01-07",
+        "scn_dynamics": False,
+        "field_trial_validation": False,
+    }
     if farm.episode.rain_free_october:
         physics.scenario_metadata["weather_override"] = {
-            "start_date": "2019-10-01", "end_date": "2019-10-31", "rain_mm": 0.,
-            "source": "synthetic scenario override; other NASA weather fields unchanged"}
+            "start_date": "2019-10-01",
+            "end_date": "2019-10-31",
+            "rain_mm": 0.0,
+            "source": "synthetic scenario override; other NASA weather fields unchanged",
+        }
     return manifest
 
 
@@ -104,43 +148,90 @@ def configure_native(farm):
     crop = farm.crop_type
     manifest = configure_weather(farm)
     physics = farm.physics
-    physics.soil.params = replace(physics.soil.params, root_depth_m=1.2,
-        wilting_point_vwc=.10, field_capacity_vwc=.30, saturation_vwc=.45,
-        max_infiltration_mm_day=50., rainfall_capture_efficiency=1.)
-    physics.biotic.params = replace(physics.biotic.params, recruitment_fraction=0.)
-    physics.biotic.set_pressure(list(range(farm.num_ridges)), weed_pressure=0., insect_pressure=0., disease_pressure=0.)
-    farm.configure_crop_backend("wofost", crop_name=crop, variety_name=VARIETIES[crop],
-        cultivar_map={SEEDS[crop]: VARIETIES[crop]}, require_explicit_cultivar_parameters=True,
-        latitude_deg=49.4, longitude_deg=6.2, elevation_m=manifest["location"]["elevation_m"],
-        reference_density_plants_m2=40. if crop == "soybean" else 20/3,
-        initial_available_n_kg_ha=50. if crop == "soybean" else 30., base_soil_n_kg_ha=50.,
-        soil_n_mineralization_fraction=.025 if crop == "soybean" else .002,
-        fertilizer_n_fraction=.46, fertilizer_n_recovery=.7, external_biotic_coupling=False)
+    physics.soil.params = replace(
+        physics.soil.params,
+        root_depth_m=1.2,
+        wilting_point_vwc=0.10,
+        field_capacity_vwc=0.30,
+        saturation_vwc=0.45,
+        max_infiltration_mm_day=50.0,
+        rainfall_capture_efficiency=1.0,
+    )
+    physics.biotic.params = replace(physics.biotic.params, recruitment_fraction=0.0)
+    physics.biotic.set_pressure(
+        list(range(farm.num_ridges)),
+        weed_pressure=0.0,
+        insect_pressure=0.0,
+        disease_pressure=0.0,
+    )
+    farm.configure_crop_backend(
+        "wofost",
+        crop_name=crop,
+        variety_name=VARIETIES[crop],
+        cultivar_map={SEEDS[crop]: VARIETIES[crop]},
+        require_explicit_cultivar_parameters=True,
+        latitude_deg=49.4,
+        longitude_deg=6.2,
+        elevation_m=manifest["location"]["elevation_m"],
+        reference_density_plants_m2=40.0 if crop == "soybean" else 20 / 3,
+        initial_available_n_kg_ha=50.0 if crop == "soybean" else 30.0,
+        base_soil_n_kg_ha=50.0,
+        soil_n_mineralization_fraction=0.025 if crop == "soybean" else 0.002,
+        fertilizer_n_fraction=0.46,
+        fertilizer_n_recovery=0.7,
+        external_biotic_coupling=False,
+    )
     if crop == "soybean":
         physics.yield_recovery.params.grain_moisture_mode = "soybean_equilibrium"
-    farm.configure_management_regime(irrigation_quota_mm_total=180., fertilizer_quota_kg=600* farm.field_area_m2/10000)
-    farm.configure_postharvest_market(market_moisture_pct=13. if crop == "soybean" else 14.,
-        max_storage_moisture_pct=13.5 if crop == "soybean" else 14.)
+    farm.configure_management_regime(
+        irrigation_quota_mm_total=180.0,
+        fertilizer_quota_kg=600 * farm.field_area_m2 / 10000,
+    )
+    farm.configure_postharvest_market(
+        market_moisture_pct=13.0 if crop == "soybean" else 14.0,
+        max_storage_moisture_pct=13.5 if crop == "soybean" else 14.0,
+    )
     physics.observation_model.rng.seed(0)
 
 
 class PlanningFarm(FarmWorldApp):
     """Unselected, bare land becomes a crop exactly once before field work."""
 
-    def __init__(self, *, selected_crop=None, episode=None, num_ridges=64, field_length_m=268., ridge_width_m=.75,
-                 management_objective=None):
+    def __init__(
+        self,
+        *,
+        selected_crop=None,
+        episode=None,
+        num_ridges=64,
+        field_length_m=268.0,
+        ridge_width_m=0.75,
+        management_objective=None,
+    ):
         self.episode = episode or EpisodeState()
         self._management_objective = deepcopy(management_objective)
-        super().__init__(name="Field", farm_id="field", num_ridges=num_ridges, field_length_m=field_length_m,
-                         ridge_width_m=ridge_width_m, rows_per_ridge=1, crop_type=selected_crop or "maize",
-                         required_field_preparation_ops=("level", "form_ridges"))
+        super().__init__(
+            name="Field",
+            farm_id="field",
+            num_ridges=num_ridges,
+            field_length_m=field_length_m,
+            ridge_width_m=ridge_width_m,
+            rows_per_ridge=1,
+            crop_type=selected_crop or "maize",
+            required_field_preparation_ops=("level", "form_ridges"),
+        )
         for ridge in self._ridges:
-            ridge.soil_vwc, ridge.soil_temp_c = .26, 20.
+            ridge.soil_vwc, ridge.soil_temp_c = 0.26, 20.0
         for soil in self.physics.soil.states.values():
-            soil.top_temp_c, soil.root_temp_c = 20., 20.
+            soil.top_temp_c, soil.root_temp_c = 20.0, 20.0
         if selected_crop:
-            self._set_configuration(farm_id="field", num_ridges=num_ridges, field_length_m=field_length_m,
-                ridge_width_m=ridge_width_m, crop_type=selected_crop, rows_per_ridge=OPTIONS[selected_crop]["rows_per_ridge"])
+            self._set_configuration(
+                farm_id="field",
+                num_ridges=num_ridges,
+                field_length_m=field_length_m,
+                ridge_width_m=ridge_width_m,
+                crop_type=selected_crop,
+                rows_per_ridge=OPTIONS[selected_crop]["rows_per_ridge"],
+            )
             self.episode.selection = {"crop_id": selected_crop, "source": "scenario"}
             configure_native(self)
         else:
@@ -151,7 +242,11 @@ class PlanningFarm(FarmWorldApp):
     def get_crop_capabilities(self) -> dict:
         """Read chosen crop capabilities and management objective, or both uncommitted candidates."""
         if not self.episode.selection:
-            return {"farm_id": self.farm_id, "crop_selected": False, "candidates": crop_options(self)}
+            return {
+                "farm_id": self.farm_id,
+                "crop_selected": False,
+                "candidates": crop_options(self),
+            }
         result = super().get_crop_capabilities()
         if self._management_objective is not None:
             result["management_objective"] = deepcopy(self._management_objective)
@@ -195,19 +290,39 @@ class PlanningTractor(SharedTractorApp):
 
 
 class SeasonPlanning(App):
-    def __init__(self, farm):
+    def __init__(self, farm, *, prices=None):
         super().__init__("SeasonPlanning")
         self.farm = farm
+        self.prices = deepcopy(prices or {})
 
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_season_context(self, farm_id: str) -> dict:
-        """Read prior-season records, dated SCN lab result, and public rotation rule."""
+        """Read season history, SCN report, crop rule and fixed USD prices.
+
+        Args:
+            farm_id: Declared farm ID, normally field; see farm overview.
+
+        Returns:
+            dict: Historical records, soil eggs/100cc, rotation rule and USD prices
+            per kg, seed, L fuel or m3 water as named; includes FX/source.
+            Budget *_minor fields are integer US cents (100/USD). Unknown farm
+            returns error.
+        """
         if farm_id != self.farm.farm_id:
             return {"error": "Unknown farm"}
-        return {**asdict(self.farm.episode), "rule": {
-            "threshold_eggs_per_100cc": 10000, "hosts": ["soybean"], "nonhosts": ["maize"],
-            "source": SCN_SOURCE, "scn_population_simulated": False}}
+        return {
+            **asdict(self.farm.episode),
+            "prices": deepcopy(self.prices),
+            "currency": "USD",
+            "rule": {
+                "threshold_eggs_per_100cc": 10000,
+                "hosts": ["soybean"],
+                "nonhosts": ["maize"],
+                "source": SCN_SOURCE,
+                "scn_population_simulated": False,
+            },
+        }
 
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
@@ -219,30 +334,57 @@ class SeasonPlanning(App):
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
-    def select_crop(self, farm_id: str, crop_id: str, cultivar_id: str, report_id: str) -> dict:
+    def select_crop(
+        self, farm_id: str, crop_id: str, cultivar_id: str, report_id: str
+    ) -> dict:
         """Commit one crop before any field work; agronomic suitability is evaluated separately."""
         farm = self.farm
-        if farm_id != farm.farm_id or crop_id not in OPTIONS or cultivar_id != SEEDS.get(crop_id):
+        if (
+            farm_id != farm.farm_id
+            or crop_id not in OPTIONS
+            or cultivar_id != SEEDS.get(crop_id)
+        ):
             return {"error": "Invalid farm/crop/cultivar"}
         if report_id != farm.episode.soil_report.get("report_id"):
             return {"error": "Unknown soil report"}
-        if farm.episode.selection or any(r.planted for r in farm._ridges) or farm.completed_prep_ops:
+        if (
+            farm.episode.selection
+            or any(r.planted for r in farm._ridges)
+            or farm.completed_prep_ops
+        ):
             return {"error": "Crop choice is locked"}
         # Prepare independently, then commit: invalid native configuration cannot
         # partially change the land, clock, warehouse, or bound sensor references.
-        candidate = PlanningFarm(selected_crop=crop_id, episode=deepcopy(farm.episode),
-            num_ridges=farm.num_ridges, field_length_m=farm.field_length_m, ridge_width_m=farm.ridge_width_m,
-            management_objective=farm._management_objective)
+        candidate = PlanningFarm(
+            selected_crop=crop_id,
+            episode=deepcopy(farm.episode),
+            num_ridges=farm.num_ridges,
+            field_length_m=farm.field_length_m,
+            ridge_width_m=farm.ridge_width_m,
+            management_objective=farm._management_objective,
+        )
         candidate._ridges = deepcopy(farm._ridges)
         if farm._physics is not None:
             candidate.physics.soil.states = deepcopy(farm.physics.soil.states)
-        preserved = {k: farm.__dict__[k] for k in (
-            "farm_environment", "time_manager", "_weather_app", "simulation_timezone",
-            "add_event_callbacks", "schedule_event_callbacks")}
+        preserved = {
+            k: farm.__dict__[k]
+            for k in (
+                "farm_environment",
+                "time_manager",
+                "_weather_app",
+                "simulation_timezone",
+                "add_event_callbacks",
+                "schedule_event_callbacks",
+            )
+        }
         candidate.__dict__.update(preserved)
         candidate._legacy_inventory = None
-        candidate.episode.selection = {"crop_id": crop_id, "cultivar_id": cultivar_id,
-            "report_id": report_id, "timestamp": self.time_manager.time()}
+        candidate.episode.selection = {
+            "crop_id": crop_id,
+            "cultivar_id": cultivar_id,
+            "report_id": report_id,
+            "timestamp": self.time_manager.time(),
+        }
         farm.__dict__.update(candidate.__dict__)
         farm.is_state_modified = True
         self.is_state_modified = True
@@ -250,30 +392,74 @@ class SeasonPlanning(App):
 
 
 class SeedMarket(App):
-    def __init__(self, farm, warehouse, offers, cost_reader=None):
+    def __init__(
+        self,
+        farm,
+        warehouse,
+        offers,
+        cost_reader=None,
+        *,
+        prices=None,
+        production_budget_minor=None,
+    ):
         super().__init__("SeedMarket")
         self.farm, self.warehouse, self.offers = farm, warehouse, deepcopy(offers)
         self.cost_reader = cost_reader
+        self.prices = deepcopy(prices or {})
+        self.production_budget_minor = (
+            production_budget_minor
+            if production_budget_minor is not None
+            else farm.episode.budget_initial_minor
+        )
 
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_budget(self) -> dict:
-        """Read seed-procurement budget in integer cents (100 cents = one demo currency unit)."""
+        """Read seed-purchase cash and the separate production-cost limit.
+
+        Returns:
+            dict: USD prices and *_minor amounts in integer US cents (100/USD).
+            initial/spent/remaining_minor describe seed-purchase cash;
+            production_budget_minor caps seed payments plus consumed fertilizer,
+            fuel, water and actual drying. accounted_production_cost_minor is current
+            cost; production_budget_remaining_minor is the remaining cost allowance.
+        """
         s = self.farm.episode
         accounted = self.cost_reader() if self.cost_reader else s.spent
-        return {"initial_minor": s.budget_initial_minor, "spent_minor": s.spent,
-                "remaining_minor": s.remaining, "currency": "DEMO",
-                "production_budget_minor": s.budget_initial_minor,
-                "accounted_production_cost_minor": accounted,
-                "production_budget_remaining_minor": s.budget_initial_minor-accounted}
+        return {
+            "initial_minor": s.budget_initial_minor,
+            "spent_minor": s.spent,
+            "remaining_minor": s.remaining,
+            "currency": "USD",
+            "minor_units_per_usd": 100,
+            "prices": deepcopy(self.prices),
+            "production_budget_minor": self.production_budget_minor,
+            "accounted_production_cost_minor": accounted,
+            "production_budget_remaining_minor": self.production_budget_minor
+            - accounted,
+        }
 
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def list_offers(self, seed_type: str) -> dict:
         """List identical-quality, immediately delivered fixed seed lots and itemized total prices."""
-        return {"offers": [{**deepcopy(o), "available_lots": int(not any(
-            order["offer_id"] == o["offer_id"] for order in self.farm.episode.orders.values()))}
-            for o in self.offers.values() if o["seed_type"] == seed_type]}
+        return {
+            "currency": "USD",
+            "minor_units_per_usd": 100,
+            "offers": [
+                {
+                    **deepcopy(o),
+                    "available_lots": int(
+                        not any(
+                            order["offer_id"] == o["offer_id"]
+                            for order in self.farm.episode.orders.values()
+                        )
+                    ),
+                }
+                for o in self.offers.values()
+                if o["seed_type"] == seed_type
+            ],
+        }
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
@@ -295,12 +481,20 @@ class SeedMarket(App):
         total = offer["seed_minor"] - offer["discount_minor"] + offer["delivery_minor"]
         if total > s.remaining:
             return {"error": "Insufficient budget"}
-        receipt = {**deepcopy(offer), "order_id": order_id, "total_minor": total,
-                   "timestamp": self.time_manager.time()}
+        receipt = {
+            **deepcopy(offer),
+            "currency": "USD",
+            "minor_units_per_usd": 100,
+            "order_id": order_id,
+            "total_minor": total,
+            "timestamp": self.time_manager.time(),
+        }
         seed = offer["seed_type"]
         self.warehouse.stock.seed_stock[seed] += quantity
         s.orders[order_id] = receipt
-        self.is_state_modified = self.warehouse.is_state_modified = self.farm.is_state_modified = True
+        self.is_state_modified = self.warehouse.is_state_modified = (
+            self.farm.is_state_modified
+        ) = True
         return deepcopy(receipt)
 
     @app_tool()

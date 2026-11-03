@@ -75,8 +75,8 @@ def test_static_plan_executes_and_fresh_json_replay_matches(sid, tmp_path, compl
     assert stored_grain(replay) > 0
     assert replay.farm.field_area_m2 == (18867.2 if "discount" in sid else 12864.0)
     metadata = b.evaluate().metadata
-    assert metadata["purchase_cost_minor"] == (566016 if "discount" in sid else 557440 if "total_cost" in sid else 0)
-    assert metadata["budget_remaining_minor"] == (691797 if "discount" in sid else 300160 if "total_cost" in sid else 857600)
+    assert metadata["purchase_cost_minor"] == (14387 if "discount" in sid else 22765 if "total_cost" in sid else 0)
+    assert metadata["budget_remaining_minor"] == (6517 if "discount" in sid else 5107 if "total_cost" in sid else 83616)
     assert len(replay.farm.physics.crop_backend.export_state()["runs"]) == 64
 
 
@@ -123,7 +123,7 @@ def test_wrong_rotation_is_executable_but_fails_rule(sid):
     assert engine.evaluate().metadata["rotation_rule_satisfied"]
 
 
-@pytest.mark.parametrize("sid,offer,cost", [(SCENARIO_IDS[2], "regular", 754688), (SCENARIO_IDS[3], "low_sticker", 686080)])
+@pytest.mark.parametrize("sid,offer,cost", [(SCENARIO_IDS[2], "regular", 15986), (SCENARIO_IDS[3], "low_sticker", 22906)])
 def test_legal_expensive_choice_grows_crop_but_fails_cost(sid, offer, cost):
     plan = reference(sid)
     plan.dag["purchase"].tool_args["offer_id"] = offer

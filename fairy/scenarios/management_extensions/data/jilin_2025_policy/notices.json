@@ -1,0 +1,29 @@
+[
+  {
+    "document_id": "jilin_2025_march_program",
+    "title": "强化政策支持引导 巩固扩种大豆油料工作成果",
+    "publisher": "吉林省农业农村厅",
+    "source_url": "https://agri.jl.gov.cn/xczx/lssc/202503/t20250324_3419686.html",
+    "published_at": "2025-03-24T16:17:20+08:00",
+    "year": 2025,
+    "counties": ["榆树市", "通榆县"],
+    "eligible_crops": ["maize", "soybean"],
+    "rates_yuan_per_mu": {"soybean": 550.0, "maize": null},
+    "rate_scope": "This retained rate applies to the scenario's registered Yushu farm, in the official central region. Tongyu is a retrieval distractor in the western region; it cannot establish this farm's eligibility.",
+    "county_rates_yuan_per_mu": {"榆树市": {"soybean": 550.0, "maize": null}, "通榆县": {"soybean": 410.0, "maize": null}},
+    "maize_rate_status": "Not yet fixed in March; government notice says amount depends on annual funds and verified planted acreage."
+  },
+  {
+    "document_id": "jilin_2025_september_final_maize",
+    "title": "吉林省农业农村厅关于2025年目标价格补贴发放标准的通知",
+    "publisher": "吉林省农业农村厅",
+    "source_url": "https://xxgk.jl.gov.cn/zcbm/fgw_98047/xxgkmlqy/202509/t20250910_9318768.html",
+    "published_at": "2025-09-10T23:59:59+08:00",
+    "publication_time_note": "Official notice specifies date only. This experiment conservatively exposes it after the end of that date.",
+    "year": 2025,
+    "counties": ["榆树市", "通榆县"],
+    "eligible_crops": ["maize"],
+    "rates_yuan_per_mu": {"maize": 48.95},
+    "county_rates_yuan_per_mu": {"榆树市": {"maize": 48.95}, "通榆县": {"maize": 48.95}}
+  }
+]

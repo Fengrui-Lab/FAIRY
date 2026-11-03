@@ -29,9 +29,17 @@ def test_rotation_prompt_exposes_both_paths_without_selecting_the_answer(sid, cr
     prompt = scene.scenario_input
     assert prompt == scene.additional_system_prompt
     assert "若选择玉米" in prompt and "若选择大豆" in prompt
-    assert "MAIZE_201" in prompt and "SOYBEAN_901" in prompt
-    assert "85760粒" in prompt and "514560粒" in prompt
-    assert "每1000粒玉米65 DEMO" in prompt and "每6000粒大豆45 DEMO" in prompt
+    assert "MAIZE_201" not in prompt and "SOYBEAN_901" not in prompt
+    options = scene.planning.get_crop_options("field")
+    assert options["maize"]["seed_type"] == "MAIZE_201"
+    assert options["soybean"]["seed_type"] == "SOYBEAN_901"
+    assert options["maize"]["required_seeds"] == 85760
+    assert options["soybean"]["required_seeds"] == 514560
+    assert "SeasonPlanning.get_season_context" in prompt
+    assert "USD/粒" not in prompt and "1 USD=" not in prompt
+    prices = scene.planning.get_season_context("field")["prices"]
+    assert prices["currency"] == "USD" and prices["cny_per_usd"] == 7.1757
+    assert "DEMO" not in prompt
     assert "换种玉米" not in prompt and "继续玉米" not in prompt
     assert "复测SCN仍高" not in prompt
     assert "17218" not in prompt and "7803.40" not in prompt
