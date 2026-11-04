@@ -1,6 +1,6 @@
 # A2A with Jev: decisions and results log
 
-Branch `jev-a2a-wip`. Status: working, tested on 3 scenarios, no full run yet.
+Branch `jev-a2a-wip`. Status: full L3-mini run done (19 scenarios, 1 run each, 2026-11-05).
 
 ## What was built
 
@@ -36,6 +36,22 @@ The comparison setting `a2a_llm_manager_llm_experts` is FAIRY's existing A2A wit
 - `rebatch_fos_from_traces.py`: for shared-trace runs only, skips delegation and final-answer steps. Plain A2A runs still fail replay on purpose rather than scoring as "did nothing".
 - `jev_agent.py`: small hooks, no change in behaviour for `farm_jev`.
 
-## Test results
+## Results
 
-See the table in the message / `../jev_a2a_runs/`. Fill in after the full run.
+19 L3-mini scenarios, 1 run each, commit 6616efb. Runs and scores: `Synkrasis/jev_a2a_runs/full`, `full_scoring`, `full_summary.csv`. LLM alone and hybrid are the earlier runs from `jev_single_farm_L3mini_runs`.
+
+| | LLM + Jev experts | LLM alone | Hybrid |
+|---|---|---|---|
+| Seasons finished | 18/19 | 19/19 | 18/19 |
+| Average grain loss | 16.3% | 6.4% | 7.3% |
+| Median grain loss | 13.3% | 7.5% | 5.2% |
+| Total cost | $2.69 | $1.19 | $2.37 |
+| Average time per run | 8.4 min (19 at once) | 7.1 min (one at a time) | 3.4 min (one at a time) |
+
+Lower grain loss than LLM alone on 5 of 19 scenarios, than the hybrid on 4 of 19.
+
+Jobs: 2,670 in total. 71% one action, 12% none, 17% two or more. 2,149 finished, 463 unsure, 58 stuck.
+
+Failure: `compacted_headland_stand_recovery` used all 300 actions with 24 of 64 ridges harvested (62.6%). The same scenario gave -1.6% and finished in the 3-scenario test, so single runs are very noisy.
+
+Replay matched the live grain on all 19 runs, with no replay errors. The existing A2A was run on 3 scenarios only (0/3 finished; 57-100% loss), not on all 19.
