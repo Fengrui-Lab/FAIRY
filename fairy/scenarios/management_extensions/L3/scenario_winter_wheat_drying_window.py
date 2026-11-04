@@ -41,6 +41,7 @@ class DeliveryWarehouse(WarehouseApp):
 
 class ScenarioWinterWheatDryingWindow(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_drying_window"
+    default_late_harvest = False
     drying_capacity_kg_per_day = 3100.0
     ORACLE_REFERENCE = {
         "input_fingerprint": "447a6cb0fcf748b90c670094800617a099628c5543f46281c4014a7f183b4cbc",

@@ -39,6 +39,7 @@ class DeliveryContractWheatFarm(WinterWheatFarm):
 
 class ScenarioWinterWheatDeliveryContract(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_delivery_contract"
+    default_late_harvest = False
     objective_metric = "production_cost"
     ORACLE_REFERENCE: ClassVar = {
         "scenario_id": "scenario_l3_winter_wheat_delivery_contract",

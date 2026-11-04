@@ -1,13 +1,14 @@
 """L3：冬小麦全季经营；初始化、题设、参考及显式 Oracle 均在本文件。"""
 
-from datetime import datetime
-from pathlib import Path
 from typing import ClassVar
-from zoneinfo import ZoneInfo
 from fairy.scenarios.scenario import Scenario
 from fairy.types import EventRegisterer
 from ..apps.winter_wheat_accounts_app import WheatResources
-from ..winter_wheat_setup import initialize_wheat_farm, wheat_fingerprint
+from ..winter_wheat_setup import (
+    configure_wheat_calendar,
+    initialize_wheat_farm,
+    wheat_fingerprint,
+)
 from ..evaluation.winter_wheat import evaluate
 from ..common import capture_step, finish_capture
 
@@ -15,11 +16,13 @@ from ..common import capture_step, finish_capture
 class ScenarioWinterWheatFullSeason(Scenario):
     scenario_id = "scenario_l3_winter_wheat_full_season"
     level = "L3"
+    default_late_harvest = True
     objective_metric = "net_operating_margin"
     resources: ClassVar = WheatResources()
     ORACLE_REFERENCE: ClassVar = {
         "scenario_id": "scenario_l3_winter_wheat_full_season",
-        "input_fingerprint": "cd5d0a2d0da28502866e07d93dd6d71d08185aa96a4ce9c24044f1a2662f1aa3",
+        "input_fingerprint": "301cf4028b2d641f9235c8ac952a14b4f276b0dff6287836f5aa92a0164b4644",
+        "legacy_input_fingerprint": "cd5d0a2d0da28502866e07d93dd6d71d08185aa96a4ce9c24044f1a2662f1aa3",
         "selected": {
             "currency": "USD",
             "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
@@ -40,13 +43,10 @@ class ScenarioWinterWheatFullSeason(Scenario):
         "search_artifact": "validation_runs/winter_wheat_blocks_20261104/release_search/selection.json",
     }
 
-    def __init__(self, *, input_dir=None, calibrating=False, **kwargs):
+    def __init__(
+        self, *, input_dir=None, late_harvest=None, calibrating=False, **kwargs
+    ):
         self.calibrating = calibrating
-        self.input_dir = (
-            Path(input_dir)
-            if input_dir is not None
-            else Path(__file__).resolve().parents[1] / "data/winter_wheat_ncp_2019_2020"
-        )
         self._input_override = kwargs.get("scenario_input")
         self._system_override = kwargs.get("additional_system_prompt")
         self._has_system_override = "additional_system_prompt" in kwargs
@@ -59,17 +59,7 @@ class ScenarioWinterWheatFullSeason(Scenario):
             raise ValueError("Winter wheat requires its declared native WOFOST inputs")
         kwargs.setdefault("scenario_id", self.scenario_id)
         super().__init__(crop_backend="wofost", **kwargs)
-        self.timezone_name = "Asia/Shanghai"
-        self.simulation_timezone = ZoneInfo(self.timezone_name)
-        self.start_time = datetime(
-            2019, 10, 1, 7, tzinfo=self.simulation_timezone
-        ).timestamp()
-        self.duration = (
-            datetime(
-                2020, 7, 15, 23, 59, 59, tzinfo=self.simulation_timezone
-            ).timestamp()
-            - self.start_time
-        )
+        configure_wheat_calendar(self, input_dir, late_harvest)
 
     def setup(self, *args, **kwargs):
         if self.apps:

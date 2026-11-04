@@ -53,7 +53,7 @@ SOIL_VARS = {"SM", "NAVAIL", "TOTIRR", "TSR", "PERCT", "LOSST"}
 
 
 class InputBundle:
-    def __init__(self, root: str | Path):
+    def __init__(self, root: str | Path, *, late_harvest: bool = False):
         self.root = Path(root).resolve()
         self.manifest = json.loads(
             (self.root / "manifest.json").read_text(encoding="utf-8")
@@ -61,13 +61,25 @@ class InputBundle:
         if self.manifest.get("schema") != "fairy.winter_wheat.inputs.v1":
             raise ValueError("Unsupported wheat input manifest")
         m = self.manifest
+        extension = m.pop("late_harvest", None)
+        self.weather = WeatherSeries.from_csv(verified_file(self.root, m["weather"]))
+        if late_harvest:
+            if extension is None:
+                raise ValueError("The wheat inputs have no late-harvest weather")
+            extra_weather = WeatherSeries.from_csv(
+                verified_file(self.root, extension["weather"])
+            )
+            self.weather = WeatherSeries(
+                [*self.weather.rows.values(), *extra_weather.rows.values()]
+            )
+            m["season"]["deadline"] = extension["deadline"]
+            m["late_harvest"] = extension
         self.season = Season(
             **{
                 k: date.fromisoformat(v) if k != "timezone" else v
                 for k, v in m["season"].items()
             }
         )
-        self.weather = WeatherSeries.from_csv(verified_file(self.root, m["weather"]))
         self.weather.require(
             self.season.start, self.season.deadline + timedelta(days=1)
         )

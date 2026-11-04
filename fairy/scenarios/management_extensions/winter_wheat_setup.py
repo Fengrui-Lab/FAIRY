@@ -1,7 +1,9 @@
 """Wheat-specific wiring of existing farm Apps; no scenario selection or policy."""
 
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, time
+from pathlib import Path
+from zoneinfo import ZoneInfo
 from fairy.apps.agent_user_interface import AgentUserInterface
 from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
@@ -15,6 +17,26 @@ from .engines.winter_wheat_wofost import InputBundle
 from .engines.winter_wheat_inputs import fingerprint
 
 
+def configure_wheat_calendar(scene, input_dir, late_harvest):
+    """Use the pinned season for the farm clock and the operating deadline."""
+    scene.input_dir = (
+        Path(input_dir)
+        if input_dir is not None
+        else Path(__file__).parent / "data/winter_wheat_ncp_2019_2020"
+    )
+    if late_harvest is None:
+        late_harvest = input_dir is None and scene.default_late_harvest
+    if type(late_harvest) is not bool:
+        raise ValueError("late_harvest must be a JSON boolean")
+    scene.input_bundle = InputBundle(scene.input_dir, late_harvest=late_harvest)
+    season = scene.input_bundle.season
+    scene.timezone_name = season.timezone
+    scene.simulation_timezone = zone = ZoneInfo(season.timezone)
+    scene.start_time = datetime.combine(season.start, time(7), zone).timestamp()
+    end = datetime.combine(season.deadline, time(23, 59, 59), zone).timestamp()
+    scene.duration = end - scene.start_time
+
+
 def initialize_wheat_farm(
     scene,
     *,
@@ -24,7 +46,7 @@ def initialize_wheat_farm(
 ):
     """Create one block-managed native field with the common clock and warehouse."""
     r = scene.resources
-    scene.farm = farm_class(InputBundle(scene.input_dir), r)
+    scene.farm = farm_class(scene.input_bundle, r)
     scene.world = scene.farm
     scene.farms = [scene.farm]
     scene.weather, scene.system, scene.aui = (

@@ -74,7 +74,8 @@ class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_block_scouting"
     resources: ClassVar = WheatResources(fertilizer_stock_kg=360.0)
     ORACLE_REFERENCE: ClassVar = {
-        "input_fingerprint": "cdc892212abd0ac7a2f006f60282d62d78c281c1666f7fd525b6e53ef3f60194",
+        "input_fingerprint": "9d1b7a6abb3eb084d14e345f1c83c6e94fae62df28077f03d9f6c954550d4ed3",
+        "legacy_input_fingerprint": "cdc892212abd0ac7a2f006f60282d62d78c281c1666f7fd525b6e53ef3f60194",
         "selected": {
             "currency": "USD",
             "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",

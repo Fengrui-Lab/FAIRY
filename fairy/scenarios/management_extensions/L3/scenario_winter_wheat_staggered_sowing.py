@@ -62,6 +62,7 @@ class StaggeredHandoverWheatFarm(WinterWheatFarm):
 
 class ScenarioWinterWheatStaggeredSowing(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_staggered_sowing"
+    default_late_harvest = False
     ORACLE_REFERENCE = {
         "input_fingerprint": "229124d9805044fdcaf232c8ea1a95c0af9ad033376554d5b50ba250c95ad4ff",
         "selected": {

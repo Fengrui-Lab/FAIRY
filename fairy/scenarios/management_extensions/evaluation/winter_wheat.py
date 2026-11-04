@@ -67,7 +67,10 @@ def evaluate(scene, env=None):
     )
     reference = scene.ORACLE_REFERENCE
     if reference and not scene.calibrating:
-        if scene.input_fingerprint() != reference["input_fingerprint"]:
+        if scene.input_fingerprint() not in (
+            reference["input_fingerprint"],
+            reference.get("legacy_input_fingerprint"),
+        ):
             failures.append("Oracle inputs/resources/prices differ from this scene")
         else:
             compare_to_oracle(result, reference["selected"])

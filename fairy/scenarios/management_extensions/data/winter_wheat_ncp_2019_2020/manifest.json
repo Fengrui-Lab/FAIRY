@@ -64,5 +64,17 @@
   "notes": [
     "Pinned official wheat parameters and actual local daily weather drive the simulation.",
     "Soil and operation settings are benchmark assumptions, without local field calibration."
-  ]
+  ],
+  "late_harvest": {
+    "deadline": "2020-08-30",
+    "weather": {
+      "path": "weather_late_harvest.csv",
+      "sha256": "f91e40055ba28a4c43456ca533523dd514f9d7450859bfe5190c59faca4df6f3",
+      "source": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CT2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN%2CWS2M%2CRH2M&community=AG&longitude=114.5&latitude=38.05&start=20200716&end=20200831&format=JSON&time-standard=LST"
+    },
+    "raw_weather": {
+      "path": "power_late_harvest_raw.json",
+      "sha256": "d191c6a5cbf09d9d19c4581046682d52b8bcda3e161880f4899a966f7f259a3c"
+    }
+  }
 }

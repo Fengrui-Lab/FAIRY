@@ -15,6 +15,7 @@ from .scenario_winter_wheat_water_limit import ScenarioWinterWheatWaterLimit
 
 class ScenarioWinterWheatIrrigationTurn(ScenarioWinterWheatWaterLimit):
     scenario_id = "scenario_l3_winter_wheat_irrigation_turn"
+    default_late_harvest = False
     max_blocks = 8
     supply_windows = (
         ("2020-03-10T07:00:00+08:00", "2020-03-11T07:00:00+08:00"),

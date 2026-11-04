@@ -72,6 +72,7 @@ class SoilWaterWheatFarm(WinterWheatFarm):
 
 class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_soil_water_priority"
+    default_late_harvest = False
     resources: ClassVar = WheatResources(water_stock_m3=1000.0)
     ORACLE_REFERENCE: ClassVar = {
         "input_fingerprint": "fc9a451fdb95643fcef7b59b84cd2ee382d559cb41b394863e672e9b295f176a",
