@@ -1,72 +1,39 @@
-"""Pinned real forcing and honest import of the published summary workbooks."""
+"""Offline native input checks; no workbook import or observation evaluation."""
 
-import json
-from collections import Counter
 from datetime import date
-from pathlib import Path
-
 import pytest
-
 from fairy.scenarios.management_extensions.engines.winter_wheat_inputs import (
     WeatherSeries,
+    validate_wheat_parameters,
+    verified_file,
 )
 from fairy.scenarios.management_extensions.engines.winter_wheat_wofost import (
     InputBundle,
+    WinterWheatBackend,
 )
-from fairy.scenarios.management_extensions.evaluation.winter_wheat_observations import (
-    import_published_summaries,
-    compare,
-)
-from fairy.scenarios.management_extensions.winter_wheat_data import power_rows
-
-INPUTS = Path(__file__).resolve().parents[1] / "data/winter_wheat_ncp_2019_2020"
+from fairy.scenarios.management_extensions.winter_wheat_oracles import DEFAULT_INPUTS
 
 
-def test_actual_forcing_has_all_winter_and_leap_days_and_correct_radiation_units():
-    bundle = InputBundle(INPUTS)
-    payload = json.loads((INPUTS / "power_raw.json").read_text())
-    rows = power_rows(payload)
-    assert len(rows) == 290
-    assert date(2020, 2, 29) in bundle.weather.rows
-    assert {row.day: row.as_dict() for row in rows} == {
-        day: row.as_dict() for day, row in bundle.weather.rows.items()
-    }
-    missing = [r for r in rows if r.day != date(2020, 2, 29)]
+def test_pinned_local_inputs_cover_winter_and_leap_day():
+    b = InputBundle(DEFAULT_INPUTS)
+    assert len(b.weather.rows) == 290
+    assert date(2020, 2, 29) in b.weather.rows
+    assert "observations" not in b.manifest
+    assert not (DEFAULT_INPUTS / "observations").exists()
+    for key in ("crop", "weather"):
+        assert verified_file(DEFAULT_INPUTS, b.manifest[key]).exists()
+    rows = [r for d, r in b.weather.rows.items() if d != date(2020, 2, 29)]
     with pytest.raises(ValueError, match="Missing daily weather"):
-        WeatherSeries(missing).require(date(2020, 2, 28), date(2020, 3, 1))
+        WeatherSeries(rows).require(date(2020, 2, 28), date(2020, 3, 1))
 
 
-def test_real_summary_headers_are_imported_without_inventing_years_or_dates():
-    result = import_published_summaries(INPUTS / "observations")
-    assert Counter(r["split"] for r in result["records"]) == {
-        "calibration": 75,
-        "validation": 75,
-        "overall": 37,
-    }
-    counties = [r for r in result["records"] if r["entity_type"] == "county"]
-    assert len(counties) == 150 and all(r["harvest_year"] is None for r in counties)
-    phenology = [r for r in counties if r["metric"].endswith("_day_statistic")]
-    assert len(phenology) == 100
-    assert any(not r["value_days"].is_integer() for r in phenology)
-    assert all(r["calendar_date"] is None for r in phenology)
-    assert all(r["native_comparable"] is False for r in result["records"])
-    assert not any(
-        r.get("source_column", "").startswith("WOFOST") for r in result["records"]
+def test_real_official_wheat_parameters_keep_vernalization_and_photoperiod():
+    b = WinterWheatBackend(InputBundle(DEFAULT_INPUTS))
+    assert (
+        b.parameters["IDSL"] == 2 and b.parameters["VERNSAT"] > b.parameters["VERNBASE"]
     )
-    assert result == json.loads(
-        (INPUTS / "observations/published_summaries.json").read_text()
-    )
-
-
-def test_published_county_summaries_cannot_generate_fake_field_validation_accuracy():
-    obs = import_published_summaries(INPUTS / "observations")
-    predictions = {
-        "schema": "fairy.winter_wheat.predictions.v1",
-        "records": [],
-        "input_fingerprint": "example",
-        "spatial_matching_evidence": "No annual county mapping supplied",
-    }
-    with pytest.raises(ValueError, match="No scientifically comparable"):
-        compare(obs, predictions)
-    with pytest.raises(ValueError, match="not an independent"):
-        compare(obs, predictions, split="overall")
+    assert b.bundle.cultivar == "Winter_wheat_104"
+    bad = dict(b.parameters)
+    bad["IDSL"] = 0
+    with pytest.raises(ValueError):
+        validate_wheat_parameters(bad)

@@ -1,19 +1,13 @@
-"""L3：冬小麦有限水量；题设、初始化、评估入口和完整Oracle均在本文件。"""
+"""L3：有限供水下的冬小麦经营；初始化、题设、参考及显式 Oracle 均在本文件。"""
 
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 from zoneinfo import ZoneInfo
-
-from fairy.apps.agent_user_interface import AgentUserInterface
 from fairy.scenarios.scenario import Scenario
 from fairy.types import EventRegisterer
-from ..apps.winter_wheat_app import (
-    WheatResources,
-    WinterWheatApp,
-    WinterWheatRuntime,
-)
-from ..engines.winter_wheat_wofost import InputBundle, WinterWheatBackend
+from ..apps.winter_wheat_accounts_app import WheatResources
+from ..winter_wheat_setup import initialize_wheat_farm, wheat_fingerprint
 from ..evaluation.winter_wheat import evaluate
 from ..common import capture_step, finish_capture
 
@@ -25,26 +19,25 @@ class ScenarioWinterWheatWaterLimit(Scenario):
     resources: ClassVar = WheatResources(water_stock_m3=1200.0)
     ORACLE_REFERENCE: ClassVar = {
         "scenario_id": "scenario_l3_winter_wheat_water_limit",
-        "input_fingerprint": "af5b1a475d4431a2108772e6561fb49f5ed80fc0489ff7a4076a15b8efbaff5b",
+        "input_fingerprint": "62efaab5f5a69e6119f810031ead55cf126f47c81dd243994bcd016a9dcd7eb8",
         "selected": {
             "currency": "USD",
-            "price_book_id": "winter_wheat_china_2025_usd_v1",
+            "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
             "cny_per_usd": 7.1757,
-            "stored_kg_by_crop": {"winter_wheat": 7645.300667531633},
-            "stored_grain_kg": 7645.300667531633,
-            "dry_grain_kg": 6689.638084090178,
-            "production_cost": 473.7052846672771,
-            "stored_grain_value": 2535.7547819342067,
-            "net_operating_margin": 2062.0494972669294,
+            "stored_kg_by_crop": {"winter_wheat": 7263.04},
+            "stored_grain_kg": 7263.04,
+            "dry_grain_kg": 6689.63808409018,
+            "production_cost": 355.1316492360719,
+            "stored_grain_value": 2408.9684908789386,
+            "net_operating_margin": 2053.8368416428666,
         },
-        "workflow_steps": 35,
-        "candidate_count": 277,
-        "feasible_count": 275,
-        "scope": "Best feasible net operating margin in the actually executed staged candidate search "
-        "over water/N totals, splits, sowing dates, three/four-application schedules and spring "
-        "timing, cross-scenario transfers and matched low-input controls. Official crop "
-        "parameters and weather unchanged. Not a global optimum or a China field calibration.",
-        "search_artifact": "validation_runs/winter_wheat_integration_20261104/search_four_phase/selection.json",
+        "workflow_steps": 125,
+        "candidate_count": 11,
+        "feasible_count": 9,
+        "scope": "Best feasible net operating margin among 11 actually executed block-management "
+        "candidates. Native crop, weather and physical rules unchanged between trials. Finite "
+        "comparison, not a global optimum.",
+        "search_artifact": "validation_runs/winter_wheat_blocks_20261104/release_search/selection.json",
     }
 
     def __init__(self, *, input_dir=None, calibrating=False, **kwargs):
@@ -63,9 +56,7 @@ class ScenarioWinterWheatWaterLimit(Scenario):
             kwargs.pop("crop_backend", "wofost") != "wofost"
             or kwargs.pop("crop_backend_options", {}) != {}
         ):
-            raise ValueError(
-                "Winter wheat requires its declared native WOFOST input bundle"
-            )
+            raise ValueError("Winter wheat requires its declared native WOFOST inputs")
         kwargs.setdefault("scenario_id", self.scenario_id)
         super().__init__(crop_backend="wofost", **kwargs)
         self.timezone_name = "Asia/Shanghai"
@@ -85,18 +76,7 @@ class ScenarioWinterWheatWaterLimit(Scenario):
             return
         if args or kwargs:
             raise ValueError("Configure inputs at construction")
-        bundle = InputBundle(self.input_dir)
-        if bundle.season.start != date(2019, 10, 1) or bundle.season.deadline != date(
-            2020, 7, 15
-        ):
-            raise ValueError(
-                "This frozen workflow requires the declared autumn-to-summer input season"
-            )
-        self.world = WinterWheatApp(
-            WinterWheatRuntime(WinterWheatBackend(bundle), self.resources)
-        )
-        self.aui = AgentUserInterface()
-        self.apps = [self.aui, self.world]
+        initialize_wheat_farm(self)
         self.scenario_input = (
             self._input_override
             if self._input_override is not None
@@ -107,31 +87,25 @@ class ScenarioWinterWheatWaterLimit(Scenario):
         )
         self.build_events_flow()
 
-    @property
-    def prices(self):
-        return self.world.runtime.accounts()["prices"]
-
     def input_fingerprint(self):
-        return self.world.crop_backend_provenance()["config_fingerprint"]
+        return wheat_fingerprint(self)
 
     def validate(self, env=None):
         return evaluate(self, env)
 
     def task_description(self, detailed=True):
         basic = (
-            f"管理一块面积{self.resources.area_ha * 10000:g}平方米的冬小麦田，完成秋播、越冬管理、成熟收获与安全入库，在资源约束内提高净经营收益。"
-            "本场供水额度较紧，需要比较不同生育时期用水的增收与费用。"
-            "通过WinterWheat.get_field_info查询播期、用种和作业条件，通过WinterWheat.get_accounts查询价格、库存与预算。"
+            f"经营一座面积{self.resources.area_ha * 10000:g}平方米的冬小麦农场，田地按管理块划分，可分别播种、灌溉、施肥和收获。"
+            "完成秋播、越冬管理、成熟收获与安全入库，在有限物资和预算内提高净经营收益。有限供水下的冬小麦经营。"
+            "通过WheatField.get_field_info查地块、用种和作业条件，通过OperatingAccounts.get_accounts查价格与资源。"
         )
         if not detailed:
             return basic
-        return (
-            basic
-            + "先查询资料，再使用WinterWheat.observe检查原生生育状态、土壤水氮估计和上一完整日天气。"
-            "播前核对窗口并整地，结合土壤情况安排秋播与投入；越冬期间保持同一作物和土壤连续推进，可合并等待并定期复查。"
-            "春季结合生育进展与水氮变化比较分次投入的收益和费用，处理后等待模型结算，再检查响应。"
-            "花后继续检查长势、库存和账本，确认原生成熟后收获、干燥并入库。土壤水氮是模型估计，不能当成独立化验。"
-            "具体剂量、日期和限额均从工具查询，完成后报告产量、实际成本和净经营收益。"
+        return basic + (
+            "先查询农场、仓库和农机状态，使用Sensor.read_root_zone_sensors、Sensor.read_canopy_sensors与WheatField.inspect_blocks检查水氮估计、冠层和各块生育进展，结合天气安排作业。"
+            "播前整平土地并装种，分块条播，不需要起垄；投入前核对单位、库存和设备容量。按生育阶段及观测变化安排水肥，处理后推进时间并复查响应。"
+            "越冬期间保留同一季作物与土壤，春季继续检查各块差异。原生成熟后分批收获、卸粮、干燥和入库，注意粮仓容量与安全水分。"
+            "观测是模拟估计；具体日期、剂量和阈值通过工具查询并自主判断。最后报告产量、实际成本和净经营收益。"
         )
 
     def build_events_flow(self):
@@ -141,216 +115,758 @@ class ScenarioWinterWheatWaterLimit(Scenario):
                 previous,
                 self.aui.send_message_to_agent(self.scenario_input),
                 "task",
-                "Read the field task and query conditions before management.",
+                "Read the block-managed farm task.",
             )
             previous = capture_step(
                 previous,
-                self.world.get_field_info(),
+                self.farm.get_field_info(),
                 "wheat_001",
-                "Read area, sowing window, seed requirement and native harvest rules.",
+                "Read block geometry, sowing window, seed rate and native maturity rules.",
             )
             previous = capture_step(
                 previous,
-                self.world.get_accounts(),
+                self.accounts.get_accounts(),
                 "wheat_002",
-                "Read current USD prices, remaining resources and actual accounts.",
+                "Query USD prices, actual costs, remaining resources and crop value.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.get_status(),
                 "wheat_003",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Check shared equipment and payload capacities.",
             )
             previous = capture_step(
                 previous,
-                self.world.prepare_field(operation_id="prepare"),
+                self.tractor.attach_implement(implement="grader"),
                 "wheat_004",
-                "Prepare the single field through its quoted service before sowing.",
+                "Mount the required available implement.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=24),
+                self.tractor.prepare_field(),
                 "wheat_005",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Prepare flat land without a soybean ridge-forming step.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.system.advance_time(seconds=2068600.0),
                 "wheat_006",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Settle each intervening native day on the existing shared farm clock.",
             )
             previous = capture_step(
                 previous,
-                self.world.sow(operation_id="sow"),
+                self.sensor.read_root_zone_sensors(),
                 "wheat_007",
-                "Sow within the queried autumn window; keep official cultivar parameters unchanged.",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
             )
             previous = capture_step(
                 previous,
-                self.world.apply_nitrogen(
-                    operation_id="nitrogen_0", nitrogen_kg_ha=33.0
-                ),
+                self.sensor.read_canopy_sensors(),
                 "wheat_008",
-                "Apply elemental N; consume the corresponding actual mass of urea product.",
+                "Check current canopy response and coverage.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=21),
+                self.farm.inspect_blocks(start_block=0, end_block=15),
                 "wheat_009",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Inspect every block for development, native grain and water/N differences.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.detach_implement(),
                 "wheat_010",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Detach the current implement before changing equipment.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=61),
+                self.tractor.attach_implement(implement="seeder"),
                 "wheat_011",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Mount the required available implement.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_012",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=46),
+                self.tractor.sow(start_block=0, end_block=0, depth_cm=3.0),
                 "wheat_013",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_014",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=9),
+                self.tractor.sow(start_block=1, end_block=1, depth_cm=3.0),
                 "wheat_015",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_016",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.apply_nitrogen(
-                    operation_id="nitrogen_1", nitrogen_kg_ha=132.0
-                ),
+                self.tractor.sow(start_block=2, end_block=2, depth_cm=3.0),
                 "wheat_017",
-                "Apply elemental N; consume the corresponding actual mass of urea product.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.irrigate(operation_id="water_1", depth_mm=30.0),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_018",
-                "Purchase gross irrigation water and queue the declared effective native input.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=22),
+                self.tractor.sow(start_block=3, end_block=3, depth_cm=3.0),
                 "wheat_019",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_020",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=29),
+                self.tractor.sow(start_block=4, end_block=4, depth_cm=3.0),
                 "wheat_021",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_022",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.irrigate(operation_id="water_2", depth_mm=90.0),
+                self.tractor.sow(start_block=5, end_block=5, depth_cm=3.0),
                 "wheat_023",
-                "Purchase gross irrigation water and queue the declared effective native input.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=15),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_024",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.sow(start_block=6, end_block=6, depth_cm=3.0),
                 "wheat_025",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=17),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_026",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.sow(start_block=7, end_block=7, depth_cm=3.0),
                 "wheat_027",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.wait(days=19),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_028",
-                "Advance the shared clock; settle every intervening native calendar day without a year reset.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.observe(),
+                self.tractor.sow(start_block=8, end_block=8, depth_cm=3.0),
                 "wheat_029",
-                "Check native crop stage, modeled root-zone water/N and completed-day weather.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.harvest(operation_id="harvest"),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_030",
-                "Require native DOM maturity and recover the native TWSO dry matter once.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.dry_grain(operation_id="dry"),
+                self.tractor.sow(start_block=9, end_block=9, depth_cm=3.0),
                 "wheat_031",
-                "Pay for actual drying throughput; remove water while preserving grain dry matter.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
             previous = capture_step(
                 previous,
-                self.world.store_grain(operation_id="store"),
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
                 "wheat_032",
-                "Store the safe-moisture grain lot within physical capacity.",
+                "Load only the seed quantity required for this block within hopper capacity.",
             )
             previous = capture_step(
                 previous,
-                self.world.get_accounts(),
+                self.tractor.sow(start_block=10, end_block=10, depth_cm=3.0),
                 "wheat_033",
-                "Read current USD prices, remaining resources and actual accounts.",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
             )
-            capture_step(
+            previous = capture_step(
                 previous,
-                self.aui.send_message_to_user(
-                    "冬小麦管理流程结束；产量、资源消耗和经营收益以实际原生结果与账本为准。"
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
+                "wheat_034",
+                "Load only the seed quantity required for this block within hopper capacity.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.sow(start_block=11, end_block=11, depth_cm=3.0),
+                "wheat_035",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
+                "wheat_036",
+                "Load only the seed quantity required for this block within hopper capacity.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.sow(start_block=12, end_block=12, depth_cm=3.0),
+                "wheat_037",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
+                "wheat_038",
+                "Load only the seed quantity required for this block within hopper capacity.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.sow(start_block=13, end_block=13, depth_cm=3.0),
+                "wheat_039",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
+                "wheat_040",
+                "Load only the seed quantity required for this block within hopper capacity.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.sow(start_block=14, end_block=14, depth_cm=3.0),
+                "wheat_041",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_seeds(seed_type="WINTER_WHEAT_104", count=250000),
+                "wheat_042",
+                "Load only the seed quantity required for this block within hopper capacity.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.sow(start_block=15, end_block=15, depth_cm=3.0),
+                "wheat_043",
+                "Sow this block at its fixed reference seed rate within the legal autumn window.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_fertilizer(kg=71.73913043478261),
+                "wheat_044",
+                "Transfer urea product from the warehouse into the shared spreader.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.fertilize(
+                    start_block=0, end_block=9, kg_per_block=4.483695652173913
                 ),
-                "finish",
-                "Report actual stored grain and accounts without inventing results.",
+                "wheat_045",
+                "Apply product kg per block; convert independently to pure N per hectare.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.fertilize(
+                    start_block=10, end_block=15, kg_per_block=4.483695652173913
+                ),
+                "wheat_046",
+                "Apply product kg per block; convert independently to pure N per hectare.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=1807884.0),
+                "wheat_047",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_048",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_049",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_050",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=5270400.0),
+                "wheat_051",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_052",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_053",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_054",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=3974400.0),
+                "wheat_055",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_056",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_057",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_058",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=777600.0),
+                "wheat_059",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_060",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_061",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_062",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.load_fertilizer(kg=286.95652173913044),
+                "wheat_063",
+                "Transfer urea product from the warehouse into the shared spreader.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.fertilize(
+                    start_block=0, end_block=9, kg_per_block=17.934782608695652
+                ),
+                "wheat_064",
+                "Apply product kg per block; convert independently to pure N per hectare.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.fertilize(
+                    start_block=10, end_block=15, kg_per_block=17.934782608695652
+                ),
+                "wheat_065",
+                "Apply product kg per block; convert independently to pure N per hectare.",
+            )
+            previous = capture_step(
+                previous,
+                self.irrigation.irrigate(start_block=0, end_block=15, depth_mm=30),
+                "wheat_066",
+                "Apply gross water depth only to the named blocks and debit their treated area.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=4382880.0),
+                "wheat_067",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_068",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_069",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_070",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.irrigation.irrigate(start_block=0, end_block=15, depth_mm=90),
+                "wheat_071",
+                "Apply gross water depth only to the named blocks and debit their treated area.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=1230900.0),
+                "wheat_072",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_073",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_074",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_075",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=1468800.0),
+                "wheat_076",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_077",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_078",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_079",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=1641600.0),
+                "wheat_080",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_081",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_082",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_083",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=86400.0),
+                "wheat_084",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.system.advance_time(seconds=86400.0),
+                "wheat_085",
+                "Settle each intervening native day on the existing shared farm clock.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_root_zone_sensors(),
+                "wheat_086",
+                "Observe root-zone water and native nitrogen estimates before deciding inputs.",
+            )
+            previous = capture_step(
+                previous,
+                self.sensor.read_canopy_sensors(),
+                "wheat_087",
+                "Check current canopy response and coverage.",
+            )
+            previous = capture_step(
+                previous,
+                self.farm.inspect_blocks(start_block=0, end_block=15),
+                "wheat_088",
+                "Inspect every block for development, native grain and water/N differences.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.detach_implement(),
+                "wheat_089",
+                "Detach the current implement before changing equipment.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.attach_implement(implement="harvester"),
+                "wheat_090",
+                "Mount the required available implement.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=0, end_block=1),
+                "wheat_091",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_0"),
+                "wheat_092",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_0", target_moisture_pct=12.5),
+                "wheat_093",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_0"),
+                "wheat_094",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=2, end_block=3),
+                "wheat_095",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_2"),
+                "wheat_096",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_2", target_moisture_pct=12.5),
+                "wheat_097",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_2"),
+                "wheat_098",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.refuel(liters=50.0),
+                "wheat_099",
+                "Transfer available fuel before further machine work.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=4, end_block=5),
+                "wheat_100",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_4"),
+                "wheat_101",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_4", target_moisture_pct=12.5),
+                "wheat_102",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_4"),
+                "wheat_103",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=6, end_block=7),
+                "wheat_104",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_6"),
+                "wheat_105",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_6", target_moisture_pct=12.5),
+                "wheat_106",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_6"),
+                "wheat_107",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=8, end_block=9),
+                "wheat_108",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_8"),
+                "wheat_109",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_8", target_moisture_pct=12.5),
+                "wheat_110",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_8"),
+                "wheat_111",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=10, end_block=11),
+                "wheat_112",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_10"),
+                "wheat_113",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_10", target_moisture_pct=12.5),
+                "wheat_114",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_10"),
+                "wheat_115",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=12, end_block=13),
+                "wheat_116",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_12"),
+                "wheat_117",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_12", target_moisture_pct=12.5),
+                "wheat_118",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_12"),
+                "wheat_119",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.harvest_blocks(start_block=14, end_block=15),
+                "wheat_120",
+                "Harvest native-mature blocks into the shared bin, preserving source IDs.",
+            )
+            previous = capture_step(
+                previous,
+                self.tractor.unload_grain(batch_id="wheat_14"),
+                "wheat_121",
+                "Transfer the bin to a unique warehouse batch before further harvest.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.dry_grain(batch_id="wheat_14", target_moisture_pct=12.5),
+                "wheat_122",
+                "Use the common dryer to reach the queried safe storage moisture.",
+            )
+            previous = capture_step(
+                previous,
+                self.warehouse.store_grain(batch_id="wheat_14"),
+                "wheat_123",
+                "Store the safe batch in the common warehouse.",
+            )
+            previous = capture_step(
+                previous,
+                self.accounts.get_accounts(),
+                "wheat_124",
+                "Query USD prices, actual costs, remaining resources and crop value.",
             )
         return finish_capture(self, events)

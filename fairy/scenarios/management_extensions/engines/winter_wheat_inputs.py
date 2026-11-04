@@ -5,7 +5,6 @@ Only Python's standard library is required here. No crop growth is synthesized.
 
 from __future__ import annotations
 
-import calendar
 import csv
 import hashlib
 import json
@@ -17,12 +16,6 @@ from typing import Any, Mapping
 
 UPSTREAM_COMMIT = "1ca91d7dbb5aaf6b41462162de03a8254812d3a5"
 WHEAT_URL = f"https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/{UPSTREAM_COMMIT}/wheat.yaml"
-ZENODO_DOI = "10.5281/zenodo.14785961"
-ZENODO_FILES = {
-    "Phenology data.zip": "12b04f2543fdf287fd63c12a0088821c",
-    "Yield data.zip": "cbdaf83f7ed4df7e35564e99271ee5dc",
-}
-
 
 def number(
     value: Any,
@@ -203,17 +196,6 @@ def stage_from_native(values: Mapping[str, Any], *, sown: bool) -> str:
     if values.get("DOA") is not None or float(values.get("DVS") or 0) >= 1:
         return "POST_ANTHESIS"
     return "VEGETATIVE"
-
-
-def date_from_doy(year: int, doy: Any) -> date:
-    value = number(
-        doy, "day-of-year", minimum=1, maximum=366 if calendar.isleap(year) else 365
-    )
-    if not value.is_integer():
-        raise ValueError(
-            "Non-integer DOY: aggregated dates must remain durations/statistics"
-        )
-    return date(year, 1, 1) + timedelta(days=int(value) - 1)
 
 
 def dry_to_moist_mass(dry_kg: float, moisture_fraction: float) -> float:

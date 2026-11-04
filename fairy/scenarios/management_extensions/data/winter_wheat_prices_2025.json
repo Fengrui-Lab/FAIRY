@@ -1,5 +1,5 @@
 {
-  "price_book_id": "winter_wheat_china_2025_usd_v1",
+  "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
   "currency": "USD",
   "cny_per_usd": 7.1757,
   "exchange_rate_source": "management_extensions/data/china_market_2025.json",
@@ -9,33 +9,45 @@
     "water_per_m3": 0.2,
     "high_water_per_m3": 0.8,
     "grain_per_kg": 2.38,
-    "prepare_per_ha": 450.0,
-    "sow_per_ha": 180.0,
-    "fertilize_pass_per_ha": 45.0,
-    "irrigate_pass_per_ha": 35.0,
-    "harvest_per_ha": 350.0,
     "drying_per_kg": 0.04,
-    "storage_per_kg": 0.03
+    "fuel_per_liter": 6.63
   },
   "sources": [
     {
-      "keys": ["grain_per_kg"],
+      "keys": [
+        "grain_per_kg"
+      ],
       "type": "public_policy_benchmark_not_spot_quote",
       "source": "https://zfxxgk.ndrc.gov.cn/web/iteminfo.jsp?id=20439",
       "title": "2025—2026年小麦（三等）最低收购价每50公斤119元",
       "interpretation": "Fixed benchmark valuation, not automatic purchase-policy eligibility or the 2020 realized farm-gate price."
     },
     {
-      "keys": ["fertilizer_per_kg", "water_per_m3", "high_water_per_m3", "drying_per_kg"],
+      "keys": [
+        "fertilizer_per_kg",
+        "water_per_m3",
+        "high_water_per_m3",
+        "drying_per_kg"
+      ],
       "type": "existing_extension_benchmarks_and_service_contracts",
       "source": "china_market_2025.json",
       "interpretation": "Urea is priced per kg product. Water includes pumping; drying is priced per kg actually processed."
     },
     {
-      "keys": ["seed_per_kg", "prepare_per_ha", "sow_per_ha", "fertilize_pass_per_ha", "irrigate_pass_per_ha", "harvest_per_ha", "storage_per_kg"],
-      "type": "explicit_fixed_service_contract_assumptions",
-      "interpretation": "Declared experimental seed/service quotes, not a verified 2025 wheat farm cost survey. Machinery services include fuel/operator; no extra fuel is charged."
+      "keys": [
+        "seed_per_kg"
+      ],
+      "type": "experimental_seed_quote",
+      "interpretation": "4 CNY/kg seed is an explicit benchmark quote; thousand-kernel mass 45 g is a logistical assumption."
+    },
+    {
+      "keys": [
+        "fuel_per_liter"
+      ],
+      "type": "existing_extension_benchmark",
+      "source": "china_market_2025.json",
+      "interpretation": "Same 2025 Northeast diesel benchmark as the existing farm ledger."
     }
   ],
-  "accounting": "Actual consumed seed and urea product, gross water purchased, field services, drying throughput and storage. No land rent, capital depreciation or ordinary labor beyond the quoted services."
+  "accounting": "Reuse owned-machinery OperatingAccounts: consumed seed/urea/fuel/water and actual warehouse drying throughput. No duplicate outsourced service fee, rent, depreciation or ordinary labour charge."
 }

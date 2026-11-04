@@ -97,7 +97,7 @@ class InputBundle:
 
 
 class WinterWheatBackend:
-    """One field, one cross-year crop, continuous soil, daily queued management."""
+    """One management block, one cross-year crop, continuous soil and daily inputs."""
 
     def __init__(self, bundle: InputBundle):
         from fairy.physics.wofost_backend import _load_runtime
@@ -220,8 +220,8 @@ class WinterWheatBackend:
             if previous["kind"] != kind or previous["amount"] != amount:
                 raise ValueError("Operation ID reused with different content")
             return deepcopy(previous)
-        if self.maturity is not None:
-            raise ValueError("No post-maturity management in the one-crop adapter")
+        if self.maturity is not None and kind == "sow":
+            raise ValueError("This one-crop block has already completed its crop")
         if kind == "sow":
             self.bundle.season.check_sowing(self.next_day)
             if self.sown or any(a["kind"] == "sow" for a in self.pending):

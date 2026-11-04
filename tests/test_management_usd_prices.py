@@ -224,10 +224,7 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
     task = Engine(None, scene)._resolve_agent_task()
     _, _, tools = build_toolset(list(scene.apps))
 
-    if "WinterWheat__get_accounts" in tools:
-        query = "WinterWheat__get_accounts"
-        prices = tools[query]()["prices"]
-    elif "OperatingAccounts__get_accounts" in tools:
+    if "OperatingAccounts__get_accounts" in tools:
         query = "OperatingAccounts__get_accounts"
         account = tools[query]()
         prices = account["prices"]
@@ -287,15 +284,15 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
                 f["ridge_width_m"],
             )
         ]
-    elif "WinterWheat__get_field_info" in tools:
+    elif "WheatField__get_field_info" in tools:
         geometry = [(scene.resources.area_ha * 10000,)]
     else:
         geometry = [(scene.farm.field_area_m2, scene.farm.ridge_width_m)]
     allowed = {round(number, 6) for pair in geometry for number in pair}
     exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)}
     assert exposed == allowed
-    if "WinterWheat__get_field_info" in tools:
-        assert ("WinterWheat.observe" in task) is detailed
+    if "WheatField__get_field_info" in tools:
+        assert ("Sensor.read_root_zone_sensors" in task) is detailed
     elif detailed:
         assert "read_soil_sensors" in task and "read_canopy_sensors" in task
     else:

@@ -1,82 +1,80 @@
-"""Winter-wheat operational feasibility and signed USD/Oracle outcomes."""
-
-from __future__ import annotations
+"""Block completion, native input conservation and existing signed USD metrics."""
 
 import math
-
 from fairy.scenarios.validation_result import ScenarioValidationResult
 from .oracle_comparison import compare_to_oracle
 
 
-def evaluate(scenario, env=None):
-    runtime = scenario.world.runtime
-    result = runtime.outcome_summary()
-    p = runtime.resources
+def evaluate(scene, env=None):
+    f, r = scene.farm, scene.resources
+    scene.farm_environment.sync()
+    result = scene.accounts.compute_accounts()
     failures = []
-    if not result["operational_success"]:
-        failures.append(
-            "Native maturity, harvest, drying and full-field storage are required"
-        )
-    if runtime.failed or runtime.backend.failed:
+    if any(not block.harvested for block in f._ridges):
+        failures.append("Every block must reach native maturity and be harvested")
+    if any(b.failed for b in f.backends):
         failures.append("Native model failed")
-    if env is not None and not len(env.workflow):
-        failures.append("Empty workflow")
-    if any(value < -1e-7 for value in runtime.inventory.values()):
-        failures.append("Negative resource inventory")
-    if runtime.cost_usd > p.budget_usd + 1e-7:
-        failures.append("Operating budget exceeded")
+    batches = list(scene.warehouse.grain_batches.values())
+    if (
+        not batches
+        or any(b.status != "stored" for b in batches)
+        or scene.tractor._grain_bin_kg > 1e-8
+    ):
+        failures.append("All recovered grain must be unloaded and safely stored")
+    if result["production_cost"] > r.budget_usd + 1e-7:
+        failures.append("Operating cost limit exceeded")
+    receipts = [a for b in f.backends for a in b.receipts.values()]
+    area_ha = f.ridge_area_m2 / 10000
+    n = sum(a["amount"] * area_ha for a in receipts if a["kind"] == "fertilize")
+    water = sum(a["amount"] * area_ha * 10 for a in receipts if a["kind"] == "irrigate")
     if not math.isclose(
-        sum(result["cost_components"].values()), result["production_cost"], abs_tol=1e-7
+        n, result["fertilizer_product_kg"] * r.fertilizer_n_fraction, abs_tol=1e-6
     ):
-        failures.append("Cost components do not balance")
-    native_inputs = list(runtime.backend.receipts.values())
-    n = sum(row["amount"] for row in native_inputs if row["kind"] == "fertilize")
-    water = sum(row["amount"] for row in native_inputs if row["kind"] == "irrigate")
-    product = p.fertilizer_stock_kg - runtime.inventory["fertilizer_product_kg"]
-    if not math.isclose(product * p.fertilizer_n_fraction / p.area_ha, n, abs_tol=1e-7):
-        failures.append("Product fertilizer and native elemental N do not balance")
-    if not math.isclose(
-        p.water_stock_m3 - runtime.inventory["water_m3"],
-        water * p.area_ha * 10,
-        abs_tol=1e-7,
+        failures.append("Urea product and native pure-N inputs do not balance")
+    if not math.isclose(water, result["water_m3"], abs_tol=1e-6):
+        failures.append("Water ledger and native gross depth do not balance")
+    native_dry = sum((b.values.get("TWSO") or 0) * area_ha for b in f.backends)
+    expected = sum(
+        (f.backends[i].values.get("TWSO") or 0)
+        * area_ha
+        * 0.95
+        / (1 - r.storage_moisture_pct / 100)
+        for i, block in enumerate(f._ridges)
+        if block.harvested
+    )
+    stored = result["stored_kg_by_crop"]["winter_wheat"]
+    if (
+        all(block.harvested for block in f._ridges)
+        and abs(expected - stored) > 0.01 * f.num_ridges
     ):
-        failures.append("Gross irrigation and water inventory do not balance")
-    if runtime.sown and not math.isclose(
-        p.seed_stock_kg - runtime.inventory["seed_kg"],
-        p.seed_kg_ha * p.area_ha,
-        abs_tol=1e-7,
-    ):
-        failures.append("Seed inventory does not balance")
-    native = result["native"]["values"]
-    if runtime.harvested and not math.isclose(
-        runtime.dry_grain_kg, native["TWSO"] * p.area_ha, abs_tol=1e-7
-    ):
-        failures.append("Harvested dry grain differs from native TWSO")
-    if runtime.stored and (
-        runtime.grain_moisture > p.storage_moisture_fraction + 1e-9
-        or result["stored_grain_kg"] > p.warehouse_capacity_kg + 1e-7
-    ):
-        failures.append("Unsafe or over-capacity storage")
-    reference = scenario.ORACLE_REFERENCE
-    if reference and not scenario.calibrating:
-        if scenario.input_fingerprint() != reference["input_fingerprint"]:
-            failures.append(
-                "Oracle reference does not match current inputs/resources/prices"
-            )
+        failures.append(
+            "Stored mass differs from native grain, machine recovery and moisture conversion"
+        )
+    result.update(
+        stored_grain_kg=stored,
+        dry_grain_kg=native_dry,
+        management_unit="flat_block",
+        block_count=f.num_ridges,
+        harvested_blocks=[i for i, x in enumerate(f._ridges) if x.harvested],
+        area_m2=f.field_area_m2,
+        yield_kg_per_mu=stored / (r.area_ha * 15),
+        production_cost_usd_per_mu=result["production_cost"] / (r.area_ha * 15),
+        pure_n_applied_kg=n,
+        operational_success=not failures,
+        field_validated=False,
+        objective="net_operating_margin",
+        native_provenance=f.crop_backend_provenance(),
+    )
+    reference = scene.ORACLE_REFERENCE
+    if reference and not scene.calibrating:
+        if scene.input_fingerprint() != reference["input_fingerprint"]:
+            failures.append("Oracle inputs/resources/prices differ from this scene")
         else:
             compare_to_oracle(result, reference["selected"])
-    elif not scenario.calibrating:
-        failures.append("Validated Oracle reference is missing")
-    result.update(
-        objective="net_operating_margin",
-        oracle_scope=reference.get("scope") if reference else "exploration",
-        yield_kg_per_mu=result["stored_grain_kg"] / (p.area_ha * 15),
-        production_cost_usd_per_mu=result["production_cost"] / (p.area_ha * 15),
-        field_validated=False,
-    )
+    elif not scene.calibrating:
+        failures.append("Validated block-management Oracle reference missing")
     return ScenarioValidationResult(
         success=not failures,
-        message="; ".join(failures)
-        or "Native winter wheat harvested and safely stored",
+        message="; ".join(failures) or "All wheat blocks harvested and stored",
         metadata=result,
     )

@@ -32,7 +32,7 @@
     "latitude": 38.05,
     "longitude": 114.5,
     "elevation_m": 80,
-    "identity": "illustrative Shijiazhuang-area grid; not matched to a Zenodo station"
+    "identity": "Shijiazhuang-area weather grid; not a calibrated field site"
   },
   "native_soil_parameters": {
     "SMW": 0.12,
@@ -61,28 +61,8 @@
     "irrigation_efficiency": 0.85,
     "nitrogen_recovery_fraction": 0.7
   },
-  "observations": {
-    "doi": "10.5281/zenodo.14785961",
-    "status": "archives_downloaded_not_mapped_not_calibrated",
-    "license_note": "consult original record and data-use terms; no license invented",
-    "files": [
-      {
-        "path": "observations/Phenology data.zip",
-        "sha256": "7c723968d289416cecfa46c469fc5d5238f2b8fe3d5bd5b9315982e57e0f377c",
-        "md5": "12b04f2543fdf287fd63c12a0088821c",
-        "source": "https://zenodo.org/records/14785961/files/Phenology%20data.zip?download=1"
-      },
-      {
-        "path": "observations/Yield data.zip",
-        "sha256": "f82d2994ecc61f9aa6947433f8a77a7c6502c5935ae6a9f4c3a416fa09606aa6",
-        "md5": "cbdaf83f7ed4df7e35564e99271ee5dc",
-        "source": "https://zenodo.org/records/14785961/files/Yield%20data.zip?download=1"
-      }
-    ]
-  },
   "notes": [
-    "Weather and crop YAML are actual downloads; soil/prices/calendar are benchmark assumptions.",
-    "This bundle does not reproduce the Zenodo author's training or validation experiment.",
-    "Never compare a single grid simulation to a county yield without a justified spatial aggregation."
+    "Pinned official wheat parameters and actual local daily weather drive the simulation.",
+    "Soil and operation settings are benchmark assumptions, without local field calibration."
   ]
 }

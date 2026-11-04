@@ -1,10 +1,8 @@
-"""Scene-local briefings and actual model-visible wheat tool schemas."""
+"""Both briefings and the real model-visible block tool schemas."""
 
 import inspect
 import re
-
 import pytest
-
 from fairy.agents.agent.toolset_builder import build_toolset
 from fairy.controllers.engine import Engine
 from fairy.scenarios.registry import get_scenario_class
@@ -13,41 +11,61 @@ from fairy.scenarios.management_extensions.winter_wheat_oracles import SCENARIO_
 
 
 @pytest.mark.parametrize("sid", SCENARIO_IDS)
-def test_both_briefing_modes_reach_agent_and_preserve_native_state(sid):
-    states = []
-    fingerprints = []
-    for mode in (False, True):
-        scene = get_scenario_class(sid)(detailed_briefing=mode)
-        scene.setup()
-        engine = Engine(None, scene)
+def test_task_modes_query_prices_and_observation_without_oracle_doses(sid):
+    scenes = []
+    for detailed in (False, True):
+        s = get_scenario_class(sid)(detailed_briefing=detailed)
+        s.setup()
+        engine = Engine(None, s)
         task = engine._resolve_agent_task()
-        assert task == scene.scenario_input == scene.additional_system_prompt
+        assert task == s.scenario_input == s.additional_system_prompt
         assert {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)} == {10000.0}
-        assert ("WinterWheat.observe" in task) is mode
+        assert ("read_root_zone_sensors" in task) is detailed
         assert (
-            "WinterWheat.get_accounts" in task and "WinterWheat.get_field_info" in task
+            "OperatingAccounts.get_accounts" in task
+            and "WheatField.get_field_info" in task
         )
-        before = scene.world.get_state()
-        plan = engine.build_oracle_workflow(run_oracle=False)
-        assert scene.world.get_state() == before
-        assert len(plan) == scene.ORACLE_REFERENCE["workflow_steps"]
-        states.append(before)
-        fingerprints.append(scene.input_fingerprint())
-        tools, schemas, _ = build_toolset(scene.apps)
+        before = s.farm.get_state()
+        workflow = engine.build_oracle_workflow(run_oracle=False)
+        assert s.farm.get_state() == before
+        assert len(workflow) == s.ORACLE_REFERENCE["workflow_steps"]
+        tools, schemas, _ = build_toolset(s.apps)
+        names = {f"{t.app_name}__{t.name}" for t in tools}
+        assert {
+            "Tractor__load_seeds",
+            "Tractor__load_fertilizer",
+            "Tractor__sow",
+            "Tractor__fertilize",
+            "Tractor__harvest_blocks",
+            "Warehouse__dry_grain",
+            "Warehouse__store_grain",
+            "SystemApp__advance_time",
+        } <= names
+        assert "Tractor__form_ridges" not in names and not any(
+            n.startswith("WinterWheat__") for n in names
+        )
         schemas = {s["function"]["name"]: s["function"] for s in schemas}
         for tool in tools:
-            if tool.app_name != "WinterWheat":
+            if tool.name not in {
+                "sow",
+                "fertilize",
+                "harvest_blocks",
+                "prepare_field",
+                "get_field_info",
+                "inspect_blocks",
+                "irrigate",
+            }:
                 continue
             schema = schemas[f"{tool.app_name}__{tool.name}"]
             assert "Returns:" in schema["description"]
             args = set(inspect.signature(tool.function).parameters) - {"self"}
             assert set(_argument_descriptions(tool.function)) == args
             assert set(schema["parameters"]["properties"]) == args
-        assert scene.world.get_accounts()["prices"]["currency"] == "USD"
-    assert states[0] == states[1] and fingerprints[0] == fingerprints[1]
+        scenes.append(s.farm.get_state())
+    assert scenes[0] == scenes[1]
 
 
 @pytest.mark.parametrize("value", ["false", 0, None])
-def test_invalid_briefing_flag_rejected(value):
+def test_invalid_briefing_boolean(value):
     with pytest.raises(ValueError, match="JSON boolean"):
         get_scenario_class(SCENARIO_IDS[0])(detailed_briefing=value)
