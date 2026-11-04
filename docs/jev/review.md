@@ -572,3 +572,107 @@ Each cell: season finished, grain loss, cost. The 16.2 column is repeated for co
 4. **Takeaway:** with a neutral note ("use it when it helps") gpt-6-luna still never asks Jev. Getting any use would take a stronger instruction (for example when or how often to ask), which this test deliberately did not include.
 
 Spent: about $1.20. Part 2 total: about $11.7.
+
+## 17. A2A: global LLM with local Jev experts (branch `jev-a2a-wip`, 2026-11-05)
+
+### 17.1 What was done
+
+gpt-6-luna (reasoning "medium", Responses API) runs the farm as the main agent. Each of the 8 field apps (farm, weather, sensors, 2 drones, robot, tractor, field operations) is replaced by one tool, `<App>__expert_agent(task)`, which hands a job to a Jev expert for that app. The LLM cannot call the app tools itself. It keeps the clock tools and the message to the user.
+
+One job works like this:
+
+- The LLM writes the job as text.
+- The expert's Jev gets the job, the code-built farm snapshot (same as the hybrid) and its own actions in this job. It does not get the season task or the LLM's conversation.
+- Jev picks actions and arguments from the same menus as the hybrid, limited to that app's tools. Numbers in the job and in the season task are added as menu options.
+- If the job names one ridge range, ridge options are limited to that range. "done" is not offered before the job's first action.
+- The job ends when Jev picks "done", after 10 actions, when Jev's confidence is below 0.4, or when Jev repeats an action that changed nothing. In the last two cases the job goes back to the LLM. There is no LLM inside an expert.
+- Code writes the reply to the LLM: status, every action with its result and, when the job came back, what Jev wanted to do, its top options and the question it was least sure of.
+
+The system prompt has a short added note: what the experts are, that they pick from lists, to write every value in the job, and what the reply statuses mean. Each expert tool description lists that app's tools.
+
+Settings:
+
+- `--a2a true --a2a-app-prop 1.0 --a2a-provider typesafe --a2a-model jev-latest --a2a-max-tool-calls 10 --a2a-min-confidence 0.4`, plus the LLM flags of the baseline. In `scripts/jev_run_l3mini.py`: `a2a_llm_manager_jev_experts`. Code: `fairy/agents/jev/a2a_expert.py`.
+- Done check on the main agent. 300 actions, 60 min, seed 0, 1 run per scenario, the same 19 L3-mini scenarios and English task text as section 13.
+- Experts' real farm actions are written to the main workflow and count toward the 300 actions. A delegation that acts adds no count; a job with no action counts as 1. FAIRY's existing A2A keeps these actions out of the main workflow, so its runs fail scoring replay.
+- Scoring: `scripts/rebatch_fos_from_traces.py`, changed to skip delegation steps for these runs only. Other A2A runs still fail replay.
+- 121 tests: 120 pass; 1 fails because `rg` is not installed here (`test_no_are_or_rsare_runtime_imports`).
+- Decisions: `docs/jev/a2a_log.md`.
+
+The 19 runs ran in parallel: 5 first, the other 14 within a few minutes. Sections 13-16 ran one at a time.
+
+### 17.2 Results (19 L3-mini, 1 run each)
+
+Each cell: season finished, grain loss, cost. A run that did not finish shows ridges harvested. All columns except the last are repeated from sections 13-16.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | Full history (14) | REFLEX-style (15) | Jev tool (16.2) | Jev tool + note (16.4) | **A2A: LLM + Jev experts** |
+|---|---|---|---|---|---|---|---|
+| organic_residue_weed_establishment | yes, 13.65%, $0.17 | yes, -0.27%, $0.18 | **no** (0/64), 100.00%, $0.17 | yes, -0.59%, $0.23 | yes, 19.05%, $0.11 | yes, 14.26%, $0.11 | yes, 21.26%, $0.19 |
+| organic_patch_weed_mechanical_capacity | yes, 8.36%, $0.10 | yes, 4.18%, $0.10 | **no** (0/64), 100.00%, $0.07 | yes, 8.40%, $0.47 | yes, 8.23%, $0.06 | yes, 8.32%, $0.05 | yes, 13.32%, $0.12 |
+| micronutrient_deficiency_flowering_patch | yes, 8.36%, $0.06 | yes, 8.61%, $0.09 | **no** (0/64), 100.00%, $0.17 | **no** (0/64), 100.00%, $0.36 | yes, 15.38%, $0.04 | yes, 14.06%, $0.04 | yes, 18.13%, $0.07 |
+| local_soil_constraint_nutrition_patch | yes, -9.70%, $0.04 | yes, -9.11%, $0.17 | **no** (0/64), 100.00%, $0.11 | **no** (0/64), 100.00%, $0.43 | yes, -11.76%, $0.07 | yes, -10.31%, $0.10 | yes, -11.49%, $0.11 |
+| heinong84_edge_low_fertility | yes, 5.06%, $0.07 | yes, 4.66%, $0.19 | **no** (0/64), 100.00%, $0.15 | **no** (0/64), 100.00%, $0.39 | yes, 17.12%, $0.09 | yes, 6.94%, $0.06 | yes, 6.40%, $0.17 |
+| cloudy_wet_low_radiation_biomass | yes, 13.80%, $0.02 | yes, 0.86%, $0.05 | **no** (0/64), 100.00%, $0.15 | yes, 0.20%, $0.08 | yes, 4.63%, $0.04 | yes, 4.63%, $0.02 | yes, 19.11%, $0.05 |
+| poordrainage_wetjune_disease_trafficability | yes, 11.30%, $0.03 | yes, 7.37%, $0.11 | **no** (0/64), 100.00%, $0.21 | **no** (0/64), 100.00%, $0.36 | yes, 7.98%, $0.03 | yes, 10.44%, $0.03 | yes, 4.56%, $0.12 |
+| staggered_wetjune_canopy_disease | yes, 3.46%, $0.08 | yes, 9.53%, $0.10 | **no** (0/64), 100.00%, $0.08 | **no** (0/64), 100.00%, $0.51 | yes, 9.61%, $0.04 | yes, 15.63%, $0.06 | yes, 52.59%, $0.15 |
+| soy_after_soy_wetjune_disease | yes, 13.19%, $0.06 | yes, 9.04%, $0.06 | **no** (0/64), 100.00%, $0.17 | yes, 2.27%, $0.32 | yes, 7.84%, $0.04 | yes, 17.78%, $0.05 | yes, 16.12%, $0.17 |
+| dryr5r6_hn58_std_waterlimit | yes, 1.78%, $0.05 | yes, 5.23%, $0.08 | **no** (0/64), 100.00%, $0.09 | yes, 4.12%, $0.18 | yes, 8.20%, $0.05 | yes, 15.55%, $0.05 | yes, 6.40%, $0.18 |
+| drought_recovery_false_disease_signal | yes, 3.10%, $0.05 | yes, 3.43%, $0.30 | **no** (0/64), 100.00%, $0.13 | **no** (0/64), 100.00%, $0.54 | yes, 14.38%, $0.03 | yes, 9.71%, $0.03 | yes, 0.28%, $0.18 |
+| heinong58_resistant_biotic_water_budget_priority | yes, 8.41%, $0.05 | yes, 11.53%, $0.10 | **no** (0/64), 100.00%, $0.19 | **no** (0/64), 100.00%, $0.53 | yes, 13.86%, $0.04 | yes, 7.88%, $0.04 | yes, 29.62%, $0.10 |
+| hn60_high_fastdrain_dryr5r6 | yes, 0.54%, $0.05 | yes, 5.65%, $0.04 | **no** (0/64), 100.00%, $0.15 | yes, 5.66%, $0.09 | yes, 5.70%, $0.08 | yes, 7.65%, $0.05 | yes, 4.50%, $0.15 |
+| dryr5r6_insect_threshold_waterstress | yes, 7.49%, $0.05 | yes, 1.22%, $0.09 | **no** (0/64), 100.00%, $0.13 | **no** (0/64), 100.00%, $0.37 | yes, 7.10%, $0.04 | yes, 5.97%, $0.03 | yes, 1.31%, $0.09 |
+| dryer_capacity_batch_harvest_storage | yes, 0.10%, $0.05 | yes, 6.09%, $0.15 | **no** (0/64), 100.00%, $0.05 | **no** (36/64), 51.75%, $0.47 | yes, 31.95%, $0.09 | yes, 15.24%, $0.08 | yes, 25.30%, $0.23 |
+| grain_moisture_sensor_failure_harvest | yes, 5.76%, $0.05 | yes, 0.00%, $0.05 | **no** (0/64), 100.00%, $0.06 | yes, 0.14%, $0.08 | yes, 0.14%, $0.05 | yes, 11.26%, $0.17 | yes, 11.98%, $0.12 |
+| laterain_shattering_drying_tradeoff | yes, 14.39%, $0.05 | yes, 0.13%, $0.04 | **no** (0/64), 100.00%, $0.09 | **no** (59/64), 16.32%, $0.38 | yes, 16.23%, $0.07 | yes, 9.53%, $0.04 | yes, 8.86%, $0.11 |
+| cool_august_lategrain_laterain | yes, 3.67%, $0.07 | yes, 8.35%, $0.04 | **no** (0/64), 100.00%, $0.05 | yes, 0.27%, $0.12 | yes, 1.92%, $0.04 | yes, 0.05%, $0.03 | yes, 18.85%, $0.08 |
+| compacted_headland_stand_recovery | yes, 8.70%, $0.08 | **no** (24/64), 61.53%, $0.45 | **no** (0/64), 100.00%, $0.14 | **no** (0/64), 100.00%, $0.43 | yes, 4.11%, $0.10 | yes, 3.02%, $0.16 | **no** (2026-09-11, 24/64), 62.61%, $0.30 |
+
+| | LLM baseline (13.1) | Hybrid (13) | Full history (14) | REFLEX-style (15) | Jev tool (16.2) | Jev tool + note (16.4) | **A2A: LLM + Jev experts** |
+|---|---|---|---|---|---|---|---|
+| Seasons finished | 19 of 19 | 18 of 19 | 0 of 19 | 8 of 19 | 19 of 19 | 19 of 19 | 18 of 19 |
+| Used up all 300 actions | 0 | 1 | 0 | 11 | 0 | 0 | 1 |
+| Average grain loss, all 19 | 6.4% | 7.3% | 100.0% | 52.0% | 9.6% | 8.8% | 16.3% |
+| Median grain loss, all 19 | 7.5% | 5.2% | 100.0% | 51.8% | 8.2% | 9.5% | 13.3% |
+| Total cost (19 runs) | $1.19 | $2.37 | $2.36 | $6.36 | $1.11 | $1.20 | $2.69 |
+| Average actions per run | 137 | 143 | 77 | 248 | 130 | 134 | 183 |
+| Average time per run | 7.1 min | 3.4 min | 2.0 min | 4.7 min | 5.4 min | 5.8 min | 8.4 min |
+
+Full history: every run ended early with an error (section 14), so its cost, actions and time cover less than half a season. A2A actions are farm actions; delegation calls are not counted. A2A cost: $1.94 LLM, $0.75 Jev. Replay matched the live stored grain on all 19 A2A runs, with no replay errors.
+
+| A2A jobs, 19 runs | |
+|---|---|
+| Jobs | 2,670 |
+| Jev requests | 6,856 |
+| Farm actions by Jev experts | 3,128 of 3,480 (90%) |
+| Farm actions by the LLM (clock, message to the user) | 352 (10%) |
+| Jobs with no action | 311 (11.6%) |
+| Jobs with 1 action | 1,889 (70.7%) |
+| Jobs with 2 or more actions | 470 (17.6%) |
+| Status finished | 2,149 (80.5%) |
+| Status unsure (back to the LLM) | 463 (17.3%) |
+| Status stuck (back to the LLM) | 58 (2.2%) |
+
+### 17.3 Test runs before the 19 (3 scenarios, 1 run each)
+
+Each cell: season finished, grain loss, cost, farm actions, time, stop reason. The first version had none of the "done" and ridge-range rules above; its run had 80 jobs with no action out of 231. The final version ran 6 seasons in parallel.
+
+Existing A2A here means FAIRY's A2A with gpt-6-luna experts, `--a2a-app-prop 1.0`, typed experts and the done check, plus two changes so it could be compared: expert actions in the main workflow and reasoning "medium" for the experts. It has no added prompt note and no tool list in the expert tool description. It was not run on all 19.
+
+| Scenario | Jev experts, first version | Jev experts, final version | Existing A2A (LLM experts) | Jev experts, final version, 19-run set |
+|---|---|---|---|---|
+| grain_moisture_sensor_failure_harvest | yes, 8.27%, $0.21, 174 act., 14.1 min, stop: agent_finished | yes, 14.24%, $0.18, 222 act., 11.9 min, stop: agent_finished | **no** (10/64), 85.99%, $0.09, 250 act., 20.6 min, stop: max_tool_calls | yes, 11.98%, $0.12 |
+| dryer_capacity_batch_harvest_storage | - | yes, 22.35%, $0.30, 264 act., 15.3 min, stop: agent_finished | **no** (28/64), 57.16%, $0.08, 242 act., 17.4 min, stop: max_tool_calls | yes, 25.30%, $0.23 |
+| compacted_headland_stand_recovery | - | yes, -1.64%, $0.20, 235 act., 11.3 min, stop: agent_finished | **no** (0/64), 100.00%, $0.01, 23 act., 3.3 min, stop: agent_finished | **no** (2026-09-11, 24/64), 62.61%, $0.30 |
+
+### 17.4 Findings
+
+1. 18 of 19 seasons finished. Average grain loss 16.3%, baseline 6.4%, hybrid 7.3%.
+2. Grain loss was lower than the baseline on 5 of 19 scenarios and lower than the hybrid on 4 of 19.
+3. The run that did not finish, compacted_headland_stand_recovery, used all 300 actions with 24 of 64 ridges harvested (62.61%). The same scenario and settings gave -1.64% and finished in 17.3.
+4. Jev experts took 90% of the farm actions. 70.7% of jobs were one action.
+5. 19.5% of jobs went back to the LLM as unsure or stuck.
+6. Existing A2A finished 0 of 3 seasons in 17.3, with grain loss 57.16% to 100%.
+
+One run per scenario.
+
+Spent: about $3.77 (test runs $1.08, 19 runs $2.69).

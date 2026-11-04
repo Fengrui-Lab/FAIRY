@@ -50,7 +50,7 @@ The comparison setting `a2a_llm_manager_llm_experts` is FAIRY's existing A2A wit
 
 Lower grain loss than LLM alone on 5 of 19 scenarios, than the hybrid on 4 of 19.
 
-Jobs: 2,670 in total. 71% one action, 12% none, 17% two or more. 2,149 finished, 463 unsure, 58 stuck.
+Jobs: 2,670 in total. 70.7% one action, 11.6% none, 17.6% two or more. 2,149 finished, 463 unsure, 58 stuck.
 
 Failure: `compacted_headland_stand_recovery` used all 300 actions with 24 of 64 ridges harvested (62.6%). The same scenario gave -1.6% and finished in the 3-scenario test, so single runs are very noisy.
 
