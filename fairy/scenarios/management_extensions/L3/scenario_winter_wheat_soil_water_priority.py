@@ -1,6 +1,8 @@
 """Allocate a shared irrigation quota among winter wheat blocks with different soils."""
 
 from copy import copy, deepcopy
+import json
+from pathlib import Path
 from typing import ClassVar
 
 from fairy.tool_utils import OperationType, app_tool
@@ -11,26 +13,38 @@ from ..apps.winter_wheat_farm_app import WinterWheatFarm
 from ..common import capture_step, finish_capture
 from ..engines.winter_wheat_inputs import fingerprint
 from ..winter_wheat_setup import initialize_wheat_farm
+from ..winter_wheat_workflow import capture_wheat_oracle
 from .scenario_winter_wheat_full_season import ScenarioWinterWheatFullSeason
+
+REFERENCE_PATH = (
+    Path(__file__).parents[1]
+    / "data/winter_wheat_oracles"
+    / "scenario_l3_winter_wheat_soil_water_priority.json"
+)
 
 
 class SoilWaterWheatFarm(WinterWheatFarm):
     """The first eight blocks have a shallower, coarser rootable profile."""
 
     shallow_block_count = 8
+    profile_overrides = {
+        "shallow": (
+            {"SMW": 0.10, "SMFCF": 0.24, "SM0": 0.41, "RDMSOL": 60.0},
+            {"WAV": 10.0, "SMLIM": 0.24},
+            "benchmark shallow coarse soil, no local field calibration",
+        )
+    }
 
     def block_inputs(self, block_id):
-        if block_id >= self.shallow_block_count:
+        zone = "shallow" if block_id < self.shallow_block_count else "deep"
+        if zone not in self.profile_overrides:
             return self.bundle
+        soil, site, description = self.profile_overrides[zone]
         inputs = copy(self.bundle)
         inputs.manifest = deepcopy(self.bundle.manifest)
-        inputs.manifest["native_soil_parameters"].update(
-            SMW=0.10, SMFCF=0.24, SM0=0.41, RDMSOL=60.0
-        )
-        inputs.manifest["native_site_parameters"].update(WAV=10.0, SMLIM=0.24)
-        inputs.manifest["soil_status"] = (
-            "benchmark shallow coarse soil, no local field calibration"
-        )
+        inputs.manifest["native_soil_parameters"].update(soil)
+        inputs.manifest["native_site_parameters"].update(site)
+        inputs.manifest["soil_status"] = description
         inputs.identity = fingerprint(inputs.manifest)
         return inputs
 
@@ -70,10 +84,70 @@ class SoilWaterWheatFarm(WinterWheatFarm):
         return field
 
 
+class SoilWaterPriorityFarm(SoilWaterWheatFarm):
+    """Report native root-zone water on comparable, soil-specific scales."""
+
+    profile_overrides = {
+        **SoilWaterWheatFarm.profile_overrides,
+        "deep": (
+            {"SMW": 0.13, "SMFCF": 0.34, "SM0": 0.48, "RDMSOL": 120.0},
+            {"WAV": 25.2, "SMLIM": 0.34},
+            "benchmark deep fine-textured soil, no local field calibration",
+        ),
+    }
+
+    @app_tool()
+    @event_registered(operation_type=OperationType.READ)
+    def inspect_blocks(self, start_block: int, end_block: int) -> dict:
+        """Read crop development and soil-specific root-zone water by block.
+
+        Args:
+            start_block: First block ID to inspect, inclusive.
+            end_block: Last block ID, inclusive and at least start_block.
+
+        Returns:
+            Block status, native crop and soil estimates, root depth (cm), the
+            plant-available water remaining (mm and fraction from 0 to 1), and net mm
+            to refill the current root zone to field capacity. These water
+            estimates use each block's soil limits and native root depth.
+            Rooted water estimates are null before emergence and after maturity. Check them
+            again on the calendar day after irrigation completion.
+        """
+        field = super().inspect_blocks(start_block, end_block)
+        for block in field.get("blocks", []):
+            backend = self.backends[block["block_id"]]
+            soil = backend.bundle.manifest["native_soil_parameters"]
+            root_depth = backend.values.get("RD")
+            if (
+                root_depth
+                and backend.values.get("DOE") is not None
+                and backend.maturity is None
+            ):
+                moisture = block["SM"]
+                capacity, wilting = soil["SMFCF"], soil["SMW"]
+                available = max(0.0, min(moisture, capacity) - wilting)
+                block.update(
+                    root_depth_cm=round(root_depth, 1),
+                    available_water_fraction=round(available / (capacity - wilting), 3),
+                    available_water_mm=round(available * root_depth * 10, 1),
+                    net_mm_to_field_capacity=round(
+                        max(0, capacity - moisture) * root_depth * 10, 1
+                    ),
+                )
+            else:
+                block.update(
+                    root_depth_cm=None,
+                    available_water_fraction=None,
+                    available_water_mm=None,
+                    net_mm_to_field_capacity=None,
+                )
+        return field
+
+
 class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_soil_water_priority"
-    default_late_harvest = False
-    resources: ClassVar = WheatResources(water_stock_m3=1000.0)
+    legacy_resources: ClassVar = WheatResources(water_stock_m3=1000.0)
+    resources: ClassVar = WheatResources(water_stock_m3=950.0)
     ORACLE_REFERENCE: ClassVar = {
         "input_fingerprint": "fc9a451fdb95643fcef7b59b84cd2ee382d559cb41b394863e672e9b295f176a",
         "selected": {
@@ -95,12 +169,25 @@ class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
         "different timings, and reduced or zero inputs.",
     }
 
+    def __init__(self, *, legacy=None, late_harvest=None, **kwargs):
+        if legacy is not None and type(legacy) is not bool:
+            raise ValueError("legacy must be a JSON boolean")
+        self.legacy = late_harvest is False if legacy is None else legacy
+        if self.legacy:
+            self.resources = self.legacy_resources
+        if late_harvest is None:
+            late_harvest = not self.legacy
+        super().__init__(late_harvest=late_harvest, **kwargs)
+
     def setup(self, *args, **kwargs):
         if self.apps:
             return
         if args or kwargs:
             raise ValueError("Configure inputs at construction")
-        initialize_wheat_farm(self, farm_class=SoilWaterWheatFarm)
+        initialize_wheat_farm(
+            self,
+            farm_class=SoilWaterWheatFarm if self.legacy else SoilWaterPriorityFarm,
+        )
         self.scenario_input = (
             self.task_description(self.detailed_briefing)
             if self._input_override is None
@@ -112,6 +199,33 @@ class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
         self.build_events_flow()
 
     def task_description(self, detailed=True):
+        if self.legacy:
+            return self._legacy_task_description(detailed)
+        task = (
+            "经营一座面积10000平方米的冬小麦农场。两区土壤保水能力不同，共用同一季灌溉水。"
+            "按地块分配有限水量，完成秋播、越冬、成熟收获与安全入库，提高净经营收益。"
+        )
+        if not detailed:
+            return task + (
+                "通过WheatField.get_field_info查询土壤资料，"
+                "通过OperatingAccounts.get_accounts查询物资价格和剩余配额。"
+            )
+        return task + (
+            "\n\n秋播前查看各区田间持水量、萎蔫点和根系可达深度，再核对天气、库存和价格。"
+            "十月中旬前后整地条播，播深约3 cm。底肥可参考约6 kg尿素/块，入冬前确认出苗。"
+            "\n\n二月下旬到三月上旬返青，四月上旬冠层扩展时再查根区可用氮和长势。"
+            "确需追肥时可分别参考约9和7–8 kg尿素/块。四月中下旬视读数和库存考虑少量追肥。"
+            "分次装入当次用量，施后复查根区氮和长势。"
+            "\n\n四月中下旬至五月开花前后，一起看各区的可用水比例、剩余水深和当前根深，"
+            "结合未来几天降雨判断谁先补。浅土储水少，缺口初现可先补约20–30 mm，后续明显不足时可参考约40–50 mm。"
+            "保留后续水量，根区还湿的区可以晚些再补。"
+            "灌水完成后等到次日复查，按退湿速度决定是否再补。"
+            "\n\n五月灌浆期继续比较两区读数。深土区的可用水降到约一半、后续少雨时，可参考补约25–35 mm。"
+            "后续按两区退湿速度和余额调整分配。确认成熟后看短期预报，预留足够小时数完成分批收获、卸粮、干燥和安全入库。"
+            "最后核对各块收获和粮批状态，报告用水、成本和净收益。"
+        )
+
+    def _legacy_task_description(self, detailed):
         task = (
             "经营一座面积10000平方米的冬小麦农场。地块的根系可达深度和保水能力不同，全场共用一季的灌溉水。"
             "完成秋播、越冬、分块收获和安全入库，在资源限制下提高净经营收益。"
@@ -130,7 +244,47 @@ class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
             "\n\n成熟与入库。确认成熟及作业天气，按粮箱容量分批收获和卸粮，核对含水率后干燥入库。报告入库产量、用水、实际成本和净经营收益。"
         )
 
+    def validate(self, env=None):
+        result = super().validate(env)
+        if self.legacy:
+            return result
+        farm = self.farm
+        split = farm.shallow_block_count
+        area_ha = farm.ridge_area_m2 / 10000
+        zones = {}
+        for name, start, end in (
+            ("shallow", 0, split),
+            ("deep", split, farm.num_ridges),
+        ):
+            blocks = farm.backends[start:end]
+            zones[name] = {
+                "block_ids": list(range(start, end)),
+                "dry_grain_kg": area_ha
+                * sum(b.values.get("TWSO") or 0 for b in blocks),
+                "irrigation_m3": area_ha
+                * 10
+                * sum(
+                    a["amount"]
+                    for b in blocks
+                    for a in b.receipts.values()
+                    if a["kind"] == "irrigate"
+                ),
+            }
+        result.metadata["soil_water_zones"] = zones
+        return result
+
     def build_events_flow(self):
+        if self.calibrating:
+            return []
+        if self.legacy:
+            return self._build_legacy_events_flow()
+        data = json.loads(REFERENCE_PATH.read_text(encoding="utf-8"))
+        self.ORACLE_REFERENCE = data["reference"]
+        if self.input_fingerprint() != self.ORACLE_REFERENCE["input_fingerprint"]:
+            raise ValueError("Soil-water priority requires its verified Oracle inputs")
+        return capture_wheat_oracle(self, data["steps"])
+
+    def _build_legacy_events_flow(self):
         previous = None
         with EventRegisterer.capture_mode() as events:
 

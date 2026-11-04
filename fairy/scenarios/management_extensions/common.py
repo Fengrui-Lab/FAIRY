@@ -13,6 +13,7 @@ from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.farm_world.weather_app import WeatherApp
 from fairy.apps.system import SystemApp
 from fairy.scenarios.scenario import Scenario
+from .evaluation.oracle_comparison import biological_grain_kg, recovered_grain_kg
 from .runtime import (
     EpisodeState,
     PlanningFarm,
@@ -231,6 +232,8 @@ class FullSeasonExtension(ExtensionValidation, Scenario):
             "drying_throughput_kg": dry_kg,
             "fertilizer_product_kg": fertilizer,
             "consumed_seeds": seed_used,
+            "biological_kg_by_crop": {crop: biological_grain_kg(self.farm)},
+            "recovered_kg_by_crop": {crop: recovered_grain_kg(self.farm)},
             "stored_kg_by_crop": {crop: stored},
             "stored_grain_kg": stored,
             "stored_grain_value": value,

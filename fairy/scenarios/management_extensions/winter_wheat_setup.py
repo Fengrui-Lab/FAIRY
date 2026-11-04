@@ -9,7 +9,7 @@ from fairy.apps.farm_world.farm_environment import FarmContext, FarmEnvironment
 from fairy.apps.farm_world.warehouse_app import WarehouseApp, WarehouseStock
 from fairy.apps.farm_world.weather_app import WeatherApp
 from fairy.apps.system import SystemApp
-from .apps.winter_wheat_accounts_app import SEED, WinterWheatAccounts
+from .apps.winter_wheat_accounts_app import WinterWheatAccounts
 from .apps.winter_wheat_farm_app import WinterWheatFarm, WinterWheatSensors
 from .apps.winter_wheat_tractor_app import WinterWheatTractor
 from .apps.winter_wheat_irrigation_app import WinterWheatIrrigation
@@ -43,6 +43,8 @@ def initialize_wheat_farm(
     farm_class=WinterWheatFarm,
     irrigation_factory=WinterWheatIrrigation,
     warehouse_factory=WarehouseApp,
+    tractor_factory=WinterWheatTractor,
+    accounts_factory=WinterWheatAccounts,
 ):
     """Create one block-managed native field with the common clock and warehouse."""
     r = scene.resources
@@ -58,7 +60,7 @@ def initialize_wheat_farm(
     scene.irrigation = irrigation_factory(scene.farm, scene.weather)
     scene.warehouse = warehouse_factory(
         WarehouseStock(
-            {SEED: round(r.seed_stock_kg / r.seed_mass_kg)},
+            scene.farm.seed_inventory(),
             0.0,
             r.fertilizer_stock_kg,
             r.fuel_stock_liters,
@@ -79,8 +81,8 @@ def initialize_wheat_farm(
         start_time=scene.start_time,
         timezone_name=scene.timezone_name,
     )
-    scene.tractor = WinterWheatTractor(scene.farm_environment)
-    scene.accounts = WinterWheatAccounts(
+    scene.tractor = tractor_factory(scene.farm_environment)
+    scene.accounts = accounts_factory(
         resources=r,
         farms=scene.farms,
         warehouse=scene.warehouse,

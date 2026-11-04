@@ -67,6 +67,8 @@ class ScenarioMaizeFertilizerBudgetTradeoff(Scenario):
             "currency": "USD",
             "price_book_id": "china_northeast_2025_usd_v1",
             "cny_per_usd": 7.1757,
+            "biological_kg_by_crop": {"maize": 3313.8653956166436},
+            "recovered_kg_by_crop": {"maize": 3737.7318997071434},
             "stored_kg_by_crop": {"maize": 3737.72},
             "production_cost": 123.53700400709053,
             "stored_grain_value": 1125.1132572431957,

@@ -134,6 +134,8 @@ class ScenarioSeedTotalCost(FullSeasonExtension):
             "drying_throughput_kg": 17251.359999999993,
             "fertilizer_product_kg": 728.9599999999999,
             "consumed_seeds": {"SOYBEAN_901": 0, "MAIZE_201": 85760},
+            "biological_kg_by_crop": {"maize": 15295.072291463703},
+            "recovered_kg_by_crop": {"maize": 17251.418747348587},
             "stored_kg_by_crop": {"maize": 17251.359999999993},
             "stored_grain_kg": 17251.359999999993,
             "stored_grain_value": 5192.9341527655815,

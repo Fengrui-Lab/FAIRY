@@ -16,7 +16,9 @@ from fairy.scenarios.management_extensions.china_market_prices import (
     usd_cents,
 )
 from fairy.scenarios.management_extensions.evaluation.oracle_comparison import (
+    biological_grain_kg,
     compare_to_oracle,
+    recovered_grain_kg,
     relative_difference,
 )
 
@@ -39,17 +41,21 @@ def test_loading_maps_cannot_mutate_another_scenario_price_table():
     assert b["seed_per_unit"]["MAIZE_201"] < 0.01
 
 
-def test_agent_beats_oracle_is_positive_and_not_clipped():
+def test_biological_yield_loss_is_signed_and_separate_from_stored_weight():
     a = {
         "currency": "USD",
         "production_cost": 150.0,
         "net_operating_margin": 300.0,
+        "biological_kg_by_crop": {"maize": 310.0},
+        "recovered_kg_by_crop": {"maize": 70.0},
         "stored_kg_by_crop": {"maize": 150.0},
     }
     o = {
         "currency": "USD",
         "production_cost": 100.0,
         "net_operating_margin": 200.0,
+        "biological_kg_by_crop": {"maize": 200.0},
+        "recovered_kg_by_crop": {"maize": 100.0},
         "stored_kg_by_crop": {"maize": 100.0},
     }
     compare_to_oracle(a, o)
@@ -58,7 +64,11 @@ def test_agent_beats_oracle_is_positive_and_not_clipped():
     assert c["metrics"]["production_cost"]["better"] == "lower"
     assert c["metrics"]["net_operating_margin"]["relative_difference_pct"] == 50
     assert c["stored_kg_by_crop"]["maize"]["relative_difference_pct"] == 50
-    assert a["yield_loss_pct_by_crop"] == {"maize": -50}
+    assert a["yield_loss_pct"] == pytest.approx(-55)
+    assert a["yield_loss_pct_by_crop"] == {"maize": pytest.approx(-55)}
+    assert a["recovered_yield_loss_pct"] == 30
+    assert a["recovered_yield_loss_pct_by_crop"] == {"maize": 30}
+    assert a["stored_yield_loss_pct_by_crop"] == {"maize": -50}
 
 
 def test_zero_and_negative_oracle_denominators_are_explicit():
@@ -82,8 +92,98 @@ def test_crops_and_seasons_are_matched_without_summing_unlike_kg():
     c = a["oracle_comparison"]
     assert c["stored_kg_by_crop"] == {}
     assert c["seasons"][0]["yield"] is None and c["seasons"][0]["not_comparable_reason"]
+    assert a["yield_loss_pct"] is None
+    assert c["seasons"][0]["yield_loss_pct"] is None
     with pytest.raises(ValueError, match="currency"):
         compare_to_oracle(a, {"currency": "CNY"})
+
+
+def test_same_crop_seasons_are_weighted_by_oracle_biological_yield():
+    a = {"currency": "USD"}
+    o = {"currency": "USD"}
+    agent_seasons = [
+        {
+            "year": 2025,
+            "biological_grain_kg": 20,
+            "recovered_grain_kg": 0,
+            "stored_grain_kg": 0,
+        },
+        {
+            "year": 2026,
+            "biological_grain_kg": 20,
+            "recovered_grain_kg": 8,
+            "stored_grain_kg": 0,
+        },
+    ]
+    oracle_seasons = [
+        {
+            "year": 2025,
+            "biological_grain_kg": 10,
+            "recovered_grain_kg": 10,
+            "stored_grain_kg": 10,
+        },
+        {
+            "year": 2026,
+            "biological_grain_kg": 40,
+            "recovered_grain_kg": 20,
+            "stored_grain_kg": 40,
+        },
+    ]
+    compare_to_oracle(a, o, agent_seasons=agent_seasons, oracle_seasons=oracle_seasons)
+    assert a["yield_loss_pct"] == 20
+    first, second = a["oracle_comparison"]["seasons"]
+    assert first["yield_loss_pct"] == -100
+    assert second["yield_loss_pct"] == 50
+    assert first["recovered_yield_loss_pct"] == 100
+    assert second["recovered_yield_loss_pct"] == 60
+    assert a["recovered_yield_loss_pct"] == pytest.approx(100 * (1 - 8 / 30))
+    assert second["stored_yield_loss_pct"] == 100
+
+    compare_to_oracle(a, o, agent_seasons=agent_seasons[:1], oracle_seasons=oracle_seasons)
+    assert a["yield_loss_pct"] is None
+    assert a["oracle_comparison"]["seasons"][0]["yield_loss_pct"] == -100
+
+
+def test_missing_or_zero_biological_yield_baseline_does_not_use_stored_weight():
+    a = {"currency": "USD", "biological_kg_by_crop": {"maize": 4, "soybean": 2}}
+    o = {
+        "currency": "USD",
+        "biological_kg_by_crop": {"maize": 0},
+        "stored_kg_by_crop": {"maize": 3, "soybean": 1},
+    }
+    compare_to_oracle(a, o)
+    assert a["yield_loss_pct_by_crop"] == {"maize": None, "soybean": None}
+
+
+def test_maturity_extrapolates_biology_on_a_copy_and_never_counts_unharvested_grain():
+    from types import SimpleNamespace
+
+    class Farm:
+        ridge_area_m2 = 250
+
+        def __init__(self):
+            self._ridges = [SimpleNamespace(planted=True, harvested=False)]
+            self.yield_state = SimpleNamespace(
+                biological_yield_g_m2=10,
+                recovered_yield_g_m2_at_market_moisture=2,
+                harvested=False,
+            )
+            self.physics = SimpleNamespace(
+                last_physics_sim_time=0,
+                yield_recovery=SimpleNamespace(states={0: self.yield_state}),
+            )
+
+        def is_ridge_mature(self, index):
+            return self.yield_state.biological_yield_g_m2 == 100
+
+        def advance_physics_time(self, timestamp):
+            self.physics.last_physics_sim_time = timestamp
+            self.yield_state.biological_yield_g_m2 = 100
+
+    farm = Farm()
+    assert biological_grain_kg(farm, deadline=86400) == 25
+    assert biological_grain_kg(farm) == 2.5
+    assert recovered_grain_kg(farm) == 0
 
 
 def test_affordable_usd_fertilizer_order_survives_cash_checkpoint():
@@ -290,7 +390,10 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
         geometry = [(scene.farm.field_area_m2, scene.farm.ridge_width_m)]
     allowed = {round(number, 6) for pair in geometry for number in pair}
     exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)}
-    assert exposed == allowed
+    if detailed and "WheatField__get_field_info" in tools:
+        assert allowed <= exposed
+    else:
+        assert exposed == allowed
     if "WheatField__get_field_info" in tools:
         assert ("根区" in task) is detailed
     elif detailed:

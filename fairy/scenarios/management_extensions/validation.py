@@ -2,7 +2,7 @@
 
 from fairy.scenarios.validation_result import ScenarioValidationResult
 from .runtime import crop_options, SEEDS
-from .evaluation.oracle_comparison import compare_to_oracle
+from .evaluation.oracle_comparison import biological_grain_kg, compare_to_oracle
 from collections import Counter
 
 
@@ -180,7 +180,8 @@ class ExtensionValidation:
             or self.tractor._fertilizer_spreader_kg > 1e-8
         ):
             failures.append("Unsettled equipment payload")
-        production_cost = self.production_cost_minor()
+        accounts = self.production_accounts()
+        production_cost = accounts["production_cost_minor"]
         if production_cost > self.production_budget_minor:
             failures.append("Whole-season production budget exceeded")
         target = 0.99 * self.best_tested_yield_kg
@@ -188,7 +189,9 @@ class ExtensionValidation:
             failures.append("Stored yield below 99% of best tested candidate")
         if production_cost > self.oracle_cost_minor:
             failures.append("Total modeled production cost exceeds selected reference")
-        accounts = self.production_accounts()
+        accounts["biological_kg_by_crop"][farm.crop_id] = biological_grain_kg(
+            farm, deadline=self.start_time + self.duration
+        )
         selected = getattr(self, "ORACLE_REFERENCE", {}).get("selected")
         if selected:
             if selected.get("prices") != accounts["prices"]:
@@ -230,11 +233,6 @@ class ExtensionValidation:
                 "oracle_cost_minor": self.oracle_cost_minor,
                 "grain_kg_per_usd": (
                     stored / (production_cost / 100) if production_cost else None
-                ),
-                "yield_loss_pct": (
-                    100 * (1 - stored / selected["stored_grain_kg"])
-                    if selected and selected.get("stored_grain_kg")
-                    else None
                 ),
             },
         )

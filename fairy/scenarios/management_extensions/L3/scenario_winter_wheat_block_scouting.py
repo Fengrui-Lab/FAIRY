@@ -72,6 +72,7 @@ class ScoutingWheatFarm(WinterWheatFarm):
 
 class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
     scenario_id = "scenario_l3_winter_wheat_block_scouting"
+    farm_class = ScoutingWheatFarm
     resources: ClassVar = WheatResources(fertilizer_stock_kg=360.0)
     ORACLE_REFERENCE: ClassVar = {
         "input_fingerprint": "9d1b7a6abb3eb084d14e345f1c83c6e94fae62df28077f03d9f6c954550d4ed3",
@@ -102,7 +103,7 @@ class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
             raise ValueError("Configure inputs at construction")
         from ..apps.winter_wheat_scouting_apps import WheatScoutDrone, WheatScoutRobot
 
-        initialize_wheat_farm(self, farm_class=ScoutingWheatFarm)
+        initialize_wheat_farm(self, farm_class=self.farm_class)
         self.drone = WheatScoutDrone(self.farm_environment)
         self.robot = WheatScoutRobot(self.farm_environment)
         for device in (self.drone, self.robot):
@@ -130,19 +131,19 @@ class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
             )
         return task + (
             "\n\n先核对播期、设备容量、物资库存和价格。"
-            "\n\n十月中下旬安排秋播。"
-            "先看地块墒情和近期天气，地面适合时整平并分块条播，土壤过湿就等到合适时段复查。"
-            "十月底到十一月初检查出苗，越冬后结合巡查安排春季氮肥。"
-            "\n\n三月前后返青，四月上旬冠层开始加快扩展时，先比较各区根区水氮和冠层读数。"
-            "结合近期降雨决定是否先补水。"
+            "\n\n十月中旬前后安排秋播。"
+            "先看地块墒情和近期天气，地面适合时整平并分块条播，播深参考约3 cm。土壤过湿就等到合适时段复查。"
+            "十月底到十一月初检查出苗，把主要氮肥留到四月巡查后安排。"
+            "\n\n三月前后返青。四月上旬冠层开始加快扩展时，先看墒情和近期降雨，确有缺水风险时，首轮补水参考约50 mm。"
+            "补水生效后或墒情已合适时，再比较各区根区水氮和冠层读数。"
             "发现某区长势偏弱时，天气允许就用无人机定位，再让地面机器人对比异常块和相邻正常块的生育状态与叶片读数。"
             "暂不宜飞行时，先用探头和地面巡查缩小范围。"
-            "墒情相近且根区氮与叶片读数都指向供氮不足时，给确认的地块补氮。"
-            "全田供氮有下降趋势时，结合长势安排全田追氮。"
+            "例如墒情接近时，弱区根区可用氮只有邻区约三分之一，弱块叶片读数也低约10点以上，可判定为优先补氮的地块。"
+            "预计全田供氮跟不上生长时，首轮追氮可参考约13–14 kg尿素/块。对确认缺氮的块，这一轮的总量可参考约24–25 kg尿素/块。"
             "证据还不一致时，先补查异常块和邻块，再决定处理。"
-            "\n\n四月中下旬到开花前复查原处理块和邻块，比较根区水氮、冠层和叶片变化，据此调整后续投入。"
-            "五月上旬末到中旬初核实生育阶段。"
-            "开花前和灌浆中段结合墒情趋势与降雨判断是否补水。"
+            "\n\n四月中下旬复查原处理块和邻块，比较根区水氮、冠层和叶片变化。氮差缩小、叶片读数改善时，局部加量可以结束。全田仍需追氮时，第二轮参考约6–7 kg尿素/块，按余量调整。"
+            "四月中下旬、开花前和五月中下旬灌浆时，结合墒情趋势与降雨判断是否补水，仍有缺水风险时参考首轮水深。"
+            "五月上旬末到中旬初用地块生育进度确认开花。"
             "按灌水回执的生效时间复测原地块，按水分变化安排下一次检查。"
             "\n\n六月中旬前后，先查各块成熟状态和粮箱余量，再结合地面墒情和降雨预报安排分批收获。"
             "碰上雨天就选下一个可能下地的时段复查。"

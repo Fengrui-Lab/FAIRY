@@ -1,6 +1,6 @@
 # 管理扩展场景：阅读入口
 
-当前共26个场景，包含16个玉米／大豆管理场景和10个冬小麦场景。冬小麦的分块农场、现有工具复用及运行方法见 [WINTER_WHEAT.md](WINTER_WHEAT.md)；新增内容仍按L3、App、引擎和评估分别放在本目录。
+当前共31个场景，包含16个玉米／大豆管理场景和15个冬小麦场景。冬小麦的分块农场、现有工具复用及运行方法见 [WINTER_WHEAT.md](WINTER_WHEAT.md)；新增内容仍按L3、App、引擎和评估分别放在本目录。
 
 ## 美元核算与2025年中国价格
 
@@ -37,7 +37,18 @@ relative_difference     = (agent - oracle) / oracle
 relative_difference_pct = 100 * (agent - oracle) / oracle
 ```
 
-正数表示Agent的数值更高：成本更高通常更差，产量或净收益更高更好。Oracle=0时比例为null并说明原因；Oracle为负时保留原公式，同时给出绝对差额和负分母标志。不同作物、不同季节不混加公斤数；作物发生变化时，相应季节产量对比记为不可比。`yield_loss_pct_by_crop`与上述产量增幅符号相反，允许负数。
+正数表示 Agent 的数值更高。Oracle 为零时比例为 `null`。Oracle 为负时保留原公式，报告同时给出差额和负分母标志。
+
+拓展报告沿用回放表 `yield_loss(%)` 和 `recovered_yield_loss(%)` 的两套产量：
+
+```text
+yield_loss_pct           = 100 * (1 - agent_biological_kg / oracle_biological_kg)
+recovered_yield_loss_pct = 100 * (1 - agent_recovered_kg / oracle_recovered_kg)
+```
+
+生物产量是模拟器的籽粒干物质。尚未成熟的作物在独立副本上逐日推进，最多 180 天且限于当季有效期限，取达到成熟或到达上限时的产量。收获产量取原轨迹中实际收获并折到市场含水率的公斤数，未收获的地块计零。两者均使用实际垄或地块面积，Agent 超过 Oracle 时为负，Oracle 为零或数据缺失时为 `null`。
+
+单作物报告给出两项总比例，多作物分别看 `yield_loss_pct_by_crop` 和 `recovered_yield_loss_pct_by_crop`。跨年按同年同作物配对，同作物的年份集合一致时各自合计公斤数再比较。每季结果见 `oracle_comparison.seasons`，入库重量差异单列 `stored_yield_loss_pct_by_crop`。
 
 改价会改变最优决策，因此当前Oracle需要匹配本美元价格表重新评估、执行和新实例回放。搜索证据与每场参考一起标识，不称为全局最优。以前的DeepSeek/OpenAI结果保持原价原样；若另作美元重估，必须标明旧决策是在旧价格下产生，不能当成新价格下重新调用模型的实验。
 

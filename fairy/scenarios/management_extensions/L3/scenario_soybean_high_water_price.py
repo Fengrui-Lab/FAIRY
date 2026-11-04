@@ -67,6 +67,8 @@ class ScenarioSoybeanHighWaterPrice(Scenario):
             "currency": "USD",
             "price_book_id": "china_northeast_2025_usd_v1",
             "cny_per_usd": 7.1757,
+            "biological_kg_by_crop": {"soybean": 1846.7534796580203},
+            "recovered_kg_by_crop": {"soybean": 2021.9615626591376},
             "stored_kg_by_crop": {"soybean": 2021.96},
             "production_cost": 117.0435553325808,
             "stored_grain_value": 1217.2843346293741,

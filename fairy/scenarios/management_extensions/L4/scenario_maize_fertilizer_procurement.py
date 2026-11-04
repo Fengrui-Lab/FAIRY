@@ -125,8 +125,20 @@ class ScenarioTwoYearMaizeFertilizerProcurement(Scenario):
             "production_cost": 296.48215077377256,
             "net_operating_margin": 1916.2859415377789,
             "seasons": [
-                {"year": 2024, "stored_grain_kg": 3496.84, "crop_id": "maize"},
-                {"year": 2025, "stored_grain_kg": 3854.16, "crop_id": "maize"},
+                {
+                    "year": 2024,
+                    "stored_grain_kg": 3496.84,
+                    "crop_id": "maize",
+                    "biological_grain_kg": 3100.293852065068,
+                    "recovered_grain_kg": 3496.843065701296,
+                },
+                {
+                    "year": 2025,
+                    "stored_grain_kg": 3854.16,
+                    "crop_id": "maize",
+                    "biological_grain_kg": 3417.0764597263915,
+                    "recovered_grain_kg": 3854.14437899372,
+                },
             ],
         },
         "workflow_steps": 213,
@@ -463,7 +475,7 @@ class ScenarioTwoYearMaizeFertilizerProcurement(Scenario):
                 compare_to_oracle(
                     account,
                     reference["selected"],
-                    agent_seasons=self.cycle.closed,
+                    agent_seasons=self.cycle.yield_seasons(),
                     oracle_seasons=reference["selected"].get("seasons", ()),
                 )
         account["purchase_accounts"] = self.market.compute_purchase_accounts()

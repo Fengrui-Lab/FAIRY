@@ -112,8 +112,18 @@ class TwoYearMaizeScenario(Scenario):
             "net_operating_margin": 7704.293011520906,
             "total_stored_grain_kg": 29615.04,
             "seasons": [
-                {"year": 2026, "stored_grain_kg": 14727.04},
-                {"year": 2027, "stored_grain_kg": 14888.0},
+                {
+                    "year": 2026,
+                    "stored_grain_kg": 14727.04,
+                    "biological_grain_kg": 13056.92737475719,
+                    "recovered_grain_kg": 14726.999480830764,
+                },
+                {
+                    "year": 2027,
+                    "stored_grain_kg": 14888.0,
+                    "biological_grain_kg": 13199.65707460254,
+                    "recovered_grain_kg": 14887.985305074959,
+                },
             ],
         },
         "workflow_steps": 263,

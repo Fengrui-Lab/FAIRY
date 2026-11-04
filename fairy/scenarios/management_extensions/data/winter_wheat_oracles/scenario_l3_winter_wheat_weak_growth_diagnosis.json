@@ -1,0 +1,1443 @@
+{
+  "reference": {
+    "scenario_id": "scenario_l3_winter_wheat_weak_growth_diagnosis",
+    "input_fingerprint": "2c11cd3356533c3f142a6b27ddb2676fdfe500e26cb8062c8d7f624124587b61",
+    "workflow_steps": 153,
+    "candidate_count": 19,
+    "feasible_count": 19,
+    "scope": "Best net operating margin among the executed candidates. Diagnosis controls used equal total water and urea. Generic soil fixtures, not a field-calibrated recommendation.",
+    "selected": {
+      "currency": "USD",
+      "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+      "cny_per_usd": 7.1757,
+      "stored_kg_by_crop": {
+        "winter_wheat": 7168.569999999999
+      },
+      "stored_grain_kg": 7168.569999999999,
+      "dry_grain_kg": 6602.607765248608,
+      "production_cost": 360.89980712152015,
+      "stored_grain_value": 2377.6351575456047,
+      "net_operating_margin": 2016.7353504240846,
+      "water_m3": 1518.75,
+      "fertilizer_product_kg": 342.391304347826
+    }
+  },
+  "diagnosis_evidence": {
+    "before": [
+      {
+        "blocks": [
+          0,
+          1
+        ],
+        "root_vwc": 0.119,
+        "available_n_kg_ha": 11.1167
+      },
+      {
+        "blocks": [
+          2,
+          4
+        ],
+        "root_vwc": 0.2653,
+        "available_n_kg_ha": 7.453
+      },
+      {
+        "blocks": [
+          5,
+          7
+        ],
+        "root_vwc": 0.267,
+        "available_n_kg_ha": 7.453
+      },
+      {
+        "blocks": [
+          8,
+          9
+        ],
+        "root_vwc": 0.2759,
+        "available_n_kg_ha": 0.0
+      },
+      {
+        "blocks": [
+          10,
+          12
+        ],
+        "root_vwc": 0.2713,
+        "available_n_kg_ha": 7.453
+      },
+      {
+        "blocks": [
+          13,
+          15
+        ],
+        "root_vwc": 0.2673,
+        "available_n_kg_ha": 7.453
+      }
+    ],
+    "after": [
+      {
+        "blocks": [
+          0,
+          1
+        ],
+        "root_vwc": 0.2038,
+        "available_n_kg_ha": 0.0
+      },
+      {
+        "blocks": [
+          2,
+          4
+        ],
+        "root_vwc": 0.2565,
+        "available_n_kg_ha": 0.0
+      },
+      {
+        "blocks": [
+          5,
+          7
+        ],
+        "root_vwc": 0.2506,
+        "available_n_kg_ha": 0.0
+      },
+      {
+        "blocks": [
+          8,
+          9
+        ],
+        "root_vwc": 0.2677,
+        "available_n_kg_ha": 29.22
+      },
+      {
+        "blocks": [
+          10,
+          12
+        ],
+        "root_vwc": 0.2564,
+        "available_n_kg_ha": 0.0
+      },
+      {
+        "blocks": [
+          13,
+          15
+        ],
+        "root_vwc": 0.2543,
+        "available_n_kg_ha": 0.0
+      }
+    ],
+    "robot_first_spad_proxy": {
+      "1": 50.0,
+      "2": 47.2,
+      "7": 48.6,
+      "8": 36.8,
+      "9": 34.0
+    }
+  },
+  "controls": {
+    "target_55_60": {
+      "dry_grain_kg": 6602.607765248608,
+      "stored_grain_kg": 7168.569999999999,
+      "net_operating_margin": 2016.7353504240846,
+      "water_m3": 1518.75,
+      "fertilizer_product_kg": 342.391304347826,
+      "dry_grain_kg_by_group": {
+        "shallow_water_limited": 542.7850728349771,
+        "low_n": 677.0508562531264,
+        "control": 5382.771836160504
+      }
+    },
+    "swap_55_60": {
+      "dry_grain_kg": 6476.142551521182,
+      "stored_grain_kg": 7031.269999999999,
+      "net_operating_margin": 1971.9617394871725,
+      "water_m3": 1518.75,
+      "fertilizer_product_kg": 342.391304347826,
+      "dry_grain_kg_by_group": {
+        "shallow_water_limited": 515.021226681116,
+        "low_n": 578.3494886795615,
+        "control": 5382.771836160504
+      }
+    },
+    "uniform_55_60": {
+      "dry_grain_kg": 6581.68827134262,
+      "stored_grain_kg": 7145.85,
+      "net_operating_margin": 1998.9836024537901,
+      "water_m3": 1518.75,
+      "fertilizer_product_kg": 342.391304347826,
+      "dry_grain_kg_by_group": {
+        "shallow_water_limited": 521.5547504091563,
+        "low_n": 606.999203459127,
+        "control": 5453.134317474337
+      }
+    },
+    "omit_40_120": {
+      "dry_grain_kg": 6476.142551521182,
+      "stored_grain_kg": 7031.269999999999,
+      "net_operating_margin": 1980.6044080248157,
+      "water_m3": 1450.0,
+      "fertilizer_product_kg": 326.0869565217391,
+      "dry_grain_kg_by_group": {
+        "shallow_water_limited": 515.021226681116,
+        "low_n": 578.3494886795615,
+        "control": 5382.771836160504
+      }
+    }
+  },
+  "steps": [
+    [
+      "farm",
+      "get_field_info",
+      {},
+      "get field info"
+    ],
+    [
+      "accounts",
+      "get_accounts",
+      {},
+      "get accounts"
+    ],
+    [
+      "tractor",
+      "get_status",
+      {},
+      "get status"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "grader"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "prepare_field",
+      {},
+      "prepare field"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 1204600.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "detach_implement",
+      {},
+      "detach implement"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "seeder"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 0,
+        "end_block": 0,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 1,
+        "end_block": 1,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 2,
+        "end_block": 2,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 3,
+        "end_block": 3,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 4,
+        "end_block": 4,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 5,
+        "end_block": 5,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 6,
+        "end_block": 6,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 7,
+        "end_block": 7,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 8,
+        "end_block": 8,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 9,
+        "end_block": 9,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 10,
+        "end_block": 10,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 11,
+        "end_block": 11,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 12,
+        "end_block": 12,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 13,
+        "end_block": 13,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 14,
+        "end_block": 14,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 15,
+        "end_block": 15,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 16238304.0
+      },
+      "advance time"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "Distinguish shallow low water from low nitrogen using complete coverage zones."
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "drone",
+      "survey_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "Map the weak canopy and compare it with neighboring normal blocks."
+    ],
+    [
+      "robot",
+      "inspect_blocks",
+      {
+        "start_block": 1,
+        "end_block": 2
+      },
+      "Compare a dry block and nearby normal foliage at the same stage."
+    ],
+    [
+      "robot",
+      "inspect_blocks",
+      {
+        "start_block": 7,
+        "end_block": 9
+      },
+      "Compare leaf greenness in the moist weak area with an adjacent reference."
+    ],
+    [
+      "robot",
+      "charge",
+      {},
+      "charge"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 16.304347826086957
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 8,
+        "end_block": 9,
+        "kg_per_block": 8.152173913043478
+      },
+      "Treat the moist zone with low available N and pale leaves."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 1,
+        "depth_mm": 55.0
+      },
+      "Water the shallow dry zone with adequate available N."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 303680.0
+      },
+      "advance time"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "Recheck the original zones after daily settlement and before the next broad application."
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "robot",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 2
+      },
+      "inspect blocks"
+    ],
+    [
+      "robot",
+      "inspect_blocks",
+      {
+        "start_block": 8,
+        "end_block": 9
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 184.78260869565216
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 11.54891304347826
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 11.54891304347826
+      },
+      "fertilize"
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 45
+      },
+      "irrigate"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 914680.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 141.30434782608694
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 8.831521739130434
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 8.831521739130434
+      },
+      "fertilize"
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 50
+      },
+      "irrigate"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 1258080.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 50
+      },
+      "irrigate"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 50100.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "detach_implement",
+      {},
+      "detach implement"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "harvester"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 0,
+        "end_block": 1
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_0"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_0",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_0"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "refuel",
+      {
+        "liters": 50.0
+      },
+      "refuel"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 2,
+        "end_block": 3
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_2"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_2",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_2"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 4,
+        "end_block": 5
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_4"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_4",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_4"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 6,
+        "end_block": 7
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_6"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_6",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_6"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 8,
+        "end_block": 9
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_8"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_8",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_8"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 10,
+        "end_block": 11
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_10"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_10",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_10"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 12,
+        "end_block": 13
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_12"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_12",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_12"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 14,
+        "end_block": 15
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_14"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_14",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_14"
+      },
+      "store grain"
+    ],
+    [
+      "accounts",
+      "get_accounts",
+      {},
+      "get accounts"
+    ]
+  ]
+}

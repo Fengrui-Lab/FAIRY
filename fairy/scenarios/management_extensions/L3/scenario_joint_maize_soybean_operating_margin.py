@@ -81,6 +81,8 @@ class ScenarioJointCropOperatingMargin(Scenario):
             "currency": "USD",
             "price_book_id": "china_northeast_2025_usd_v1",
             "cny_per_usd": 7.1757,
+            "biological_kg_by_crop": {"maize": 3840.804076896348, "soybean": 1790.18432155591},
+            "recovered_kg_by_crop": {"maize": 4332.069714638906, "soybean": 1960.0254869596172},
             "stored_kg_by_crop": {"maize": 4332.08, "soybean": 1960.04},
             "production_cost": 252.46567159352807,
             "stored_grain_value": 2484.0316066725195,

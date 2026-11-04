@@ -219,6 +219,7 @@ class CropRotationApp(SeasonCycle):
             "storage_limit_pct": self.farm._postharvest_market.max_storage_moisture_pct,
             "status": "stored",
         }
+        self.closed[-1]["crop_id"] = self.current_crop
         self.closed[-1]["grain_batch"] = batch
         batches = [deepcopy(b) for b in self.farm.stored_batches if b["season"] == year]
         if (
@@ -229,8 +230,10 @@ class CropRotationApp(SeasonCycle):
                 "Closed-season grain does not match crop-specific warehouse batches"
             )
         self.closed[-1]["grain_batches"] = batches
-        self.closed[-1]["crop_id"] = self.current_crop
-        return deepcopy(self.closed[-1])
+        record = deepcopy(self.closed[-1])
+        record.pop("biological_grain_kg")
+        record.pop("recovered_grain_kg")
+        return record
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)

@@ -112,8 +112,20 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             "production_cost": 231.01168656818984,
             "net_operating_margin": 1614.8420698597545,
             "seasons": [
-                {"year": 2024, "stored_grain_kg": 3140.08, "crop_id": "maize"},
-                {"year": 2025, "stored_grain_kg": 2992.0, "crop_id": "maize"},
+                {
+                    "year": 2024,
+                    "stored_grain_kg": 3140.08,
+                    "crop_id": "maize",
+                    "biological_grain_kg": 2783.985790922705,
+                    "recovered_grain_kg": 3140.076996738397,
+                },
+                {
+                    "year": 2025,
+                    "stored_grain_kg": 2992.0,
+                    "crop_id": "maize",
+                    "biological_grain_kg": 2652.7055249365353,
+                    "recovered_grain_kg": 2992.005068823768,
+                },
             ],
         },
         "workflow_steps": 198,
@@ -442,7 +454,7 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
                 compare_to_oracle(
                     account,
                     reference["selected"],
-                    agent_seasons=self.cycle.closed,
+                    agent_seasons=self.cycle.yield_seasons(),
                     oracle_seasons=reference["selected"].get("seasons", ()),
                 )
         return ScenarioValidationResult(

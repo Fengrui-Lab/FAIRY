@@ -248,9 +248,16 @@ class WinterWheatBackend:
         self.receipts[operation_id] = item
         return deepcopy(item)
 
-    def advance_day(self) -> dict:
+    def _calculate_current_day(self, day: date, actions: list[dict]) -> None:
+        """Calculate native rates after the block's daily management inputs."""
+        self.model.calculate_current_day()
+
+    def advance_day(self, *, assimilation_factor: float = 1.0) -> dict:
         if self.failed:
             raise RuntimeError(f"Invalid backend: {self.failed}")
+        factor = number(
+            assimilation_factor, "external assimilation factor", minimum=0, maximum=1
+        )
         day = self.next_day
         if day > self.bundle.season.deadline:
             raise ValueError("Season deadline exceeded")
@@ -287,7 +294,16 @@ class WinterWheatBackend:
                     N_amount=nitrogen,
                     N_recovery=self.n_recovery,
                 )
-            self.model.calculate_current_day()
+            crop = self.model.crop
+            if crop is not None:
+                assimilation = self.runtime["Assimilation"]
+                if factor != 1.0 and not isinstance(crop.assim, assimilation):
+                    crop.assim = assimilation(
+                        day, self.model.kiosk, self.model.parameterprovider
+                    )
+                if isinstance(crop.assim, assimilation):
+                    crop.assim.external_factor = factor
+            self._calculate_current_day(day, actions)
             self.model.run(days=1)
             if self.model.day != day + timedelta(days=1):
                 raise RuntimeError(
@@ -304,7 +320,10 @@ class WinterWheatBackend:
                         values[key] = self.maturity.get(key)
             self.values = values
             self.next_day += timedelta(days=1)
-            self.journal.append({"day": day.isoformat(), "actions": actions})
+            entry = {"day": day.isoformat(), "actions": actions}
+            if factor != 1.0:
+                entry["assimilation_factor"] = factor
+            self.journal.append(entry)
             self.pending.clear()
             return self.snapshot()
         except Exception as exc:
@@ -352,7 +371,9 @@ class WinterWheatBackend:
                 if a["day"] != entry["day"]:
                     raise ValueError("Checkpoint action date mismatch")
                 result.queue(a["id"], a["kind"], a["amount"])
-            result.advance_day()
+            result.advance_day(
+                assimilation_factor=entry.get("assimilation_factor", 1.0)
+            )
         for a in state["pending"]:
             if a["day"] != result.next_day.isoformat():
                 raise ValueError("Pending checkpoint action date mismatch")

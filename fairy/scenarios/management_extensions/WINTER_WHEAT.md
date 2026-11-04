@@ -20,14 +20,39 @@
 
 ## 冬小麦场景
 
+以下是当前推荐运行的场景。
+
 | ID | 场景文件 | 经营情境 |
 | --- | --- | --- |
 | `scenario_l3_winter_wheat_full_season` | `L3/scenario_winter_wheat_full_season.py` | 普通水价，全季净经营收益 |
 | `scenario_l3_winter_wheat_water_limit` | `L3/scenario_winter_wheat_water_limit.py` | 较少季节供水 |
 | `scenario_l3_winter_wheat_nitrogen_limit` | `L3/scenario_winter_wheat_nitrogen_limit.py` | 较少尿素库存 |
-| `scenario_l3_winter_wheat_high_water_price` | `L3/scenario_winter_wheat_high_water_price.py` | 更高供水价格 |
 | `scenario_l3_winter_wheat_block_scouting` | `L3/scenario_winter_wheat_block_scouting.py` | 春季巡查与分块管理 |
-| `scenario_l3_winter_wheat_soil_water_priority` | `L3/scenario_winter_wheat_soil_water_priority.py` | 按土壤蓄水差异与墒情分配有限水量 |
+| `scenario_l3_winter_wheat_weak_growth_diagnosis` | `L3/scenario_winter_wheat_weak_growth_diagnosis.py` | 诊断缺水和缺氮造成的弱长势，分块处理和复查 |
+| `scenario_l3_winter_wheat_stripe_rust` | `L3/scenario_winter_wheat_stripe_rust.py` | 识别条锈病灶，比较局部与全田防治 |
+| `scenario_l3_winter_wheat_late_maturing` | `L3/scenario_winter_wheat_late_maturing.py` | 官方 Winter_wheat_101，按较长的灌浆期管理 |
+| `scenario_l3_winter_wheat_two_varieties` | `L3/scenario_winter_wheat_two_varieties.py` | 同一农场各半种植 Winter_wheat_104 和 101，分开管理和入库 |
+| `scenario_l3_winter_wheat_local_drainage` | `L3/scenario_winter_wheat_local_drainage.py` | 花前后局部积水，按块抽排并复查根区退湿 |
+| `scenario_l3_winter_wheat_soil_water_priority` | `L3/scenario_winter_wheat_soil_water_priority.py` | 两种土壤共用配额，按可用水和生育期分水 |
+
+原五个场景的 `detail=true` 给出水深、每块尿素产品重量和关键阶段的参考范围。水肥实际用量仍结合墒情、天气、苗情、可用氮和剩余资源决定。
+
+弱长势诊断、条锈病、晚熟品种、双品种、局部排涝和新版土壤分水的固定 Oracle 位于 `data/winter_wheat_oracles/`，场景文件记录构造和任务描述。Oracle 候选使用公开工具完成全季作业，对照用量、产量和净收益随参考结果保存。品种比较采用同一份官方 WOFOST 参数文件和相同的面积、天气及资源口径。双品种地块分别计算干粮、开花和成熟日期，仓储批次保留品种来源。
+
+### 待定
+
+| ID | 场景文件 | 经营情境 |
+| --- | --- | --- |
+| `scenario_l3_winter_wheat_high_water_price` | `L3/scenario_winter_wheat_high_water_price.py` | 更高供水价格 |
+
+保留原场景 ID 供历史回放，暂不纳入推荐运行批次。
+
+### 待重做
+
+以下四个保留原场景 ID，供查看和回放历史实验。暂不列入推荐运行批次。
+
+| ID | 场景文件 | 经营情境 |
+| --- | --- | --- |
 | `scenario_l3_winter_wheat_irrigation_turn` | `L3/scenario_winter_wheat_irrigation_turn.py` | 核对泵站轮次和并行能力，安排两批花前补水 |
 | `scenario_l3_winter_wheat_staggered_sowing` | `L3/scenario_winter_wheat_staggered_sowing.py` | 地块分期交接，分别利用合适的播种时段 |
 | `scenario_l3_winter_wheat_drying_window` | `L3/scenario_winter_wheat_drying_window.py` | 在短收获窗口和日烘干容量下按期交付 |
@@ -39,9 +64,25 @@
 
 巡查场景使用六个固定观测区和十六个管理块。固定传感器读区域根区水氮和冠层，无人机按块报告 NDVI 和冠层温度代理，机器人到块内读取生育状态和叶片 SPAD 代理。飞行和步巡沿用原设备的天气、电量、时间与覆盖规则。记录各次巡查的时间和覆盖块，报告可用的测量误差。
 
-局部初始土壤氮供应差异由原生 WOFOST 结算。Agent 通过多种观测定位，再决定处理。地块状态查询发布播种与收获所需的状态，氮供应和冠层诊断证据由巡查工具提供。机器人叶片值来自已有 SPAD 观测模型和小麦的原生叶氮状态。当前小麦模型的病虫草字段为未模拟。
+局部初始土壤氮供应差异由原生 WOFOST 结算。Agent 通过多种观测定位，再决定处理。地块状态查询发布播种与收获所需的状态，氮供应和冠层诊断证据由巡查工具提供。机器人叶片值来自已有 SPAD 观测模型和小麦的原生叶氮状态。这两个巡查场景的病虫草字段为未模拟。条锈病场景使用单独的病程与地面抽样。
 
 运行下文的 CLI 命令时，将场景 ID 换成 `scenario_l3_winter_wheat_block_scouting` 即可执行巡查 Oracle 和回放。油菜可沿用地块编号、设备作业和观测入口，生育和观测值由油菜模型提供。
+
+## 土壤水量优先
+
+浅土区和深土区各 8 块，接受同一份天气并共用季节供水。两区的土壤是模拟参数。逐块查询同时给出根区含水率、原生根深、可用水深及其比例、到田间持水量的净补水缺口。按区比较含水量时，应结合各区的田间持水量、萎蔫点、根深和降雨趋势。灌水完成后按日结算，再复查墒情。
+
+新版季节配额为 950 m³。147 步 Oracle 从 16 条已执行方案中按净收益选出。前两轮先补浅土区，开花后同时补深土区。相同播期、施氮、灌溉日期和每轮水量下，分区方案干籽粒 6,454.99 kg，均分为 6,130.31 kg，全给浅土区为 6,131.13 kg。另行调整日期的均分候选最好为 6,301.66 kg。
+
+默认截止日为 2020 年 8 月 30 日。历史工作流沿用原场景 ID，回放时增加 `"legacy": true` 或 `"late_harvest": false`，即可使用原土壤、1,000 m³ 配额、7 月 15 日截止日和 155 步 Oracle。新版的参数、候选和观测保存在 [Oracle 参考与工作流](data/winter_wheat_oracles/scenario_l3_winter_wheat_soil_water_priority.json)。
+
+## 局部排涝
+
+16 个管理块中，6–9 号块使用独立的浅土层、低渗排和地表蓄水参数，并启用 WOFOST 原生根区缺氧响应。各块接受同一场雨。为使涝害在事前节制灌溉的情况下也能出现，场景在原 NASA POWER 序列的 2020 年 5 月 7 日和 8 日各叠加 60 mm 模拟降雨，合计日雨量为 78.70 和 78.25 mm。这是严重降雨压力测试，土壤和排水价格也是实验设定。
+
+`Drainage.inspect_blocks` 可查逐块积水、根区含水率、连续过湿天数和抽排能力。`Drainage.drain` 按实际地表积水量计费并占用作业时间，次日复查原生结算。根区仍按原生渗排逐日退湿。独立管理块之间没有横向来水。
+
+Oracle 从 14 条候选中选出净收益最高的方案，共 184 步。5 月 9 日抽排 27.23 m³，复查退湿后再分区补水。同水肥下及时排水收获 7251.23 kg 干籽粒，不排为 6964.77 kg，全场 YieldLoss 为 3.95%。相同水肥的排水对照和逐日观测保存在 [Oracle 参考与工作流](data/winter_wheat_oracles/scenario_l3_winter_wheat_local_drainage.json)。
 
 ## 代码位置
 
@@ -73,7 +114,7 @@
 - 播种率固定为参考用种量；模型没有密度响应，不能声称少播种自动获得相同产量。种子质量／粒数换算为显式物流假设。
 - 只能收获原生成熟块。`TWSO`是kg干籽粒/ha，按真实块面积换算一次，再采用明确的95%机械回收率和标准水分换算。沿用仓库的**标准水分质量口径**，干燥不重复增减这份标准质量。
 
-当前不模拟冻死、雪被、病虫草害、倒伏、横向块间水氮流动或成熟后延迟收获损失。粮食含水率是物流假设，不是WOFOST动态预测。
+当前不模拟冻死、雪被、倒伏、横向块间水氮流动或成熟后延迟收获损失。条锈病和局部涝害仅在对应场景启用，其他病虫草害未模拟。粮食含水率是物流假设，不是WOFOST动态预测。
 
 ## 价格、任务与评价
 

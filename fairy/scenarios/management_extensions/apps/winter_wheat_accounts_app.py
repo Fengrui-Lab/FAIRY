@@ -1,6 +1,6 @@
 """Wheat configuration and the existing consumed-input operating ledger."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import json
 from pathlib import Path
 from ..china_market_prices import CNY_PER_USD, usd
@@ -88,7 +88,17 @@ class WinterWheatAccounts(OperatingAccounts):
 
     def __init__(self, *, resources, **kwargs):
         self.resources = resources
-        super().__init__(prices=resources.operating_prices(), **kwargs)
+        prices = resources.operating_prices()
+        seed_stock = kwargs["warehouse"].stock.seed_stock
+        if seed_stock.keys() - prices.seed_per_unit.keys():
+            seed_price = prices.seed_per_unit[SEED]
+            prices = replace(
+                prices,
+                seed_per_unit={
+                    seed: prices.seed_per_unit.get(seed, seed_price) for seed in seed_stock
+                },
+            )
+        super().__init__(prices=prices, **kwargs)
 
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
@@ -106,7 +116,7 @@ class WinterWheatAccounts(OperatingAccounts):
         result.update(
             seed_mass_kg=r.seed_mass_kg,
             seed_usd_per_kg=wheat_price("seed_per_kg"),
-            consumed_seed_kg=result["consumed_seeds"].get(SEED, 0) * r.seed_mass_kg,
+            consumed_seed_kg=sum(result["consumed_seeds"].values()) * r.seed_mass_kg,
             fertilizer_n_fraction=r.fertilizer_n_fraction,
             operating_cost_limit_usd=r.budget_usd,
             operating_cost_remaining_usd=r.budget_usd - result["production_cost"],

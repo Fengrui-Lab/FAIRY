@@ -1,0 +1,2191 @@
+{
+  "reference": {
+    "scenario_id": "scenario_l3_winter_wheat_soil_water_priority",
+    "input_fingerprint": "625dd5776028e1eebadd60c1b5c6f10aa2bbd8b9ae4bc0c52c4e780d51aa758b",
+    "selected": {
+      "currency": "USD",
+      "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+      "cny_per_usd": 7.1757,
+      "stored_kg_by_crop": {
+        "winter_wheat": 7008.28
+      },
+      "stored_grain_kg": 7008.28,
+      "dry_grain_kg": 6454.987050449124,
+      "production_cost": 383.9872922768461,
+      "stored_grain_value": 2324.4709784411275,
+      "net_operating_margin": 1940.4836861642814,
+      "water_m3": 950.0,
+      "pure_n_applied_kg": 185.0
+    },
+    "selected_candidate": "zone_priority",
+    "workflow_steps": 147,
+    "candidate_count": 16,
+    "feasible_count": 16,
+    "scope": "Highest observed net operating margin among executed candidates. Matched controls hold native irrigation date, volume per date, crop and nitrogen fixed.",
+    "candidates": {
+      "zone_priority": {
+        "rounds": [
+          [
+            "2020-04-24",
+            20,
+            0
+          ],
+          [
+            "2020-05-06",
+            45,
+            0
+          ],
+          [
+            "2020-05-17",
+            40,
+            35
+          ],
+          [
+            "2020-05-23",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-24": 100.0,
+          "2020-05-06": 225.0,
+          "2020-05-17": 375.0,
+          "2020-05-23": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3358.441746365625,
+          "deep": 3096.5453040834986
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 7008.28
+          },
+          "stored_grain_kg": 7008.28,
+          "dry_grain_kg": 6454.987050449124,
+          "production_cost": 383.9872922768461,
+          "stored_grain_value": 2324.4709784411275,
+          "net_operating_margin": 1940.4836861642814,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "uniform_matched": {
+        "rounds": [
+          [
+            "2020-04-24",
+            10,
+            10
+          ],
+          [
+            "2020-05-06",
+            22.5,
+            22.5
+          ],
+          [
+            "2020-05-17",
+            37.5,
+            37.5
+          ],
+          [
+            "2020-05-23",
+            25,
+            25
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-24": 100.0,
+          "2020-05-06": 225.0,
+          "2020-05-17": 375.0,
+          "2020-05-23": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 2601.8223528495223,
+          "deep": 3528.4859740761644
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6655.76
+          },
+          "stored_grain_kg": 6655.76,
+          "dry_grain_kg": 6130.308326925689,
+          "production_cost": 382.02221569895124,
+          "stored_grain_value": 2207.5489220563845,
+          "net_operating_margin": 1825.5267063574333,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "reverse_matched": {
+        "rounds": [
+          [
+            "2020-04-24",
+            0,
+            20
+          ],
+          [
+            "2020-05-06",
+            0,
+            45
+          ],
+          [
+            "2020-05-17",
+            35,
+            40
+          ],
+          [
+            "2020-05-23",
+            0,
+            50
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-05-17": 375.0,
+          "2020-04-24": 100.0,
+          "2020-05-06": 225.0,
+          "2020-05-23": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 1583.7122235670724,
+          "deep": 3682.0902993009736
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 5717.12
+          },
+          "stored_grain_kg": 5717.12,
+          "dry_grain_kg": 5265.802522868046,
+          "production_cost": 376.78988993282394,
+          "stored_grain_value": 1896.2255389718075,
+          "net_operating_margin": 1519.4356490389837,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "shallow_only": {
+        "rounds": [
+          [
+            "2020-04-24",
+            20,
+            0
+          ],
+          [
+            "2020-05-06",
+            45,
+            0
+          ],
+          [
+            "2020-05-17",
+            75,
+            0
+          ],
+          [
+            "2020-05-23",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-24": 100.0,
+          "2020-05-06": 225.0,
+          "2020-05-17": 375.0,
+          "2020-05-23": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3466.0360853424854,
+          "deep": 2665.0916698414912
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6656.64
+          },
+          "stored_grain_kg": 6656.64,
+          "dry_grain_kg": 6131.127755183979,
+          "production_cost": 382.0271211437162,
+          "stored_grain_value": 2207.8407960199006,
+          "net_operating_margin": 1825.8136748761845,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "uniform_calendar_search": {
+        "rounds": [
+          [
+            "2020-05-06",
+            35,
+            35
+          ],
+          [
+            "2020-05-12",
+            35,
+            35
+          ],
+          [
+            "2020-05-20",
+            25,
+            25
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-05-06": 350.0,
+          "2020-05-12": 350.0,
+          "2020-05-20": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 2767.7261683316096,
+          "deep": 3533.938462630541
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6841.8
+          },
+          "stored_grain_kg": 6841.8,
+          "dry_grain_kg": 6301.66463096215,
+          "production_cost": 383.0592713172185,
+          "stored_grain_value": 2269.2537313432836,
+          "net_operating_margin": 1886.1944600260651,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_zone_priority": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            40,
+            20
+          ],
+          [
+            "2020-05-24",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3376.1342448932915,
+          "deep": 2918.362034081398
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6834.04
+          },
+          "stored_grain_kg": 6834.04,
+          "dry_grain_kg": 6294.496278974692,
+          "production_cost": 383.01601421338194,
+          "stored_grain_value": 2266.6799336650083,
+          "net_operating_margin": 1883.6639194516265,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_uniform_matched": {
+        "rounds": [
+          [
+            "2020-04-20",
+            17.5,
+            17.5
+          ],
+          [
+            "2020-05-05",
+            22.5,
+            22.5
+          ],
+          [
+            "2020-05-16",
+            30,
+            30
+          ],
+          [
+            "2020-05-24",
+            25,
+            25
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 2343.9171953742693,
+          "deep": 3509.6093098272718
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6355.28
+          },
+          "stored_grain_kg": 6355.28,
+          "dry_grain_kg": 5853.526505201539,
+          "production_cost": 380.3472292864758,
+          "stored_grain_value": 2107.8872305140962,
+          "net_operating_margin": 1727.5400012276205,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_reverse_matched": {
+        "rounds": [
+          [
+            "2020-04-20",
+            0,
+            35
+          ],
+          [
+            "2020-05-05",
+            0,
+            45
+          ],
+          [
+            "2020-05-16",
+            20,
+            40
+          ],
+          [
+            "2020-05-24",
+            0,
+            50
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-05-16": 300.0,
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 1302.7784641063954,
+          "deep": 3682.0902993009736
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 5412.12
+          },
+          "stored_grain_kg": 5412.12,
+          "dry_grain_kg": 4984.8687634073685,
+          "production_cost": 375.0897073722375,
+          "stored_grain_value": 1795.0646766169152,
+          "net_operating_margin": 1419.9749692446776,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_shallow_only": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            60,
+            0
+          ],
+          [
+            "2020-05-24",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3507.3049606649483,
+          "deep": 2665.0916698414912
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6701.4400000000005
+          },
+          "stored_grain_kg": 6701.4400000000005,
+          "dry_grain_kg": 6172.396630506442,
+          "production_cost": 382.27685287720567,
+          "stored_grain_value": 2222.699834162521,
+          "net_operating_margin": 1840.422981285315,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_deep_15_mm_at_grain_fill": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            45,
+            15
+          ],
+          [
+            "2020-05-24",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3425.3290496428267,
+          "deep": 2855.5758716284136
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6819.24
+          },
+          "stored_grain_kg": 6819.24,
+          "dry_grain_kg": 6280.904921271238,
+          "production_cost": 382.93351355142556,
+          "stored_grain_value": 2261.7711442786067,
+          "net_operating_margin": 1878.837630727181,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_deep_25_mm_at_grain_fill": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            35,
+            25
+          ],
+          [
+            "2020-05-24",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3311.4003647702057,
+          "deep": 2978.0300058246353
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6828.519999999999
+          },
+          "stored_grain_kg": 6828.519999999999,
+          "dry_grain_kg": 6289.430370594841,
+          "production_cost": 382.9852436962198,
+          "stored_grain_value": 2264.8490878938633,
+          "net_operating_margin": 1881.8638441976434,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_deep_30_mm_at_grain_fill": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            30,
+            30
+          ],
+          [
+            "2020-05-24",
+            50,
+            0
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3238.218294318065,
+          "deep": 3037.1511376153026
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6813.24
+          },
+          "stored_grain_kg": 6813.24,
+          "dry_grain_kg": 6275.369431933365,
+          "production_cost": 382.90006733711897,
+          "stored_grain_value": 2259.781094527363,
+          "net_operating_margin": 1876.8810271902441,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_deep_20_mm_on_last_pass": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            60,
+            0
+          ],
+          [
+            "2020-05-24",
+            30,
+            20
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3321.345154199057,
+          "deep": 2857.9244850895197
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6708.920000000001
+          },
+          "stored_grain_kg": 6708.920000000001,
+          "dry_grain_kg": 6179.269639288576,
+          "production_cost": 382.3185491577079,
+          "stored_grain_value": 2225.1807628524048,
+          "net_operating_margin": 1842.862213694697,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_deep_10_mm_on_each_late_pass": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            50,
+            10
+          ],
+          [
+            "2020-05-24",
+            40,
+            10
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0,
+          "2020-05-24": 250.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 3380.609814205948,
+          "deep": 2891.895743050554
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6810.120000000001
+          },
+          "stored_grain_kg": 6810.120000000001,
+          "dry_grain_kg": 6272.5055572565025,
+          "production_cost": 382.8826753056795,
+          "stored_grain_value": 2258.7462686567164,
+          "net_operating_margin": 1875.8635933510368,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_even_four_passes": {
+        "rounds": [
+          [
+            "2020-04-20",
+            23.75,
+            23.75
+          ],
+          [
+            "2020-05-05",
+            23.75,
+            23.75
+          ],
+          [
+            "2020-05-16",
+            23.75,
+            23.75
+          ],
+          [
+            "2020-05-24",
+            23.75,
+            23.75
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 237.5,
+          "2020-05-05": 237.5,
+          "2020-05-16": 237.5,
+          "2020-05-24": 237.5
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 2245.8543250622283,
+          "deep": 3509.6093098272718
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6248.799999999999
+          },
+          "stored_grain_kg": 6248.799999999999,
+          "dry_grain_kg": 5755.463634889499,
+          "production_cost": 379.75367046991437,
+          "stored_grain_value": 2072.5704809286894,
+          "net_operating_margin": 1692.816810458775,
+          "water_m3": 950.0,
+          "pure_n_applied_kg": 185.0
+        }
+      },
+      "early_calendar_one_pass_less": {
+        "rounds": [
+          [
+            "2020-04-20",
+            35,
+            0
+          ],
+          [
+            "2020-05-05",
+            45,
+            0
+          ],
+          [
+            "2020-05-16",
+            40,
+            20
+          ]
+        ],
+        "native_water_m3_by_day": {
+          "2020-04-20": 175.0,
+          "2020-05-05": 225.0,
+          "2020-05-16": 300.0
+        },
+        "dry_grain_kg_by_zone": {
+          "shallow": 2732.019278892404,
+          "deep": 2918.362034081398
+        },
+        "outcome": {
+          "currency": "USD",
+          "price_book_id": "winter_wheat_china_2025_owned_machinery_usd_v2",
+          "cny_per_usd": 7.1757,
+          "stored_kg_by_crop": {
+            "winter_wheat": 6134.72
+          },
+          "stored_grain_kg": 6134.72,
+          "dry_grain_kg": 5650.381312973804,
+          "production_cost": 372.14978513468577,
+          "stored_grain_value": 2034.7330016583749,
+          "net_operating_margin": 1662.583216523689,
+          "water_m3": 700.0,
+          "pure_n_applied_kg": 185.0
+        }
+      }
+    },
+    "soil_observations": [
+      {
+        "operation_date": "2020-04-24",
+        "depth_mm_shallow_deep": [
+          20,
+          0
+        ],
+        "after_effective_date": "2020-04-25",
+        "before": {
+          "shallow": {
+            "SM": 0.14563680585996458,
+            "DVS": 0.6390473278279335,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.326,
+            "net_mm_to_field_capacity": 56.6
+          },
+          "deep": {
+            "SM": 0.292448757997149,
+            "DVS": 0.6390473278279335,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.774,
+            "net_mm_to_field_capacity": 57.1
+          }
+        },
+        "after": {
+          "shallow": {
+            "SM": 0.1669564453076187,
+            "DVS": 0.6582611344463409,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.478,
+            "net_mm_to_field_capacity": 43.8
+          },
+          "deep": {
+            "SM": 0.2862119472692235,
+            "DVS": 0.6582611344463409,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.744,
+            "net_mm_to_field_capacity": 64.5
+          }
+        }
+      },
+      {
+        "operation_date": "2020-05-06",
+        "depth_mm_shallow_deep": [
+          45,
+          0
+        ],
+        "after_effective_date": "2020-05-07",
+        "before": {
+          "shallow": {
+            "SM": 0.12704857871148142,
+            "DVS": 0.9400290590436412,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.193,
+            "net_mm_to_field_capacity": 67.8
+          },
+          "deep": {
+            "SM": 0.24584594515563507,
+            "DVS": 0.9400290590436412,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.552,
+            "net_mm_to_field_capacity": 113.0
+          }
+        },
+        "after": {
+          "shallow": {
+            "SM": 0.18783655272067323,
+            "DVS": 0.9650583500914275,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.627,
+            "net_mm_to_field_capacity": 31.3
+          },
+          "deep": {
+            "SM": 0.24229606181759256,
+            "DVS": 0.9650583500914275,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.535,
+            "net_mm_to_field_capacity": 117.2
+          }
+        }
+      },
+      {
+        "operation_date": "2020-05-17",
+        "depth_mm_shallow_deep": [
+          40,
+          35
+        ],
+        "after_effective_date": "2020-05-18",
+        "before": {
+          "shallow": {
+            "SM": 0.17476092446164326,
+            "DVS": 1.1844421052631582,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.534,
+            "net_mm_to_field_capacity": 39.1
+          },
+          "deep": {
+            "SM": 0.23447811952230943,
+            "DVS": 1.1844421052631582,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.498,
+            "net_mm_to_field_capacity": 126.6
+          }
+        },
+        "after": {
+          "shallow": {
+            "SM": 0.22396269571463492,
+            "DVS": 1.2048526315789476,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.885,
+            "net_mm_to_field_capacity": 9.6
+          },
+          "deep": {
+            "SM": 0.2553008299125609,
+            "DVS": 1.2048526315789476,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.597,
+            "net_mm_to_field_capacity": 101.6
+          }
+        }
+      },
+      {
+        "operation_date": "2020-05-23",
+        "depth_mm_shallow_deep": [
+          50,
+          0
+        ],
+        "after_effective_date": "2020-05-24",
+        "before": {
+          "shallow": {
+            "SM": 0.1748661504040194,
+            "DVS": 1.3291052631578948,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.535,
+            "net_mm_to_field_capacity": 39.1
+          },
+          "deep": {
+            "SM": 0.23032723478473688,
+            "DVS": 1.3291052631578948,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.478,
+            "net_mm_to_field_capacity": 131.6
+          }
+        },
+        "after": {
+          "shallow": {
+            "SM": 0.2359833435307793,
+            "DVS": 1.3543052631578947,
+            "root_depth_cm": 60.0,
+            "available_water_fraction": 0.971,
+            "net_mm_to_field_capacity": 2.4
+          },
+          "deep": {
+            "SM": 0.22535114832924044,
+            "DVS": 1.3543052631578947,
+            "root_depth_cm": 120.0,
+            "available_water_fraction": 0.454,
+            "net_mm_to_field_capacity": 137.6
+          }
+        }
+      }
+    ]
+  },
+  "steps": [
+    [
+      "farm",
+      "get_field_info",
+      {},
+      "get field info"
+    ],
+    [
+      "accounts",
+      "get_accounts",
+      {},
+      "get accounts"
+    ],
+    [
+      "tractor",
+      "get_status",
+      {},
+      "get status"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "grader"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "prepare_field",
+      {},
+      "prepare field"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 1204600.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "detach_implement",
+      {},
+      "detach implement"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "seeder"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 0,
+        "end_block": 0,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 1,
+        "end_block": 1,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 2,
+        "end_block": 2,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 3,
+        "end_block": 3,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 4,
+        "end_block": 4,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 5,
+        "end_block": 5,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 6,
+        "end_block": 6,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 7,
+        "end_block": 7,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 8,
+        "end_block": 8,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 9,
+        "end_block": 9,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 10,
+        "end_block": 10,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 11,
+        "end_block": 11,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 12,
+        "end_block": 12,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 13,
+        "end_block": 13,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 14,
+        "end_block": 14,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_seeds",
+      {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "load seeds"
+    ],
+    [
+      "tractor",
+      "sow",
+      {
+        "start_block": 15,
+        "end_block": 15,
+        "depth_cm": 3.0
+      },
+      "sow"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 97.82608695652173
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 6.114130434782608
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 6.114130434782608
+      },
+      "fertilize"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 11657484.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 141.30434782608694
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 8.831521739130434
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 8.831521739130434
+      },
+      "fertilize"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 3022380.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 119.56521739130434
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 7.4728260869565215
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "refuel",
+      {
+        "liters": 50.0
+      },
+      "refuel"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 7.4728260869565215
+      },
+      "fertilize"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 1553580.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "load_fertilizer",
+      {
+        "kg": 43.47826086956522
+      },
+      "load fertilizer"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 0,
+        "end_block": 9,
+        "kg_per_block": 2.717391304347826
+      },
+      "fertilize"
+    ],
+    [
+      "tractor",
+      "fertilize",
+      {
+        "start_block": 10,
+        "end_block": 15,
+        "kg_per_block": 2.717391304347826
+      },
+      "fertilize"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 343980.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_forecast",
+      {
+        "days": 7
+      },
+      "Check rain against the measured root-zone deficit."
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "Compare available water and net refill deficits for the two soil profiles."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 7,
+        "depth_mm": 20
+      },
+      "Apply this zone's candidate allocation within the shared quota."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 71700.0
+      },
+      "advance time"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "After native settlement, compare the two profiles before allocating more water."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 950400.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_forecast",
+      {
+        "days": 7
+      },
+      "Check rain against the measured root-zone deficit."
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "Compare available water and net refill deficits for the two soil profiles."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 7,
+        "depth_mm": 45
+      },
+      "Apply this zone's candidate allocation within the shared quota."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 53700.0
+      },
+      "advance time"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "After native settlement, compare the two profiles before allocating more water."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 864000.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_forecast",
+      {
+        "days": 7
+      },
+      "Check rain against the measured root-zone deficit."
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "Compare available water and net refill deficits for the two soil profiles."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 7,
+        "depth_mm": 40
+      },
+      "Apply this zone's candidate allocation within the shared quota."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 8,
+        "end_block": 15,
+        "depth_mm": 35
+      },
+      "Apply this zone's candidate allocation within the shared quota."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 31800.0
+      },
+      "advance time"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "After native settlement, compare the two profiles before allocating more water."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 432000.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_forecast",
+      {
+        "days": 7
+      },
+      "Check rain against the measured root-zone deficit."
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "Compare available water and net refill deficits for the two soil profiles."
+    ],
+    [
+      "irrigation",
+      "irrigate",
+      {
+        "start_block": 0,
+        "end_block": 7,
+        "depth_mm": 50
+      },
+      "Apply this zone's candidate allocation within the shared quota."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 50100.0
+      },
+      "advance time"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "After native settlement, compare the two profiles before allocating more water."
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 1728000.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "system",
+      "advance_time",
+      {
+        "seconds": 86400.0
+      },
+      "advance time"
+    ],
+    [
+      "weather",
+      "get_current_weather",
+      {},
+      "get current weather"
+    ],
+    [
+      "sensor",
+      "read_root_zone_sensors",
+      {},
+      "read root zone sensors"
+    ],
+    [
+      "sensor",
+      "read_canopy_sensors",
+      {},
+      "read canopy sensors"
+    ],
+    [
+      "farm",
+      "inspect_blocks",
+      {
+        "start_block": 0,
+        "end_block": 15
+      },
+      "inspect blocks"
+    ],
+    [
+      "tractor",
+      "detach_implement",
+      {},
+      "detach implement"
+    ],
+    [
+      "tractor",
+      "attach_implement",
+      {
+        "implement": "harvester"
+      },
+      "attach implement"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 0,
+        "end_block": 1
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_0"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_0",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_0"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 2,
+        "end_block": 3
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_2"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_2",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_2"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 4,
+        "end_block": 5
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_4"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_4",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_4"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 6,
+        "end_block": 7
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_6"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_6",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_6"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 8,
+        "end_block": 9
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_8"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_8",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_8"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 10,
+        "end_block": 11
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_10"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_10",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_10"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 12,
+        "end_block": 13
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_12"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_12",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_12"
+      },
+      "store grain"
+    ],
+    [
+      "tractor",
+      "harvest_blocks",
+      {
+        "start_block": 14,
+        "end_block": 15
+      },
+      "harvest blocks"
+    ],
+    [
+      "tractor",
+      "unload_grain",
+      {
+        "batch_id": "wheat_14"
+      },
+      "unload grain"
+    ],
+    [
+      "warehouse",
+      "dry_grain",
+      {
+        "batch_id": "wheat_14",
+        "target_moisture_pct": 12.5
+      },
+      "dry grain"
+    ],
+    [
+      "warehouse",
+      "store_grain",
+      {
+        "batch_id": "wheat_14"
+      },
+      "store grain"
+    ],
+    [
+      "accounts",
+      "get_accounts",
+      {},
+      "get accounts"
+    ]
+  ]
+}

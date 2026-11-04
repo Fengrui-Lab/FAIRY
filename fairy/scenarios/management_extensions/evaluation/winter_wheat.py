@@ -1,8 +1,25 @@
 """Block completion, native input conservation and existing signed USD metrics."""
 
 import math
+from datetime import timedelta
 from fairy.scenarios.validation_result import ScenarioValidationResult
-from .oracle_comparison import compare_to_oracle
+from .oracle_comparison import MAX_MATURITY_DAYS, compare_to_oracle, recovered_grain_kg
+
+
+def _dry_yield_at_maturity(backend):
+    planted = backend.sown or any(action["kind"] == "sow" for action in backend.pending)
+    if not planted or backend.maturity or backend.failed:
+        return backend.values.get("TWSO") or 0
+    end = min(
+        backend.next_day + timedelta(days=MAX_MATURITY_DAYS),
+        backend.bundle.season.deadline + timedelta(days=1),
+    )
+    if backend.next_day >= end:
+        return backend.values.get("TWSO") or 0
+    projection = backend.restore(backend.bundle, backend.export_state())
+    while projection.next_day < end and not projection.maturity:
+        projection.advance_day()
+    return projection.values.get("TWSO") or 0
 
 
 def evaluate(scene, env=None):
@@ -34,6 +51,12 @@ def evaluate(scene, env=None):
     if not math.isclose(water, result["water_m3"], abs_tol=1e-6):
         failures.append("Water ledger and native gross depth do not balance")
     native_dry = sum((b.values.get("TWSO") or 0) * area_ha for b in f.backends)
+    field_projection = getattr(f, "project_biological_grain_kg", None)
+    biological = (
+        field_projection(MAX_MATURITY_DAYS)
+        if field_projection is not None
+        else sum(_dry_yield_at_maturity(b) * area_ha for b in f.backends)
+    )
     expected = sum(
         (f.backends[i].values.get("TWSO") or 0)
         * area_ha
@@ -53,6 +76,8 @@ def evaluate(scene, env=None):
     result.update(
         stored_grain_kg=stored,
         dry_grain_kg=native_dry,
+        biological_kg_by_crop={"winter_wheat": biological},
+        recovered_kg_by_crop={"winter_wheat": recovered_grain_kg(f)},
         management_unit="flat_block",
         block_count=f.num_ridges,
         harvested_blocks=[i for i, x in enumerate(f._ridges) if x.harvested],
@@ -73,7 +98,19 @@ def evaluate(scene, env=None):
         ):
             failures.append("Oracle inputs/resources/prices differ from this scene")
         else:
-            compare_to_oracle(result, reference["selected"])
+            selected = reference["selected"]
+            compare_to_oracle(
+                result,
+                {
+                    **selected,
+                    "biological_kg_by_crop": {"winter_wheat": selected["dry_grain_kg"]},
+                    "recovered_kg_by_crop": {
+                        "winter_wheat": selected["dry_grain_kg"]
+                        * 0.95
+                        / (1 - r.storage_moisture_pct / 100),
+                    },
+                },
+            )
     elif not scene.calibrating:
         failures.append("Validated block-management Oracle reference missing")
     return ScenarioValidationResult(

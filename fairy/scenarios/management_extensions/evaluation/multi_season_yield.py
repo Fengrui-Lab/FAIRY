@@ -40,7 +40,12 @@ def evaluate(scene: Scene) -> ScenarioValidationResult:
     accounts = scene.cycle.compute_accounts()
     accounts["total_stored_grain_kg"] = total
     if reference_matches and not scene.calibrating:
-        compare_to_oracle(accounts, reference["selected"], agent_seasons=rows, oracle_seasons=reference["selected"].get("seasons", ()))
+        compare_to_oracle(
+            accounts,
+            reference["selected"],
+            agent_seasons=scene.cycle.yield_seasons(),
+            oracle_seasons=reference["selected"].get("seasons", ()),
+        )
     return ScenarioValidationResult(
         success=not failures,
         message="; ".join(failures)
@@ -52,9 +57,6 @@ def evaluate(scene: Scene) -> ScenarioValidationResult:
             "seasons": rows,
             "total_stored_grain_kg": total,
             "reference_stored_grain_kg": reference_yield,
-            "yield_loss_pct": 100 * (1 - total / reference_yield)
-            if reference_yield
-            else None,
             "calibration_status": "finite_grid_best"
             if reference_matches
             else "development_not_calibrated",

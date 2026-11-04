@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from fairy.scenarios.validation_result import ScenarioValidationResult
-from .oracle_comparison import compare_to_oracle
+from .oracle_comparison import (
+    biological_grain_kg,
+    compare_to_oracle,
+    recovered_grain_kg,
+)
 
 if TYPE_CHECKING:
     from ..L3.scenario_joint_maize_soybean_operating_margin import (
@@ -20,6 +24,16 @@ def evaluate(scene: Scene) -> ScenarioValidationResult:
     for farm in scene.farms:
         errors.extend(_field_errors(scene, farm))
     account = scene.accounts.compute_accounts()
+    biological, recovered = {}, {}
+    deadline = scene.start_time + scene.duration
+    for farm in scene.farms:
+        crop = farm.crop_id
+        biological[crop] = biological.get(crop, 0.0) + biological_grain_kg(
+            farm, deadline=deadline
+        )
+        recovered[crop] = recovered.get(crop, 0.0) + recovered_grain_kg(farm)
+    account["biological_kg_by_crop"] = biological
+    account["recovered_kg_by_crop"] = recovered
     errors.extend(_resource_errors(scene, account))
     _compare_reference(scene, account, errors)
     account["feasible"] = not errors

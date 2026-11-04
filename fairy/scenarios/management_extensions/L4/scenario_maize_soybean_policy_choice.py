@@ -122,11 +122,19 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             "production_cost": 199.74016442096215,
             "net_operating_margin": 1812.5071703338351,
             "seasons": [
-                {"year": 2024, "stored_grain_kg": 3496.84, "crop_id": "maize"},
+                {
+                    "year": 2024,
+                    "stored_grain_kg": 3496.84,
+                    "crop_id": "maize",
+                    "biological_grain_kg": 3100.293852065068,
+                    "recovered_grain_kg": 3496.843065701296,
+                },
                 {
                     "year": 2025,
                     "stored_grain_kg": 979.8400000000001,
                     "crop_id": "soybean",
+                    "biological_grain_kg": 1144.2330795211062,
+                    "recovered_grain_kg": 979.8474075337582,
                 },
             ],
         },
@@ -589,7 +597,7 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
                 compare_to_oracle(
                     account,
                     reference["selected"],
-                    agent_seasons=self.cycle.closed,
+                    agent_seasons=self.cycle.yield_seasons(),
                     oracle_seasons=reference["selected"].get("seasons", ()),
                 )
         return ScenarioValidationResult(

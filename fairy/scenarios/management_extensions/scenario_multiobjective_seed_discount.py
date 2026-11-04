@@ -138,6 +138,8 @@ class ScenarioSeedDiscount(FullSeasonExtension):
             "drying_throughput_kg": 8087.839999999997,
             "fertilizer_product_kg": 0.0,
             "consumed_seeds": {"SOYBEAN_901": 754688, "MAIZE_201": 0},
+            "biological_kg_by_crop": {"soybean": 7387.013918632073},
+            "recovered_kg_by_crop": {"soybean": 8087.846250636559},
             "stored_kg_by_crop": {"soybean": 8087.839999999997},
             "stored_grain_kg": 8087.839999999997,
             "stored_grain_value": 4869.137338517495,

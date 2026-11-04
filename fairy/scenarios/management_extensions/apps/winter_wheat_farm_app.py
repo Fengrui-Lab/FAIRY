@@ -172,6 +172,8 @@ class WheatFieldPhysics:
 
 
 class WinterWheatFarm(FarmWorldApp):
+    physics_class = WheatFieldPhysics
+
     def __init__(self, bundle, resources):
         self.bundle, self.resources = bundle, resources
         super().__init__(
@@ -186,13 +188,13 @@ class WinterWheatFarm(FarmWorldApp):
             rows_per_ridge=1,
         )
         self.backends = [
-            WinterWheatBackend(self.block_inputs(block_id))
+            self.make_block_backend(block_id)
             for block_id in range(self.num_ridges)
         ]
         self._required_field_preparation_ops = ("level",)
         self.variety_name = bundle.cultivar
         self._sim_date = bundle.season.start.isoformat()
-        self._physics = WheatFieldPhysics(self)
+        self._physics = self.physics_class(self)
         self._postharvest_market.market_moisture_pct = resources.storage_moisture_pct
         self._postharvest_market.max_storage_moisture_pct = (
             resources.storage_moisture_pct
@@ -203,6 +205,12 @@ class WinterWheatFarm(FarmWorldApp):
             fertilizer_quota_kg=resources.fertilizer_stock_kg,
         )
         self._sync_blocks()
+
+    def seed_inventory(self):
+        return {SEED: round(self.resources.seed_stock_kg / self.resources.seed_mass_kg)}
+
+    def make_block_backend(self, block_id):
+        return WinterWheatBackend(self.block_inputs(block_id))
 
     def block_inputs(self, block_id):
         """Select this block's configured inputs before native initialization."""
@@ -521,7 +529,7 @@ class WinterWheatFarm(FarmWorldApp):
         ):
             raise ValueError("Checkpoint must contain every block exactly once")
         backends = [
-            WinterWheatBackend.restore(backend.bundle, saved)
+            type(backend).restore(backend.bundle, saved)
             for backend, saved in zip(self.backends, state["native"])
         ]
         self._ridges, self.backends = ridges, backends

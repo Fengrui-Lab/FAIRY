@@ -13,7 +13,7 @@ from fairy.scenarios.management_extensions.winter_wheat_oracles import SCENARIO_
 @pytest.mark.parametrize(
     "sid", (*SCENARIO_IDS, "scenario_l3_winter_wheat_block_scouting")
 )
-def test_task_modes_query_prices_and_observation_without_oracle_doses(sid):
+def test_task_modes_query_prices_and_expert_reference_rates(sid):
     scenes = []
     for detailed in (False, True):
         s = get_scenario_class(sid)(detailed_briefing=detailed)
@@ -21,13 +21,16 @@ def test_task_modes_query_prices_and_observation_without_oracle_doses(sid):
         engine = Engine(None, s)
         task = engine._resolve_agent_task()
         assert task == s.scenario_input == s.additional_system_prompt
-        assert {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)} == {10000.0}
+        exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)}
+        assert 10000.0 in exposed
         if detailed:
+            assert "约3 cm" in task and "kg尿素/块" in task and "mm" in task
             assert all(
                 phase in task for phase in ("秋播", "越冬", "开花", "灌浆", "成熟")
             )
             assert "根区" in task and "价格" in task
         else:
+            assert exposed == {10000.0}
             assert (
                 "OperatingAccounts.get_accounts" in task
                 and "WheatField.get_field_info" in task

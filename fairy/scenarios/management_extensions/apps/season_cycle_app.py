@@ -2,12 +2,14 @@
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime, time
 
 from fairy.apps.app import App
 from fairy.apps.farm_world.crop_dynamics import create_crop_dynamics
 from fairy.tool_utils import OperationType, app_tool
 from fairy.types import event_registered
+
+from ..evaluation.oracle_comparison import biological_grain_kg, recovered_grain_kg
 
 
 @dataclass(frozen=True)
@@ -94,9 +96,34 @@ class SeasonCycle(App):
             "fertilizer_budget_kg": self.fertilizer_budget_kg,
             "water_budget_mm": self.water_budget_mm,
         }
+        for row in result["closed"]:
+            row.pop("biological_grain_kg", None)
+            row.pop("recovered_grain_kg", None)
         if self.prices:
             result["operating_accounts"] = self.compute_accounts()
         return result
+
+    def yield_seasons(self):
+        """Include the current crop even when harvest or storage is unfinished."""
+        if self.closed and self.closed[-1]["year"] == self.current_year:
+            return self.closed
+        season = self.seasons[len(self.closed)]
+        deadline = datetime.combine(
+            season.harvest_deadline, time.max, self.farm.simulation_timezone
+        ).timestamp()
+        return [
+            *self.closed,
+            {
+                "year": self.current_year,
+                "crop_id": self.farm.crop_id,
+                "biological_grain_kg": biological_grain_kg(
+                    self.farm, deadline=deadline
+                ),
+                "recovered_grain_kg": recovered_grain_kg(self.farm),
+                "stored_grain_kg": self.farm._inventory.warehouse_grain_kg
+                - sum(row["stored_grain_kg"] for row in self.closed),
+            },
+        ]
 
     def compute_accounts(self):
         """Actual same-crop USD accounts; rotation scenes override crop-grain attribution."""
@@ -213,7 +240,13 @@ class SeasonCycle(App):
                 for rid, run in backend._runs.items()
             },
         }
-        self.closed.append(record)
+        self.closed.append(
+            {
+                **record,
+                "biological_grain_kg": biological_grain_kg(self.farm),
+                "recovered_grain_kg": recovered_grain_kg(self.farm),
+            }
+        )
         return deepcopy(record)
 
     @app_tool()

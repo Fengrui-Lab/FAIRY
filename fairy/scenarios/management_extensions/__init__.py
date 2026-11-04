@@ -19,10 +19,16 @@ SCENARIO_MODULES = (
     "L3.scenario_winter_wheat_full_season",
     "L3.scenario_winter_wheat_water_limit",
     "L3.scenario_winter_wheat_nitrogen_limit",
-    "L3.scenario_winter_wheat_high_water_price",
+    "L3.scenario_winter_wheat_high_water_price",  # 待定，保留历史回放
     "L3.scenario_winter_wheat_block_scouting",
-    "L3.scenario_winter_wheat_irrigation_turn",
+    "L3.scenario_winter_wheat_weak_growth_diagnosis",
+    "L3.scenario_winter_wheat_stripe_rust",
+    "L3.scenario_winter_wheat_late_maturing",
+    "L3.scenario_winter_wheat_two_varieties",
+    "L3.scenario_winter_wheat_local_drainage",
     "L3.scenario_winter_wheat_soil_water_priority",
+    # 待重做。保留原 ID 供历史回放，暂不列入推荐批次。
+    "L3.scenario_winter_wheat_irrigation_turn",
     "L3.scenario_winter_wheat_staggered_sowing",
     "L3.scenario_winter_wheat_drying_window",
     "L3.scenario_winter_wheat_delivery_contract",

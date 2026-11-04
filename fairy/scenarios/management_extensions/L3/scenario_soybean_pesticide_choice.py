@@ -76,6 +76,8 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             "currency": "USD",
             "price_book_id": "china_northeast_2025_usd_v1",
             "cny_per_usd": 7.1757,
+            "biological_kg_by_crop": {"soybean": 1818.7838894343513},
+            "recovered_kg_by_crop": {"soybean": 1988.6384333417045},
             "stored_kg_by_crop": {"soybean": 1988.64},
             "production_cost": 112.2365582706181,
             "stored_grain_value": 1197.224633136837,
