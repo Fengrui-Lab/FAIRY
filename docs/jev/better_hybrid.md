@@ -2,6 +2,8 @@
 
 Branch `jev-better-hybrid`. Goal: a Jev + LLM hybrid better than the current one. All new behaviour is behind options, off by default; `--controller farm_jev` with no new flags is unchanged (test: `tests/test_jev_better_hybrid.py`).
 
+**What is new:** the main change is the plan note. The LLM now writes its next steps at every hand-off and Jev follows them, so the LLM plans and Jev carries the plan out. Lean memory is a cost change; the budget note and medium reasoning are smaller additions. Results are also in `review.md`, section 17.
+
 ## What the old logs showed (19 hybrid runs)
 
 - Cost: Jev $1.11, LLM $1.26 (uncached input $0.69, cached input $0.55, output $0.02).
