@@ -805,3 +805,11 @@ Option `--jev-prompt-note true` (default off) adds a short neutral note to the s
 - Details: `review.md`, section 16.4.
 
 Spent: about $1.20. Part 2 total: about $11.7.
+
+## Step 24 – Better hybrid (2026-11-04, branch `jev-better-hybrid`)
+
+Options added, all off by default: lean LLM memory, LLM plan note for Jev, action budget note, fallback reasoning effort. Decisions and the 4-scenario test: `docs/jev/better_hybrid.md`.
+
+**Flag: the earlier hybrid did not use medium reasoning.** In every earlier hybrid run (sections 13-15, all of `jev_single_farm_L3mini_runs`) the LLM helper ran gpt-6-luna on Chat Completions with reasoning `none`. LLM alone ran on the Responses API with reasoning `medium`. Earlier reports do not say this. The new version runs its helper with `medium`, so any comparison of it with the old hybrid also includes this change.
+
+Full run: new version only (`hybrid_lean_plan_budget_medium`), 19 L3-mini, 3 runs each. Compared with the existing LLM-alone and hybrid runs; those were not rerun.
