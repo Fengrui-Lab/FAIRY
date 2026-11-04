@@ -14,6 +14,7 @@ Settings (folder names as in the shared run package):
     hybrid_lean_memory                   hybrid with a short LLM memory (docs/jev/better_hybrid.md)
     hybrid_lean_plan                     + the LLM writes next steps for Jev
     hybrid_lean_plan_budget              + Jev and the LLM see the actions left
+    hybrid_lean_plan_budget_medium       + the LLM uses medium reasoning, as in LLM alone
     ablation_llm_with_jev_tool           gpt-6-luna, ReAct, done check, optional ask_jev tool
     ablation_llm_with_jev_tool_and_note  same with a note about Jev in the system prompt
 
@@ -62,6 +63,7 @@ SETTINGS = {
     "hybrid_lean_memory": LEAN,
     "hybrid_lean_plan": PLAN,
     "hybrid_lean_plan_budget": [*PLAN, "--budget-note", "true"],
+    "hybrid_lean_plan_budget_medium": [*PLAN, "--budget-note", "true", "--fallback-reasoning-effort", "medium"],
     "ablation_llm_with_jev_tool": LLM_JEV_TOOL,
     "ablation_llm_with_jev_tool_and_note": [*LLM_JEV_TOOL, "--jev-prompt-note", "true"],
 }

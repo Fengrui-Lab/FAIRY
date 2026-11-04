@@ -104,7 +104,7 @@ def load_scores(path: Path | None) -> dict[tuple[str, str], float]:
         return {}
     out = {}
     for row in csv.DictReader(path.open(encoding="utf-8")):
-        cell = row.get("run_dir") or row.get("run") or row.get("case") or ""
+        cell = row.get("cell") or ""
         value = row.get("recovered_yield_loss(%)")
         scenario = row.get("scenario_id") or row.get("scenario") or ""
         if value not in (None, "") and cell:
