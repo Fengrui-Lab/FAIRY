@@ -35,7 +35,7 @@ Branch `jev-better-hybrid`. Goal: a Jev + LLM hybrid better than the current one
 
 | Setting | Finished | Grain loss | Cost, 4 runs | Min/run | Actions/run | Jev share |
 |---|---|---|---|---|---|---|
-| Old results (Oct 23) | 3/4 | 20.0% | $0.96 | not computed | 193 | not computed |
+| Old results (Oct 23) | 3/4 | 20.0% | $0.96 | not computed | 209 | not computed |
 | Current hybrid, rerun today | 4/4 | 8.7% | $0.63 | 3.4 | 153 | 49% |
 | Lean | 4/4 | 2.1% | $0.49 | 3.9 | 186 | 52% |
 | Lean + plan | 4/4 | 3.7% | $0.44 | 3.3 | 187 | 65% |
