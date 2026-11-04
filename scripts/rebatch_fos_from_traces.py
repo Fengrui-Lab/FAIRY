@@ -269,7 +269,10 @@ def _iter_fairy_tool_steps(workflow: Any, a2a_shared_trace: bool = False) -> lis
         # With a shared A2A trace the expert's real tool calls are their own steps, so
         # the delegation call is skipped. Without one the real calls are not in this
         # workflow; such a run must keep failing replay, not score as "did nothing".
-        if a2a_shared_trace and str(raw_step["tool_name"]).endswith("__expert_agent"):
+        if a2a_shared_trace and (
+            str(raw_step["tool_name"]).endswith("__expert_agent")
+            or str(raw_step["tool_name"]).startswith("FinalAnswerTool__")
+        ):
             continue
         steps.append(raw_step)
     return steps
