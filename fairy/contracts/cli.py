@@ -41,7 +41,7 @@ def capabilities():
     return dict(contract_version=CONTRACT_VERSION, identity=fingerprint(),
                 scenarios=list(list_scenarios()), controllers=list(AgentBuilder().list_agents()),
                 providers=['typesafe','system-one-compatible','vllm','openai-compatible','deepseek'],
-                features=['jev-adaptor-profiles-v1','score-batch-v1','hybrid-reflex-v1','llm-jev-tool-v1','run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
+                features=['jev-enforced-management-v2','jev-adaptor-profiles-v1','score-batch-v1','hybrid-reflex-v1','llm-jev-tool-v1','run-manifest-v1','service-check-v1','oracle-v1','fos-replay-v1','llm-roles-v1','describe-scenario-v1','scenario-data-fingerprint-v1','probe-request-v1'])
 
 
 def scrub(text, secrets):

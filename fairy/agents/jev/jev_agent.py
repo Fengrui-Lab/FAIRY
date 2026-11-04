@@ -36,7 +36,10 @@ LLM as in the default mode.
 
 from __future__ import annotations
 
+from fairy.agents.jev.constraints import family as tool_family, legal_options, action_blocker
+
 import json
+import math
 import re
 import time
 from types import SimpleNamespace
@@ -57,6 +60,7 @@ from fairy.agents.jev.menu import (
     task_numbers,
 )
 from fairy.agents.jev.baseline_parameters import BaselineParameters
+from fairy.agents.jev import management, decision_context, model_view, establishment
 from fairy.agents.jev.execution_guidance import (
     EXECUTION_GUIDANCE_VERSION, EXECUTION_GUIDANCE_SHA256, execution_guidance,
 )
@@ -211,6 +215,8 @@ class JevAgent(Agent):
         self._done_refusals = 0
         self._llm_done_refusals = 0
         self._notes: list[str] = []
+        self._management = None
+        self._derived_management_arguments = 0
         self._facts: dict[str, Any] = {}
         self._snapshot: dict[str, Any] = {}
         self._state_chars: list[int] = []
@@ -253,7 +259,28 @@ class JevAgent(Agent):
                     "execution_guidance_sha256": EXECUTION_GUIDANCE_SHA256}
         return {
             "enforced_tool_adaptor": enabled,
-            "tool_adaptor_profile": "enforced-v1" if enabled else "manos-compatible-v1",
+            "tool_adaptor_profile": management.PROFILE if enabled else "manos-compatible-v1",
+            "management_adapter_version": management.VERSION if enabled else None,
+            "decision_context_version": decision_context.VERSION if enabled else None,
+            "decision_context_sha256": decision_context.SHA256 if enabled else None,
+            "model_view_version": model_view.VERSION if enabled else None,
+            "model_view_contract_sha256": model_view.SHA256 if enabled else None,
+            "history_retention_policy": {
+                "version": model_view.HISTORY_POLICY,
+                "max_age_sim_seconds": model_view.HISTORY_MAX_AGE_SECONDS,
+                "observation_limit": model_view.OBSERVATION_LIMIT,
+                "observation_bytes": model_view.OBSERVATION_BYTES,
+                "failure_limit": model_view.FAILURE_LIMIT,
+                "failure_bytes": model_view.FAILURE_BYTES,
+                "result_preview_bytes": model_view.RESULT_PREVIEW_BYTES,
+                "request_target_bytes": model_view.REQUEST_TARGET_BYTES,
+            } if enabled else None,
+            "tool_feasibility_version": "public-feasibility-v1" if enabled else None,
+            "temporal_guidance_version": "temporal-progress-v4" if enabled else None,
+            "state_semantics_version": "public-state-semantics-v1.2" if enabled else None,
+            "establishment_adapter_version": establishment.VERSION if enabled else None,
+            "entity_contract_version": "receipt-entity-v1" if enabled else None,
+            "management_guidance_sha256": management.SHA256 if enabled else None,
             "completion_language_version": "zh-en-done-v1",
             "ridge_range_adapter_version": RIDGE_RANGE_ADAPTER_VERSION if enabled else "legacy-count-v1",
             "seed_amount_adapter_version": "task_seed_demand_v1" if enabled else None,
@@ -322,6 +349,7 @@ class JevAgent(Agent):
                 ),
                 "min_action_confidence": min(confidences) if confidences else None,
                 "done_refusals": self._done_refusals,
+                "management_derived_arguments": self._derived_management_arguments,
                 "llm_done_refusals": self._llm_done_refusals,
                 "jev_input_tokens": self._jev_tokens,
                 "decision_http_requests": self._decision_http_requests,
@@ -450,8 +478,208 @@ class JevAgent(Agent):
         )
         return SimpleNamespace(role="assistant", content=None, tool_calls=[tool_call])
 
-    def _decide(
-        self, state: dict[str, Any], skip_args_below: float | None = None
+    def _management_enabled(self):
+        # Pure-LLM snapshot inherits JevAgent; preserve its pre-v2 inputs.
+        return self.enforced_tool_adaptor and not getattr(self, "strict_qwen", False)
+
+    def _uses_managed_values(self, menu):
+        if not self._management_enabled() or not self._management:
+            return False
+        native = self.tools_map[menu.tool_name]
+        from fairy.agents.jev.entities import dependent
+        if dependent(native):return True
+        from fairy.agents.jev.establishment import supported
+        if supported(native,getattr(self,'_snapshot_task',''),self._facts):return True
+        cls, name = tool_family(native), native.name
+        from fairy.agents.jev.ridge_irrigation import supported
+        # Use dependent resolution where selectors affect resource arithmetic;
+        # retain existing safe fan-out for unrelated read/range tools.
+        return ((cls == 'TractorApp' and name in {'load_fertilizer','load_seeds','refuel','load_pesticide','load_fungicide','refill_pesticide_tank'}) or
+                (cls == 'TractorApp' and name == 'apply_fertilizer') or
+                (cls == 'TractorApp' and name == 'base_fertilize' and self._management['plan']['kind'] == 'ridge') or
+                cls in {'PaddyOpsApp','PaddyMachineryApp'} or
+                (cls == 'FarmWorldApp' and name == 'dry_grain') or
+                (cls == 'FarmWorldApp' and name == 'apply_fertigation') or supported(native))
+
+    def _management_criteria(self, criteria):
+        if not self._management_enabled():
+            return criteria
+        criteria = dict(criteria)
+        reasons = {}
+        problems = self._done_problems(getattr(self, "_snapshot_task", ""))
+        if problems and DONE_OPTION in criteria:
+            criteria.pop(DONE_OPTION)
+            reasons[DONE_OPTION] = problems
+        context = self._management
+        if context:
+            plan, ledger = context['plan'], context['ledger']
+            for name in list(criteria):
+                if name not in self.tools_map:
+                    continue
+                native = self.tools_map[name]
+                hard_blocker = action_blocker(native, self._facts, self._facts.get("now"))
+                if not hard_blocker:
+                    from fairy.agents.jev.ridge_irrigation import blocker
+                    hard_blocker = blocker(native,self._facts,context)
+                if hard_blocker:
+                    if native.name in ('apply_fertilizer', 'apply_fertigation', 'base_fertilize'):
+                        current = context['next_ridge_fertilizer_round']
+                        if current and plan['kind'] == 'ridge' and native.name != 'base_fertilize':
+                            hard_blocker = f'Fertilizer round {current["index"]} remains incomplete ({sum(current["remaining_by_ridge_kg"].values()):g} kg product). ' + hard_blocker
+                    if native.name=='apply_fertilizer' and plan['kind']=='paddy':
+                        remaining=[]
+                        for plot in self._facts.get('plots',[]):
+                            r=management.paddy_round(plan,ledger,plot['plot_id'])
+                            if r and not plot.get('harvested'):remaining.append(dict(plot_id=plot['plot_id'],round=r['index'],required_product_kg=r['remaining_kg_ha']*plot['area_m2']/10000))
+                        if remaining:hard_blocker=f'Plot fertilizer doses remain incomplete: {remaining}. '+hard_blocker+' For these incomplete plots, load the prescribed batch first if quota permits.'
+                        else:hard_blocker='All explicit fertilizer doses are accounted for; this does not complete other seasonal work.'
+                    criteria.pop(name)
+                    reasons[name] = [hard_blocker]
+                    continue
+                from fairy.agents.jev.establishment import blocker as establishment_blocker
+                reason=establishment_blocker(native,getattr(self,'_snapshot_task',''),self._facts)
+                if reason:
+                    criteria.pop(name);reasons[name]=[reason]
+                    continue
+                if tool_family(native) == 'PaddyOpsApp' and native.name == 'irrigate':
+                    limits = context['canal_limits']
+                    if limits and not any(c['is_open'] and any(v > management.EPS for v in c['max_delivery_mm_by_plot'].values()) for c in limits):
+                        criteria.pop(name)
+                        reasons[name] = ['Canal is closed, blocked or has no public quota; use the explicit UTC opening time or repair/inspection.']
+                        continue
+                resources = management.fertilizer_resources(native, self._facts)
+                if not resources:
+                    continue
+                blocked = None
+                if native.name == 'load_fertilizer':
+                    if resources['load_limit_kg'] <= management.EPS:
+                        blocked = ('Observed fertilizer stock is empty; loading cannot add supply.' if resources['stock_kg'] <= management.EPS else
+                                   'The applicator has no free fertilizer capacity; use its carried supply before loading again.')
+                    elif plan['kind'] in ('paddy', 'ridge'):
+                        value = management.derive_fertilizer(native, 'kg', {}, plan, ledger, self._facts)
+                        known = plan['kind'] == 'paddy' or plan.get('topdress') or ledger['basal_used_kg'] < plan.get('basal_kg', 0)
+                        if known and value is None:
+                            if plan['kind'] == 'ridge':
+                                basal_left = max(0., plan['basal_kg']-ledger['basal_used_kg'])
+                                current = context['next_ridge_fertilizer_round']
+                                needed = basal_left if basal_left > management.EPS else sum(current['remaining_by_ridge_kg'].values()) if current else 0.
+                            else:
+                                remaining = [(p, management.paddy_round(plan, ledger, p['plot_id'])) for p in self._facts.get('plots', []) if not p.get('harvested')]
+                                active = [r['index'] for p,r in remaining if r]
+                                needed = sum(r['remaining_kg_ha']*p['area_m2']/10000 for p,r in remaining if r and r['index']==min(active)) if active else 0.
+                            if needed <= management.EPS:
+                                blocked = 'All explicit fertilizer doses are accounted for by successful receipts; this does not complete other seasonal work.'
+                            elif resources['remaining_quota_kg'] is not None and resources['remaining_quota_kg'] <= management.EPS:
+                                blocked = 'Fertilizer work remains, but the public quota is exhausted; loading does not restore quota.'
+                            elif resources['carried_kg']+management.EPS >= needed:
+                                blocked = f'The next prescribed batch ({needed:g} kg) is already carried; loading cannot add the same batch. Check its reference timing and actual need before field application.'
+                            else:
+                                blocked = 'The current batch cannot be derived from the observed resources; inspect the resource constraint, not assumed task completion.'
+                elif native.name == 'base_fertilize' and plan['kind'] == 'ridge':
+                    left = max(0., plan['basal_kg']-ledger['basal_used_kg'])
+                    if left <= management.EPS or resources['carried_kg']+management.EPS < left:
+                        blocked = ('Basal prescribed dose is complete.' if left <= management.EPS else
+                                   f'Basal dose remains {left:g} kg; carried {resources["carried_kg"]:g} kg. Load fertilizer first; the dose is not complete.')
+                elif native.name in ('apply_fertilizer', 'apply_fertigation'):
+                    if plan['kind'] == 'paddy':
+                        feasible = []
+                        incomplete = []
+                        for plot in self._facts.get('plots', []):
+                            r = management.paddy_round(plan, ledger, plot['plot_id'])
+                            if r and not plot.get('harvested'):
+                                required = r['remaining_kg_ha']*plot['area_m2']/10000
+                                incomplete.append(dict(plot_id=plot['plot_id'], round=r['index'], required_product_kg=required))
+                                if required <= resources['carried_kg']+management.EPS:
+                                    feasible.append(plot['plot_id'])
+                        if not feasible:
+                            blocked = (f'Plot fertilizer doses remain incomplete: {incomplete}. Carried fertilizer {resources["carried_kg"]:g} kg is insufficient; load the prescribed batch first.' if incomplete else
+                                       'All explicit fertilizer doses for unharvested plots are accounted for; this does not complete other seasonal work.')
+                    elif plan['kind'] == 'ridge' and plan.get('topdress'):
+                        r = context['next_ridge_fertilizer_round']
+                        quota = resources['remaining_quota_kg']
+                        available = min(resources['available_kg'], quota) if quota is not None else resources['available_kg']
+                        if not r:
+                            blocked = 'All explicit fertilizer rounds are accounted for by successful product receipts; this does not complete other seasonal work.'
+                        elif min(r['remaining_by_ridge_kg'].values()) > available+management.EPS:
+                            need = min(r['remaining_by_ridge_kg'].values())
+                            blocked = (f'Fertilizer round {r["index"]} remains incomplete; at least {need:g} kg is needed for one remaining ridge, '
+                                       f'available to this tool {available:g} kg. ' +
+                                       ('The remaining fertilizer quota is insufficient; inspect resources or defer.' if quota is not None and quota+management.EPS < need else
+                                        'Load fertilizer first for this tool; prior-round coverage does not complete this round.'))
+                if blocked:
+                    criteria.pop(name)
+                    reasons[name] = [blocked]
+            due = {w['kind'] for w in context['windows'] if w['at'] <= self.time_manager.time()}
+            due_tools = {w['tool'] for w in context['windows'] if w['at'] <= self.time_manager.time() and w.get('tool')}
+            for name in list(criteria):
+                if name in due_tools or ('fertilizer' in due and name.endswith(('__load_fertilizer', '__apply_fertilizer', '__apply_fertigation', '__inspect_crop'))) or ('water_check' in due and name.endswith(('__read_water_sensors', '__get_root_zone_water', '__read_soil_sensor', '__read_soil_sensors', '__read_root_zone_sensors', '__get_forecast'))):
+                    criteria[name] = '[DUE management: inspect readiness and continue the listed task] ' + criteria[name]
+                    if name.endswith(('__load_fertilizer', '__apply_fertilizer', '__apply_fertigation')):
+                        r = context['next_ridge_fertilizer_round']
+                        if r:
+                            criteria[name] += f' Current fertilizer round {r["index"]}: {sum(r["remaining_by_ridge_kg"].values()):g} kg product still required across {len(r["remaining_by_ridge_kg"])} ridges; older-round coverage is not completion.'
+                        if name.endswith('__load_fertilizer'):
+                            criteria[name] += ' Loading supplies the applicator; it is a prerequisite, not a field application.'
+                        if name.endswith('__apply_fertigation') and plan.get('fertigation_carrier_zero'):
+                            criteria[name] += ' Explicit task: adapter sets carrier water to zero; this route applies fertilizer without extra irrigation.'
+                if name.startswith('SystemApp__') and name.endswith(('__wait_for_notification', '__advance_time')) and due:
+                    criteria[name] = '[DEFER due work only for a real blocker; waiting does not finish it] ' + criteria[name]
+            from fairy.agents.jev.model_view import fertilizer_reference
+            reference=fertilizer_reference(context,self.time_manager.time() if self.time_manager is not None else self._facts.get('now'))
+            if reference and reference['timing_status']=='UPCOMING_REFERENCE':
+                for name in criteria:
+                    if name.endswith(('__apply_fertilizer','__apply_fertigation')):
+                        criteria[name]='[UPCOMING fertilizer reference: remaining quantity is future planning, not an instruction to apply now; assess actual crop need before deviating] '+criteria[name]
+            # Probe acquisition clears a water-check window. It must not erase
+            # a still-feasible, undelivered reference from the decision menu.
+            from fairy.agents.jev.ridge_irrigation import target as irrigation_target
+            for name in criteria:
+                native=self.tools_map.get(name)
+                target=irrigation_target(native,self._facts,context) if native else None
+                if target:
+                    criteria[name]=f'[DUE irrigation reference {target["reference_index"]}: acquired fresh root-zone evidence permits a target with {target["target_mm_per_ridge"]:g} mm reference remaining; assess weather and crop need; a sensor read is not watering] '+criteria[name]
+        if context is not None:
+            from fairy.agents.jev import temporal
+            context['temporal_guidance']=temporal.build(getattr(self,'_snapshot_task',''),self._facts,self.time_manager.time() if self.time_manager is not None else self._facts.get('now'))
+            criteria=temporal.criteria(criteria,context['temporal_guidance'])
+            context['blocked_actions'] = reasons
+        from fairy.agents.jev.establishment import report_allowed
+        report_farm=self._snapshot.get('farm_now',{})
+        report_crop=report_farm.get('farms') or report_farm.get('plots') or report_farm.get('crop',[])
+        if REPORT_TOOL in criteria and not report_allowed(getattr(self,'_snapshot_task',''),self._facts,report_crop):
+            criteria.pop(REPORT_TOOL)
+            reasons[REPORT_TOOL]=['A report was already sent for this material crop/work state. Queries, charging and repeated non-improving resets do not require another report.']
+        from fairy.agents.jev.establishment import summary as establishment_summary
+        pending=establishment_summary(getattr(self,'_snapshot_task',''),self._facts)
+        if pending and pending['pending_planting_ridges']:
+            for name in criteria:
+                if name.endswith(('__plant_seeds','__load_seeds')):
+                    criteria[name]='[ESTABLISHMENT INCOMPLETE: finish the remaining prescribed targets or their seed prerequisite before routine inspection of established areas] '+criteria[name]
+        from fairy.agents.jev.receipts import grain_state
+        if DONE_OPTION in criteria and grain_state(self._facts)['unsafe_stored_batches']:
+            criteria[DONE_OPTION] = 'Stop with an unresolved recorded unsafe-storage warning; this is not successful task completion. Report the warning.'
+        self.record_event('jev_management_options', status='ok', version=management.VERSION,
+                          excluded=reasons, done_allowed=DONE_OPTION in criteria)
+        return criteria
+
+    def _decide(self, state, skip_args_below=None):
+        if not self._management_enabled():
+            return self._decide_once(state, skip_args_below)
+        from fairy.agents.jev.feasibility import ToolNotReady
+        excluded=set()
+        for _ in range(len(self.tool_menus)+1):
+            try:
+                return self._decide_once(state, skip_args_below, excluded=excluded)
+            except ToolNotReady as exc:
+                excluded.add(exc.tool)
+                self.record_event('jev_tool_not_ready',status='local_constraint',tool_name=exc.tool,
+                                  argument=exc.argument,selected_arguments=exc.arguments,reason=str(exc))
+                state={**state,'local_constraints':{'unavailable_tools_this_decision':sorted(excluded),
+                       'last_blocker':str(exc),'instruction':'Choose another feasible prerequisite or wait/recheck. No tool was executed.'}}
+        raise ValueError('No feasible tool could be resolved within bounded local checks')
+
+    def _decide_once(
+        self, state: dict[str, Any], skip_args_below: float | None = None, excluded=None
     ) -> tuple[str, dict[str, Any] | None, dict[str, float]]:
         """Jev's tool and arguments; arguments are None when skip_args_below skipped them."""
         tool_question = {
@@ -466,11 +694,26 @@ class JevAgent(Agent):
                 DONE_OPTION: DONE_DESCRIPTION,
             },
         }
+        tool_question['criteria'] = self._management_criteria(tool_question['criteria'])
+        for unavailable in excluded or ():
+            tool_question['criteria'].pop(unavailable,None)
+        if not tool_question['criteria']:
+            raise ValueError('No legal next action remains after local feasibility checks')
+        if self._management_enabled():
+            from fairy.agents.jev.decision_context import INSTRUCTIONS
+            tool_question['instructions'] = INSTRUCTIONS
         questions: dict[str, dict[str, Any]] = {TOOL_QUESTION_ID: tool_question}
         prepared: dict[str, dict[str, tuple[str, dict[str, Any]]]] = {}
-        for name in self._likely_tools(tool_question["criteria"]):
-            arg_questions, prepared[name] = self._value_questions(self.tool_menus[name], name)
+        for name in ([] if self._management_enabled() else self._likely_tools(tool_question["criteria"])):
+            arg_questions, candidate = self._value_questions(self.tool_menus[name], name)
+            if self._management_enabled() and any(not q['criteria'] for q in arg_questions.values()):
+                self.record_event('jev_speculative_arguments_skipped',status='empty_candidates',tool_name=name,
+                    reason='No currently legal argument candidate; do not send an empty Choice for an unselected tool.')
+                continue
+            prepared[name] = candidate
             questions.update(arg_questions)
+        if self._management_enabled() and self._state_chars:
+            self._state_chars[-1] = len(json.dumps(state, default=str, ensure_ascii=False))
         answers = self._ask("tool", state, questions)
         tool_answer = answers[TOOL_QUESTION_ID]
         self._last_tool_probabilities = tool_answer["probabilities"]
@@ -495,7 +738,7 @@ class JevAgent(Agent):
         if not self.enforced_tool_adaptor:
             return BaselineParameters._jev_arguments(self, state, pick, options, answers)
         menu = self.tool_menus[pick]
-        if dependent_menu(self.tools_map[pick], enforced_tool_adaptor=self.enforced_tool_adaptor):
+        if dependent_menu(self.tools_map[pick], enforced_tool_adaptor=self.enforced_tool_adaptor) or self._uses_managed_values(menu):
             arguments, confidences = self._dependent_values(menu, state)
             self._validate_ridge_ranges(menu, arguments)
             return arguments, confidences
@@ -504,6 +747,9 @@ class JevAgent(Agent):
         else:
             self._fanout["misses"] += 1
             arg_questions, options = self._value_questions(menu)
+            if self._management_enabled() and any(not q['criteria'] for q in arg_questions.values()):
+                from fairy.agents.jev.feasibility import ToolNotReady
+                raise ToolNotReady(menu.tool_name,'arguments',{})
             answers = self._ask("arguments", state, arg_questions)
         arguments, confidences = self._read_values(menu, options, answers)
         # Start and unrelated arguments may be pre-requested together. The end
@@ -511,6 +757,9 @@ class JevAgent(Agent):
         for arg in self._range_ends(menu):
             start_name = RANGE_END_TO_START[arg.name]
             opts = self._range_options(menu, arguments, start_name)
+            if self._management_enabled() and not opts:
+                from fairy.agents.jev.feasibility import ToolNotReady
+                raise ToolNotReady(menu.tool_name,arg.name,arguments)
             qid = _arg_question_id(arg.name, None)
             question = {
                 "type": "choice",
@@ -530,7 +779,7 @@ class JevAgent(Agent):
         return [a for a in menu.args if RANGE_END_TO_START.get(a.name) in names]
 
     def _range_options(self, menu: ToolMenu, arguments: dict[str, Any], start_name: str):
-        """Structural constraints only: no maturity, weather or charging policy."""
+        """Public boundary/pass limits plus opt-in dose/battery arithmetic; no hidden maturity or weather reads."""
         native = self.tools_map[menu.tool_name]
         world = scene_world(native, arguments)
         size = getattr(world, "num_ridges", self._num_ridges)
@@ -538,6 +787,29 @@ class JevAgent(Agent):
         if type(start) is not int or not 0 <= start < size:
             raise ValueError(f"Invalid ridge start for {menu.tool_name}: {start!r} (size {size})")
         width = min(self._menu_width(menu, arguments), size - start)
+        if self._management_enabled() and tool_family(native) == 'RobotApp' and native.name in ('inspect_emergence','inspect_pests','inspect_crop_health'):
+            battery = self._facts.get('machines',{}).get(native.class_instance.name,{}).get('battery_pct')
+            if management.number(battery) is not None:
+                width = min(width,8,max(0,int((battery-10.)//5.)))
+        if self._uses_managed_values(menu) and native.name in ('apply_fertilizer', 'apply_fertigation'):
+            current = self._management['next_ridge_fertilizer_round']
+            if current:
+                needs = current['remaining_by_ridge_kg']
+                dose = needs.get(start)
+                if dose is not None:
+                    resources = management.fertilizer_resources(native, self._facts)
+                    if resources:
+                        available = resources['available_kg']
+                        if resources['remaining_quota_kg'] is not None:
+                            available = min(available, resources['remaining_quota_kg'])
+                        width = min(width, math.floor((available+management.EPS)/dose))
+                    for offset in range(width):
+                        if abs(needs.get(start+offset, -1.)-dose) > management.EPS:
+                            width = offset
+                            break
+        if self._management_enabled():
+            from fairy.agents.jev.establishment import range_width
+            width=range_width(native,arguments,getattr(self,'_snapshot_task',''),self._facts,width)
         return {_count_key(n): start + n - 1 for n in range(1, width + 1)}
 
     def _validate_ridge_ranges(self, menu: ToolMenu, arguments: dict[str, Any]):
@@ -555,7 +827,7 @@ class JevAgent(Agent):
         recent = [s.tool_name for s in self._facts.get("steps", [])[-LIKELY_RECENT_ACTIONS:]]
         out: list[str] = []
         for name in likely + recent[::-1]:
-            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out and not dependent_menu(self.tools_map[name], enforced_tool_adaptor=self.enforced_tool_adaptor):
+            if name in offered and name in self.tool_menus and self.tool_menus[name].args and name not in out and not dependent_menu(self.tools_map[name], enforced_tool_adaptor=self.enforced_tool_adaptor) and not self._uses_managed_values(self.tool_menus[name]):
                 out.append(name)
         return out
 
@@ -593,12 +865,13 @@ class JevAgent(Agent):
             return BaselineParameters._menu_width(self, menu)
         native = self.tools_map[menu.tool_name]
         if extended_scene_tool(native):
-            if native.class_name == "ManualOpsApp":
+            if tool_family(native) == "ManualOpsApp":
                 return 2
-            if native.class_name in ("SharedTractorApp", "TractorService"):
+            from fairy.agents.jev.menu import canonical_tool
+            if (canonical_tool(native).class_name if self._management_enabled() else native.class_name) in ("SharedTractorApp", "TractorService"):
                 return PASS_WIDTH.get(("TractorApp", native.name), self._num_ridges)
             world = scene_world(native, arguments)
-            return PASS_WIDTH.get((native.class_name, native.name), getattr(world, "num_ridges", self._num_ridges))
+            return PASS_WIDTH.get((tool_family(native), native.name), getattr(world, "num_ridges", self._num_ridges))
         return PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
 
     def _dependent_values(self, menu: ToolMenu, state: dict[str, Any]):
@@ -607,11 +880,43 @@ class JevAgent(Agent):
             return BaselineParameters._dependent_values(self, menu, state)
         native = self.tools_map[menu.tool_name]
         arguments, confidences = {}, {}
-        scope_order = {"farm_id": 0, "asset_id": 1, "plot_id": 2, "machine_id": 2, "seed_type": 2}
+        scope_order = {"farm_id": 0, "asset_id": 1, "plot_id": 2, "machine_id": 2, "seed_type": 2, "crop_id": 2, "offer_id": 2}
+        if self._management_enabled() and native.name in ('plant_seeds','replant_seeds'):
+            scope_order['start_ridge']=2
         ends = self._range_ends(menu)
-        args = sorted(menu.args, key=lambda a: (scope_order.get(a.name, 4 if a in ends else 3), a.name == "batch_id"))
+        args = sorted(menu.args, key=lambda a: (scope_order.get(a.name, 4 if a in ends else 5 if a.name in {'kg', 'kg_per_ha', 'kg_per_ridge', 'total_kg', 'nutrient_amount', 'water_mm', 'hours', 'duration_hours'} else 3), a.name == "batch_id"))
         for arg in args:
-            if native.class_name == "TractorApp" and native.name == "load_seeds" and arg.name == "count":
+            if self._management_enabled() and self._management:
+                from fairy.agents.jev import ridge_irrigation
+                irrigation_target = ridge_irrigation.target(native,self._facts,self._management)
+                if irrigation_target and arg.name in irrigation_target['arguments']:
+                    value=irrigation_target['arguments'][arg.name]
+                    arguments[arg.name]=value
+                    self._derived_management_arguments+=1
+                    self.record_event('jev_derived_argument',status='ok',tool_name=menu.tool_name,
+                        argument=arg.name,value=value,source=ridge_irrigation.VERSION,
+                        reference_index=irrigation_target['reference_index'],reference_day=irrigation_target['reference_day'],
+                        reason=irrigation_target['reason'])
+                    continue
+                derived = management.derive_fertilizer(native, arg.name, arguments,
+                    self._management['plan'], self._management['ledger'], self._facts)
+                if derived is None and native.name=='load_seeds' and arg.name=='count':
+                    from fairy.agents.jev.establishment import load_amount
+                    derived=load_amount(native,arguments.get('seed_type'),str(state.get('task','')),self._facts)
+                if derived is None:
+                    from fairy.agents.jev.constraints import derive_transfer
+                    derived = derive_transfer(native,arg.name,arguments,self._facts)
+                if derived is None and tool_family(native) == 'PaddyOpsApp':
+                    from fairy.agents.jev.observations import derive_water
+                    derived = derive_water(native,arg.name,arguments,str(state.get('task','')),self._facts,self._facts.get('now',0.))
+                if derived is not None:
+                    value, reason = derived
+                    arguments[arg.name] = value
+                    self._derived_management_arguments += 1
+                    self.record_event('jev_derived_argument', status='ok', tool_name=menu.tool_name,
+                        argument=arg.name, value=value, source=management.VERSION, reason=reason)
+                    continue
+            if tool_family(native) == "TractorApp" and native.name == "load_seeds" and arg.name == "count":
                 from fairy.agents.jev.seed_candidates import seed_amount_hint
                 from fairy.apps.farm_world import tractor_app as tractor_constants
                 machine = self._facts.get("machines", {}).get(native.class_instance.name, {})
@@ -628,7 +933,8 @@ class JevAgent(Agent):
                     continue
             scoped = None
             opts = self._arg_options(menu, arg, arguments)
-            if arg.name in ("water_mm", "quantity", "liters", "count", "kg"):
+            from fairy.agents.jev.entities import dependent as entity_dependent
+            if arg.name in ("water_mm", "quantity", "liters", "count", "kg") or (self._management_enabled() and entity_dependent(native)):
                 raw_arg = next(a for a in native.args if a.name == arg.name)
                 scoped = build_arg_menu(native, raw_arg,
                     descriptions=arg_descriptions(native.function_description),
@@ -636,6 +942,27 @@ class JevAgent(Agent):
                     arguments=arguments, steps=self._facts.get("steps", []), task_text=str(state.get("task", "")),
                     enforced_tool_adaptor=self.enforced_tool_adaptor)
                 opts = scoped.options
+                if self._management_enabled() and self._management and tool_family(native) == 'PaddyOpsApp' and native.name == 'irrigate' and arg.name == 'water_mm':
+                    pid = arguments.get('plot_id')
+                    caps = [c['max_delivery_mm_by_plot'][pid] for c in self._management['canal_limits'] if pid in c['max_delivery_mm_by_plot']]
+                    if caps:
+                        cap = max(caps)
+                        opts = {k:v for k,v in opts.items() if management.number(v) is not None and 0 < v <= cap+management.EPS}
+                        if cap > management.EPS:
+                            # Round down: a rounded-up volume can exceed the closing instant.
+                            safe = math.floor(cap*1e6)/1e6
+                            if safe > 0:
+                                opts[f'{safe:g} mm fits current canal window'] = safe
+                if self._management_enabled() and native.name == 'load_fertilizer' and arg.name == 'kg':
+                    resources = management.fertilizer_resources(native, self._facts)
+                    if resources:
+                        opts = {k:v for k,v in opts.items() if management.number(v) is not None and 0 < v <= resources['load_limit_kg']+management.EPS}
+                        if resources['load_limit_kg'] > management.EPS:
+                            opts[f"{resources['load_limit_kg']:g} kg available load space"] = resources['load_limit_kg']
+            if self._management_enabled():
+                opts = legal_options(native, arg, opts, arguments, self._facts)
+                from fairy.agents.jev.establishment import options as establishment_options
+                opts=establishment_options(native,arg.name,opts,arguments,str(state.get('task','')),self._facts)
             count_from = RANGE_END_TO_START.get(arg.name)
             runtime = getattr(native.class_instance, "runtime", None)
             if runtime is not None and arg.name == "asset_id" and arguments.get("farm_id"):
@@ -659,11 +986,28 @@ class JevAgent(Agent):
                         opts = {k: v for k, v in opts.items() if v is not None}
                 elif arg.name == "batch_id":
                     opts = {k: v for k, v in opts.items() if (v is None) == (arguments.get("plot_id") is not None)}
+            if not opts and self._management_enabled():
+                from fairy.agents.jev.feasibility import ToolNotReady
+                raise ToolNotReady(menu.tool_name,arg.name,arguments)
             if not opts or len(opts) > MAX_CHOICE_OPTIONS:
                 raise ValueError(f"Invalid dependent menu: {menu.tool_name}.{arg.name}")
+            if self._uses_managed_values(menu) and len(opts) == 1:
+                value = next(iter(opts.values()))
+                arguments[arg.name] = value
+                self._derived_management_arguments += 1
+                self.record_event('jev_derived_argument', status='ok', tool_name=menu.tool_name,
+                    argument=arg.name, value=value, source=management.VERSION,
+                    reason='Only one value in the current explicit task/native schema scope; no model choice is needed.')
+                continue
             qid = _arg_question_id(arg.name, None)
             question = {"type": "choice", "instructions": self._arg_instructions(menu, arg, count_from=count_from if count_from in arguments else None),
                         "criteria": {k: None for k in opts}}
+            if self._management_enabled():
+                from fairy.agents.jev.operation_clock import annotation
+                for key,value in opts.items():
+                    preview=annotation(native,{**arguments,arg.name:value},self._facts,self._management)
+                    if preview: question['criteria'][key]=json.dumps(preview,ensure_ascii=False)
+
             if scoped is not None and scoped.description:
                 question["instructions"] += " " + scoped.description
             # Include selected scope in the question, not hidden simulator facts.
@@ -918,12 +1262,63 @@ class JevAgent(Agent):
     def _arg_options(self, menu: ToolMenu, arg: Any, arguments: dict[str, Any]) -> dict[str, Any]:
         options = dict(arg.options)
         if arg.name in (DURATION_ARG, "timeout") and menu.tool_name.startswith("SystemApp__"):
+            if self._management_enabled():
+                from fairy.agents.jev.observations import chinese_durations
+                for unit,value in chinese_durations(getattr(self,'_snapshot_task','')):
+                    seconds = value * {'days':86400,'hours':3600,'minutes':60,'seconds':1}[unit]
+                    if seconds > 0:
+                        options[f'{value:g} {unit} from explicit task'] = {'seconds':seconds} if arg.name == DURATION_ARG else seconds
             for p in self._facts.get("pending", []):
                 secs = p["seconds_left"]
                 key = f"until {p['from_action']} is ready ({_readable_seconds(secs)})"
                 options[key] = {"seconds": secs} if arg.name == DURATION_ARG else secs
+            if self._management_enabled() and self._management:
+                limit = self._management['wait_limit_seconds']
+                # A charged device may remain idle. Keep charge-ready as an
+                # optional wake-up, not a mandatory farm-wide deadline.
+                pending = [p['seconds_left'] for p in self._facts.get('pending', []) if p.get('seconds_left', 0) > 0
+                           and p.get('from_action','').split('__')[-1]!='charge']
+                if pending:
+                    limit = min([limit, *pending]) if limit is not None else min(pending)
+                if limit is not None and limit > 0:
+                    def seconds(value):
+                        return sum(management.number(v) * {'days':86400, 'hours':3600, 'minutes':60, 'seconds':1}.get(k,0) for k,v in value.items()) if isinstance(value,dict) else management.number(value)
+                    options = {k:v for k,v in options.items() if seconds(v) is not None and 0 < seconds(v) <= limit+management.EPS}
+                    has_due = any(w['at'] <= self.time_manager.time() for w in self._management['windows'])
+                    label = 'defer blocked due work; recheck within ' if has_due else 'until next task check '
+                    options[label + '(' + _readable_seconds(limit) + ')'] = {'seconds':limit} if arg.name == DURATION_ARG else limit
+            if self._management_enabled():
+                from fairy.agents.jev.temporal import wait_options
+                options=wait_options(options,bool(self._management and self._management.get('temporal_guidance',{}).get('observation_loop_pressure')))
             return options
         native = self.tools_map[menu.tool_name]
+        if self._management_enabled():
+            options = legal_options(native, arg, options, arguments, self._facts)
+            from fairy.agents.jev.establishment import options as establishment_options
+            options=establishment_options(native,arg.name,options,arguments,getattr(self,'_snapshot_task',''),self._facts)
+            resources = management.fertilizer_resources(native, self._facts)
+            if resources and native.name == 'load_fertilizer' and arg.name == 'kg':
+                options = {k:v for k,v in options.items() if management.number(v) is not None and 0 < v <= resources['load_limit_kg']+management.EPS}
+                if resources['load_limit_kg'] > management.EPS:
+                    options[f"{resources['load_limit_kg']:g} kg available load space"] = resources['load_limit_kg']
+            if self._management:
+                if tool_family(native) == 'PaddyOpsApp' and native.name == 'irrigate' and arg.name == 'plot_id' and self._management['canal_limits']:
+                    feasible = {pid for c in self._management['canal_limits'] for pid,depth in c['max_delivery_mm_by_plot'].items() if depth > management.EPS}
+                    options = {k:v for k,v in options.items() if v in feasible}
+                if native.name == 'apply_fertilizer' and tool_family(native) == 'PaddyOpsApp' and arg.name == 'plot_id' and self._management['plan']['kind'] == 'paddy':
+                    feasible = set()
+                    for plot in self._facts.get('plots', []):
+                        r = management.paddy_round(self._management['plan'], self._management['ledger'], plot['plot_id'])
+                        if r and not plot.get('harvested') and resources and r['remaining_kg_ha']*plot['area_m2']/10000 <= resources['carried_kg']+management.EPS:
+                            feasible.add(plot['plot_id'])
+                    options = {k:v for k,v in options.items() if v in feasible}
+                if self._uses_managed_values(menu) and native.name in ('apply_fertilizer', 'apply_fertigation') and arg.name == 'start_ridge':
+                    current = self._management['next_ridge_fertilizer_round']
+                    if current:
+                        available = resources['available_kg'] if resources else float('inf')
+                        if resources and resources['remaining_quota_kg'] is not None:
+                            available = min(available, resources['remaining_quota_kg'])
+                        options = {k:v for k,v in options.items() if current['remaining_by_ridge_kg'].get(v, float('inf')) <= available+management.EPS}
         if extended_scene_tool(native) and arg.name in ("ridge_id", "start", "end", "start_ridge", "end_ridge"):
             world = scene_world(native, arguments)
             if hasattr(world, "_ridges"):
@@ -955,6 +1350,9 @@ class JevAgent(Agent):
 
     def _done_problems(self, task: str) -> list[str]:
         """Simple checks on visible facts before "done" is accepted (not the evaluator)."""
+        if self._management_enabled():
+            from fairy.agents.jev.completion import problems
+            return problems(task,self._facts,self.tools_map)
         return done_problems(task, self._facts, self.tools_map)
 
     def _report_text(self) -> str:
@@ -1018,12 +1416,18 @@ class JevAgent(Agent):
             (step.content for step in self.workflow.dag.values() if step.op_type == "USER"), ""
         )
         self._snapshot, self._facts = build_snapshot(
-            self._toolsets, self.workflow, self.time_manager.time()
+            self._toolsets, self.workflow, self.time_manager.time(), enhanced_tool_adaptor=self._management_enabled()
         )
+        if self._management_enabled():
+            from fairy.agents.jev.receipts import enhance_snapshot
+            self._facts['now'] = self.time_manager.time()
+            self._snapshot = enhance_snapshot(self._snapshot, self._facts)
         if any(extended_scene_tool(t) for t in self.tools_map.values()):
             # Dynamic entities (especially grain batches) can appear after a tool.
+            self._menu_unavailable=[]
             self.tool_menus = build_tool_menus(self.tools_map, task_text=str(task), num_ridges=self._num_ridges,
-                                              steps=self._facts.get("steps", []), enforced_tool_adaptor=self.enforced_tool_adaptor)
+                                              steps=self._facts.get("steps", []), enforced_tool_adaptor=self.enforced_tool_adaptor,
+                                              diagnostics=self._menu_unavailable if self._management_enabled() else None)
         if self.state_mode == "history":
             # Part 1 input (diagnostic): every action with its full result, no snapshot.
             # The snapshot is still built for the menus and the done check.
@@ -1040,6 +1444,37 @@ class JevAgent(Agent):
         # Keep the original task intact: it also feeds task-derived value menus.
         if self.enforced_tool_adaptor:
             state["jev_execution_guidance"] = execution_guidance()
+        self._snapshot_task = str(task)
+        if self._management_enabled():
+            self._management = management.management_context(str(task), self._facts, self.time_manager.time(), self._num_ridges)
+            from fairy.agents.jev.establishment import summary as establishment_summary
+            establishment=establishment_summary(str(task),self._facts)
+            if establishment:
+                self._management['establishment']=establishment
+                phase=establishment.get('next_planting_phase')
+                if phase and phase.get('seconds_until') is not None and phase['seconds_until']>0:
+                    self._management['windows'].append(dict(kind='planting',target='explicit next zone',at=phase['at'],status='UPCOMING',seconds_until=phase['seconds_until']))
+                    self._management['windows'].sort(key=lambda w:w['at'])
+                    old_limit=self._management['wait_limit_seconds']
+                    self._management['wait_limit_seconds']=min(old_limit,phase['seconds_until']) if old_limit is not None else phase['seconds_until']
+            from fairy.agents.jev import ridge_irrigation
+            self._management['ridge_irrigation'] = ridge_irrigation.build(str(task),self._facts,self._management,self.time_manager.time())
+            from fairy.agents.jev import temporal
+            self._management['temporal_guidance']=temporal.build(str(task),self._facts,self.time_manager.time())
+            self._management['tool_discovery_prerequisites']=[d for d in getattr(self,'_menu_unavailable',[]) if d['reason']=='requires_observation']
+            self._management['completion_allowed'] = not bool(self._done_problems(str(task)))
+            self._management['remaining_requirements'] = self._done_problems(str(task))
+            from fairy.agents.jev.receipts import grain_state, paddy_batches
+            self._management['grain_batches'] = paddy_batches(self._facts)
+            if self._facts.get('plots'):
+                self._management['shared_clock_note'] = 'Waiting and long operations advance every plot together. Use fresh preparation_wet_hours; do not repeat a separate full soak just because switching plots.'
+            self._management['postharvest'] = grain_state(self._facts)
+            from fairy.agents.jev.observations import water_targets, weather_evidence
+            self._management['weather_evidence'] = weather_evidence(self._facts,self.time_manager.time())
+            self._management['water_observations'] = water_targets(str(task),self._facts,self.time_manager.time())
+            state['management_progress'] = self._management
+            from fairy.agents.jev.decision_context import present
+            state = present(state, self._facts, self._management, self.time_manager.time())
         if self._notes:
             state["notes"] = list(self._notes)
         self._state_chars.append(len(json.dumps(state, default=str, ensure_ascii=False)))
@@ -1050,6 +1485,20 @@ class JevAgent(Agent):
     ) -> dict[str, dict[str, Any]]:
         self._request_serial += 1
         self._active_request_id = f"request_{self._request_serial}"
+        if self._management_enabled():
+            from fairy.agents.jev.model_view import request_guard, compact, ContextBudgetError
+            if self._management and 'management_progress' in state:
+                state = {**state, 'management_progress': {**state['management_progress'],
+                    'blocked_actions': compact(self._management.get('blocked_actions', {})),
+                    'temporal_guidance': compact(self._management.get('temporal_guidance', {}))}}
+            try:
+                state, budget = request_guard(state, questions, getattr(self.llm, 'model', None))
+            except ContextBudgetError as exc:
+                self.record_event('jev_context_budget', status='blocked_before_network', **{k:v for k,v in exc.budget.items() if k!='status'})
+                raise
+            self.record_event('jev_context_budget', **budget)
+            if self._state_chars:
+                self._state_chars[-1] = len(json.dumps(state, default=str, ensure_ascii=False))
         option_counts = {qid: len(q["criteria"]) for qid, q in questions.items()}
         self.record_event(
             "jev_request_start",

@@ -17,6 +17,8 @@ Resources must be loaded from the farm warehouse before use:
 
 from __future__ import annotations
 
+from fairy.apps.resource_transfer import transfer_receipt
+
 import uuid
 import math
 from math import isfinite
@@ -303,18 +305,20 @@ class TractorOperations:
         Args:
             liters: Amount to transfer .
         """
+        if isinstance(liters, bool):
+            return {"error": "liters must be a finite positive number"}
         liters = float(liters)
         if not isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
         space = _FUEL_TANK_MAX_L - self._fuel_tank_l
         if space <= 0:
-            return {"msg": "Fuel tank is already full"}
+            return {"msg": "Fuel tank is already full", **transfer_receipt(liters, 0, self._fuel_tank_l, _FUEL_TANK_MAX_L, farm.world._inventory.fuel_liters, "L")}
         to_transfer = min(liters, space)
         if not farm.world.consume_fuel(to_transfer):
-            return {"error": "Insufficient fuel in warehouse"}
+            return {"error": "Insufficient fuel in warehouse", "code": "insufficient_stock", "requested": liters, "required_transfer": to_transfer, "available": farm.world._inventory.fuel_liters, "remaining_capacity": space}
         self._fuel_tank_l = self._fuel_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "fuel_tank_l": self._fuel_tank_l}
+        return {"status": "ok", "fuel_tank_l": self._fuel_tank_l, **transfer_receipt(liters, to_transfer, self._fuel_tank_l, _FUEL_TANK_MAX_L, farm.world._inventory.fuel_liters, "L")}
 
     def _operate_refill_pesticide_tank(
         self,
@@ -327,18 +331,20 @@ class TractorOperations:
         Args:
             liters: Amount to transfer
         """
+        if isinstance(liters, bool):
+            return {"error": "liters must be a finite positive number"}
         liters = float(liters)
         if not isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
         space = _PESTICIDE_TANK_MAX_L - self._pesticide_tank_l
         if space <= 0:
-            return {"msg": "Pesticide tank is already full"}
+            return {"msg": "Pesticide tank is already full", **transfer_receipt(liters, 0, self._pesticide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
         to_transfer = min(liters, space)
         if not farm.world.consume_pesticide(to_transfer):
-            return {"error": "Insufficient pesticide in warehouse"}
+            return {"error": "Insufficient pesticide in warehouse", "code": "insufficient_stock", "requested": liters, "required_transfer": to_transfer, "available": farm.world._inventory.pesticide_liters, "remaining_capacity": space}
         self._pesticide_tank_l = self._pesticide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l}
+        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l, **transfer_receipt(liters, to_transfer, self._pesticide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
 
     def _operate_load_fertilizer(self, farm: FarmContext, kg: float) -> dict[str, Any]:
         """
@@ -346,18 +352,21 @@ class TractorOperations:
         Args:
             kg: Amount to transfer.
         """
+        if isinstance(kg, bool):
+            return {"error": "kg must be a finite positive number"}
         kg = float(kg)
         if not isfinite(kg) or kg <= 0:
             return {"error": "kg must be positive"}
         space = _FERTILIZER_SPREADER_MAX_KG - self._fertilizer_spreader_kg
         if space <= 0:
-            return {"msg": "Fertilizer spreader is already full"}
+            return {"msg": "Fertilizer spreader is already full", **transfer_receipt(kg, 0, self._fertilizer_spreader_kg, _FERTILIZER_SPREADER_MAX_KG, farm.world._inventory.fertilizer_kg, "kg")}
         to_transfer = min(kg, space)
         if not farm.world.withdraw_fertilizer(to_transfer):
-            return {"error": "Insufficient fertilizer in warehouse"}
+            return {"error": "Insufficient fertilizer in warehouse", "code": "insufficient_stock", "requested": kg, "required_transfer": to_transfer, "available": farm.world._inventory.fertilizer_kg, "remaining_capacity": space}
         self._fertilizer_spreader_kg = self._fertilizer_spreader_kg + to_transfer
         self.is_state_modified = True
         return {
+            **transfer_receipt(kg, to_transfer, self._fertilizer_spreader_kg, _FERTILIZER_SPREADER_MAX_KG, farm.world._inventory.fertilizer_kg, "kg"),
             "status": "ok",
             "fertilizer_spreader_kg": self._fertilizer_spreader_kg,
         }
@@ -370,7 +379,7 @@ class TractorOperations:
     ) -> dict[str, Any]:
         """
         Transfer seeds from the farm warehouse to the tractor seed hopper.
-        Hopper holds up to 300000 plants per seed type; excess is rejected.
+        Hopper holds up to 300000 seeds; requests are capped by free capacity.
 
         Args:
             seed_type: One of STANDARD, EARLY_COLD, HIGH_DENSITY,
@@ -384,25 +393,23 @@ class TractorOperations:
         allowed_seed_types = set(farm.world.crop_definition.seed_types)
         if seed_type not in allowed_seed_types:
             return {"error": f"Unknown seed_type '{seed_type}'"}
-        # Preserve the original single-farm loading order: selecting a variety
-        # relabels the existing hopper before capacity and stock checks.
-        # SharedTractorApp implements its own loading and rejects mixed varieties.
-        self.seed_type = seed_type
-        count = int(count)
-        if count <= 0:
+        # Keep successful legacy relabelling, but never mutate a failed request.
+        if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
             return {"error": "count must be positive"}
         current = self._seed_hopper
         space = _SEED_HOPPER_MAX_PLANTS - current
         if space <= 0:
-            return {"msg": f"Seed hopper already full for {seed_type}"}
+            return {"msg": "Seed hopper already full", **transfer_receipt(count, 0, current, _SEED_HOPPER_MAX_PLANTS, farm.world._inventory.seed_stock.get(seed_type, 0), "seeds")}
         to_transfer = min(count, space)
         if not farm.world.consume_seeds(seed_type, to_transfer):
             return {
                 "error": f"Insufficient {seed_type} seeds in warehouse: need {to_transfer}"
             }
+        self.seed_type = seed_type
         self._seed_hopper = current + to_transfer
         self.is_state_modified = True
         return {
+            **transfer_receipt(count, to_transfer, self._seed_hopper, _SEED_HOPPER_MAX_PLANTS, farm.world._inventory.seed_stock.get(seed_type, 0), "seeds"),
             "status": "ok",
             "seed_hopper": self._seed_hopper,
             "seed_type": seed_type,
@@ -879,18 +886,20 @@ class TractorOperations:
             liters: Amount of pesticide (insecticide) to transfer from
                     warehouse to the tractor's onboard pesticide tank.
         """
+        if isinstance(liters, bool):
+            return {"error": "liters must be a finite positive number"}
         liters = float(liters)
         if not isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
         space = _PESTICIDE_TANK_MAX_L - self._pesticide_tank_l
         if space <= 0:
-            return {"msg": "Pesticide tank is already full"}
+            return {"msg": "Pesticide tank is already full", **transfer_receipt(liters, 0, self._pesticide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
         to_transfer = min(liters, space)
         if not farm.world.consume_pesticide(to_transfer):
-            return {"error": "Insufficient pesticide in warehouse"}
+            return {"error": "Insufficient pesticide in warehouse", "code": "insufficient_stock", "requested": liters, "required_transfer": to_transfer, "available": farm.world._inventory.pesticide_liters, "remaining_capacity": space}
         self._pesticide_tank_l = self._pesticide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l}
+        return {"status": "ok", "pesticide_tank_l": self._pesticide_tank_l, **transfer_receipt(liters, to_transfer, self._pesticide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
 
     def _operate_spray_pesticide(
         self,
@@ -1000,18 +1009,20 @@ class TractorOperations:
         Args:
             liters: Amount to transfer.
         """
+        if isinstance(liters, bool):
+            return {"error": "liters must be a finite positive number"}
         liters = float(liters)
         if not isfinite(liters) or liters <= 0:
             return {"error": "liters must be positive"}
         space = _PESTICIDE_TANK_MAX_L - self._fungicide_tank_l
         if space <= 0:
-            return {"msg": "Fungicide tank is already full"}
+            return {"msg": "Fungicide tank is already full", **transfer_receipt(liters, 0, self._fungicide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
         to_transfer = min(liters, space)
         if not farm.world.consume_pesticide(to_transfer):
-            return {"error": "Insufficient chemical in warehouse"}
+            return {"error": "Insufficient chemical in warehouse", "code": "insufficient_stock", "requested": liters, "required_transfer": to_transfer, "available": farm.world._inventory.pesticide_liters, "remaining_capacity": space}
         self._fungicide_tank_l = self._fungicide_tank_l + to_transfer
         self.is_state_modified = True
-        return {"status": "ok", "fungicide_tank_l": self._fungicide_tank_l}
+        return {"status": "ok", "fungicide_tank_l": self._fungicide_tank_l, **transfer_receipt(liters, to_transfer, self._fungicide_tank_l, _PESTICIDE_TANK_MAX_L, farm.world._inventory.pesticide_liters, "L")}
 
     def _operate_apply_fungicide(
         self,

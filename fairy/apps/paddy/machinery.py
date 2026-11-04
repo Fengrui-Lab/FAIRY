@@ -1,4 +1,5 @@
 """Shared machinery assets; physical work consumes onboard resources."""
+from fairy.apps.resource_transfer import transfer_receipt
 from dataclasses import asdict
 
 from fairy.apps.app import App
@@ -40,13 +41,17 @@ class PaddyMachineryApp(App):
         self.world.advance_physics_time()
         m = self.world.machine(machine_id)
         amount = positive(liters, "liters")
-        if amount > self.world.field.fuel_liters or amount + m.fuel_liters > m.tank_capacity_liters:
-            raise ValueError("Insufficient warehouse fuel or tank capacity")
+        remaining = m.tank_capacity_liters - m.fuel_liters
+        if amount > self.world.field.fuel_liters:
+            raise ValueError(f"Insufficient warehouse fuel: requested={amount}, available={self.world.field.fuel_liters}, remaining_capacity={remaining}")
+        if amount > remaining:
+            raise ValueError(f"Fuel tank capacity exceeded: requested={amount}, remaining_capacity={remaining}, available={self.world.field.fuel_liters}")
         self.world.run_job(300)
         self.world.field.fuel_liters -= amount
         m.fuel_liters += amount
         self.world.record("refuel", machine_id=machine_id, liters=amount)
-        return {"status": "ok", "fuel_liters": m.fuel_liters}
+        return {"status": "ok", "fuel_liters": m.fuel_liters,
+                **transfer_receipt(amount, amount, m.fuel_liters, m.tank_capacity_liters, self.world.field.fuel_liters, "L")}
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)

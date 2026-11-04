@@ -108,7 +108,7 @@ def test_seed_varieties_do_not_mix_and_failed_load_does_not_change_type(tractor_
     ],
 )
 @pytest.mark.parametrize("via_tool", [False, True])
-def test_single_farm_seed_switch_preserves_original_loading_order(
+def test_single_farm_seed_switch_preserves_success_and_rejects_atomically(
     remaining, stock, requested, transferred, response_key, via_tool,
 ):
     world = FarmWorldApp()
@@ -123,7 +123,7 @@ def test_single_farm_seed_switch_preserves_original_loading_order(
     result = load(seed_type="HEINONG58", count=requested)
 
     assert response_key in result
-    assert tractor.get_status()["seed_type"] == "HEINONG58"
+    assert tractor.get_status()["seed_type"] == ("HEINONG58" if transferred else "HEINONG84")
     assert tractor.get_status()["seed_hopper"] == remaining + transferred
     expected_stock = {**before, "HEINONG58": stock - transferred}
     assert world._inventory.seed_stock == expected_stock

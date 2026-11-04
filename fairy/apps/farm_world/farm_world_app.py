@@ -1662,6 +1662,9 @@ class FarmWorldApp(App):
             return {"error": "Dry an explicit batch through Warehouse.dry_grain(batch_id)"}
         if not 11.0 <= float(target_moisture_pct) <= 16.0:
             return {"error": "target_moisture_pct must be in [11, 16]"}
+        if self._inventory.harvest_grain_kg <= 0:
+            return {"error": "No pending grain batch to dry", "code": "no_pending_grain",
+                    "trailer_grain_kg": self._inventory.harvest_grain_kg}
         market = self._postharvest_market
         if float(target_moisture_pct) > market.max_storage_moisture_pct:
             return {

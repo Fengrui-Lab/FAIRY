@@ -1,6 +1,8 @@
 """Finite paddy operations with explicit assets, batches and native inputs."""
 from __future__ import annotations
 
+from fairy.apps.resource_transfer import transfer_receipt
+
 import math
 from datetime import datetime, timezone
 
@@ -150,13 +152,17 @@ class PaddyOpsApp(App):
             raise ValueError("Unknown seedling batch")
         if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity <= 0:
             raise ValueError("Seedling quantity must be a positive integer")
-        if quantity > batch.quantity or quantity + batch.loaded > self.world.machine("transplanter").seedling_capacity:
-            raise ValueError("Insufficient stock or transplanter capacity exceeded")
+        capacity = self.world.machine("transplanter").seedling_capacity
+        if quantity > batch.quantity:
+            raise ValueError(f"Insufficient seedling stock: requested={quantity}, available={batch.quantity}, remaining_capacity={capacity - batch.loaded}")
+        if quantity + batch.loaded > capacity:
+            raise ValueError(f"Transplanter capacity exceeded: requested={quantity}, remaining_capacity={capacity - batch.loaded}, available={batch.quantity}")
         self.world.run_job(600)
         batch.quantity -= quantity
         batch.loaded += quantity
         self.world.record("load_seedlings", batch_id=batch_id, quantity=quantity)
-        return {"status": "ok", "loaded": batch.loaded, "inventory_remaining": batch.quantity}
+        return {"status": "ok", "loaded": batch.loaded,
+                **transfer_receipt(quantity, quantity, batch.loaded, capacity, batch.quantity, "seedlings")}
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
@@ -365,13 +371,19 @@ class PaddyOpsApp(App):
         self.world.advance_physics_time()
         amount = positive(kg, "kg")
         machine = self.world.machine("tractor")
-        if product_id != "urea" or amount > self.world.field.fertilizer_kg or amount + machine.fertilizer_kg > machine.fertilizer_capacity_kg:
-            raise ValueError("Unknown product, insufficient fertilizer stock or loading capacity exceeded")
+        if product_id != "urea":
+            raise ValueError(f"Unknown fertilizer product {product_id!r}; supported=urea")
+        remaining = machine.fertilizer_capacity_kg - machine.fertilizer_kg
+        if amount > self.world.field.fertilizer_kg:
+            raise ValueError(f"Insufficient fertilizer stock: requested={amount}, available={self.world.field.fertilizer_kg}, remaining_capacity={remaining}")
+        if amount > remaining:
+            raise ValueError(f"Fertilizer loading capacity exceeded: requested={amount}, remaining_capacity={remaining}, available={self.world.field.fertilizer_kg}")
         self.world.run_job(600)
         self.world.field.fertilizer_kg -= amount
         machine.fertilizer_kg += amount
         self.world.record("load_fertilizer", product_id=product_id, kg=amount)
-        return {"status": "ok", "loaded_kg": machine.fertilizer_kg}
+        return {"status": "ok", "loaded_kg": machine.fertilizer_kg,
+                **transfer_receipt(amount, amount, machine.fertilizer_kg, machine.fertilizer_capacity_kg, self.world.field.fertilizer_kg, "kg")}
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)

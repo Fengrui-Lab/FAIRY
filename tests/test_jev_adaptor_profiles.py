@@ -43,13 +43,20 @@ def test_seed_route_is_opt_in(enabled):
         assert any(s.tool_name == 'TractorApp__load_seeds' and s.tool_args['count'] == 300000 for s in workflow.dag.values())
 
 
-@pytest.mark.parametrize('enabled', [False, True])
-def test_chinese_completion_compatibility_shared_not_enhancement(enabled):
-    agent, _, client = _run([{TOOL_QUESTION_ID: 'done'}]*3,
-                           task='播种全部64垄。', enforced_tool_adaptor=enabled)
+def test_chinese_completion_baseline_keeps_two_refusals():
+    agent, _, client = _run([{TOOL_QUESTION_ID: 'done'}]*3, task='播种全部64垄。')
     assert agent.telemetry['done_refusals'] == 2
     assert agent.telemetry['completion_language_version'] == 'zh-en-done-v1'
-    assert ('jev_execution_guidance' in client.requests[0][0]) == enabled
+
+
+def test_enhanced_completion_uses_same_language_facts_but_removes_premature_done():
+    agent, _, client = _run([{TOOL_QUESTION_ID: 'WeatherApp__get_current_weather'}],
+                           max_tool_calls=1, task='播种全部64垄。', enforced_tool_adaptor=True)
+    state, questions = client.requests[0]
+    assert 'done' not in questions['next_action']['criteria']
+    assert state['management_progress']['completion_allowed'] is False
+    assert any('not planted' in p for p in state['management_progress']['remaining_requirements'])
+    assert agent.telemetry['tool_adaptor_profile'] == 'enforced-v2'
 
 
 @pytest.mark.parametrize('value', ['false', 1, None])

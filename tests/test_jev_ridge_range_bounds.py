@@ -36,13 +36,13 @@ def test_robot_range_counts_follow_start(start, count, end):
     assert len(confidence) == 2
 
 
-def test_actual_robot_boundary_call_and_speculation():
+def test_actual_robot_boundary_call_with_operation_only_selection():
     agent, workflow, client = _run([
         {TOOL_QUESTION_ID: 'Robot0__inspect_emergence'},
         {'arg__start_ridge': 'ridge 62'},
         {'arg__end_ridge': '2 ridges'},
-        {TOOL_QUESTION_ID: 'Robot0__inspect_emergence',
-         'arg__Robot0__inspect_emergence__start_ridge': 'ridge 62'},
+        {TOOL_QUESTION_ID: 'Robot0__inspect_emergence'},
+        {'arg__start_ridge': 'ridge 62'},
         {'arg__end_ridge': '2 ridges'},
     ], max_tool_calls=2, enforced_tool_adaptor=True)
     steps = [s for s in workflow.dag.values() if s.op_type in ('TOOL', 'TOOL_ERROR')]

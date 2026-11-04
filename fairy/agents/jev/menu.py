@@ -214,6 +214,25 @@ def _numeric_values(
     return values, source
 
 
+def canonical_tool(tool):
+    """Inherited native methods share adapter contracts, without renaming logged tools.
+
+    Override methods keep their own schema/semantics. Only trusted app bases
+    and method identity qualify; no arbitrary class-name suffix matching.
+    """
+    supported={'SharedTractorApp','WarehouseApp','PaddyOpsApp','PaddyObservationApp',
+               'PaddyMachineryApp','PaddyInfrastructureApp','PaddyDroneApp','TractorApp',
+               'RobotApp','DroneApp','IrrigationApp'}
+    cls=type(tool.class_instance)
+    for base in cls.__mro__[1:]:
+        if base.__name__ in supported and base.__module__.startswith('fairy.apps.') and getattr(cls,tool.name,None) is getattr(base,tool.name,None):
+            class View:
+                class_name=base.__name__
+                def __getattr__(self,name):return getattr(tool,name)
+            return View()
+    return tool
+
+
 def build_arg_menu(
     tool: Any,
     arg: Any,
@@ -241,6 +260,8 @@ def build_arg_menu(
         if mapped is None:
             raise ValueError(f"No menu rule for native schema {schema}")
         arg = SimpleNamespace(name=arg.name, arg_type=mapped + (" | None" if nullable_schema else ""), has_default=arg.has_default, default=arg.default)
+    if enforced_tool_adaptor:
+        tool=canonical_tool(tool)
     key = (tool.class_name, tool.name, arg.name)
     description = descriptions.get(arg.name, "")
     parts = {p.strip() for p in arg.arg_type.split("|")}
@@ -254,7 +275,15 @@ def build_arg_menu(
         values = list(range(num_ridges))
         source = f"every ridge 0-{num_ridges - 1}"
     elif arg_type == "str":
-        values, source = scene_text_values(tool, arg, numbers=numbers, steps=steps, task_text=task_text) or _text_values(tool, arg)
+        try:
+            values, source = scene_text_values(tool, arg, numbers=numbers, steps=steps, task_text=task_text) or _text_values(tool, arg)
+        except ValueError as exc:
+            if not enforced_tool_adaptor or not str(exc).startswith('No menu rule for text argument'):raise
+            from fairy.agents.jev.entities import choices
+            discovered=choices(tool,arg,arguments,steps)
+            if discovered is None:raise
+            values,source=discovered
+
     elif arg_type in ("list", "list[str]", "List[str]") and tool.class_name == "PaddyDroneApp" and arg.name == "plot_ids":
         ids = [p.plot_id for p in scene_world(tool).field.plots]
         if 2 ** len(ids) - 1 > MAX_CHOICE_OPTIONS:
@@ -267,6 +296,12 @@ def build_arg_menu(
         values, source = scene_numeric_values(tool, arg, numbers, arguments=arguments, steps=steps, task_text=task_text) or _numeric_values(key, arg_type, numbers)
     else:
         raise ValueError(f"No menu rule for {key} of type {arg.arg_type}")
+
+    if enforced_tool_adaptor:
+        from fairy.agents.jev.entities import choices,dependent
+        if dependent(tool):
+            discovered=choices(tool,arg,arguments,steps)
+            if discovered is not None:values,source=discovered
 
     if enforced_tool_adaptor and key == ("TractorApp", "load_seeds", "count"):
         from fairy.agents.jev.seed_candidates import seed_amount_hint
@@ -295,6 +330,7 @@ def build_arg_menu(
         source += " + nullable default"
     if not seen:
         raise EmptyMenuError(f"Empty menu for {key}", reason=(
+            "requires_observation" if enforced_tool_adaptor and ("queried" in source or "public receipts" in source) else
             "empty_resources" if extended_scene_tool(tool) and arg.name in
             ("batch_id", "plot_id", "machine_id", "asset_id", "farm_id", "channel_id") else "missing_rule"))
     if len(seen) > MAX_CHOICE_OPTIONS:
@@ -356,7 +392,7 @@ def _text_values(tool: Any, arg: Any) -> tuple[list[Any], str]:
 def build_tool_menus(
     tools_map: dict[str, Any], *, task_text: str, num_ridges: int,
     steps: list[Any] | tuple = (),
-    enforced_tool_adaptor: bool = False,
+    enforced_tool_adaptor: bool = False, diagnostics: list | None = None,
 ) -> dict[str, ToolMenu]:
     """One ToolMenu per tool, in the same order the LLM agent sees them."""
     numbers = task_numbers(task_text)
@@ -373,9 +409,11 @@ def build_tool_menus(
                     )
                     for arg in tool.args
                 ]
-            except EmptyMenuError:
+            except EmptyMenuError as exc:
                 # e.g. an amount with no maximum in the code and no number in the task:
                 # Jev cannot call this tool (the jev_menu event lists the tools offered).
+                if diagnostics is not None:
+                    diagnostics.append(dict(tool=tool_name,reason=exc.reason,message=str(exc)))
                 continue
         menus[tool_name] = ToolMenu(
             tool_name=tool_name,
@@ -620,6 +658,9 @@ def scene_numeric_values(tool: Any, arg: Any, numbers: list[float], *, arguments
 
 def dependent_menu(tool: Any, *, enforced_tool_adaptor: bool = False) -> bool:
     names = {a.name for a in tool.args}
+    if enforced_tool_adaptor:
+        from fairy.agents.jev.entities import dependent
+        if dependent(tool):return True
     if enforced_tool_adaptor and tool.class_name == "TractorApp" and tool.name == "load_seeds":
         return True
     return extended_scene_tool(tool) and (("farm_id" in names or "asset_id" in names) or

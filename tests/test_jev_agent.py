@@ -138,9 +138,9 @@ def test_ridge_count_becomes_an_end_within_the_field() -> None:
             {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
             {"arg__start": "ridge 20"},
             {"arg__end": "6 ridges"},
-            # Only independent arguments may ride along with tool selection.
-            {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state",
-             "arg__FarmWorldApp__get_ridge_range_state__start": "ridge 60"},
+            # Enhanced selection is operation-only, including repeated tools.
+            {TOOL_QUESTION_ID: "FarmWorldApp__get_ridge_range_state"},
+            {"arg__start": "ridge 60"},
             {"arg__end": "4 ridges"},
             {TOOL_QUESTION_ID: "done"},
         ], enforced_tool_adaptor=True
@@ -148,12 +148,13 @@ def test_ridge_count_becomes_an_end_within_the_field() -> None:
     assert "arg__end" not in llm.requests[1][1]
     assert len(llm.requests[2][1]["arg__end"]["criteria"]) == 44
     assert "arg__FarmWorldApp__get_ridge_range_state__end" not in llm.requests[3][1]
-    assert list(llm.requests[4][1]["arg__end"]["criteria"]) == ["1 ridge", "2 ridges", "3 ridges", "4 ridges"]
+    assert list(llm.requests[5][1]["arg__end"]["criteria"]) == ["1 ridge", "2 ridges", "3 ridges", "4 ridges"]
     steps = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
     assert [s.tool_args for s in steps] == [{"start": 20, "end": 25}, {"start": 60, "end": 63}]
-    assert "ridges 20-25 (6 ridges)" in llm.requests[4][1]["arg__end"]["instructions"]
-    assert len(llm.requests) == 6
-    assert agent.telemetry["fanout_hits"] == 1 and agent.telemetry["fanout_misses"] == 1
+    assert "ridges 20-25 (6 ridges)" in llm.requests[5][1]["arg__end"]["instructions"]
+    assert len(llm.requests) == 7
+    assert set(llm.requests[3][1]) == {TOOL_QUESTION_ID}
+    assert agent.telemetry["fanout_hits"] == 0 and agent.telemetry["fanout_misses"] == 2
 
 
 def test_wait_is_one_question_in_plain_units() -> None:
@@ -184,19 +185,22 @@ def test_done_is_refused_twice_while_ridges_are_unplanted() -> None:
 def test_ridge_range_count_follows_start_and_preserves_pass_limit() -> None:
     agent, workflow, llm = _run(
         [
+            {TOOL_QUESTION_ID: "TractorApp__load_fertilizer"},
+            {"arg__kg": "200"},
             {TOOL_QUESTION_ID: "TractorApp__apply_fertilizer"},
-            {"arg__start_ridge": "ridge 10", "arg__kg_per_ridge": "3"},
+            {"arg__start_ridge": "ridge 10"},
             {"arg__end_ridge": "10 ridges"},
+            {"arg__kg_per_ridge": "3"},
             {TOOL_QUESTION_ID: "done"},
         ], enforced_tool_adaptor=True
     )
-    args = llm.requests[1][1]
-    assert set(args) == {"arg__start_ridge", "arg__kg_per_ridge"}
-    args = llm.requests[2][1]
+    assert set(llm.requests[3][1]) == {"arg__start_ridge"}
+    args = llm.requests[4][1]
     assert "How many ridges" in args["arg__end_ridge"]["instructions"]
-    # apply_fertilizer covers at most 10 ridges per pass.
     assert list(args["arg__end_ridge"]["criteria"]) == ["1 ridge"] + [f"{n} ridges" for n in range(2, 11)]
-    step = [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")][0]
+    # Dose follows the selected count, so total product fits the actual load.
+    assert set(llm.requests[5][1]) == {"arg__kg_per_ridge"}
+    step = next(s for s in workflow.dag.values() if s.tool_name == "TractorApp__apply_fertilizer")
     assert step.tool_args == {"start_ridge": 10, "kg_per_ridge": 3.0, "end_ridge": 19}
 
 

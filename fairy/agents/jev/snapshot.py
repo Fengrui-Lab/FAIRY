@@ -65,10 +65,15 @@ def _short(value: Any, limit: int = RESULT_CHARS) -> str:
     return text if len(text) <= limit else text[: limit - 3] + "..."
 
 
-def _apps(toolsets: list[Any]) -> dict[str, list[Any]]:
+def _apps(toolsets: list[Any], *, enhanced: bool = False) -> dict[str, list[Any]]:
     out: dict[str, list[Any]] = {}
     for app in toolsets:
-        out.setdefault(type(app).__name__, []).append(app)
+        name = type(app).__name__
+        if enhanced:
+            # Inherited public read contracts, including header-maintenance tractors.
+            name = next((c.__name__ for c in type(app).__mro__ if c.__name__ in
+                         ('TractorApp','FarmWorldApp','DroneApp','RobotApp')), name)
+        out.setdefault(name, []).append(app)
     return out
 
 
@@ -230,8 +235,8 @@ def repeat_count(steps: list[Any]) -> int:
     return n
 
 
-def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict[str, Any], dict[str, Any]]:
-    apps = _apps(toolsets)
+def build_snapshot(toolsets: list[Any], workflow: Any, now: float, *, enhanced_tool_adaptor: bool = False) -> tuple[dict[str, Any], dict[str, Any]]:
+    apps = _apps(toolsets, enhanced=enhanced_tool_adaptor)
     if len(apps.get("FarmWorldApp", [])) > 1 or "PaddyWorldApp" in apps or any(hasattr(a, "runtime") for a in toolsets):
         return _scene_snapshot(toolsets, workflow, now)
     farm = apps["FarmWorldApp"][0]
@@ -242,10 +247,13 @@ def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict
         "crop": _crop(ridges),
         "inventory": _inventory(farm.get_inventory()),
     }
+    if enhanced_tool_adaptor:
+        snap["completed_field_preparation_ops"] = list(farm.completed_prep_ops)
     machines: dict[str, Any] = {}
     for tractor in apps.get("TractorApp", []):
         status = tractor.get_status()
-        status.pop("available_implements", None)
+        if not enhanced_tool_adaptor:
+            status.pop("available_implements", None)
         machines[tractor.name] = status
     for kind in ("DroneApp", "RobotApp"):
         for app in apps.get(kind, []):
@@ -280,6 +288,7 @@ def build_snapshot(toolsets: list[Any], workflow: Any, now: float) -> tuple[dict
         )
     facts = {
         "ridges": ridges,
+        **({"completed_field_preparation_ops": snap["completed_field_preparation_ops"]} if enhanced_tool_adaptor else {}),
         "inventory": snap["inventory"],
         "machines": machines,
         "pending": snap["pending_effects"],

@@ -95,6 +95,46 @@ def test_real_cli_robot_range_is_bounded_on_the_wire(tmp_path, provider, enabled
   action = next(e for e in progress if e.get('record_type') == 'jev_action')
   assert action['arguments'] == {'start_ridge': 62, 'end_ridge': 63 if enabled else 65}
   assert report['controller_telemetry']['enforced_tool_adaptor'] is enabled
-  assert report['controller_telemetry']['tool_adaptor_profile'] == ('enforced-v1' if enabled else 'manos-compatible-v1')
+  assert report['controller_telemetry']['tool_adaptor_profile'] == ('enforced-v2' if enabled else 'manos-compatible-v1')
  finally:
   server.shutdown(); server.server_close(); thread.join()
+
+
+@pytest.mark.parametrize('provider', ['system-one-compatible', 'typesafe'])
+def test_enforced_rice_fertilizer_is_computed_without_a_numeric_model_question(tmp_path, provider):
+ requests=[]
+ class Handler(BaseHTTPRequestHandler):
+  def log_message(self,*args):pass
+  def do_POST(self):
+   body=json.loads(self.rfile.read(int(self.headers['Content-Length'])));requests.append(body)
+   assert set(body['questions'])=={'next_action'}
+   criteria=body['questions']['next_action']['criteria']
+   assert 'done' not in criteria
+   pick='PaddyOpsApp__load_fertilizer';assert pick in criteria
+   answer={'type':'choice','choice':pick,'confidence':.9,'probabilities':{n:float(n==pick) for n in criteria}}
+   result={'model':'offline-decision','answers':{'next_action':answer},'usage':{'input_tokens':10,'output_tokens':2}}
+   data=json.dumps(result).encode();self.send_response(200);self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
+ server=ThreadingHTTPServer(('127.0.0.1',0),Handler);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+ root=Path(__file__).resolve().parents[1];endpoint=f'http://127.0.0.1:{server.server_port}'
+ argv=[str(root/'.venv/bin/fairy-cli'),'--scenario','scenario_rice_l3_normal','--agent','--controller','farm_jev',
+       '--provider',provider,'--model','offline-decision','--endpoint',endpoint if provider=='typesafe' else endpoint+'/v1',
+       '--max-tool-calls','1','--timeout-seconds','30','--request-max-retries','0','--output-dir',str(tmp_path),
+       '--enforced-tool-adaptor','true','--scenario-kwargs',json.dumps({'seed':0,'detailed_briefing':True})]
+ env={k:v for k,v in os.environ.items() if not any(s in k.upper() for s in ('API_KEY','TOKEN','PROXY'))}
+ try:
+  result=subprocess.run(argv,cwd=tmp_path,env=env,capture_output=True,text=True,timeout=60)
+  assert result.returncode==0,(result.stdout+result.stderr)[-4000:]
+  assert len(requests)==1
+  state=requests[0]['state'];state=json.loads(state) if isinstance(state,str) else state
+  from fairy.agents.jev.management import VERSION
+  assert state['management_progress']['version']==VERSION
+  workflow=json.loads(next(tmp_path.glob('*.agent_workflow.json')).read_text())
+  steps=[s for s in workflow.values() if s.get('op_type') in ('TOOL','TOOL_ERROR')]
+  assert len(steps)==1 and steps[0]['op_type']=='TOOL'
+  assert steps[0]['tool_args']=={'product_id':'urea','kg':75.}
+  assert steps[0]['content']['loaded_kg']==75.
+  report=json.loads(next(tmp_path.glob('*.run_report.json')).read_text())
+  assert report['controller_telemetry']['tool_adaptor_profile']=='enforced-v2'
+  assert report['controller_telemetry']['management_derived_arguments']==2
+ finally:
+  server.shutdown();server.server_close();thread.join()
