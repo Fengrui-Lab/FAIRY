@@ -129,6 +129,8 @@ def _readable_seconds(seconds: int) -> str:
 
 
 class JevAgent(Agent):
+    tool_instructions = TOOL_INSTRUCTIONS
+
     def __init__(
         self,
         name: str,
@@ -140,6 +142,7 @@ class JevAgent(Agent):
         fallback_confidence: float = 0.6,
         state_mode: str = "snapshot",
         hybrid_mode: str = "full",
+        num_ridges: int | None = None,
     ) -> None:
         if state_mode not in ("snapshot", "history"):
             raise ValueError(f"Unknown Jev state mode: {state_mode}")
@@ -157,7 +160,7 @@ class JevAgent(Agent):
             hidden_tool_names=hidden_tool_names,
         )
         self._toolsets = list(toolsets or [])
-        self._num_ridges = next(
+        self._num_ridges = num_ridges or next(
             (int(t.num_ridges) for t in self._toolsets if hasattr(t, "num_ridges")),
             None,
         )
@@ -200,7 +203,7 @@ class JevAgent(Agent):
     def run(self, input, **kwargs):
         self._reset_telemetry()
         self.tool_menus = build_tool_menus(
-            self.tools_map, task_text=str(input), num_ridges=self._num_ridges
+            self.tools_map, task_text=self._menu_task_text(str(input)), num_ridges=self._num_ridges
         )
         self.record_event(
             "jev_menu",
@@ -225,6 +228,10 @@ class JevAgent(Agent):
             },
         )
         return super().run(input, **kwargs)
+
+    def _menu_task_text(self, task: str) -> str:
+        """Text whose numbers and durations are offered in the argument menus."""
+        return task
 
     def after_agent_run(self) -> None:
         confidences = self._action_confidences
@@ -370,7 +377,7 @@ class JevAgent(Agent):
         """Jev's tool and arguments; arguments are None when skip_args_below skipped them."""
         tool_question = {
             "type": "choice",
-            "instructions": TOOL_INSTRUCTIONS if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
+            "instructions": self.tool_instructions if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
             "criteria": {
                 **{
                     name: menu.description

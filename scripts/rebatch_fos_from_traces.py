@@ -266,6 +266,10 @@ def _iter_fairy_tool_steps(workflow: Any) -> list[dict[str, Any]]:
             continue
         if not raw_step.get("tool_name"):
             continue
+        # A2A delegation calls are not farm actions. With a shared run trace the
+        # expert's real tool calls are their own steps in this workflow.
+        if str(raw_step["tool_name"]).endswith("__expert_agent"):
+            continue
         steps.append(raw_step)
     return steps
 
