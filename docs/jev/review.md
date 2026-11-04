@@ -653,4 +653,4 @@ Drought recovery, run 2: nothing harvested, 100% loss, 300 actions, simulated da
 
 Without this run the new hybrid's average would be about 5.7%; that is an observation, not a result, since the run is part of what was tested. 17 of 57 runs had 6 or more Jev waits in a row, with no clear extra grain loss. **Not fixed:** the numbers above are for the code as run. Proposed fix: a plan expires, and a few waits in a row go back to the LLM.
 
-Spent: about $8. Part 2 total: about $25.
+Spent: about $8. All experiments so far: about $32 (status report total of $24 plus this).
