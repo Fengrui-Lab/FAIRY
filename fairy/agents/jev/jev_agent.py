@@ -229,6 +229,9 @@ class JevAgent(Agent):
         )
         return super().run(input, **kwargs)
 
+    def _offer_done(self) -> bool:
+        return True
+
     def _menu_task_text(self, task: str) -> str:
         """Text whose numbers and durations are offered in the argument menus."""
         return task
@@ -384,7 +387,7 @@ class JevAgent(Agent):
                     for name, menu in self.tool_menus.items()
                     if not (name == REPORT_TOOL and self._last_was_report())
                 },
-                DONE_OPTION: DONE_DESCRIPTION,
+                **({DONE_OPTION: DONE_DESCRIPTION} if self._offer_done() else {}),
             },
         }
         questions: dict[str, dict[str, Any]] = {TOOL_QUESTION_ID: tool_question}

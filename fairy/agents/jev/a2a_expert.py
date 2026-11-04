@@ -18,14 +18,19 @@ There is no LLM inside an expert: the LLM decides what to do with a handed-back 
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
-from fairy.agents.jev.jev_agent import DONE_OPTION, JevAgent
-from fairy.agents.jev.menu import arg_descriptions, first_paragraph
+from fairy.agents.jev.jev_agent import DONE_OPTION, RANGE_END_TO_START, RANGE_STARTS, JevAgent
+from fairy.agents.jev.menu import PASS_WIDTH, arg_descriptions, first_paragraph
 from fairy.agents.jev.snapshot import _failed, _short, _tool_steps, step_history
 
 REPORT_RESULT_CHARS = 8000
 TOP_OPTIONS = 3
+_RIDGE_RANGE_RES = (
+    re.compile(r"ridges?\s*(\d+)\s*(?:-|\u2013|to|through)\s*(\d+)", re.IGNORECASE),
+    re.compile(r"start(?:_ridge)?\s*[=:]\s*(\d+)\D+end(?:_ridge)?\s*[=:]\s*(\d+)", re.IGNORECASE),
+)
 EXPERT_TOOL_INSTRUCTIONS = (
     "You are the expert for one farm app. `task` is the job the farm manager gave you, and "
     "steps_in_this_job lists what you did for it so far. Which action comes next for this job? "
@@ -44,6 +49,17 @@ MANAGER_NOTE = (
     "may not be complete; then check the actions, and rewrite the job more exactly or split it. "
     "You call the clock tools and the message to the user directly."
 )
+
+
+def job_ridge_range(job: str) -> tuple[int, int] | None:
+    """The ridge range a job names, if it names exactly one."""
+    found = {
+        (int(a), int(b))
+        for pattern in _RIDGE_RANGE_RES
+        for a, b in pattern.findall(job or "")
+        if int(a) <= int(b)
+    }
+    return found.pop() if len(found) == 1 else None
 
 
 class ManagerEscalation:
@@ -80,6 +96,7 @@ class JevExpertAgent(JevAgent):
         self._job_start = 0
         self._job_text = ""
         self._handback: dict[str, Any] | None = None
+        self._last_decision: tuple[str, Any, dict[str, float]] | None = None
 
     def describe_tools(self) -> str:
         lines = [f"This expert can do ({self.app_name}):"]
@@ -106,6 +123,37 @@ class JevExpertAgent(JevAgent):
     def _menu_task_text(self, task: str) -> str:
         return f"{task}\n{self.scenario_task}"
 
+    def _offer_done(self) -> bool:
+        # With "done" offered at once, Jev skipped read jobs whose answer it believed it had.
+        return bool(self._job_steps())
+
+    def _value_questions(self, menu, tool_key=None):
+        """When the job names a ridge range, only ridges inside it are offered."""
+        questions, options = super()._value_questions(menu, tool_key)
+        job_range = job_ridge_range(self._job_text)
+        if job_range is None:
+            return questions, options
+        low, high = job_range
+        width = PASS_WIDTH.get(tuple(menu.tool_name.split("__", 1))) or self._num_ridges
+        for name, (qid, opts) in options.items():
+            if name in RANGE_STARTS or name == "ridge_id":
+                narrowed = {k: v for k, v in opts.items() if low <= v <= high}
+            elif name in RANGE_END_TO_START and qid in questions and any(
+                k.endswith(("ridge", "ridges")) for k in opts
+            ):
+                narrowed = {k: v for k, v in opts.items() if v <= min(width, high - low + 1)}
+            else:
+                continue
+            if narrowed:
+                options[name] = (qid, narrowed)
+                questions[qid]["criteria"] = {key: None for key in narrowed}
+        return questions, options
+
+    def _decide(self, state, skip_args_below=None):
+        decision = super()._decide(state, skip_args_below)
+        self._last_decision = decision
+        return decision
+
     def _done_problems(self, task: str) -> list[str]:
         return []  # "done" here ends one job; the season-level check stays on the main agent
 
@@ -131,9 +179,12 @@ class JevExpertAgent(JevAgent):
     def _llm_decide(self, state, reason, fill_tool=None):
         """No LLM in the expert: an unsure or stuck Jev ends the job with what it did so far."""
         top = sorted(self._last_tool_probabilities.items(), key=lambda kv: -kv[1])[:TOP_OPTIONS]
+        pick, arguments, confidences = self._last_decision
         self._handback = {
             "reason": reason,
             "top_options": {name: round(float(p), 3) for name, p in top},
+            "wanted": {"action": pick.split("__", 1)[-1], "arguments": arguments},
+            "least_sure_about": min(confidences, key=confidences.get).split("__")[-1],
         }
         self.record_event("jev_expert_handback", status="ok", app=self.app_name, **self._handback)
         return DONE_OPTION, {}
@@ -167,6 +218,8 @@ class JevExpertAgent(JevAgent):
         }
         if self._handback:
             report["expert_top_options"] = self._handback["top_options"]
+            report["expert_wanted_not_done"] = self._handback["wanted"]
+            report["expert_least_sure_about"] = self._handback["least_sure_about"]
         return json.dumps(report, ensure_ascii=False, default=str)
 
     def job_summary(self) -> dict[str, Any]:

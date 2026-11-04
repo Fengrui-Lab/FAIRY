@@ -6,7 +6,7 @@ import json
 from types import SimpleNamespace
 
 from fairy.agents.agent.agent import Agent
-from fairy.agents.jev.a2a_expert import JevAppAgentBuilder
+from fairy.agents.jev.a2a_expert import JevAppAgentBuilder, job_ridge_range
 from fairy.agents.jev.jev_agent import TOOL_QUESTION_ID
 from fairy.controllers.agent_config import AppAgentConfigBuilder
 from fairy.controllers.app_agent import (
@@ -63,12 +63,12 @@ def test_expert_actions_land_in_the_main_run():
     assert any(e["event_type"] == "jev_action" for e in main.runtime_events)
     # Only this app's tools are offered.
     criteria = jev.requests[0][1][TOOL_QUESTION_ID]["criteria"]
-    assert set(criteria) == {"WeatherApp__get_current_weather", "WeatherApp__get_forecast", "done"}
+    assert set(criteria) == {"WeatherApp__get_current_weather", "WeatherApp__get_forecast"}
     assert jev.requests[0][0]["task"] == "Get the 3-day forecast."
 
 
 def test_numbers_in_job_and_scenario_task_are_menu_options():
-    main, apps, jev = _setup([DONE])
+    main, apps, jev = _setup([{TOOL_QUESTION_ID: "TractorApp__get_status"}, DONE])
     apps["TractorApp"].expert_agent("Load 77 kg of fertilizer.")
     menu = apps["TractorApp"].app_agent.tool_menus["TractorApp__load_fertilizer"]
     assert {"77", "321"} <= set(menu.args[0].options)
@@ -80,6 +80,7 @@ def test_low_confidence_hands_the_job_back_without_acting():
     assert report["status"] == "unsure"
     assert report["actions"] == []
     assert "expert_top_options" in report
+    assert report["expert_wanted_not_done"]["action"] == "get_forecast"
     assert not [s for s in main.workflow.dag.values() if s.op_type == "TOOL"]
 
 
@@ -88,6 +89,28 @@ def test_repeat_without_change_is_stuck():
     report = json.loads(apps["WeatherApp"].expert_agent("Get the 3-day forecast."))
     assert report["status"] == "stuck"
     assert len(report["actions"]) == 2
+
+
+def test_done_is_not_offered_before_the_first_action():
+    main, apps, jev = _setup([*FORECAST, DONE])
+    apps["WeatherApp"].expert_agent("Get the 3-day forecast.")
+    assert "done" not in jev.requests[0][1][TOOL_QUESTION_ID]["criteria"]
+    assert "done" in jev.requests[-1][1][TOOL_QUESTION_ID]["criteria"]
+
+
+def test_job_ridge_range_narrows_the_ridge_menus():
+    assert job_ridge_range("Plant exact ridges 42-45 with HN84.") == (42, 45)
+    assert job_ridge_range("plant_seeds(start_ridge=0, end_ridge=3, depth_cm=4)") == (0, 3)
+    assert job_ridge_range("Load 200 kg of fertilizer") is None
+    main, apps, jev = _setup([{TOOL_QUESTION_ID: "TractorApp__get_status"}, DONE])
+    expert = apps["TractorApp"].app_agent
+    expert._job_text = "Plant ridges 42-45."
+    expert.tool_menus = __import__("fairy.agents.jev.menu", fromlist=["build_tool_menus"]).build_tool_menus(
+        expert.tools_map, task_text="", num_ridges=expert._num_ridges
+    )
+    questions, options = expert._value_questions(expert.tool_menus["TractorApp__harvest"])
+    assert set(options["start_ridge"][1].values()) == {42, 43, 44, 45}
+    assert set(options["end_ridge"][1].values()) == {1, 2, 3, 4}
 
 
 def test_action_limit_and_main_budget():
