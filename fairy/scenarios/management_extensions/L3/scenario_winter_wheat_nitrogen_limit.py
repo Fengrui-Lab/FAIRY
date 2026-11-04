@@ -97,15 +97,17 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
         basic = (
             f"经营一座面积{self.resources.area_ha * 10000:g}平方米的冬小麦农场，田地按管理块划分，可分别播种、灌溉、施肥和收获。"
             "完成秋播、越冬管理、成熟收获与安全入库，在有限物资和预算内提高净经营收益。有限尿素库存下的冬小麦经营。"
-            "通过WheatField.get_field_info查地块、用种和作业条件，通过OperatingAccounts.get_accounts查价格与资源。"
         )
         if not detailed:
-            return basic
+            return (
+                basic
+                + "通过WheatField.get_field_info查地块、用种和作业条件，通过OperatingAccounts.get_accounts查价格与资源。"
+            )
         return basic + (
-            "先查询农场、仓库和农机状态，使用Sensor.read_root_zone_sensors、Sensor.read_canopy_sensors与WheatField.inspect_blocks检查水氮估计、冠层和各块生育进展，结合天气安排作业。"
-            "播前整平土地并装种，分块条播，不需要起垄；投入前核对单位、库存和设备容量。按生育阶段及观测变化安排水肥，处理后推进时间并复查响应。"
-            "越冬期间保留同一季作物与土壤，春季继续检查各块差异。原生成熟后分批收获、卸粮、干燥和入库，注意粮仓容量与安全水分。"
-            "观测是模拟估计；具体日期、剂量和阈值通过工具查询并自主判断。最后报告产量、实际成本和净经营收益。"
+            "\n\n先核对播期、农机、尿素库存和价格，按肥料产品用量安排全季投入。"
+            "\n\n秋播与越冬。整平土地后分块条播，播种时只分配一部分氮肥，为春季追肥留出库存。越冬期间检查苗情和根区水氮。"
+            "\n\n春季生长。越冬末至返青初期检查苗情和根区氮，追施一部分氮肥。随后在开花前的营养生长期，随冠层扩展分段安排剩余尿素，结合墒情配水。临近开花及花后灌浆期重点复查根区水分，安排补水。"
+            "\n\n成熟与入库。确认各块成熟及作业天气，按粮箱容量分批收获和卸粮，核对含水率后干燥入库。报告产量、实际成本和净经营收益。"
         )
 
     def build_events_flow(self):

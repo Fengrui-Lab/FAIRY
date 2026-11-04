@@ -292,7 +292,7 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
     exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)}
     assert exposed == allowed
     if "WheatField__get_field_info" in tools:
-        assert ("Sensor.read_root_zone_sensors" in task) is detailed
+        assert ("根区" in task) is detailed
     elif detailed:
         assert "read_soil_sensors" in task and "read_canopy_sensors" in task
     else:
@@ -301,7 +301,10 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
     expected = asdict(scene.prices) if is_dataclass(scene.prices) else scene.prices
     assert prices == expected
     assert prices["currency"] == "USD"
-    assert query.replace("__", ".") in task
+    if "WheatField__get_field_info" in tools and detailed:
+        assert "价格" in task
+    else:
+        assert query.replace("__", ".") in task
     assert "美元经营价格" not in task
     assert prices["price_book_id"] not in task
     assert not re.search(r"开头.{0,12}(?:价格|美元)", task)

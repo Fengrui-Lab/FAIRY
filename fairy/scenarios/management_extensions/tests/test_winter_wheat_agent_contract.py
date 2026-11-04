@@ -10,7 +10,9 @@ from fairy.tool_utils import _argument_descriptions
 from fairy.scenarios.management_extensions.winter_wheat_oracles import SCENARIO_IDS
 
 
-@pytest.mark.parametrize("sid", SCENARIO_IDS)
+@pytest.mark.parametrize(
+    "sid", (*SCENARIO_IDS, "scenario_l3_winter_wheat_block_scouting")
+)
 def test_task_modes_query_prices_and_observation_without_oracle_doses(sid):
     scenes = []
     for detailed in (False, True):
@@ -20,16 +22,23 @@ def test_task_modes_query_prices_and_observation_without_oracle_doses(sid):
         task = engine._resolve_agent_task()
         assert task == s.scenario_input == s.additional_system_prompt
         assert {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)} == {10000.0}
-        assert ("read_root_zone_sensors" in task) is detailed
-        assert (
-            "OperatingAccounts.get_accounts" in task
-            and "WheatField.get_field_info" in task
-        )
+        if detailed:
+            assert all(
+                phase in task for phase in ("秋播", "越冬", "开花", "灌浆", "成熟")
+            )
+            assert "根区" in task and "价格" in task
+        else:
+            assert (
+                "OperatingAccounts.get_accounts" in task
+                and "WheatField.get_field_info" in task
+            )
         before = s.farm.get_state()
         workflow = engine.build_oracle_workflow(run_oracle=False)
         assert s.farm.get_state() == before
         assert len(workflow) == s.ORACLE_REFERENCE["workflow_steps"]
         tools, schemas, _ = build_toolset(s.apps)
+        if detailed:
+            assert all(tool.name not in task for tool in tools)
         names = {f"{t.app_name}__{t.name}" for t in tools}
         assert {
             "Tractor__load_seeds",

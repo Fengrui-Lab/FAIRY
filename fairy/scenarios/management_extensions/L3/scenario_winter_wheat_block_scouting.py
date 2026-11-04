@@ -121,14 +121,18 @@ class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
         task = (
             "经营一座面积10000平方米的冬小麦农场。地块过去的耕作和投入有差异，春季关注局部长势并按需处理。"
             "完成秋播、越冬、收获和安全入库，在资源限制下提高净经营收益。"
-            "通过WheatField.get_field_info查地块与作业条件，通过OperatingAccounts.get_accounts查价格和资源。"
         )
         if not detailed:
-            return task
+            return (
+                task
+                + "通过WheatField.get_field_info查地块与作业条件，通过OperatingAccounts.get_accounts查价格和资源。"
+            )
         return task + (
-            "先整地并按地块播种。春季用Sensor.read_root_zone_sensors与Sensor.read_canopy_sensors比较分区读数，结合天气判断巡查窗口。"
-            "可用Drone.survey_blocks定位冠层异常，再用Robot.inspect_blocks比较异常块和正常块的近地长势。"
-            "结合根区、冠层和近地观测选择处理，注意设备覆盖与电量，等地块结算后复查，再确认成熟并分批收获入库。"
+            "\n\n先核对播期、设备容量、物资库存和价格。"
+            "\n\n秋播与越冬。整平土地后分块条播，让同一季小麦完成越冬，把氮肥留到春季结合巡查安排。"
+            "\n\n春季巡查与追肥。恢复生长后先安排首轮补水，再用固定传感器比较各区根区水氮和冠层读数。核对天气后，用无人机定位弱长势地块，再用地面机器人比较异常块和邻近正常块的长势及叶片读数。根据这些证据安排全田追氮和局部补足。"
+            "\n\n开花前复查处理区与对照块的长势，再安排后续追肥和补水。临近开花和花后灌浆期继续查看根区水分，安排补水。"
+            "\n\n成熟与入库。确认各块成熟及作业天气，按粮箱容量分批收获和卸粮，核对含水率后干燥入库。报告产量、实际成本和净经营收益。"
         )
 
     def build_events_flow(self):
