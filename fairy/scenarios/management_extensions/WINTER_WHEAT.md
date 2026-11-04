@@ -27,6 +27,11 @@
 | `scenario_l3_winter_wheat_nitrogen_limit` | `L3/scenario_winter_wheat_nitrogen_limit.py` | 较少尿素库存 |
 | `scenario_l3_winter_wheat_high_water_price` | `L3/scenario_winter_wheat_high_water_price.py` | 更高供水价格 |
 | `scenario_l3_winter_wheat_block_scouting` | `L3/scenario_winter_wheat_block_scouting.py` | 春季巡查与分块管理 |
+| `scenario_l3_winter_wheat_soil_water_priority` | `L3/scenario_winter_wheat_soil_water_priority.py` | 按土壤蓄水差异与墒情分配有限水量 |
+| `scenario_l3_winter_wheat_irrigation_turn` | `L3/scenario_winter_wheat_irrigation_turn.py` | 核对泵站轮次和并行能力，安排两批花前补水 |
+| `scenario_l3_winter_wheat_staggered_sowing` | `L3/scenario_winter_wheat_staggered_sowing.py` | 地块分期交接，分别利用合适的播种时段 |
+| `scenario_l3_winter_wheat_drying_window` | `L3/scenario_winter_wheat_drying_window.py` | 在短收获窗口和日烘干容量下按期交付 |
+| `scenario_l3_winter_wheat_delivery_contract` | `L3/scenario_winter_wheat_delivery_contract.py` | 满足交付量门槛后，尽量降低实际生产成本 |
 
 这些场景从秋播到次年收获，属于L3。各场景文件包含题设、资源配置、参考结果和固定的 `build_events_flow()`。
 
@@ -74,7 +79,7 @@
 
 延续固定汇率 `1 USD = 7.1757 CNY`。小麦专用价格表为 `data/winter_wheat_prices_2025.json`，复用现有实际消耗账本：种子、尿素、燃油、供水与实际干燥量。自有农机不再另收外包服务费，避免重复收费；不含地租、折旧及普通人工。粮价为固定政策计值基准，种子报价为实验假设，不能当成田间成本调查。
 
-场景目标均为净经营收益，水、肥、燃油、预算与仓容为可行性条件。全部块收获、全部粮食安全入库才算完成；一次可补救的工具拒绝不自动判失败。报告保留 YieldLoss 负值，成本和净收益比例为 `(Agent−Oracle)/Oracle`。
+场景通常以净经营收益为目标，最低交付量场景在达标的策略中比较生产成本。水、肥、燃油、预算与仓容为可行性条件。全部块收获、全部粮食安全入库才算完成；一次可补救的工具拒绝不自动判失败。报告保留 YieldLoss 负值，成本和净收益比例为 `(Agent−Oracle)/Oracle`。
 
 Oracle按实际共享设备执行的有限候选比较选出，包含播期、水氮减量、缺投入及分次管理对照，不宣称全局最优。采用真实块、实际机具及库存规则后，旧版全田服务Oracle与轨迹不适用于新版小麦；原有玉米／大豆接口保持原状。
 
@@ -89,7 +94,7 @@ PYTHONPATH=. .venv/bin/python -m fairy.cli \
   --scenario-kwargs '{"seed":0,"detailed_briefing":true}' \
   --output-dir validation_runs/winter_wheat_full_season
 
-# 四场执行并从JSON轨迹在新农场回放。
+# 原有四个全季经营场景执行并从JSON轨迹在新农场回放。
 PYTHONPATH=. .venv/bin/python -m fairy.scenarios.management_extensions.winter_wheat_oracles \
   verify --output validation_runs/winter_wheat_blocks_verify
 

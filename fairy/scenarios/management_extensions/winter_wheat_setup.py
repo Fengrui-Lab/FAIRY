@@ -15,7 +15,13 @@ from .engines.winter_wheat_wofost import InputBundle
 from .engines.winter_wheat_inputs import fingerprint
 
 
-def initialize_wheat_farm(scene, *, farm_class=WinterWheatFarm):
+def initialize_wheat_farm(
+    scene,
+    *,
+    farm_class=WinterWheatFarm,
+    irrigation_factory=WinterWheatIrrigation,
+    warehouse_factory=WarehouseApp,
+):
     """Create one block-managed native field with the common clock and warehouse."""
     r = scene.resources
     scene.farm = farm_class(InputBundle(scene.input_dir), r)
@@ -27,8 +33,8 @@ def initialize_wheat_farm(scene, *, farm_class=WinterWheatFarm):
         AgentUserInterface(),
     )
     scene.sensor = WinterWheatSensors(scene.farm)
-    scene.irrigation = WinterWheatIrrigation(scene.farm, scene.weather)
-    scene.warehouse = WarehouseApp(
+    scene.irrigation = irrigation_factory(scene.farm, scene.weather)
+    scene.warehouse = warehouse_factory(
         WarehouseStock(
             {SEED: round(r.seed_stock_kg / r.seed_mass_kg)},
             0.0,
