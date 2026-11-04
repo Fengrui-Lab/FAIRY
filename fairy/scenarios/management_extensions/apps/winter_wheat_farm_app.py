@@ -17,7 +17,7 @@ from fairy.apps.farm_world.models import RidgeState, ManagementRegimeState
 from fairy.apps.farm_world.crop_profiles import CropProfile
 from fairy.crops.catalog import CropDefinition
 from fairy.crops.rules import PlantingRules, HarvestRules, ScalarRange
-from fairy.crops.runtime import CropStatus
+from fairy.crops.runtime import CropObservationTraits, CropStatus
 from fairy.physics import SoilEngine, ManagementEffectEngine
 from fairy.tool_utils import OperationType, app_tool
 from fairy.types import event_registered
@@ -71,6 +71,8 @@ PROFILE = CropProfile(
 
 class WheatFieldPhysics:
     """Existing devices read these views; PCSE alone evolves crop and soil water/N."""
+
+    observation_traits = CropObservationTraits(0.30, None, None)
 
     def __init__(self, world):
         n = world.num_ridges
@@ -183,7 +185,10 @@ class WinterWheatFarm(FarmWorldApp):
             ridge_width_m=resources.block_width_m,
             rows_per_ridge=1,
         )
-        self.backends = [WinterWheatBackend(bundle) for _ in range(self.num_ridges)]
+        self.backends = [
+            WinterWheatBackend(self.block_inputs(block_id))
+            for block_id in range(self.num_ridges)
+        ]
         self._required_field_preparation_ops = ("level",)
         self.variety_name = bundle.cultivar
         self._sim_date = bundle.season.start.isoformat()
@@ -198,6 +203,10 @@ class WinterWheatFarm(FarmWorldApp):
             fertilizer_quota_kg=resources.fertilizer_stock_kg,
         )
         self._sync_blocks()
+
+    def block_inputs(self, block_id):
+        """Select this block's configured inputs before native initialization."""
+        return self.bundle
 
     def _set_configuration(
         self, *, farm_id, num_ridges, field_length_m, ridge_width_m, crop_type, **kwargs
@@ -511,7 +520,10 @@ class WinterWheatFarm(FarmWorldApp):
             or len(state["native"]) != self.num_ridges
         ):
             raise ValueError("Checkpoint must contain every block exactly once")
-        backends = [WinterWheatBackend.restore(self.bundle, s) for s in state["native"]]
+        backends = [
+            WinterWheatBackend.restore(backend.bundle, saved)
+            for backend, saved in zip(self.backends, state["native"])
+        ]
         self._ridges, self.backends = ridges, backends
         self._field_preparation_ops = list(state["completed_preparation"])
         self._management_regime = ManagementRegimeState(**state["management_regime"])

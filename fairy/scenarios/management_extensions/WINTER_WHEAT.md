@@ -18,7 +18,7 @@
 
 连续处理相邻块时按其合计宽度计算真实机具路径、耗时和燃油；播种机3 m、撒肥机6 m、收获割台4.4 m。种箱沿用300000粒上限、粮仓沿用2000 kg上限，不能把全田当成一趟机器作业。
 
-## 四个场景
+## 冬小麦场景
 
 | ID | 场景文件 | 经营情境 |
 | --- | --- | --- |
@@ -26,8 +26,17 @@
 | `scenario_l3_winter_wheat_water_limit` | `L3/scenario_winter_wheat_water_limit.py` | 较少季节供水 |
 | `scenario_l3_winter_wheat_nitrogen_limit` | `L3/scenario_winter_wheat_nitrogen_limit.py` | 较少尿素库存 |
 | `scenario_l3_winter_wheat_high_water_price` | `L3/scenario_winter_wheat_high_water_price.py` | 更高供水价格 |
+| `scenario_l3_winter_wheat_block_scouting` | `L3/scenario_winter_wheat_block_scouting.py` | 春季巡查与分块管理 |
 
-一季秋播、次年收获属于本项目的L3；没有冒充两次种植收获的L4。每个场景文件直接继承 `Scenario`，包含题设、资源配置、评价入口、参考结果及完整字面 `build_events_flow()`。初始化不运行策略搜索。
+这些场景从秋播到次年收获，属于L3。各场景文件包含题设、资源配置、参考结果和固定的 `build_events_flow()`。
+
+## 地块巡查
+
+巡查场景使用六个固定观测区和十六个管理块。固定传感器读区域根区水氮和冠层，无人机按块报告 NDVI 和冠层温度代理，机器人到块内读取生育状态和叶片 SPAD 代理。飞行和步巡沿用原设备的天气、电量、时间与覆盖规则。记录各次巡查的时间和覆盖块，报告可用的测量误差。
+
+局部初始土壤氮供应差异由原生 WOFOST 结算。Agent 通过多种观测定位，再决定处理。地块状态查询发布播种与收获所需的状态，氮供应和冠层诊断证据由巡查工具提供。机器人叶片值来自已有 SPAD 观测模型和小麦的原生叶氮状态。当前小麦模型的病虫草字段为未模拟。
+
+运行下文的 CLI 命令时，将场景 ID 换成 `scenario_l3_winter_wheat_block_scouting` 即可执行巡查 Oracle 和回放。油菜可沿用地块编号、设备作业和观测入口，生育和观测值由油菜模型提供。
 
 ## 代码位置
 
@@ -37,7 +46,8 @@
 | `apps/winter_wheat_tractor_app.py` | 复用共享农机操作，补充小麦播种、水肥及收获接口 |
 | `apps/winter_wheat_irrigation_app.py` | 灌溉的管理块／mm参数与原生入水 |
 | `apps/winter_wheat_accounts_app.py` | 小麦资源配置、价格查询及现成消耗账本 |
-| `winter_wheat_setup.py` | 四场实际重复的农场、设备和公共时钟接线 |
+| `apps/winter_wheat_scouting_apps.py` | 在地块上复用无人机和机器人作业及原有观测模型 |
+| `winter_wheat_setup.py` | 小麦农场、设备和公共时钟接线 |
 | `engines/winter_wheat_wofost.py` | 原生PCSE日尺度模型、同日输入合并、原生历史恢复 |
 | `engines/winter_wheat_inputs.py` | 本地输入校验、日期和单位 |
 | `evaluation/winter_wheat.py` | 全块完成、物资／粮食守恒及带符号Oracle比较 |
@@ -64,7 +74,7 @@
 
 延续固定汇率 `1 USD = 7.1757 CNY`。小麦专用价格表为 `data/winter_wheat_prices_2025.json`，复用现有实际消耗账本：种子、尿素、燃油、供水与实际干燥量。自有农机不再另收外包服务费，避免重复收费；不含地租、折旧及普通人工。粮价为固定政策计值基准，种子报价为实验假设，不能当成田间成本调查。
 
-四场目标均为净经营收益，水、肥、燃油、预算与仓容为可行性条件。全部块收获、全部粮食安全入库才算完成；一次可补救的工具拒绝不自动判失败。报告保留 YieldLoss 负值，成本和净收益比例为 `(Agent−Oracle)/Oracle`。
+场景目标均为净经营收益，水、肥、燃油、预算与仓容为可行性条件。全部块收获、全部粮食安全入库才算完成；一次可补救的工具拒绝不自动判失败。报告保留 YieldLoss 负值，成本和净收益比例为 `(Agent−Oracle)/Oracle`。
 
 Oracle按实际共享设备执行的有限候选比较选出，包含播期、水氮减量、缺投入及分次管理对照，不宣称全局最优。采用真实块、实际机具及库存规则后，旧版全田服务Oracle与轨迹不适用于新版小麦；原有玉米／大豆接口保持原状。
 

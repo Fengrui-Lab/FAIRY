@@ -20,4 +20,5 @@ SCENARIO_MODULES = (
     "L3.scenario_winter_wheat_water_limit",
     "L3.scenario_winter_wheat_nitrogen_limit",
     "L3.scenario_winter_wheat_high_water_price",
+    "L3.scenario_winter_wheat_block_scouting",
 )

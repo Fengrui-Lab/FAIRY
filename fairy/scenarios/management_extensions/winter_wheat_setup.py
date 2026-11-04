@@ -15,10 +15,10 @@ from .engines.winter_wheat_wofost import InputBundle
 from .engines.winter_wheat_inputs import fingerprint
 
 
-def initialize_wheat_farm(scene):
+def initialize_wheat_farm(scene, *, farm_class=WinterWheatFarm):
     """Create one block-managed native field with the common clock and warehouse."""
     r = scene.resources
-    scene.farm = WinterWheatFarm(InputBundle(scene.input_dir), r)
+    scene.farm = farm_class(InputBundle(scene.input_dir), r)
     scene.world = scene.farm
     scene.farms = [scene.farm]
     scene.weather, scene.system, scene.aui = (
