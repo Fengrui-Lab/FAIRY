@@ -337,6 +337,9 @@ def build_controller_agent(
     hybrid_mode: str = "full",
     jev_llm: Any = None,
     jev_prompt_note: bool = False,
+    fallback_memory: str = "full",
+    plan_note: bool = False,
+    budget_note: bool = False,
 ) -> ResearchARESimulationAgent:
     if family_id == "farm_llm_jev":
         # The LLM runs the farm; Jev is a tool it can call (ask_jev).
@@ -373,7 +376,12 @@ def build_controller_agent(
             fallback_confidence=fallback_confidence,
             state_mode=jev_state,
             hybrid_mode=hybrid_mode,
+            fallback_memory=fallback_memory,
+            plan_note=plan_note,
+            budget_note=budget_note,
         )
+    if fallback_memory != "full" or plan_note or budget_note:
+        raise ValueError("--fallback-memory, --plan-note and --budget-note are only used by the farm_jev controller")
     if fallback_llm is not None:
         raise ValueError("--fallback-model is only used by the farm_jev controller")
     if hybrid_mode != "full":
