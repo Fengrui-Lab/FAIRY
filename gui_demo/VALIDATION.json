@@ -41,11 +41,11 @@
   "known_limits": [
     "One recorded dual-crop scenario; no live Agent/backend connection",
     "Schematic plants, equipment positions and map layout; no GPS track",
-    "No image material or residue measurements supplied",
+    "15 AI-generated demonstration images are bundled; no captured photographs or measured pesticide residue are supplied",
     "Optional GIS/model/data links are collected for later integration, not parsed by this UI",
     "Moisture observations use soil-probe zones, not root-zone simulation truth",
     "Formal output JSON Schemas are not declared by source tools",
-    "Maize parameters are an uncalibrated legacy simulation reference"
+    "Maize parameters are an uncalibrated simulation reference"
   ],
   "refinement": {
     "verified_at": "2026-11-05T16:36:34.127707+08:00",
@@ -184,8 +184,8 @@
     "check": "python3 scripts/check-portability.py",
     "relocation": "Retained copy in a path containing spaces; launched outside demo working directory",
     "launcher_checks": 2,
-    "relative_references_checked": 33,
-    "http_resources_checked": 68,
+    "relative_references_checked": 54,
+    "http_resources_checked": 94,
     "mime_types": "Explicit JavaScript, JSON, CSS and SVG types; verified against response bodies",
     "runtime_dependencies": "Python 3.10+, modern browser with WebGL; all default assets and vendor modules are bundled",
     "limitations": [
@@ -193,6 +193,66 @@
       "Portability checker uses the actual HTTP handler without binding a socket; browser QA separately used a loopback server",
       "Browser-saved material links must be exported and committed to be shared"
     ],
-    "git": "gui_demo was untracked at verification; it must be added and committed before a clone contains it"
+    "git": "gui_demo is tracked; new artwork and changes must be included in a new commit for distribution."
+  },
+  "simulated_illustrations": {
+    "verified_at": "2026-11-05T19:04:04.664341+08:00",
+    "status": "passed",
+    "generation_tool": "built-in image_gen",
+    "image_count": 15,
+    "ndvi_images": 3,
+    "soybean_images": 6,
+    "maize_images": 6,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "asset_directory": "assets/media/simulated/",
+    "prompt_files": [
+      "ndvi-generation.json",
+      "soybean-generation.json",
+      "maize-generation.json"
+    ],
+    "catalog_filled_slots": 12,
+    "catalog_optional_empty_slots": 4,
+    "numeric_recording_changed": false,
+    "selection_checks": {
+      "command": "node scripts/check-plant-illustrations.mjs",
+      "recorded_state_queries": 5250
+    },
+    "asset_checks": {
+      "command": "node scripts/check-simulated-assets.mjs",
+      "plant_state_cases": 12,
+      "fallback_cases": 17
+    },
+    "regressions": [
+      "check-survey-map.mjs",
+      "check-demo.mjs",
+      "check-refinement.mjs"
+    ],
+    "browser_checks": [
+      "Soybean ridge28 at162 shows disease image; State schematic switch works;175 shows residual-spot pod-stage followup",
+      "Maize ridge28 at188/189 remains water-stress;193 shows limited-improvement followup",
+      "NDVI examples188/201 are different and historicalselection preserves worldstep201",
+      "Recorded ridge SVG and canopy temperature are available while examples supplied",
+      "3D raycast maize ridge25 opens its stage/condition illustration",
+      "Unplanted and harvested views retain state schematic instead of full living plant picture",
+      "No browser console errors",
+      "Gallery loads all15 images successfully"
+    ],
+    "interpretation": [
+      "Generated NDVI pixels are illustrative, not reconstructed or calibrated measurements; actual coverage remains20/64 for validsurveys",
+      "Plant appearance is selected from generic stage/context images and is not a measured symptom or treatment-effect estimate",
+      "Followup images retain leaf marks or waterstress; unavailable stage matches fall back to state schematic",
+      "All images are repository-relative and work offline"
+    ],
+    "screenshots": [
+      "simulated-soybean-disease.png",
+      "simulated-soybean-followup.png",
+      "simulated-maize-stress.png",
+      "simulated-ndvi-maize.png",
+      "simulated-plant-3d.png",
+      "simulated-gallery.png"
+    ]
   }
 }

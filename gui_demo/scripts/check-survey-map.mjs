@@ -262,8 +262,8 @@ for (const slot of exampleSlots) {
   assert.equal(event.result.farm_id, slot.farm_id);
   assert.equal(slot.from_step, slot.survey_sequence);
   assert.equal(slot.to_step, slot.survey_sequence);
-  const example = { ...slot, url: `https://example.invalid/ndvi-${event.sequence}.png`,
-    caption: `External illustration for event ${event.sequence}` };
+  assert.ok(slot.url, 'Each NDVI example slot now has a bundled simulation image');
+  const example = { ...slot, url: new URL(slot.url, 'http://demo.invalid/gui_demo/').href };
   const unchanged = JSON.stringify(example);
   const baseline = surveyEvidence({ event, farm });
   assert.equal(hasExampleImage(baseline), false, 'No illustrative image appears without a supplied source');

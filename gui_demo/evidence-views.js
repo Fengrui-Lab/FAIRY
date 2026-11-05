@@ -135,7 +135,7 @@ function observationFor(observations, farm, ridge) {
 }
 
 /** Snapshot fields drive shape. Optional acquired observations are listed separately. */
-export function plantEvidence({ farm = {}, ridge = {}, observations = {}, step = null } = {}) {
+export function plantEvidence({ farm = {}, ridge = {}, observations = {}, step = null, illustration = null, source = 'example' } = {}) {
   farm = safeObject(farm); ridge = safeObject(ridge);
   const crop = cropOf(farm), growth = growthState(ridge, crop), obs = observationFor(observations, farm, ridge);
   const detected = typeof obs.disease?.value === 'boolean' ? obs.disease.value : typeof obs.disease_present === 'boolean' ? obs.disease_present : null;
@@ -145,16 +145,23 @@ export function plantEvidence({ farm = {}, ridge = {}, observations = {}, step =
   const water = finite(ridge.root_vwc) ? `${fmt(ridge.root_vwc)} m³/m³` : 'Unknown';
   const pressure = finite(ridge.disease_pressure) ? fmt(ridge.disease_pressure) : 'Unknown';
   const record = Number.isInteger(step) ? `Step ${step}` : 'Step not supplied';
+  const illustrationUrl = typeof illustration?.url === 'string' && /^(?:https?:\/\/|assets\/media\/simulated\/)[^\s<>"']+$/i.test(illustration.url) ? illustration.url : null;
+  const canIllustrate = illustrationUrl && !['unplanted','sown','harvested','unknown'].includes(growth.key) && !(finite(ridge.stand_fraction) && ridge.stand_fraction <= 0);
+  const showIllustration = canIllustrate && source === 'example';
   return `<section class="ev-card ev-plant" data-evidence="plant" data-growth="${growth.key}" aria-label="Plant illustration">
-    <header class="ev-head"><div><h3>Plant illustration</h3><p>Schematic · Recorded ridge state</p></div><span class="ev-record">${record}</span></header>
+    <header class="ev-head"><div><h3>Plant illustration</h3><p>${showIllustration?'AI-generated simulation example':'Schematic · Recorded ridge state'}</p></div><span class="ev-record">${record}</span></header>
     <div class="ev-identity"><strong>${escape(cropName(crop))}</strong><span>${escape(farm.label || farm.id || 'Farm plot not supplied')} · ${Number.isInteger(ridge.ridge_id) ? `Ridge ${ridge.ridge_id}` : 'Ridge unknown'}</span></div>
-    <div class="ev-art"><span class="ev-stage">${escape(growth.label)}${growth.code && !['BARE', 'PLANTED_PRE_EMERGENCE'].includes(growth.code) ? ` · ${escape(growth.code)}` : ''}</span>${plantSVG({ crop, growth, rootVwc: ridge.root_vwc, pressure: ridge.disease_pressure, surfaceVwc: ridge.soil_vwc, step, ridgeId: ridge.ridge_id, farmId: farm.id, stand: ridge.stand_fraction })}</div>
+    ${canIllustrate?`<div class="ev-map-sources"><button data-plant-source="example" class="${showIllustration?'selected':''}">Simulated image</button><button data-plant-source="schematic" class="${!showIllustration?'selected':''}">State schematic</button></div>`:''}
+    <div class="ev-art"><span class="ev-stage">${escape(growth.label)}${growth.code && !['BARE', 'PLANTED_PRE_EMERGENCE'].includes(growth.code) ? ` · ${escape(growth.code)}` : ''}</span>${showIllustration?`<a class="ev-plant-open" href="${escape(illustrationUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open full-size simulated plant image"><img class="ev-plant-image" data-plant-example="${escape(illustration.id)}" src="${escape(illustrationUrl)}" alt="${escape(illustration.title)}"><span>Open full-size image ↗</span></a>`:plantSVG({ crop, growth, rootVwc: ridge.root_vwc, pressure: ridge.disease_pressure, surfaceVwc: ridge.soil_vwc, step, ridgeId: ridge.ridge_id, farmId: farm.id, stand: ridge.stand_fraction })}</div>
     <dl class="ev-metrics"><div><dt>Root-zone VWC</dt><dd>${water}</dd></div><div><dt>Disease pressure</dt><dd>${pressure}<small>${finite(ridge.disease_pressure) ? 'model index' : 'not recorded'}</small></dd></div></dl>
-    <p class="ev-caption">Leaf marks encode disease pressure; leaf angle encodes root-zone moisture. These are display cues, not observed symptoms or a measured wilt score.</p>
+    <p class="ev-caption">${showIllustration?escape(illustration.caption)+' Numeric metrics remain recorded values.':'Leaf marks encode disease pressure; leaf angle encodes root-zone moisture. These are display cues, not observed symptoms or a measured wilt score.'}</p>
     ${!finite(ridge.root_vwc) || !finite(ridge.disease_pressure) ? '<p class="ev-missing">Missing stress values are not rendered as confirmed healthy conditions.</p>' : ''}
     ${hasObservation ? `<details class="ev-observations"><summary>Acquired evidence · separate from illustration</summary><dl class="ev-metrics">${finite(soilObservation) ? `<div><dt>Surface-probe VWC</dt><dd>${fmt(soilObservation)}<small>${escape(timestamp(obs.moisture.datetime))}</small></dd></div>` : ''}${detected !== null ? `<div><dt>Recorded ground detection</dt><dd>${detected ? 'Present' : 'Not detected'}<small>${finite(confidence) ? `Confidence ${fmt(confidence)}` : 'Confidence not recorded'}</small></dd></div>` : ''}</dl></details>` : ''}
   </section>`;
 }
+
+/** A legend for a generated example, never a claim of radiometric calibration. */
+export function illustrativeNDVILegend(){return `<div class="ev-example-legend"><div><strong>NDVI · illustrative palette</strong><span>Simulated example</span></div><i></i><div class="ev-example-ticks"><span>0.00</span><span>0.25</span><span>0.50</span><span>0.75</span><span>1.00</span></div><p>Synthetic spatial pattern · Pixels are not measured NDVI values</p></div>`;}
 
 function ranges(ids) {
   if (!ids.length) return 'None recorded';
@@ -192,6 +199,7 @@ export function surveyEvidence({ event = {}, farm = {}, layer = 'ndvi', contrast
     <div class="ev-map-controls"><label>Map layer<select id="survey-layer" aria-label="Survey map layer"><option value="ndvi" ${!thermal?'selected':''}>NDVI</option><option value="temperature" ${thermal?'selected':''}>Canopy temperature</option></select></label>${!thermal?`<label>Color scale<select id="survey-contrast" aria-label="NDVI color scale" ${showExample?'disabled':''}><option value="standard" ${contrast!=='detail'?'selected':''}>Standard · 0–1</option><option value="detail" ${contrast==='detail'?'selected':''}>Detail · 0.75–0.90</option></select></label>`:''}</div>
     ${canShowExample?`<div class="ev-map-sources"><button data-survey-source="recorded" class="${!showExample?'selected':''}">Recorded ridge map</button><button data-survey-source="example" class="${showExample?'selected':''}">Illustrative image</button></div>`:''}
     <button class="ev-map-open" data-action="expand-survey-map" aria-label="Enlarge survey map" title="Open a larger view">${showExample?`<img class="ev-example-image" data-example-id="${escape(example.id)}" src="${escape(exampleUrl)}" alt="${escape(example.caption||'Illustrative NDVI map')}" referrerpolicy="no-referrer"><span class="ev-example-label">Illustrative NDVI map</span>`:map.svg}<span class="ev-map-expand">Enlarge ↗</span></button>
+    ${showExample?illustrativeNDVILegend():''}
     <p class="ev-caption ev-map-caption">${showExample?`Illustrative NDVI map · ${escape(example.caption||example.title||'External example')}<br>Example imagery is independent of the recorded ridge values below.`:map.hasData?'One returned value per ridge; gray areas have no valid reading. Along-ridge patches and GPS positions are not supplied.':thermal?'No valid canopy-temperature readings are available for this survey.':'No valid NDVI · Canopy appearance is unknown. Missing readings are not interpreted as low NDVI.'}${!showExample&&!thermal&&contrast==='detail'?'<br>Enhanced contrast uses the same 0.75–0.90 scale for every survey. Red means lower within this range, not confirmed disease.':''}</p>
     ${!showExample?`<div class="ev-map-download"><a href="data:image/svg+xml;charset=utf-8,${encodeURIComponent(map.svg)}" download="${escape(map.filename)}">Download map SVG</a><span>${map.validCount} valid ridges · ${map.min}–${map.max}${thermal?' °C':''}</span></div>`:''}
     ${mismatch ? '<p class="ev-missing">Plot metadata does not match the returned survey. Crop appearance is left unknown.</p>' : ''}
