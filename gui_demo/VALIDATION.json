@@ -1,0 +1,198 @@
+{
+  "verified_at": "2026-11-05T15:11:48.660206+08:00",
+  "status": "passed",
+  "data_checks": {
+    "command": "node scripts/check-demo.mjs",
+    "events": 374,
+    "frames": 375,
+    "runtime_tools": 73,
+    "agent_exposed_tools": 72,
+    "executed_tools": 42,
+    "observation_provenance_checks": 85188,
+    "audit_frames": 375,
+    "asset_slots": 16,
+    "sha256": "all exported data matched file-manifest.json"
+  },
+  "browser_checks": {
+    "browser": "Codex in-app browser",
+    "viewport_css_pixels": [
+      897,
+      853
+    ],
+    "console_errors": 0,
+    "verified": [
+      "2D overview and both 3D crops",
+      "Root moisture and disease masks",
+      "Simulation versus acquired observation values",
+      "Start state has no acquired observations",
+      "Farm switching preserves world cursor",
+      "Timeline filters actions without filtering world state",
+      "Play, pause, checkpoint selection and final harvested state",
+      "3D ridge raycasting and keyboard zoom",
+      "Per-ridge PiP with timestamped soil and disease evidence",
+      "Shared warehouse and fixed sensor identification",
+      "Workflow selection, pinning, equipment focus and target state metrics",
+      "Workflow pagination preserves world time",
+      "Exposed/internal tool availability and full input constraints",
+      "Output example limited to the selected world time",
+      "Material form persists in browser and remains empty after QA"
+    ]
+  },
+  "known_limits": [
+    "One recorded dual-crop scenario; no live Agent/backend connection",
+    "Schematic plants, equipment positions and map layout; no GPS track",
+    "No image material or residue measurements supplied",
+    "Optional GIS/model/data links are collected for later integration, not parsed by this UI",
+    "Moisture observations use soil-probe zones, not root-zone simulation truth",
+    "Formal output JSON Schemas are not declared by source tools",
+    "Maize parameters are an uncalibrated legacy simulation reference"
+  ],
+  "refinement": {
+    "verified_at": "2026-11-05T16:36:34.127707+08:00",
+    "status": "passed",
+    "data_check": "node scripts/check-refinement.mjs",
+    "pose_checks": 4500,
+    "random_access_queries": 700,
+    "exact_survey_values_checked": 188,
+    "browser_checks": [
+      "Unified main field view; no source toggle",
+      "Sidebar documentation links removed",
+      "2D/3D shared projection and visible drone movement over target field",
+      "Drill into drone results from 2D and3D",
+      "Historical completed-survey selection with preserved world cursor",
+      "Initial frame has no future survey",
+      "Plant illustration reflects unplanted and actual crop growth states",
+      "Maize root-zone moisture and timestamped surface-probe readings in one popup",
+      "Timeline milestone changes update an open plant popup",
+      "Popups leave timeline controls accessible",
+      "No browser console errors"
+    ],
+    "new_screenshots": [
+      "plant-inspection-v2.png",
+      "drone-survey-v2.png",
+      "device-route-3d-v2.png",
+      "device-route-2d-v2.png"
+    ],
+    "interpretation": [
+      "Positions, route shapes and altitudes are schematic; target farm/ridges derive from executed tools",
+      "Plant visuals encode state values and are not observed symptoms or photographs",
+      "Survey illustrations use exact recorded results; no visual diagnosis or detection boxes are fabricated",
+      "Moisture sources are presented together but not averaged"
+    ]
+  },
+  "return_home_refinement": {
+    "verified_at": "2026-11-05T17:19:30.918956+08:00",
+    "status": "passed",
+    "source_semantics": "The engine models field operation duration/resources, not persistent equipment position. Low-battery early return and charge-to-station are documented, but ordinary successful completion has no hover/landing/docking state. Fixed-home trips are a display convention.",
+    "check": "node scripts/check-return-home.mjs",
+    "field_missions": 100,
+    "mission_counts": {
+      "Tractor": 86,
+      "Robot0": 9,
+      "Mavic3M": 3,
+      "Matrice4T": 2
+    },
+    "sampled_poses": 11600,
+    "continuous_phase_boundaries": 410,
+    "partial_failed_cases": 16,
+    "random_access_queries": 500,
+    "browser_checks": [
+      "Dedicated vertical equipment rail has zero overlap with the 2D/3D canvas at 897 x 853",
+      "Mavic3M takeoff at the fixed home, movement over target ridges, and completed home pose at altitude zero",
+      "3D survey and tractor field operation are visible with live phase labels",
+      "Completed tractor operation returns to At base",
+      "Survey results remain accessible from the device rail after docking",
+      "Replay operation preserves the recorded world timestamp",
+      "No browser console errors",
+      "Open equipment details track the current illustrated position and phase without replacing survey evidence"
+    ],
+    "recording_changes": false,
+    "notes": [
+      "Replay duration is a 12-second UI illustration, independent of recorded duration",
+      "No added engine events, resource consumption, charging, unloading or material returns",
+      "Reduced motion suppresses automatic animation; an explicit Replay operation click opts in"
+    ],
+    "screenshots": [
+      "drone-round-trip-2d.png",
+      "drone-round-trip-3d.png",
+      "tractor-round-trip-3d.png",
+      "equipment-vertical-home.png"
+    ]
+  },
+  "survey_map_refinement": {
+    "verified_at": "2026-11-05T18:23:43.786465+08:00",
+    "status": "passed",
+    "map_check": "node scripts/check-survey-map.mjs",
+    "regressions": [
+      "node scripts/check-refinement.mjs",
+      "node scripts/check-demo.mjs"
+    ],
+    "recorded_surveys": 5,
+    "valid_ndvi_surveys": [
+      159,
+      188,
+      201
+    ],
+    "no_valid_ndvi_surveys": [
+      110,
+      115
+    ],
+    "exported_svg_files": 13,
+    "rendered_map_checks": 26,
+    "ridge_checks": 1664,
+    "edge_cases": 19,
+    "random_access_queries": 50,
+    "scales": {
+      "ndvi": [
+        0,
+        1
+      ],
+      "ndvi_detail": [
+        0.75,
+        0.9
+      ],
+      "canopy_temperature_c": [
+        0,
+        45
+      ]
+    },
+    "browser_checks": [
+      "Mavic3M soybean NDVI map, standard/detail selector and 150% zoom",
+      "Matrice4T 188/201 render distinct maps; selecting 188 at world step 201 preserves world time",
+      "Early survey 115 shows No valid NDVI; temperature is separately available",
+      "NDVI and canopy-temperature modes work for both devices",
+      "Downloaded SVG href is self-contained and rendered image loads",
+      "3D farm plot B opens the same drone survey panel",
+      "At initial state, no future survey is displayed",
+      "No browser console errors"
+    ],
+    "data_semantics": "One flat color per returned ridge value; no invented along-ridge patches, pixel-level imagery, GPS or diagnoses.",
+    "optional_materials": "Three empty, event-specific ndvi_example slots are ready. No user imagery has been supplied.",
+    "screenshots": [
+      "ndvi-soybean-detail.png",
+      "ndvi-maize-188.png",
+      "ndvi-maize-201.png",
+      "survey-temperature-188.png",
+      "ndvi-drone-3d.png"
+    ],
+    "recording_changes": false,
+    "source_slot_checks": 60,
+    "saved_svg_matches": 13
+  },
+  "portability": {
+    "status": "passed",
+    "check": "python3 scripts/check-portability.py",
+    "relocation": "Retained copy in a path containing spaces; launched outside demo working directory",
+    "launcher_checks": 2,
+    "relative_references_checked": 33,
+    "http_resources_checked": 68,
+    "mime_types": "Explicit JavaScript, JSON, CSS and SVG types; verified against response bodies",
+    "runtime_dependencies": "Python 3.10+, modern browser with WebGL; all default assets and vendor modules are bundled",
+    "limitations": [
+      "Windows launcher reviewed but not run on Windows",
+      "Portability checker uses the actual HTTP handler without binding a socket; browser QA separately used a loopback server",
+      "Browser-saved material links must be exported and committed to be shared"
+    ],
+    "git": "gui_demo was untracked at verification; it must be added and committed before a clone contains it"
+  }
+}

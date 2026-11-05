@@ -1,0 +1,38 @@
+{
+  "audit-snapshots.jsonl.gz": {
+    "bytes": 30161125,
+    "sha256": "0b9e47e9ba975d2d803a55e977a0276cacbadcb2b5b6c004c2a5e136b1f36a8d"
+  },
+  "availability.json": {
+    "bytes": 1018,
+    "sha256": "27d67a3acda160bdd4d5a977c153b3d79d65252dc944daf687c2a00555e6de2c"
+  },
+  "checks.json": {
+    "bytes": 356,
+    "sha256": "d45d178593f7e6065e28d9f47d9b23189ccf5783688323b48b2127bf1c7d04ea"
+  },
+  "events.json": {
+    "bytes": 904595,
+    "sha256": "13003dd65cc82a774946fc3214d784c02e5007a790087014007eb5cc114cdf82"
+  },
+  "executed-workflow.json": {
+    "bytes": 807272,
+    "sha256": "0babd25950dd2c53d36397234672ac1680396fd940107581c02fb8725b6dac1f"
+  },
+  "frames.json": {
+    "bytes": 18005615,
+    "sha256": "5cd141aa5dc8e964410bb2f4bec9d96050d5231b690ddb90844b5c133cb59b71"
+  },
+  "manifest.json": {
+    "bytes": 4544,
+    "sha256": "053f7a513282e39200fd3e2b6bc16c176a8613dc32d084286cedb620e9a44a26"
+  },
+  "oracle-plan.json": {
+    "bytes": 122309,
+    "sha256": "f0791d9028c27c42b970e46bad4530fa841d3c4d052a26cd22fc35031ed377f1"
+  },
+  "tool-catalog.json": {
+    "bytes": 169192,
+    "sha256": "f36470a6d25593f53183f75eabe6580205db1e314d671e28ae63637c092c1ee5"
+  }
+}

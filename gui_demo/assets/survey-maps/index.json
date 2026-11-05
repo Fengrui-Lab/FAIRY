@@ -1,0 +1,265 @@
+{
+  "description": "Maps of recorded per-ridge tool values, not captured aerial imagery. Gray indicates unavailable or unobserved values.",
+  "maps": [
+    {
+      "file": "maize_field-Mavic3M-step-110-ndvi.svg",
+      "step": 110,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-05-26T16:59:14+08:00",
+      "layer": "ndvi",
+      "contrast": "standard",
+      "scale": [
+        0,
+        1
+      ],
+      "data_range": [
+        null,
+        null
+      ],
+      "valid_ridges": 0,
+      "covered_ridges": 64,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Mavic3M-step-110-temperature.svg",
+      "step": 110,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-05-26T16:59:14+08:00",
+      "layer": "temperature",
+      "contrast": "standard",
+      "scale": [
+        0,
+        45
+      ],
+      "data_range": [
+        13.61,
+        18.52
+      ],
+      "valid_ridges": 64,
+      "covered_ridges": 64,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "soybean_field-Mavic3M-step-115-ndvi.svg",
+      "step": 115,
+      "farm_id": "soybean_field",
+      "acquired_at": "2026-05-26T18:55:14+08:00",
+      "layer": "ndvi",
+      "contrast": "standard",
+      "scale": [
+        0,
+        1
+      ],
+      "data_range": [
+        null,
+        null
+      ],
+      "valid_ridges": 0,
+      "covered_ridges": 64,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "soybean_field-Mavic3M-step-115-temperature.svg",
+      "step": 115,
+      "farm_id": "soybean_field",
+      "acquired_at": "2026-05-26T18:55:14+08:00",
+      "layer": "temperature",
+      "contrast": "standard",
+      "scale": [
+        0,
+        45
+      ],
+      "data_range": [
+        13.61,
+        18.52
+      ],
+      "valid_ridges": 64,
+      "covered_ridges": 64,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "soybean_field-Mavic3M-step-159-ndvi.svg",
+      "step": 159,
+      "farm_id": "soybean_field",
+      "acquired_at": "2026-07-20T08:42:43+08:00",
+      "layer": "ndvi",
+      "contrast": "standard",
+      "scale": [
+        0,
+        1
+      ],
+      "data_range": [
+        0.777,
+        0.843
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "soybean_field-Mavic3M-step-159-temperature.svg",
+      "step": 159,
+      "farm_id": "soybean_field",
+      "acquired_at": "2026-07-20T08:42:43+08:00",
+      "layer": "temperature",
+      "contrast": "standard",
+      "scale": [
+        0,
+        45
+      ],
+      "data_range": [
+        26.71,
+        30.72
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "soybean_field-Mavic3M-step-159-ndvi-detail.svg",
+      "step": 159,
+      "farm_id": "soybean_field",
+      "acquired_at": "2026-07-20T08:42:43+08:00",
+      "layer": "ndvi",
+      "contrast": "detail",
+      "scale": [
+        0.75,
+        0.9
+      ],
+      "data_range": [
+        0.777,
+        0.843
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-188-ndvi.svg",
+      "step": 188,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-02T06:20:41+08:00",
+      "layer": "ndvi",
+      "contrast": "standard",
+      "scale": [
+        0,
+        1
+      ],
+      "data_range": [
+        0.783,
+        0.896
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-188-temperature.svg",
+      "step": 188,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-02T06:20:41+08:00",
+      "layer": "temperature",
+      "contrast": "standard",
+      "scale": [
+        0,
+        45
+      ],
+      "data_range": [
+        23.75,
+        30.23
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-188-ndvi-detail.svg",
+      "step": 188,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-02T06:20:41+08:00",
+      "layer": "ndvi",
+      "contrast": "detail",
+      "scale": [
+        0.75,
+        0.9
+      ],
+      "data_range": [
+        0.783,
+        0.896
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-201-ndvi.svg",
+      "step": 201,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-09T06:30:39+08:00",
+      "layer": "ndvi",
+      "contrast": "standard",
+      "scale": [
+        0,
+        1
+      ],
+      "data_range": [
+        0.759,
+        0.862
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-201-temperature.svg",
+      "step": 201,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-09T06:30:39+08:00",
+      "layer": "temperature",
+      "contrast": "standard",
+      "scale": [
+        0,
+        45
+      ],
+      "data_range": [
+        26.4,
+        30.39
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    },
+    {
+      "file": "maize_field-Matrice4T-step-201-ndvi-detail.svg",
+      "step": 201,
+      "farm_id": "maize_field",
+      "acquired_at": "2026-08-09T06:30:39+08:00",
+      "layer": "ndvi",
+      "contrast": "detail",
+      "scale": [
+        0.75,
+        0.9
+      ],
+      "data_range": [
+        0.759,
+        0.862
+      ],
+      "valid_ridges": 20,
+      "covered_ridges": 20,
+      "source": "Tool observations · One value per ridge",
+      "is_captured_image": false
+    }
+  ]
+}

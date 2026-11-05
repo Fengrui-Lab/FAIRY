@@ -1,0 +1,298 @@
+MATERIALS TO ADD — OPTIONAL EXTERNAL SUPPORT FOR THE REAL REPLAY
+
+This list is fillable. Nothing below is claimed to have been captured by FAIRY.
+Leave URL and source fields empty when material is unavailable. A working demo
+can use the exported numeric records without any of these external assets.
+
+ALREADY AVAILABLE — DO NOT FABRICATE OR RE-ENTER
+- 374 executed tool events and 375 global frames, including the initial state.
+- Soil/canopy observations, numeric NDVI and canopy temperature, ground
+  detection confidence/coverage, crop stages, actions, inventory and devices.
+- Per-ridge simulation truth is separate from Agent-observed tool results.
+- Neither drone nor ground-inspection output contains an RGB photograph,
+  thermal raster, bounding box, segmentation mask or raw spectral image.
+- Disease pressure is a model index, not a diseased-leaf percentage.
+- Residual protection days are not a measured pesticide-residue concentration.
+
+HOW TO FILL THE CATALOG
+Edit assets/catalog.json. Set url to a relative local asset path or a permitted
+external URL; set source_type (for example actual_photo, measured_data,
+demo_illustration, model_asset or geometry_data), caption and acquired_at.
+Use ISO 8601 with timezone for a real acquisition time, or null when unknown.
+Keep original event tool names/results unchanged. Source descriptions and
+usage permissions belong to the supplied material, not to the simulation.
+
+All from_step/to_step bounds below are INCLUSIVE event/frame indices.
+Frame 0 is the initial state; frame N is the state after event N.
+Never display an event-support image before its from_step. Before-treatment
+images expire before the first intervention. Static crop/equipment references
+are marked reference-only and must never masquerade as a live observation.
+When adding real material from a later date, advance from_step accordingly.
+
+RIDGE MAPPING
+Both farm plots visibly use raw ZERO-BASED ridge IDs 0-63.
+The target interval is 20-39 inclusive (20 ridges); it is not 20% of a field.
+Ground disease checks sample 28-31 and 32-35 (eight ridges), not all 20.
+Do not relabel raw ridge 0 as ridge 1 or silently switch to one-based indexing.
+Backend soybean_field = farm plot A; maize_field = farm plot B.
+
+========================================================================
+ID: soybean-disease-before-aerial
+TITLE: Soybean canopy before disease treatment
+PRIORITY: recommended
+TYPE / ROLE: image / disease_before
+FARM: soybean_field
+REPLAY RANGE: 159-165 (inclusive)
+CONTEXT: Event 159 (disease_multispectral), 2026-07-20T08:42:43+08:00, Mavic3M__fly_survey. farm plot A, raw ridge IDs 20-39. The real result contains per-ridge NDVI and canopy temperature only. Supply an external reference image or a clearly labelled demo illustration; the simulation did not capture an aerial photograph. This pre-treatment slot expires before event 166.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions
+
+========================================================================
+ID: soybean-disease-before-ground
+TITLE: Soybean ground diagnosis before treatment
+PRIORITY: recommended
+TYPE / ROLE: image / disease_before
+FARM: soybean_field
+REPLAY RANGE: 161-165 (inclusive)
+CONTEXT: Event 161 (silking_soybean_field_health), 2026-07-20T10:16:03+08:00, Robot0__inspect_crop_health; Event 162 (disease_confirm_32), 2026-07-20T11:02:43+08:00, Robot0__inspect_crop_health. farm plot A: samples 28-31 and 32-35 within target ridges 20-39. The real observations are disease/pest/weed indicators and confidence, without leaf photos, image boxes or masks. Supply a matching external leaf/plant reference or labelled illustration. No whole-field ground coverage is implied.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions, diagnosed_condition_if_known, optional_bbox_or_mask_with_pixel_coordinates
+
+========================================================================
+ID: soybean-disease-followup
+TITLE: Soybean seven-day disease follow-up
+PRIORITY: recommended
+TYPE / ROLE: image / disease_followup
+FARM: soybean_field
+REPLAY RANGE: 174-176 (inclusive)
+CONTEXT: Event 174 (disease_followup_28), 2026-07-27T11:55:43+08:00, Robot0__inspect_crop_health; Event 175 (disease_followup_32), 2026-07-27T12:42:23+08:00, Robot0__inspect_crop_health. farm plot A: ground samples 28-31 and 32-35, seven days after treatment. There is no new aerial event and no native photo at this follow-up. Supply external supporting media or a labelled demonstration illustration; do not present a before/after photo pair as measured treatment efficacy.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions
+
+========================================================================
+ID: maize-water-before-first
+TITLE: Maize thermal support before first irrigation
+PRIORITY: recommended
+TYPE / ROLE: image / water_before
+FARM: maize_field
+REPLAY RANGE: 188-188 (inclusive)
+CONTEXT: Event 188 (drought_thermal), 2026-08-02T06:20:41+08:00, Matrice4T__fly_survey. farm plot B, raw ridge IDs 20-39. Matrice4T returned NDVI and canopy-temperature values, not a thermal raster. Irrigation starts in event 189. Supply an external thermal reference or labelled illustration; soil readings and weather are already available for the water diagnosis.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions, temperature_units_and_color_scale_if_thermal, radiometric_or_illustrative
+
+========================================================================
+ID: maize-water-followup-first
+TITLE: Maize first next-day water follow-up
+PRIORITY: recommended
+TYPE / ROLE: image / water_followup
+FARM: maize_field
+REPLAY RANGE: 192-195 (inclusive)
+CONTEXT: Event 192 (grain_fill_maize_recheck), 2026-08-03T10:25:41+08:00, Maize_Sensor__read_soil_sensors; Event 193 (drought_crop_recheck), 2026-08-03T10:25:41+08:00, MaizeFarm__get_ridge_range_state. farm plot B, following the first irrigation on 2026-08-02. The evidence is soil-probe readings and crop-state results; there is no next-day aerial/thermal photo. Any image supplied here is external support or a labelled illustration, not a captured simulator observation.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions
+
+========================================================================
+ID: maize-water-before-second
+TITLE: Maize thermal support before second irrigation
+PRIORITY: recommended
+TYPE / ROLE: image / water_second_before
+FARM: maize_field
+REPLAY RANGE: 201-201 (inclusive)
+CONTEXT: Event 201 (drought_second_thermal), 2026-08-09T06:30:39+08:00, Matrice4T__fly_survey. farm plot B, raw ridge IDs 20-39, after weather/soil/crop reassessment. The result is numeric NDVI and canopy temperature only. Second irrigation starts in event 202. Supply external thermal support or a labelled illustration with its own source and timestamp.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions, temperature_units_and_color_scale_if_thermal, radiometric_or_illustrative
+
+========================================================================
+ID: maize-water-followup-second
+TITLE: Maize second next-day water follow-up
+PRIORITY: recommended
+TYPE / ROLE: image / water_second_followup
+FARM: maize_field
+REPLAY RANGE: 205-206 (inclusive)
+CONTEXT: Event 205 (drought_second_recheck), 2026-08-10T10:35:39+08:00, Maize_Sensor__read_soil_sensors; Event 206 (drought_second_crop_recheck), 2026-08-10T10:35:39+08:00, MaizeFarm__get_ridge_range_state. farm plot B, following the second irrigation on 2026-08-09. These are soil and crop-state checks, not imaging events. Supply external supporting media or a labelled demonstration illustration only if useful.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions
+
+========================================================================
+ID: soybean-pesticide-residue
+TITLE: Optional measured pesticide-residue data
+PRIORITY: optional
+TYPE / ROLE: data / residue
+FARM: soybean_field
+REPLAY RANGE: 167-374 (inclusive)
+CONTEXT: Event 167 (disease_treat_30), 2026-07-20T11:09:03+08:00, Tractor__apply_fungicide. Both soybean fungicide passes are now complete. The simulator records application volume and residual protection days, not pesticide-residue concentrations. Only an independently sourced quantitative dataset or laboratory result can populate a residue view. Set acquired_at to the real sampling date and move from_step forward to the matching replay time before publishing a measured result.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, sampling_date, sampling_matrix, farm_and_ridge_mapping, active_ingredient, measured_concentration, concentration_unit, analytical_method, laboratory_or_dataset_source, detection_and_quantification_limits, quality_flags
+
+========================================================================
+ID: soybean-crop-appearance
+TITLE: Optional soybean appearance reference
+PRIORITY: optional
+TYPE / ROLE: image / crop_reference
+FARM: soybean_field
+REPLAY RANGE: 0-374 (inclusive)
+CONTEXT: Static identity reference for farm plot A: HEINONG84 soybean, 64 ridges, 268 m long, 1.1 m ridge width, two rows. This slot is a crop reference, not an event photograph or evidence of the currently selected growth stage. If a stage-specific image is supplied, narrow its step range to a matching observed stage.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions, crop_and_cultivar, growth_stage_if_depicted, reference_only_label
+
+========================================================================
+ID: maize-crop-appearance
+TITLE: Optional maize appearance reference
+PRIORITY: optional
+TYPE / ROLE: image / crop_reference
+FARM: maize_field
+REPLAY RANGE: 0-374 (inclusive)
+CONTEXT: Static identity reference for farm plot B: MAIZE_EARLY_2026 maize, 64 ridges, 268 m long, 0.65 m ridge width, one row. This cultivar is an uncalibrated simulation reference. The asset is not a captured image or evidence of the currently selected stage; narrow its step range if it depicts a particular stage.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, actual_or_illustrative, ridge_coverage, original_image_dimensions, crop_and_cultivar, growth_stage_if_depicted, reference_only_label
+
+========================================================================
+ID: shared-equipment-photographs
+TITLE: Optional shared-equipment reference sheet
+PRIORITY: optional
+TYPE / ROLE: image / equipment_reference
+FARM: shared / both farm plots
+REPLAY RANGE: 0-374 (inclusive)
+CONTEXT: Static reference photographs or one labelled contact sheet for the actual shared app identities Tractor, Mavic3M, Matrice4T and Robot0. No machine photographs are produced by their tools. A reference image does not establish a live machine position, flight path or captured mission.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, source_or_creator, usage_permission, app_identity_labels, actual_device_or_generic_reference, reference_only_label
+
+========================================================================
+ID: shared-equipment-models
+TITLE: Optional shared-equipment model collection
+PRIORITY: optional
+TYPE / ROLE: model / equipment_reference
+FARM: shared / both farm plots
+REPLAY RANGE: 0-374 (inclusive)
+CONTEXT: Optional model collection for Tractor, Mavic3M, Matrice4T and Robot0, with a manifest mapping each app name to its model URL. This is visual reference material; the simulation has no device poses or GPS tracks. No models are required to read the real numeric record.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, source_or_creator, usage_permission, app_to_model_url_mapping, format, units, scale, up_axis, origin, optional_animation_names
+
+========================================================================
+ID: real-plot-geometry
+TITLE: Optional measured plot geometry
+PRIORITY: optional
+TYPE / ROLE: data / geometry
+FARM: shared / both farm plots
+REPLAY RANGE: 0-374 (inclusive)
+CONTEXT: The simulator already supplies two schematic 64-ridge geometries and exact working dimensions. Add real GIS only if a geographic map is required: both plot polygons, coordinate reference system, orientation, and an explicit mapping of raw ridge IDs 0-63 to physical ridges. Harbin/Heilongjiang is a profile label, not plot boundary coordinates.
+LINK / LOCAL PATH: 
+SOURCE TYPE (actual_photo / measured_data / demo_illustration / model_asset / geometry_data): 
+SOURCE / CREATOR / DATASET: 
+ACTUAL MATERIAL OR DEMO ILLUSTRATION: 
+ACQUIRED AT (ISO 8601; leave blank if unknown): 
+CAPTION / LIMITATIONS: 
+RAW RIDGE IDS OR APP IDENTITY: 
+USAGE PERMISSION / LICENSE: 
+MISSING DETAILS: url, source_type, caption, acquired_at, coordinate_reference_system, soybean_field_polygon, maize_field_polygon, ridge_id_to_geometry_mapping, origin_and_orientation, measurement_source, accuracy_or_uncertainty
+
+
+NDVI MAP EXAMPLES — THREE DISTINCT SURVEYS
+The UI now has a sharp, zoomable map derived from recorded ridge values.
+No pixel-level pattern has been invented. Optional example images can replace
+the main NDVI view while the original map remains available in the source toggle.
+
+1. ndvi-soybean-159 — farm plot A, 20 July, before disease treatment.
+   URL or repository-relative asset path:
+   Caption / source / NDVI color-scale range:
+2. ndvi-maize-188 — farm plot B, 2 August, before the first irrigation.
+   URL or repository-relative asset path:
+   Caption / source / NDVI color-scale range:
+3. ndvi-maize-201 — farm plot B, 9 August, before the second irrigation.
+   URL or repository-relative asset path:
+   Caption / source / NDVI color-scale range:
+
+Use clear field boundaries and red-yellow-green NDVI pseudocolor. Prefer
+high-resolution PNG/WebP or a trusted image link; include the numeric legend.
+Keep a common color scale across comparable examples. Do not label an example
+as a measured recovery image. Steps 110 and 115 have no valid NDVI and remain
+gray, without an example image. There is no post-treatment drone survey or
+next-day post-irrigation drone survey in this recording.
+
+To share images with another clone, put them inside assets/media/ and commit
+them with assets/catalog.json. Browser-only links saved by materials.html are
+not shared by git: export the completed catalog and put it in assets/catalog.json.

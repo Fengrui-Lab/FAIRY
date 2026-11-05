@@ -1,0 +1,11 @@
+{
+  "all_calls_ok": true,
+  "capture_preserves_rng_and_clock": true,
+  "event_count_matches_reference": true,
+  "final_state_matches_uninstrumented_run": true,
+  "no_llm_calls": true,
+  "plan_export_preserves_initial_state": true,
+  "tool_results_and_timing_match_uninstrumented_run": true,
+  "validation_preserves_state": true,
+  "wall_seconds": 18.018
+}
