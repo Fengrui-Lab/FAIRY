@@ -18,10 +18,8 @@ class FieldOpsService(SharedFarmService):
         Requires soil below the crop's stop-VWC threshold and available water
         quota. Uses 5 mm per ridge per requested hour, charges field-equivalent
         water quota, and advances the shared clock by setup/run duration.
-        In inactive legacy mode delivery remains pending for two more hours;
-        active legacy physics commits it after the run. Native PCSE integrates
-        queued water at the next local day boundary. Use effect_ready_at for
-        the actual recheck time.
+        Water delivery or its soil response may complete later. Use effect_ready_at
+        for the actual recheck time.
         If part of the range already has pending irrigation, returns that
         pending state without scheduling another run. Recheck after delivery.
 

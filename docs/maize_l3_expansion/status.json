@@ -1,0 +1,105 @@
+{
+  "date": "2026-11-03",
+  "candidates": {
+    "MZ-W01": {
+      "registered": true,
+      "packaging_review": "accepted",
+      "dynamic_reference_full_cycle": "accepted",
+      "static_oracle_replay": "not_executed",
+      "checkpoint_recovery": "not_executed",
+      "llm_evaluation": "not_executed",
+      "tier_o": "not_completed"
+    },
+    "MZ-N01": {
+      "registered": true,
+      "packaging_review": "accepted",
+      "dynamic_reference_full_cycle": "accepted",
+      "static_oracle_replay": "not_executed",
+      "checkpoint_recovery": "not_executed",
+      "llm_evaluation": "not_executed",
+      "interpretation": "雨养、水分受限背景下的有限施氮管理",
+      "tier_o": "not_completed"
+    },
+    "MZ-H01": {
+      "registered_in_isolated_worktree": true,
+      "historical_full_season_AB": "accepted",
+      "current_tree_201": "tier_a_and_compatibility_only",
+      "static_oracle_replay": "not_executed",
+      "checkpoint_recovery": "not_executed",
+      "llm_evaluation": "not_executed",
+      "tier_o": "not_completed"
+    }
+  },
+  "phase2_debugging": "closed",
+  "v1_1_terminal_revision": "closed",
+  "next_pair_protocol": "not_yet_frozen",
+  "new_runs_this_status_update": 0,
+  "low_yield_diagnostic": {
+    "status": "review_accepted_closed",
+    "provenance": "phase2 histories for diagnostics; v1.1 formal evidence separately archived",
+    "reproductive_stage": "stronger observed water stress; independent yield contribution not separated",
+    "additional_runs_this_revision": 0
+  },
+  "historical_completed_basic_l3_candidates_before_cultivar_batch": 2,
+  "deferred_candidates": [
+    "MZ-S01",
+    "MZ-W02"
+  ],
+  "next_actions": [
+    "W01_201_bounded_legal_policy_qualification",
+    "N01_201_separate_normal_water_parent_probe",
+    "merge_isolated_worktree_into_target_branch",
+    "decide_static_oracles_and_L1_L2_when_benchmark_release_needed"
+  ],
+  "task_families": 3,
+  "accepted_l3_instances": 13,
+  "registered_cultivar_candidates": 15,
+  "cultivar_batch": {
+    "status": "user_review_accepted_closed",
+    "historical_accepted": 3,
+    "new_tier_b_accepted": 10,
+    "accepted_variants": {
+      "W01": [
+        201,
+        202,
+        203,
+        204,
+        205
+      ],
+      "N01": [
+        201,
+        202,
+        203,
+        204,
+        205
+      ],
+      "H01": [
+        201,
+        202,
+        203
+      ]
+    },
+    "tier_a_not_run": [
+      "H01-204",
+      "H01-205"
+    ],
+    "stop_condition": "target_reached",
+    "merge_status": "not_merged",
+    "evidence_zip_sha256": "8173fa8ff4abe9ad88d74b967b0642f75276c066e068673f16e02297569676c7",
+    "new_runs_this_review": 0,
+    "user_independent_manifest_verification": 1847
+  },
+  "qualification": {
+    "tier_a_registered_count": 15,
+    "tier_b_full_season_accepted_count": 13,
+    "tier_o_accepted_count": 0,
+    "tier_o_status": "not_completed",
+    "trajectory_label": "validated dynamic reference trajectory",
+    "oracle_definition": "validated reasonable strong reference policy; not guaranteed globally optimal or unbeatable",
+    "static_oracle_replay_is_separate": true,
+    "scope": "201 only for initial qualification; no automatic cultivar expansion",
+    "protocol": "integration/maize-oracle-qualification-20261103/PLAN.md",
+    "diagnostic_status": "two_treatments_completed_stopped",
+    "report": "integration/maize-oracle-qualification-20261103/REPORT.md"
+  }
+}

@@ -252,13 +252,13 @@ class ScenarioTwoFarmFullSeasonHN84DiseaseWater(Scenario):
             for weather_event in local_profile.weather_events:
                 if weather_event.event_type == "rain_event":
                     # 本场景的既定计划是四天各18mm；每个单日事件独立声明
-                    # 总量，不依赖天气引擎一次查询一天还是整个事件区间。
+                    # 雨量，不依赖天气引擎一次查询一天还是整个事件区间。
                     local_events.extend(
                         replace(
                             weather_event,
                             start_date=weather_event.start_date + timedelta(days=offset),
                             duration_days=1,
-                            total_rain_mm=18.0,
+                            rain_mm=18.0,
                         )
                         for offset in range(weather_event.duration_days)
                     )

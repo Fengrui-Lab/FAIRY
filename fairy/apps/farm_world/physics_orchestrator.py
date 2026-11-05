@@ -133,7 +133,7 @@ def advance_physics_time(
 
     elapsed = target_sim_time - physics.last_physics_sim_time
     if elapsed < 0:
-        raise ValueError("Physics time cannot move backwards")
+        return {"status": "noop", "day_ticks_run": 0, "elapsed_s": elapsed}
     has_pending = bool(physics.pending_management_actions_by_ridge
                        or physics.pending_treatments_by_ridge
                        or physics.pending_harvest_actions_by_ridge)
@@ -781,9 +781,9 @@ def _run_registered_crop_daily_tick(farm_world_app, physics, day, weather):
         irrigation_mm_by_ridge=physics.management.irrigation_mm_by_ridge(actions),
         canopy_cover_by_ridge=living_cover,
     )
-    growth_for_uptake = physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
-    if growth_for_uptake is not None:
-        physics.management.settle_crop_growth(day, growth_for_uptake)
+    # Compatibility crop engines retain the historical zero-biomass nutrient
+    # input. Native WOFOST nitrogen uptake is owned by its CNB backend path.
+    physics.crop.advance_before_biotics(farm_world_app, physics, day, weather)
     physics.biotic.update_day(
         weather=weather["biotic"], crop_by_ridge=physics.crop.biotic_inputs(physics),
         soil_by_ridge={rid: BioticSoilInput(top_vwc=state.top_vwc, root_vwc=state.root_vwc)
@@ -1314,7 +1314,7 @@ def _settle_harvest_now(physics, weather, harvest):
 
 def _run_subdaily_injection(physics, weather_app, target_sim_time,
                             weather_inputs_provider=None, *, simulation_timezone=timezone.utc):
-    """Commit actions once without introducing another biological day."""
+    """Commit actions; harvest retains the historical recovery-day update."""
     today = datetime.fromtimestamp(target_sim_time, tz=simulation_timezone).date()
     weather = (weather_inputs_provider(today, False) if weather_inputs_provider else
                _build_weather_inputs(weather_app, today, physics=physics, advance_weather=False))

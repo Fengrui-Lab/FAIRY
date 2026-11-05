@@ -1,0 +1,23 @@
+{
+  "implementation_version": "basic-h01-v0.1",
+  "scenario_id": "scenario_maize_l3_basic_h01_v0",
+  "handoff_version": "h01-handoff-0.1",
+  "frozen_resource_role": "task_card.json, evaluation_contract.json and parameter_freeze.json are verbatim design-source records; their historical implementation status is not rewritten",
+  "inspection_time_interpretation": "No direct crop-water mutation or harvest settlement. All normal physical evolution caused by the 600 simulated seconds, including day boundaries, is retained.",
+  "reference_inspection_point": "Immediately after the unchanged N01 public controller first observes all 64 ridges MATURE, before its first harvest call. No hidden maturity date or future weather is read.",
+  "primary_result_path": "metadata.warehouse_kg_at_14pct",
+  "feasibility_validator": "BasicH01Scenario.validate: accepted v1.1 terminal validation plus audit_h01_ledger",
+  "summary_consumer": "scripts/summarize_maize_h01.py",
+  "state_basis": "N01 v1.1 candidate_spec and complete parent initialization; only a candidate-specific tractor component is added",
+  "event_graph_policy": "briefing_only; no validated H01 static oracle",
+  "path_metric_scope": "No H01 static reference graph or oracle outcome is claimed. Any native path/FOS diagnostics are auxiliary and never replace actual warehouse quantity.",
+  "engineering_assumptions": {
+    "normal_quality": 0.95,
+    "maintenance_required_quality": 0.85,
+    "inspection_seconds": 600,
+    "service_seconds_when_needed": 3600,
+    "service_seconds_when_already_serviceable": 0
+  },
+  "fullseason_acceptance": "Recorded separately in the immutable run evidence; source installation alone does not establish an accepted trajectory",
+  "local_checkpoint_scope": "Device state can be serialized. Full farm cross-process restoration and L1/L2 derivation remain outside this pilot."
+}

@@ -13,11 +13,11 @@ class SensorService(SharedFarmService):
 
     @service_tool(OperationType.READ, routing=("farm_id",))
     def read_root_zone_sensors(self, farm_id: FarmId) -> dict[str, Any]:
-        """Read modeled root-zone water probes for irrigation decisions.
+        """Read root-zone soil-water estimates for irrigation decisions.
 
-        Requires active soil physics. These are separate from the 5 cm surface
-        probes. Each reading averages its local coverage zone with +/-0.005
-        VWC noise. Reading consumes observation randomness, not battery or time.
+        Each reading averages its coverage zone with +/-0.005 VWC uncertainty.
+        These estimates are not an independent shallow measurement. This query
+        does not consume battery or advance time.
 
         Args:
             farm_id: Farm whose configured root-zone probes should be read.
@@ -30,9 +30,11 @@ class SensorService(SharedFarmService):
 
     @service_tool(OperationType.READ, routing=("farm_id",))
     def read_soil_sensors(self, farm_id: FarmId) -> dict[str, Any]:
-        """Read all configured 5 cm soil probes in one farm.
+        """Read configured soil-water and shallow-temperature estimates in one farm.
 
-        Probe count and coverage follow the actual farm layout. Each VWC
+        Probe count and coverage follow the actual farm layout. Water is for the
+        5 cm layer on layered fields; root-zone-only fields report their rooting-layer
+        estimate instead of an independent shallow measurement. Each VWC
         and temperature reading includes measurement noise. No time advances.
 
         Args:
@@ -49,7 +51,7 @@ class SensorService(SharedFarmService):
         """Read canopy probes and their actual ridge coverage in one farm.
 
         NDVI proxy readings contain noise; -1 means no valid canopy reading
-        yet. This operation consumes observation randomness without advancing time.
+        yet. This query does not advance time.
 
         Args:
             farm_id: Farm whose configured canopy probe zones should be read.
@@ -65,7 +67,8 @@ class SensorService(SharedFarmService):
         """Read one soil probe selected by its globally unique ID.
 
         Resolve the ID from World, such as maize:S1; unqualified S1 is not
-        accepted. The noisy reading represents its coverage zone at 5 cm depth.
+        accepted. The uncertain reading represents its coverage zone: shallow water on layered
+        fields, or the rooting-layer estimate on root-zone-only fields.
 
         Args:
             sensor_id: Global soil probe ID from the environment directory.

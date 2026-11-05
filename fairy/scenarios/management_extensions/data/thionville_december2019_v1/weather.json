@@ -1,0 +1,367 @@
+{
+  "schema_version": 1,
+  "id": "thionville_december2019_extension",
+  "location": {
+    "name": "Thionville vicinity, France–Luxembourg border",
+    "latitude": 49.4,
+    "longitude": 6.2,
+    "elevation_m": 277.87,
+    "elevation_source": "NASA POWER response geometry, not measured trial elevation"
+  },
+  "start_date": "2019-12-01",
+  "end_date": "2020-01-07",
+  "time_standard": "LST",
+  "date_mapping": "Retain original NASA LST daily labels unchanged; simulation civil calendar selects the same date label.",
+  "units": {
+    "tmin_c": "C",
+    "tmax_c": "C",
+    "relative_humidity_pct": "%",
+    "wind_2m_m_s": "m/s",
+    "rain_mm": "mm/day",
+    "shortwave_mj_m2_day": "MJ/m^2/day"
+  },
+  "daily": [
+    {
+      "date": "2019-12-01",
+      "tmin_c": -1.34,
+      "tmax_c": 1.62,
+      "relative_humidity_pct": 91.72,
+      "wind_2m_m_s": 2.77,
+      "rain_mm": 2.82,
+      "shortwave_mj_m2_day": 0.86
+    },
+    {
+      "date": "2019-12-02",
+      "tmin_c": -3.64,
+      "tmax_c": 4.03,
+      "relative_humidity_pct": 96.43,
+      "wind_2m_m_s": 1.56,
+      "rain_mm": 0.09,
+      "shortwave_mj_m2_day": 4.4
+    },
+    {
+      "date": "2019-12-03",
+      "tmin_c": -0.99,
+      "tmax_c": 5.13,
+      "relative_humidity_pct": 96.86,
+      "wind_2m_m_s": 0.99,
+      "rain_mm": 0.12,
+      "shortwave_mj_m2_day": 3.34
+    },
+    {
+      "date": "2019-12-04",
+      "tmin_c": -3.0,
+      "tmax_c": 3.78,
+      "relative_humidity_pct": 94.37,
+      "wind_2m_m_s": 1.71,
+      "rain_mm": 0.0,
+      "shortwave_mj_m2_day": 5.15
+    },
+    {
+      "date": "2019-12-05",
+      "tmin_c": -3.64,
+      "tmax_c": 0.55,
+      "relative_humidity_pct": 95.76,
+      "wind_2m_m_s": 1.81,
+      "rain_mm": 0.12,
+      "shortwave_mj_m2_day": 4.53
+    },
+    {
+      "date": "2019-12-06",
+      "tmin_c": -2.85,
+      "tmax_c": 3.96,
+      "relative_humidity_pct": 95.5,
+      "wind_2m_m_s": 4.7,
+      "rain_mm": 4.29,
+      "shortwave_mj_m2_day": 1.39
+    },
+    {
+      "date": "2019-12-07",
+      "tmin_c": 3.69,
+      "tmax_c": 8.34,
+      "relative_humidity_pct": 97.68,
+      "wind_2m_m_s": 3.76,
+      "rain_mm": 1.07,
+      "shortwave_mj_m2_day": 2.44
+    },
+    {
+      "date": "2019-12-08",
+      "tmin_c": 4.83,
+      "tmax_c": 9.4,
+      "relative_humidity_pct": 96.33,
+      "wind_2m_m_s": 6.14,
+      "rain_mm": 4.11,
+      "shortwave_mj_m2_day": 0.91
+    },
+    {
+      "date": "2019-12-09",
+      "tmin_c": 0.99,
+      "tmax_c": 5.97,
+      "relative_humidity_pct": 94.77,
+      "wind_2m_m_s": 5.66,
+      "rain_mm": 4.21,
+      "shortwave_mj_m2_day": 1.67
+    },
+    {
+      "date": "2019-12-10",
+      "tmin_c": -0.13,
+      "tmax_c": 2.65,
+      "relative_humidity_pct": 93.31,
+      "wind_2m_m_s": 2.93,
+      "rain_mm": 0.18,
+      "shortwave_mj_m2_day": 3.05
+    },
+    {
+      "date": "2019-12-11",
+      "tmin_c": 0.24,
+      "tmax_c": 3.01,
+      "relative_humidity_pct": 94.93,
+      "wind_2m_m_s": 3.23,
+      "rain_mm": 7.68,
+      "shortwave_mj_m2_day": 0.78
+    },
+    {
+      "date": "2019-12-12",
+      "tmin_c": 0.62,
+      "tmax_c": 2.69,
+      "relative_humidity_pct": 95.12,
+      "wind_2m_m_s": 3.99,
+      "rain_mm": 2.05,
+      "shortwave_mj_m2_day": 2.28
+    },
+    {
+      "date": "2019-12-13",
+      "tmin_c": 0.5,
+      "tmax_c": 4.16,
+      "relative_humidity_pct": 95.61,
+      "wind_2m_m_s": 5.6,
+      "rain_mm": 9.22,
+      "shortwave_mj_m2_day": 1.31
+    },
+    {
+      "date": "2019-12-14",
+      "tmin_c": 1.15,
+      "tmax_c": 6.85,
+      "relative_humidity_pct": 94.5,
+      "wind_2m_m_s": 5.99,
+      "rain_mm": 6.4,
+      "shortwave_mj_m2_day": 3.17
+    },
+    {
+      "date": "2019-12-15",
+      "tmin_c": 4.82,
+      "tmax_c": 9.22,
+      "relative_humidity_pct": 94.22,
+      "wind_2m_m_s": 4.29,
+      "rain_mm": 8.22,
+      "shortwave_mj_m2_day": 1.76
+    },
+    {
+      "date": "2019-12-16",
+      "tmin_c": 5.24,
+      "tmax_c": 8.8,
+      "relative_humidity_pct": 97.51,
+      "wind_2m_m_s": 3.08,
+      "rain_mm": 2.51,
+      "shortwave_mj_m2_day": 2.17
+    },
+    {
+      "date": "2019-12-17",
+      "tmin_c": 9.01,
+      "tmax_c": 13.01,
+      "relative_humidity_pct": 89.72,
+      "wind_2m_m_s": 5.28,
+      "rain_mm": 4.74,
+      "shortwave_mj_m2_day": 2.94
+    },
+    {
+      "date": "2019-12-18",
+      "tmin_c": 4.49,
+      "tmax_c": 9.01,
+      "relative_humidity_pct": 96.38,
+      "wind_2m_m_s": 2.42,
+      "rain_mm": 0.78,
+      "shortwave_mj_m2_day": 3.14
+    },
+    {
+      "date": "2019-12-19",
+      "tmin_c": 5.23,
+      "tmax_c": 10.62,
+      "relative_humidity_pct": 94.23,
+      "wind_2m_m_s": 4.05,
+      "rain_mm": 0.03,
+      "shortwave_mj_m2_day": 4.03
+    },
+    {
+      "date": "2019-12-20",
+      "tmin_c": 5.37,
+      "tmax_c": 10.2,
+      "relative_humidity_pct": 93.95,
+      "wind_2m_m_s": 4.95,
+      "rain_mm": 11.63,
+      "shortwave_mj_m2_day": 1.08
+    },
+    {
+      "date": "2019-12-21",
+      "tmin_c": 4.06,
+      "tmax_c": 6.14,
+      "relative_humidity_pct": 96.66,
+      "wind_2m_m_s": 3.4,
+      "rain_mm": 1.95,
+      "shortwave_mj_m2_day": 2.63
+    },
+    {
+      "date": "2019-12-22",
+      "tmin_c": 5.6,
+      "tmax_c": 7.56,
+      "relative_humidity_pct": 95.14,
+      "wind_2m_m_s": 5.16,
+      "rain_mm": 3.56,
+      "shortwave_mj_m2_day": 1.81
+    },
+    {
+      "date": "2019-12-23",
+      "tmin_c": 4.59,
+      "tmax_c": 7.69,
+      "relative_humidity_pct": 94.53,
+      "wind_2m_m_s": 4.76,
+      "rain_mm": 1.71,
+      "shortwave_mj_m2_day": 2.31
+    },
+    {
+      "date": "2019-12-24",
+      "tmin_c": 3.77,
+      "tmax_c": 9.07,
+      "relative_humidity_pct": 95.17,
+      "wind_2m_m_s": 5.02,
+      "rain_mm": 2.48,
+      "shortwave_mj_m2_day": 2.12
+    },
+    {
+      "date": "2019-12-25",
+      "tmin_c": 1.77,
+      "tmax_c": 7.57,
+      "relative_humidity_pct": 94.76,
+      "wind_2m_m_s": 3.31,
+      "rain_mm": 2.89,
+      "shortwave_mj_m2_day": 2.72
+    },
+    {
+      "date": "2019-12-26",
+      "tmin_c": 0.88,
+      "tmax_c": 4.13,
+      "relative_humidity_pct": 96.7,
+      "wind_2m_m_s": 2.03,
+      "rain_mm": 1.49,
+      "shortwave_mj_m2_day": 1.96
+    },
+    {
+      "date": "2019-12-27",
+      "tmin_c": 2.08,
+      "tmax_c": 7.24,
+      "relative_humidity_pct": 95.27,
+      "wind_2m_m_s": 1.77,
+      "rain_mm": 5.31,
+      "shortwave_mj_m2_day": 1.48
+    },
+    {
+      "date": "2019-12-28",
+      "tmin_c": -3.53,
+      "tmax_c": 2.9,
+      "relative_humidity_pct": 94.22,
+      "wind_2m_m_s": 1.72,
+      "rain_mm": 0.01,
+      "shortwave_mj_m2_day": 3.66
+    },
+    {
+      "date": "2019-12-29",
+      "tmin_c": -3.96,
+      "tmax_c": 2.63,
+      "relative_humidity_pct": 91.54,
+      "wind_2m_m_s": 1.41,
+      "rain_mm": 0.0,
+      "shortwave_mj_m2_day": 4.52
+    },
+    {
+      "date": "2019-12-30",
+      "tmin_c": -3.37,
+      "tmax_c": 3.56,
+      "relative_humidity_pct": 86.06,
+      "wind_2m_m_s": 1.26,
+      "rain_mm": 0.0,
+      "shortwave_mj_m2_day": 4.77
+    },
+    {
+      "date": "2019-12-31",
+      "tmin_c": -3.43,
+      "tmax_c": 2.97,
+      "relative_humidity_pct": 95.3,
+      "wind_2m_m_s": 1.34,
+      "rain_mm": 0.01,
+      "shortwave_mj_m2_day": 3.73
+    },
+    {
+      "date": "2020-01-01",
+      "tmin_c": -1.75,
+      "tmax_c": 1.64,
+      "relative_humidity_pct": 97.54,
+      "wind_2m_m_s": 1.63,
+      "rain_mm": 0.24,
+      "shortwave_mj_m2_day": 2.53
+    },
+    {
+      "date": "2020-01-02",
+      "tmin_c": -2.55,
+      "tmax_c": 0.8,
+      "relative_humidity_pct": 96.66,
+      "wind_2m_m_s": 2.89,
+      "rain_mm": 0.47,
+      "shortwave_mj_m2_day": 1.98
+    },
+    {
+      "date": "2020-01-03",
+      "tmin_c": 1.18,
+      "tmax_c": 5.85,
+      "relative_humidity_pct": 98.58,
+      "wind_2m_m_s": 3.96,
+      "rain_mm": 1.85,
+      "shortwave_mj_m2_day": 1.92
+    },
+    {
+      "date": "2020-01-04",
+      "tmin_c": -0.1,
+      "tmax_c": 3.67,
+      "relative_humidity_pct": 97.32,
+      "wind_2m_m_s": 2.91,
+      "rain_mm": 0.3,
+      "shortwave_mj_m2_day": 2.39
+    },
+    {
+      "date": "2020-01-05",
+      "tmin_c": 1.02,
+      "tmax_c": 5.48,
+      "relative_humidity_pct": 93.03,
+      "wind_2m_m_s": 1.26,
+      "rain_mm": 0.11,
+      "shortwave_mj_m2_day": 2.08
+    },
+    {
+      "date": "2020-01-06",
+      "tmin_c": -1.62,
+      "tmax_c": 2.75,
+      "relative_humidity_pct": 95.75,
+      "wind_2m_m_s": 2.28,
+      "rain_mm": 0.18,
+      "shortwave_mj_m2_day": 3.41
+    },
+    {
+      "date": "2020-01-07",
+      "tmin_c": 0.61,
+      "tmax_c": 5.07,
+      "relative_humidity_pct": 97.1,
+      "wind_2m_m_s": 2.73,
+      "rain_mm": 0.37,
+      "shortwave_mj_m2_day": 2.0
+    }
+  ]
+}

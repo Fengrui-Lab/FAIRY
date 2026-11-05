@@ -5,7 +5,13 @@
 当前分支已整合 `extend_crops`、桌面 `multi-farm`（包括未提交修改）与本地 WOFOST 工作区。
 作物与模型的选择、共享仓库边界、运行命令及已知校验问题见[整合说明](docs/wofost-multifarm-integration.md)。
 
-当前13个选定任务分别保留经典版与WOFOST版：**无后缀的原ID、原文件、原类使用`legacy`；WOFOST的ID、文件名、类名均加`_V2`。** `farm_world_fullseason_v2`只是历史目录名，不是后端开关。[13对版本及运行示例](docs/wofost-scenario-versions.md)给出对应关系，[版本清单](configs/oracles/wofost_scenario_versions.json)保存准确ID、路径和类名。
+新增[原生WOFOST大豆＋玉米双农场全季场景](docs/wofost-two-farm-soybean-maize.md)：相邻地区官方参数、固定2019天气、一个仓库与共享移动设备，完整Oracle及回放已验收。
+
+2026-10-27重新选定的20个单农场大豆全季场景已**20/20完成工程校准**。每场保留旧文件，新增完整独立`_V2`，通过正确/不管理/错误管理对照及正式Oracle执行、回放、评价；分别记录产量、资源和合法作业窗口，不强造减产。当前共33对旧版/V2、32个已校准，原花期营养03仍未校准；不是全部旧场景已迁移。[逐场方案与结果](docs/wofost-selected20-20261027.md)、[清单](configs/oracles/wofost_selected20_20261027.json)和[量化结果](configs/oracles/wofost_selected20_results_20261027.json)记录完整证据。既有未提交双农场工作保留，公共引擎未修改。
+
+新增[4个有不同考点的多农场WOFOST全季场景](docs/wofost-multifarm-four-20261028.md)已**4/4完成工程校准**：独立土壤水分诊断、共有药液下病虫鉴别、大豆／玉米有限氮肥分配、共享收割机雨前抢收。每场有独立完整`_V2`文件、三组管理对照和真实Oracle／回放／评价；[机器清单](configs/oracles/wofost_multifarm4_20261028.json)逐场区分干物质、商品粮、资源与耗时，相关回归284项通过。这4场是新增任务，不增加旧版迁移对数。
+
+此前13个选定任务分别保留经典版与WOFOST版：**无后缀的原ID、原文件、原类使用`legacy`；WOFOST的ID、文件名、类名均加`_V2`。** 33个成对的单农场及新增4个多农场WOFOST `_V2`文件统一放在[`fairy/scenarios/wofost/`](fairy/scenarios/wofost/)，场景ID及运行命令不变；经典源码仍在历史目录`farm_world_fullseason_v2`中。[13对版本及运行示例](docs/wofost-scenario-versions.md)给出对应关系，[版本清单](configs/oracles/wofost_scenario_versions.json)保存准确ID、路径和类名。
 
 13套WOFOST中12套已校准，03保留原花期营养任务并标为未校准。前9套已校准方案中，正常季为7个管理窗口、两次30mm补水、无例行氮肥，展开为89次工具调用。本轮另完成3个灌溉题，每场8个窗口、101次调用，包含真实SurveyDrone全田粗查和Robot定点检查；按13%水分安全入库分别为7097.36、7005.65、6649.92kg。扩展名单后17场已暂停。这些是实际工具Oracle回放，**此处为Oracle统计，Agent实验应查看独立运行记录**。[前10场农事计划](docs/wofost-farming-plans.md)、[新增3场计划](docs/wofost-next20-farming-plans.md)和[接入说明](docs/wofost-integration.md)分别说明管理及运行方式；不能把前9场都说成已补无人机。
 
@@ -27,6 +33,8 @@ Agent 从 `World__describe_environment` 取得实际目标与绑定，从 `World
 玉米复用旱田工具和 WOFOST 8.1 后端，使用固定来源的通用参考品种，提供11个 L1、4个 L2，以及正常、缺水、缺氮三个 L3，共18个场景。Oracle 按大豆 V2 的方式直接编写为 Python 事件图。运行方法、参数依据、水分质量口径与模型边界见 [玉米场景说明](docs/maize-foundation.md)。
 
 水稻基础场景与大豆共用 WOFOST 8.1 环境，从成品苗插秧开始，支持田格水氮管理、观测、农机、植保与分批收获，包含 35 个水稻工具和 28 个 L1/L2/L3 场景。各场景显式注册，使用标准事件图及离线生成的固定 oracle 计划和来源季检查点。代码入口、产物生成、重放方法、参数依据及模型边界见 [水稻基础场景说明](docs/rice-foundation.md)。
+
+在这些基础场景之外，新增玉米 14 个、水稻 10 个分区决策任务：10 个来源季、10 个真实检查点窗口和 4 个定向操作。覆盖水氮辨因、分期播种、雨间作业、堵渠漏埂和差异化植保，包含资源预算、对照实验和独立状态回放。尚未证明决策机制的候选明确标为实验性，详见[场景目录、校准结果及复验方法](docs/crop-decision-challenges.md)。
 
 FAIRY 是一个农场智能体仿真运行时，用于执行 FARM 场景、通过 OpenAI-compatible function calling 暴露农场操作工具、推进天气/土壤/作物生长/产量恢复等物理过程，并生成紧凑的 run bundle，用于检查 workflow、重放轨迹和计算 FOS/yield loss。
 

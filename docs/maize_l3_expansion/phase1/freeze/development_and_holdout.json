@@ -1,0 +1,40 @@
+{
+  "development": [
+    {
+      "id": "DEV-W01-v1",
+      "parent": "water_limit",
+      "year": 2026,
+      "seed": 101,
+      "status": "design/development; not holdout"
+    },
+    {
+      "id": "DEV-N01-v1",
+      "parent": "nitrogen_limit",
+      "year": 2026,
+      "seed": 101,
+      "status": "design/development; not holdout"
+    }
+  ],
+  "historical_used_families": [
+    {
+      "years": [
+        2017,
+        2018,
+        2019,
+        2020
+      ],
+      "depths_cm": [
+        40,
+        100
+      ],
+      "classification": "previously examined according to handoff; never relabel independent holdout by changing PCSE"
+    },
+    {
+      "year": 2011,
+      "classification": "external reconstruction already examined; not untouched holdout"
+    }
+  ],
+  "reserved_holdout": [],
+  "reason_no_reserved_holdout": "No untouched weather/soil family has been selected and hashed. Selection must precede viewing outcomes. No holdout claim is authorized.",
+  "promotion_rule": "Any held-out environment read to tune rules becomes development, append event with timestamp/reason; old checkpoints require targeted compatibility check."
+}

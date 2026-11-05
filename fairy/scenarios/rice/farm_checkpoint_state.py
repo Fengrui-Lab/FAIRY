@@ -57,3 +57,16 @@ def checkpoint_labels(variant):
     manifest = json.loads((ARTIFACT_ROOT / MANIFEST_NAME).read_text(encoding="utf-8"))
     prefix = Path("l2_l1_splits") / f"rice_{variant}" / "checkpoints"
     return sorted(Path(name).stem for name in manifest["files"] if Path(name).parent == prefix)
+
+
+def verify_split_source(plan):
+    """Reject stale children before any tool runs after a parent plan changes."""
+    parent_id = plan["source_l3_scenario_id"]
+    parent = load_oracle_plan(parent_id)
+    raw = (ARTIFACT_ROOT / plan_relative_path(parent_id)).read_bytes()
+    bounds = plan.get("source_step_range", [])
+    if (hashlib.sha256(raw).hexdigest() != plan.get("source_l3_plan_sha256") or
+            len(bounds) != 2 or any(isinstance(v, bool) or not isinstance(v, int) for v in bounds) or
+            not 0 <= bounds[0] < bounds[1] <= len(parent["steps"]) or
+            plan["steps"] != parent["steps"][bounds[0]:bounds[1]]):
+        raise ValueError(f"Rice split differs from installed L3 source; rebuild with {REBUILD_COMMAND}")

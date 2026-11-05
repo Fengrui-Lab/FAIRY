@@ -1,0 +1,106 @@
+{
+  "scenario_rice_l1_irrigate": {
+    "briefing_text": "根据水位和根区观测，为 p1 完成 20 毫米到田灌水。",
+    "detailed_briefing_text": "根据水位和根区观测，为 p1 完成 20 毫米到田灌水。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-10 06:20 UTC，本窗口终点 2026-01-10 06:36 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_drain": {
+    "briefing_text": "把 p1 的田面水调整至约 20 毫米，为基肥和插秧准备浅水条件。",
+    "detailed_briefing_text": "把 p1 的田面水调整至约 20 毫米，为基肥和插秧准备浅水条件。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 06:43 UTC，本窗口终点 2026-01-03 07:07 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_puddle": {
+    "briefing_text": "完成 p1 耙田整平，泡田前置条件和机具已经具备。",
+    "detailed_briefing_text": "完成 p1 耙田整平，泡田前置条件和机具已经具备。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 04:13 UTC，本窗口终点 2026-01-03 05:13 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_transplant": {
+    "briefing_text": "检查并装载成品秧苗，完成 p1 标准密度插秧。",
+    "detailed_briefing_text": "检查并装载成品秧苗，完成 p1 标准密度插秧。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 08:51 UTC，本窗口终点 2026-01-03 09:31 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_harvest": {
+    "briefing_text": "复核成熟、水分、天气和通行性，收割 p1。",
+    "detailed_briefing_text": "复核成熟、水分、天气和通行性，收割 p1。\n来源季 scenario_rice_l3_normal，切分起点 2026-04-02 06:00 UTC，本窗口终点 2026-04-02 07:05 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 有田面水才按需排水，并核实根区 VWC 不高于 0.42；收割需成熟、谷物含水率 14%–28%、当日降雨不超过 5 毫米。"
+  },
+  "scenario_rice_l1_observe_water": {
+    "briefing_text": "读取 p1 的田面水和根区水分传感器，保留带时间戳的观测。",
+    "detailed_briefing_text": "读取 p1 的田面水和根区水分传感器，保留带时间戳的观测。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 11:46 UTC，本窗口终点 2026-01-03 11:46 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_dry": {
+    "briefing_text": "测量接粮区目标粮批含水率，干燥至 14%，保留在接粮区。",
+    "detailed_briefing_text": "测量接粮区目标粮批含水率，干燥至 14%，保留在接粮区。\n来源季 scenario_rice_l3_normal，切分起点 2026-04-02 07:20 UTC，本窗口终点 2026-04-02 09:38 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_store": {
+    "briefing_text": "将已干燥至 14% 的目标粮批安全入库。",
+    "detailed_briefing_text": "将已干燥至 14% 的目标粮批安全入库。\n来源季 scenario_rice_l3_normal，切分起点 2026-04-02 09:38 UTC，本窗口终点 2026-04-02 09:43 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_fertilize": {
+    "briefing_text": "检查 p1 生育阶段，装载尿素，完成 300 千克/公顷的一轮追肥。",
+    "detailed_briefing_text": "检查 p1 生育阶段，装载尿素，完成 300 千克/公顷的一轮追肥。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-21 06:00 UTC，本窗口终点 2026-01-21 06:40 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 尿素用量指产品量；先核对生育阶段、浅水和装载量。本窗口只执行到期追肥，后续轮次与库存留给后续任务。"
+  },
+  "scenario_rice_l2_establishment": {
+    "briefing_text": "完成两个田格的泡田、耙田整平、基肥、浅水调整和成品苗插秧。",
+    "detailed_briefing_text": "完成两个田格的泡田、耙田整平、基肥、浅水调整和成品苗插秧。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-03 10:26 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l2_irrigation_management": {
+    "briefing_text": "根据观测完成本窗口至少 10 天的水分管理，避免胁迫并遵守共享水额。",
+    "detailed_briefing_text": "根据观测完成本窗口至少 10 天的水分管理，避免胁迫并遵守共享水额。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 10:26 UTC，本窗口终点 2026-01-17 06:00 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 灌水按现场水层和根区共同判断：来源管理在田面水低于 3 毫米且根区 VWC 低于 0.37 时补至约 20 毫米；定期复测，避免机械每日灌排。"
+  },
+  "scenario_rice_l2_harvest_storage": {
+    "briefing_text": "从新版来源季的收获窗口开始，复核成熟、天气、水分与通行性，完成两个田格收割、卸粮、干燥至 14% 和入库。",
+    "detailed_briefing_text": "从新版来源季的收获窗口开始，复核成熟、天气、水分与通行性，完成两个田格收割、卸粮、干燥至 14% 和入库。\n来源季 scenario_rice_l3_normal，切分起点 2026-04-02 06:00 UTC，本窗口终点 2026-04-02 14:48 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 有田面水才按需排水，并核实根区 VWC 不高于 0.42；收割需成熟、谷物含水率 14%–28%、当日降雨不超过 5 毫米。"
+  },
+  "scenario_rice_l2_nutrition_management": {
+    "briefing_text": "根据观测完成本窗口至少 25 天的水肥管理，在分蘖期为两个田格各完成一轮 300 千克/公顷尿素追肥。",
+    "detailed_briefing_text": "根据观测完成本窗口至少 25 天的水肥管理，在分蘖期为两个田格各完成一轮 300 千克/公顷尿素追肥。\n来源季 scenario_rice_l3_normal，切分起点 2026-01-03 10:26 UTC，本窗口终点 2026-01-31 06:00 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 灌水按现场水层和根区共同判断：来源管理在田面水低于 3 毫米且根区 VWC 低于 0.37 时补至约 20 毫米；定期复测，避免机械每日灌排。 尿素用量指产品量；先核对生育阶段、浅水和装载量。本窗口只执行到期追肥，后续轮次与库存留给后续任务。"
+  },
+  "scenario_rice_l1_scout": {
+    "briefing_text": "落地检查 p1 的虫、病、草害，保留分项观测；本任务只诊断。",
+    "detailed_briefing_text": "落地检查 p1 的虫、病、草害，保留分项观测；本任务只诊断。\n来源季 scenario_rice_l3_biotic，切分起点 2026-01-03 11:16 UTC，本窗口终点 2026-01-03 11:31 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l2_crop_protection": {
+    "briefing_text": "落地确诊两个田格的虫、病、草害，按对象、天气和水层处理并复查。",
+    "detailed_briefing_text": "落地确诊两个田格的虫、病、草害，按对象、天气和水层处理并复查。\n来源季 scenario_rice_l3_biotic，切分起点 2026-01-03 11:16 UTC，本窗口终点 2026-01-03 18:41 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_repair_bund": {
+    "briefing_text": "根据 p1 田埂巡检修复渗漏，并复查修复结果。",
+    "detailed_briefing_text": "根据 p1 田埂巡检修复渗漏，并复查修复结果。\n来源季 scenario_rice_l3_infrastructure，切分起点 2026-01-01 01:20 UTC，本窗口终点 2026-01-01 04:00 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l2_infrastructure_recovery": {
+    "briefing_text": "巡查田埂和渠道，疏通堵塞并修复渗漏，复查恢复情况。",
+    "detailed_briefing_text": "巡查田埂和渠道，疏通堵塞并修复渗漏，复查恢复情况。\n来源季 scenario_rice_l3_infrastructure，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-01 04:00 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l1_refuel": {
+    "briefing_text": "为拖拉机补充 59 升燃油，使当前 1 升余油补至 60 升满箱。",
+    "detailed_briefing_text": "为拖拉机补充 59 升燃油，使当前 1 升余油补至 60 升满箱。\n来源季 scenario_rice_l3_equipment_limit，切分起点 2026-01-03 04:08 UTC，本窗口终点 2026-01-03 04:13 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l2_harvest_batches": {
+    "briefing_text": "在 600 千克粮箱和每日 2000 千克湿谷干燥能力下，分批完成两个田格收割、卸粮、干燥至 14% 和入库；避免湿谷长时间排队。",
+    "detailed_briefing_text": "在 600 千克粮箱和每日 2000 千克湿谷干燥能力下，分批完成两个田格收割、卸粮、干燥至 14% 和入库；避免湿谷长时间排队。\n来源季 scenario_rice_l3_equipment_limit，切分起点 2026-04-02 06:00 UTC，本窗口终点 2026-04-03 15:08 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 有田面水才按需排水，并核实根区 VWC 不高于 0.42；收割需成熟、谷物含水率 14%–28%、当日降雨不超过 5 毫米。"
+  },
+  "scenario_rice_l1_gap_fill": {
+    "briefing_text": "检查 p1 缺苗，使用剩余成品秧苗补苗，等待两天后复查成活。",
+    "detailed_briefing_text": "检查 p1 缺苗，使用剩余成品秧苗补苗，等待两天后复查成活。\n来源季 scenario_rice_l3_poor_stand，切分起点 2026-01-03 10:26 UTC，本窗口终点 2026-01-05 11:26 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。"
+  },
+  "scenario_rice_l2_zonal_water_n_allocation": {
+    "briefing_text": "根据分区水分与适用的氮信号完成本窗口的水肥分配。",
+    "detailed_briefing_text": "根据分区水分与适用的氮信号完成本窗口的水肥分配。\n来源季 scenario_rice_l3_zonal_water_n_allocation，切分起点 2026-01-03 10:22 UTC，本窗口终点 2026-02-17 06:00 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-02-17。窗口增量预算：{\"water_used\": 488.88888888888886, \"fertilizer_used\": 73.33333304, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。 结果门槛：[{\"metric\": \"biomass_dry_kg\", \"direction\": \"higher\", \"threshold\": 1450.3895856764018}]。 本诊断机制仍为实验状态，尚未通过正式配对校准。"
+  },
+  "scenario_rice_l2_infrastructure_water_priority": {
+    "briefing_text": "在窄供水窗口下疏渠，按根水需要救急补水，修复漏埂并复查。",
+    "detailed_briefing_text": "在窄供水窗口下疏渠，按根水需要救急补水，修复漏埂并复查。\n来源季 scenario_rice_l3_infrastructure_water_priority，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-01 08:45 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-01。窗口增量预算：{\"water_used\": 36.66666666666667, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 11.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。 本诊断机制仍为实验状态，尚未通过正式配对校准。"
+  },
+  "scenario_rice_l1_channel_clearance": {
+    "briefing_text": "巡检并疏通供水渠，复查堵塞和供水能力；保留后续救急灌水与修埂资源。",
+    "detailed_briefing_text": "巡检并疏通供水渠，复查堵塞和供水能力；保留后续救急灌水与修埂资源。\n来源季 scenario_rice_l3_infrastructure_water_priority，切分起点 2026-01-01 00:00 UTC，本窗口终点 2026-01-01 01:40 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-01。窗口增量预算：{\"water_used\": 0.0, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。"
+  },
+  "scenario_rice_l2_zonal_crop_protection": {
+    "briefing_text": "确诊两个田格的虫、病、草害，按分区、天气和水层选择处理并复查。",
+    "detailed_briefing_text": "确诊两个田格的虫、病、草害，按分区、天气和水层选择处理并复查。\n来源季 scenario_rice_l3_zonal_crop_protection，切分起点 2026-01-03 10:26 UTC，本窗口终点 2026-01-27 06:15 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-27。窗口增量预算：{\"water_used\": 183.33333333333331, \"fertilizer_used\": 82.5, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.22000000000000003, \"fungicide_used_liters\": 0.33}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。 结果门槛：[{\"metric\": \"biomass_dry_kg\", \"direction\": \"higher\", \"threshold\": 211.40699496838403}]。"
+  },
+  "scenario_rice_l1_targeted_protection": {
+    "briefing_text": "确诊两个田格当前虫、病、草害组成，完成本轮分区处理并复查；不执行后续季节管理。",
+    "detailed_briefing_text": "确诊两个田格当前虫、病、草害组成，完成本轮分区处理并复查；不执行后续季节管理。\n来源季 scenario_rice_l3_zonal_crop_protection，切分起点 2026-01-03 11:31 UTC，本窗口终点 2026-01-03 16:18 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-01-03。窗口增量预算：{\"water_used\": 0.0, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 0.0, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.101, \"fungicide_used_liters\": 0.1515}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。"
+  },
+  "scenario_rice_l2_rainy_harvest_capacity": {
+    "briefing_text": "在晚雨、小粮箱和有限干燥能力下，完成两个田格的收获、干燥至 14% 和安全入库。",
+    "detailed_briefing_text": "在晚雨、小粮箱和有限干燥能力下，完成两个田格的收获、干燥至 14% 和安全入库。\n来源季 scenario_rice_l3_rainy_harvest_capacity，切分起点 2026-04-02 06:00 UTC，本窗口终点 2026-04-08 17:20 UTC。品种与来源季一致，p1 面积 1000 平方米；p2 面积 1500 平方米。p1 插秧日期 2026-01-03；p2 插秧日期 2026-01-03。PaddyWorldApp 查看台账与库存，PaddyObservationApp 获取田间观测，PaddyMachineryApp 管理燃油与机具，PaddyOpsApp 执行农事，PaddyInfrastructureApp 维护水利，WeatherApp 查看天气，SystemApp 推进时间。从当前快照继续，不重复已完成工序；田格分批插秧应在同一 UTC 日完成。 观察终点为 2026-04-08。窗口增量预算：{\"water_used\": 0.0, \"fertilizer_used\": 0.0, \"energy_used_kwh\": 22.627783986417903, \"repair_used_kg\": 0.0, \"insecticide_used_liters\": 0.0, \"fungicide_used_liters\": 0.0}。取水单位 m³，肥料产品 kg，电力 kWh，药剂 L，维修材料 kg。 结果门槛：[{\"metric\": \"stored_kg_at_14pct\", \"direction\": \"higher\", \"threshold\": 975.8834592150047}]。"
+  }
+}

@@ -1,0 +1,167 @@
+scenario_id: MZ-W03
+proposed_runtime_id: scenario_maize_l3_expansion_mz_w03
+title: 当前补水与可恢复暂缓
+mechanism_family: water
+status: candidate
+readiness: defer_low_priority
+evidence_level: E0 (candidate-specific; baseline tool support does not equal candidate
+  E1/E2)
+scope:
+  farm_count: 1
+  field_count: 1
+  crop: maize
+  lifecycle_start: pre_planting
+  lifecycle_end: safe_storage
+environment:
+  development_config: ../../freeze/development_configs.json#DEV-W01-v1
+  effective_environment_id: maize-l3-design-7e61d49459e59da7ace77ce44849e02373a6a83279528465e20d678627bcd3c0
+  weather_source: existing synthetic Harbin WeatherGenerator + explicit field-prep/late-harvest
+    dry events
+  weather_year: 2026
+  soil_profile_source: current native maize initialized soil; not calibrated site
+    data
+  effective_root_depth_m: 0.4
+  cultivar_id: MAIZE_201
+  native_variety: Grain_maize_201
+  cultivar_calibration_status: uncalibrated_reference
+  additional_conditions_status: No unimplemented delays, soil reports, forecasts or
+    tradeoffs may be treated as present.
+initial_state:
+  planted: false
+  soil_water:
+    top_and_root_vwc: 0.28
+  soil_nitrogen:
+    config:
+      crop_name: maize
+      variety_name: Grain_maize_201
+      cultivar_map: {}
+      cultivar_profile: null
+      cultivar_profiles: {}
+      parameter_overrides: {}
+      require_explicit_cultivar_parameters: false
+      fertilizer_n_fraction: 0.46
+      fertilizer_n_recovery: 0.7
+      irrigation_efficiency: 0.92
+      reference_density_plants_m2: 6.666666666666666
+      latitude_deg: 45.7
+      longitude_deg: 126.6
+      elevation_m: 150.0
+      relative_humidity_pct: 55.0
+      co2_ppm: 420.0
+      initial_available_n_kg_ha: 50.0
+      base_soil_n_kg_ha: 50.0
+      soil_n_mineralization_fraction: 0.002
+      soil_overrides: {}
+      site_overrides: {}
+      max_duration_days: 366
+      external_biotic_coupling: false
+      allow_external_runon: false
+      external_runon_source: null
+    policy_access: not via hidden pools
+  inventory:
+    seed_MAIZE_201: 100000
+    fertilizer_product_kg: 360
+    warehouse_fuel_l: 500
+    tractor_fuel_l: 100
+    pesticide_l: 0
+  equipment: current single-farm fixed tools; exact runtime snapshot required before
+    execution
+agent_visible:
+  tools: agent/tool_catalog.json
+  final_task_text: agent/task.zh.txt
+  additional_system_prompt: agent/additional_system_prompt.txt
+  rendering_status: complete phase1 target text; candidate class/Engine final envelope
+    not yet implemented; Phase2 equality gate mandatory
+  allowed_fields:
+  - public weather/forecast when permitted
+  - root_vwc + noise and covered ridge IDs
+  - public crop stage/maturity/moisture
+  - inventory, quotas, equipment and action receipts
+  - soil_nitrogen estimates only if explicitly in public contract; never hidden native
+    values
+  observation_schedule: same fixed 3-day observation grid + required action settlement/maturity
+    rechecks; no future truth
+core_decision:
+  question: 一次补水现在执行还是稍后根据反馈补救？
+  decision_window: within legal preparation/growth windows; no hidden calendar answer
+  allowed_actions:
+  - public tools only
+  - positive explicit base fertilizer
+  - quota-compliant irrigation if permitted
+  - legal harvest/dry/store
+  legal_alternatives:
+  - 真实checkpoint当前执行vs次日允许补救；后续控制器完全相同。
+mechanism:
+  input_state: water
+  intermediate_states:
+  - 小窗口干预的边际结果。
+  terminal_outcome: mature TWSO, recovered DM and actual14% stored mass separately
+  internal_diagnostics_not_visible_to_agent:
+  - DVS
+  - RFTRA
+  - backend NAVAIL/NSOIL
+  - future weather truth
+paired_experiment:
+  plan: not scheduled; conditions must be resolved before pair design
+  reference_policy: 真实checkpoint当前执行vs次日允许补救；后续控制器完全相同。
+  alternative_policy: same environment, information cadence, executor and budgets;
+    see alternative treatment
+  shared_constraints:
+  - same initial state/weather/seed/soil/cultivar
+  - same resource ceilings, equipment, deadline and public interface
+  - actual rejected inputs=0; uncertain inputs remain unknown until reconciled
+  actual_input_accounting:
+  - gross vs effective water + native date
+  - product kg ×0.46 /1.2864ha = external N kg/ha
+  - external N ×0.7 = modeled recovered addition; initial soil pools separate
+  holdout_plan: ../../freeze/development_and_holdout.json
+lifecycle:
+  preplant:
+  - Query crop capabilities, inventory, tractor, soil and current weather
+  - Legally level field; apply explicit positive base product dose; form 0.75m ridges
+  - Check receipts and inventory; no hardcoded 200kg fallback
+  sowing:
+  - MAIZE_201, 4cm depth,20cm spacing,1row/ridge,0–63; batches <=4ridges
+  - Commit/recheck real planting, never inject planted or mature state
+  emergence_and_seedling:
+  - Advance and observe public stage and water; no internal DVS/RFTRA access
+  vegetative:
+  - Apply only declared water/N policy through public tools and receipts
+  reproductive_and_grain_fill:
+  - Continue same observation schedule; do not infer VT/R1 from hidden truth
+  maturity_and_harvest:
+  - Wait on public maturity/moisture/weather/trafficability; refuel as needed
+  - Harvest <=4ridges per call, unload based on bin capacity; finish all64
+  postharvest:
+  - Dry only if needed to <=14%; record dry matter separately from removed water
+  - Strict safe store; bin/trailer empty, inventory and resources reconcile
+evaluation_contract: ../../evaluation_contract.md
+deduplication:
+  decision_difference: 暂缓；不得反复延长跳过时间直到制造大损失。
+  occupies_formal_slot: false
+  reason: No candidate is accepted before E1/E2 and lifecycle evidence
+acceptance:
+  E1_public_action_reaches_model: false
+  E2_paired_fullseason_difference: false
+  safe_storage_completed: false
+  checkpoint_recovery_verified: false
+  independent_decision_content: pending, merged or deferred as readiness specifies
+limitations:
+- 历史0.111%为旧版报告，不把弱效应包装强保产。
+- single synthetic development environment; no E3 or Northeast field calibration claim
+- no reference future dry-window leakage to policy
+- no fullseason experiment run in Phase1
+forbidden_claims:
+- ten scenarios passed
+- real field response quantitatively validated
+- all tool refusals imply agronomic failure
+- executor waiting is Agent capability
+- weak/no difference must be tuned into a winner
+agronomic_basis:
+  level: mechanism/plausibility candidate; not external field calibration
+  basis: water availability, total N input and thermal-season exposure can affect
+    native crop; specific site magnitudes not asserted
+  dose_status: N60/120 are preregistered comparison treatments, not fertilizer advice
+  further_requirement: Before production acceptance document candidate-specific applicable
+    conditions and primary agronomic sources; not prerequisite to documentation/pilot
+    feasibility.

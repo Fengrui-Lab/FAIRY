@@ -1,0 +1,1275 @@
+{
+  "status": "current-binding observed catalog; candidate runtime equality pending Phase2",
+  "source_scenario": "scenario_maize_l3_water_limit",
+  "binding": "legacy single-farm fixed Apps; farm_environment=None",
+  "tools": {
+    "AgentUserInterface": [
+      {
+        "name": "send_message_to_agent",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The message content to send to the agent."
+            }
+          },
+          "required": [
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Send a message to the agent.\n\nThis is normally used by scenario setup or replay to deliver the task\nbriefing to the agent. Agent runs hide this tool from the agent-facing\ntoolset so the model cannot inject new user messages into its own\nconversation.\n\nArgs:\n    content: The message content to send to the agent.\n\nReturns:\n    The content that was sent."
+      },
+      {
+        "name": "send_message_to_user",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "The content to send to the user."
+            }
+          },
+          "required": [
+            "content"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Send a message to the user.\n\nUse this as the final communication channel when the task is complete\nor cannot be completed with the available tools.\n\nArgs:\n    content: The content to send to the user.\n\nReturns:\n    The content that was sent."
+      }
+    ],
+    "FarmWorldApp": [
+      {
+        "name": "get_farm_overview",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return a concise farm summary: current date, season phase, inventory,\nrequired_field_preparation_ops and actual completed preparation,\nand a per-ridge overview (key fields only, not full detail).\n\nseason_phase indicates the current stage of the agricultural calendar:\n  \"prep\"     — pre-planting field preparation\n  \"planting\" — active sowing window\n  \"growing\"  — crop vegetative and reproductive growth\n  \"harvest\"  — grain maturity and harvesting\n\nUse get_ridge_state() or get_ridge_range_state() for full ridge detail."
+      },
+      {
+        "name": "get_ridge_state",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "ridge_id": {
+              "type": "integer",
+              "description": "Ridge identifier within the configured farm."
+            }
+          },
+          "required": [
+            "ridge_id"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return an operational state lookup for one ridge.\n\nIncludes planting status, seed type, growth stage, days since planting,\ngrain moisture, estimated yield potential, and days since pesticide application.\n\nnutrient_index is an indicative crop-condition value, not a measured soil\nnitrogen concentration. A low value alone does not establish a nutrient\ndeficiency; assess crop stage and other field evidence before fertilizing.\n\nArgs:\n    ridge_id: Ridge identifier within the configured farm."
+      },
+      {
+        "name": "get_ridge_range_state",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "integer",
+              "description": "First ridge ID"
+            },
+            "end": {
+              "type": "integer",
+              "description": "Last ridge ID , must be >= start."
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read the available operational status from start to end (inclusive).\n\nIncludes planting status, seed type, growth stage, days since planting,\ngrain moisture, estimated yield potential, and days since pesticide application.\n\nArgs:\n    start: First ridge ID\n    end:   Last ridge ID , must be >= start."
+      },
+      {
+        "name": "get_inventory",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read this farm's seed, chemical, fertilizer, fuel and grain stocks, resource allowances and drying and storage requirements.\n        "
+      },
+      {
+        "name": "commit_daily_physics",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Wait one day and update the field conditions.\n\nThis advances time by 24 hours; it is not a refresh at the current time.\nUse SystemApp.advance_time for a different duration. If daily field\nupdates are inactive, this call reports no action."
+      },
+      {
+        "name": "apply_fertigation",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge (within the configured farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (within the configured farm, inclusive, >= start_ridge)."
+            },
+            "nutrient_amount": {
+              "type": "number",
+              "description": "Positive dose multiplier; 1.0 uses 30 kg of product per treated ridge."
+            },
+            "water_mm": {
+              "type": "number",
+              "description": "Carrier-water depth per treated ridge in mm (>=0); consumes water allowance."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "nutrient_amount",
+            "water_mm"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply nutrient and carrier water to a ridge range.\n\nnutrient_amount is a dose multiplier: 1.0 uses 30 kg of fertilizer\nproduct per treated ridge. Total product use is 30 x nutrient_amount\nx the number of treated ridges.\n``water_mm`` is the per-ridge carrier-water depth; it consumes the\nirrigation quota and enters the soil water balance.\n\nArgs:\n    start_ridge:     First ridge (within the configured farm).\n    end_ridge:       Last ridge (within the configured farm, inclusive, >= start_ridge).\n    nutrient_amount: Positive dose multiplier; 1.0 uses 30 kg of product per treated ridge.\n    water_mm:        Carrier-water depth per treated ridge in mm (>=0); consumes water allowance."
+      },
+      {
+        "name": "dry_grain",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "target_moisture_pct": {
+              "type": "number",
+              "description": "Target storage moisture, typically 13.0. Must be in [11, 16].",
+              "default": 13.0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Dry the pending harvested-grain batch before long-term storage.\n\nThe target must be 11-16% and no greater than the configured storage\nlimit. The pending batch must fit the configured drying capacity.\nAlready safe batches may be skipped. Read the final batch moisture and\nquantity in the result.\n\nArgs:\n    target_moisture_pct: Target storage moisture, typically 13.0.\n                         Must be in [11, 16]."
+      },
+      {
+        "name": "store_grain",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Move the pending harvested-grain batch into long-term warehouse storage.\n\nRequires free storage capacity. Check batch moisture and the configured\nsafe-storage limit first. Strict facilities reject unknown or unsafe\nmoisture; permissive facilities may transfer it with a spoilage warning.\nRead the result: a completed transfer alone does not establish safe storage."
+      },
+      {
+        "name": "get_crop_capabilities",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read this field's permitted seeds, layout and planting and harvest requirements.\n\nIncludes replanting rules, maturity and moisture limits, required implements\nand storage requirements. Equipment status lists the implements actually\navailable. Check the replant tool for any crop-cycle restrictions.\nNutrition information distinguishes indicative values from soil nutrient\nmeasurements and fertilizer product mass from elemental nutrient mass."
+      }
+    ],
+    "WeatherApp": [
+      {
+        "name": "get_current_weather",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return today's weather readings from the on-farm weather station."
+      },
+      {
+        "name": "get_forecast",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "days": {
+              "type": "integer",
+              "description": "Number of forecast days to return (1-7).",
+              "default": 7
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return weather forecast for the next N days (max 7).\n\nArgs:\n    days: Number of forecast days to return (1-7)."
+      }
+    ],
+    "SensorApp": [
+      {
+        "name": "read_root_zone_sensors",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read root-zone soil-water estimates for irrigation decisions.\n\nValues are coverage-zone averages with +/-0.005 VWC uncertainty.\nThey describe estimated rooting-layer water, not an independent shallow\nmeasurement. Check the crop's irrigation threshold and recheck after delivery.\n\nIf soil_nitrogen is provided, it contains calculated available and reserve\nsoil-nitrogen estimates in kg N/ha, their effective dates and coverage status.\nThese are not soil-test results or a direct diagnosis of crop nitrogen\ndeficiency. Missing values are unavailable, not zero. Nitrogen estimates\nrequire complete coverage for the same reporting day.\n\nBound farm: default."
+      },
+      {
+        "name": "read_soil_sensors",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read soil-water and temperature estimates for the reported ridge zone. This field reports root-zone water content; it is not an independent 5 cm water measurement. Temperature represents the shallow soil layer. Readings have uncertainty. Use this App's sensor listing for local probe IDs.\n\nBound farm: default."
+      },
+      {
+        "name": "read_canopy_sensors",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return readings and actual coverage of this farm's canopy sensors.\n\nEach sensor reports an ndvi_proxy value (0.0-1.0). A value of -1\nmeans no valid reading yet (pre-emergence). The reading represents\nthe average canopy condition within the sensor's coverage zone.\n\nProbe count and coverage depend on the configured farm layout.\nEach result includes sensor_id, ridge_start and ridge_end; the\nsensor listing provides the local IDs for single-probe reads.\n\nBound farm: default."
+      },
+      {
+        "name": "read_soil_sensor",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "sensor_id": {
+              "type": "string",
+              "description": "Exact local soil-probe ID returned by this App's read_soil_sensors."
+            }
+          },
+          "required": [
+            "sensor_id"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Read soil-water and temperature estimates for the reported ridge zone. This field reports root-zone water content; it is not an independent 5 cm water measurement. Temperature represents the shallow soil layer. Readings have uncertainty. Use this App's sensor listing for local probe IDs.\n\nBound farm: default."
+      },
+      {
+        "name": "read_canopy_sensor",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "sensor_id": {
+              "type": "string",
+              "description": "Exact local canopy-probe ID returned by this App's read_canopy_sensors."
+            }
+          },
+          "required": [
+            "sensor_id"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return the latest reading from a single canopy sensor.\n\nArgs:\n    sensor_id: Exact local canopy-probe ID returned by this App's read_canopy_sensors.\n\nBound farm: default."
+      }
+    ],
+    "Mavic3M": [
+      {
+        "name": "fly_survey",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge of the survey range (0-based)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge of the survey range (inclusive, >= start_ridge)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Fly an aerial survey over a contiguous ridge range, collecting\nmultispectral (NDVI) and thermal (canopy temperature) observations\nfor every surveyed ridge.\n\nThe drone covers ridges in passes; each pass covers a number of\nridges determined by the drone's effective_ridges_per_pass setting.\nIf battery runs low mid-flight the drone returns automatically and\nreports the ridges it managed to cover.\n\nArgs:\n    start_ridge: First ridge of the survey range (0-based).\n    end_ridge:   Last ridge of the survey range (inclusive, >= start_ridge)."
+      },
+      {
+        "name": "check_status",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return battery level, charging state, and drone configuration."
+      },
+      {
+        "name": "charge",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Send this drone to its charging station.\n\nCharging completes asynchronously after about 30 minutes of\nenvironment time. The battery level increases gradually while charging."
+      }
+    ],
+    "Matrice4T": [
+      {
+        "name": "fly_survey",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge of the survey range (0-based)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge of the survey range (inclusive, >= start_ridge)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Fly an aerial survey over a contiguous ridge range, collecting\nmultispectral (NDVI) and thermal (canopy temperature) observations\nfor every surveyed ridge.\n\nThe drone covers ridges in passes; each pass covers a number of\nridges determined by the drone's effective_ridges_per_pass setting.\nIf battery runs low mid-flight the drone returns automatically and\nreports the ridges it managed to cover.\n\nArgs:\n    start_ridge: First ridge of the survey range (0-based).\n    end_ridge:   Last ridge of the survey range (inclusive, >= start_ridge)."
+      },
+      {
+        "name": "check_status",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return battery level, charging state, and drone configuration."
+      },
+      {
+        "name": "charge",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Send this drone to its charging station.\n\nCharging completes asynchronously after about 30 minutes of\nenvironment time. The battery level increases gradually while charging."
+      }
+    ],
+    "Robot0": [
+      {
+        "name": "inspect_ridge",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "ridge_id": {
+              "type": "integer",
+              "description": "Local ridge ID, from 0 to this farm's num_ridges - 1."
+            }
+          },
+          "required": [
+            "ridge_id"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Walk the full length of one ridge and back to inspect ground-level crop condition.\n\nUse this to investigate anomalies. Read the returned diagnoses and their\nconfidence; species identification depends on the field's diagnostic\ncapabilities. An unavailable diagnosis is not confirmed absence of a problem.\n\nArgs:\n    ridge_id:  Local ridge ID, from 0 to this farm's num_ridges - 1."
+      },
+      {
+        "name": "inspect_pests",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge, from 0 to this farm's num_ridges - 1."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (inclusive, >= start_ridge)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Inspect a ridge range for ground-level pest, disease and weed evidence.\n\nA mission visits up to eight ridges, limited by battery. Check covered\nand uncovered ridges before planning follow-up work. Detections have\nuncertainty and may miss or misidentify a problem. Unavailable diagnoses\nare unknown, not evidence that a problem is absent.\n\nArgs:\n    start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.\n    end_ridge:   Last ridge (inclusive, >= start_ridge)."
+      },
+      {
+        "name": "inspect_crop_health",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge, from 0 to this farm's num_ridges - 1."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (inclusive, >= start_ridge)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Inspect visible crop condition and available pest, disease and weed evidence.\n\nA mission visits up to eight ridges, limited by battery. Read coverage,\nsymptoms and confidence together with soil and weather observations when\nassessing the cause of poor growth. This inspection alone does not establish\na nutrient-deficiency diagnosis. Unavailable diagnoses remain unknown.\n\nArgs:\n    start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.\n    end_ridge:   Last ridge (inclusive, >= start_ridge)."
+      },
+      {
+        "name": "inspect_emergence",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge, from 0 to this farm's num_ridges - 1."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (inclusive, >= start_ridge)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Estimate the fraction of expected plants currently visible in a ridge range.\n\nA mission visits up to eight ridges, limited by battery. Read coverage\nbefore interpreting stand estimates. Assess gap distribution, crop stage\nand the remaining planting window before deciding whether to replant.\n\nArgs:\n    start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.\n    end_ridge:   Last ridge (inclusive, >= start_ridge)."
+      },
+      {
+        "name": "check_status",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return battery level, charging state, and robot configuration."
+      },
+      {
+        "name": "charge",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Send this robot dog back to its charging station.\n\nCharging completes asynchronously after about 60 minutes of\nenvironment time. The battery level increases gradually while charging."
+      }
+    ],
+    "TractorApp": [
+      {
+        "name": "attach_implement",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "implement": {
+              "type": "string",
+              "description": "Owned implement to mount.",
+              "enum": [
+                "grader",
+                "furrower",
+                "harvester",
+                "sprayer",
+                "cultivator"
+              ]
+            }
+          },
+          "required": [
+            "implement"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Attach one implement actually owned by this tractor. Detach the currently mounted implement before switching."
+      },
+      {
+        "name": "detach_implement",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Remove the currently mounted implement from the tractor.\n        "
+      },
+      {
+        "name": "refuel",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "liters": {
+              "type": "number",
+              "description": "Amount to transfer ."
+            }
+          },
+          "required": [
+            "liters"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer fuel from the farm warehouse to the tractor fuel tank.\n\nArgs:\n    liters: Amount to transfer ."
+      },
+      {
+        "name": "refill_pesticide_tank",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "liters": {
+              "type": "number",
+              "description": "Amount to transfer"
+            }
+          },
+          "required": [
+            "liters"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer pesticide from the farm warehouse to the tractor spray tank.\n\nArgs:\n    liters: Amount to transfer"
+      },
+      {
+        "name": "load_fertilizer",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "kg": {
+              "type": "number",
+              "description": "Amount to transfer."
+            }
+          },
+          "required": [
+            "kg"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer fertilizer from the farm warehouse to the tractor spreader.\nArgs:\n    kg: Amount to transfer."
+      },
+      {
+        "name": "load_seeds",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "seed_type": {
+              "type": "string",
+              "description": "Seed identity accepted by this loading point.",
+              "enum": [
+                "MAIZE_201"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "description": "Positive seed count; transfer is capped by hopper capacity.",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "seed_type",
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer the selected seed from the bound warehouse into this tractor's seed hopper. The hopper holds one seed type at a time, with a capacity of 300,000 seeds; transfers are capped by free space. Field crop compatibility is checked when sowing."
+      },
+      {
+        "name": "get_status",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return tractor resource levels, implement status, and available implements.\n        "
+      },
+      {
+        "name": "level",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Level and till the full field surface using the attached implement.\n        "
+      },
+      {
+        "name": "base_fertilize",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "total_kg": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Positive total fertilizer product mass; omitted uses the area-scaled field default.",
+              "default": null
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply base fertilizer across the full field using the tractor spreader.\n\nArgs:\n    total_kg: Positive total fertilizer product mass; omitted uses the area-scaled field default."
+      },
+      {
+        "name": "form_ridges",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "ridge_width_m": {
+              "type": "number",
+              "description": "Configured target-field ridge spacing in metres.",
+              "enum": [
+                0.75
+              ]
+            }
+          },
+          "required": [
+            "ridge_width_m"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Form ridges using this tractor's built-in ridging capability. Requires an unplanted field; terminate an existing crop through a supported operation first. The spacing must equal the selected field's configured geometry. default (maize): ridge spacing 0.75 m."
+      },
+      {
+        "name": "apply_fertilizer",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge to fertilize."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge to fertilize (max 10-ridge span)."
+            },
+            "kg_per_ridge": {
+              "type": "number",
+              "description": "Fertilizer amount per ridge in kilograms (must be positive)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "kg_per_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply fertilizer across a contiguous block of ridges using the tractor spreader\n(up to 10 ridges per pass).\n\nArgs:\n    start_ridge:   First ridge to fertilize.\n    end_ridge:     Last ridge to fertilize (max 10-ridge span).\n    kg_per_ridge:  Fertilizer amount per ridge in kilograms (must be positive)."
+      },
+      {
+        "name": "plant_seeds",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge in the target farm, inclusive.",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last local ridge in the target farm, inclusive; respect the pass limit.",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "depth_cm": {
+              "type": "number",
+              "description": "Sowing depth in cm; use the selected farm's crop range below.",
+              "minimum": 4.0,
+              "maximum": 6.0
+            },
+            "seed_spacing_cm": {
+              "type": "number",
+              "description": "Positive in-row seed spacing in cm; resulting density must satisfy the target crop's rule.",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "depth_cm",
+            "seed_spacing_cm"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Sow the target field; up to 4 contiguous ridges per pass. default (maize): completed preparation: level, base_fertilize, form_ridges; Depth 4–6 cm; target-block average soil temperature > 10 °C; target-block average soil VWC 0.2–0.35; Seed use follows 268 m ridge length and 1 planted row(s) per ridge; Observe the field's planting window."
+      },
+      {
+        "name": "apply_pesticide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge to spray (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge to spray (within this farm, max 10-ridge span)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply insecticide pesticide across a contiguous block of ridges using the tractor\nspray boom (up to 10 ridges per pass).\n\nArgs:\n    start_ridge: First ridge to spray (within this farm).\n    end_ridge:   Last ridge to spray (within this farm, max 10-ridge span).\n\nFields without crop-protection support reject this operation before resource use."
+      },
+      {
+        "name": "load_pesticide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "liters": {
+              "type": "number",
+              "description": "Amount of pesticide (insecticide) to transfer from warehouse to the tractor's onboard pesticide tank."
+            }
+          },
+          "required": [
+            "liters"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer insecticide from the farm warehouse to the tractor's pesticide tank.\n\nArgs:\n    liters: Amount of pesticide (insecticide) to transfer from\n            warehouse to the tractor's onboard pesticide tank."
+      },
+      {
+        "name": "spray_pesticide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (max 10-ridge span)."
+            },
+            "liters_per_ridge": {
+              "type": "number",
+              "description": "Insecticide application rate (>0).",
+              "default": 8.0
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Spray insecticide over up to 10 contiguous ridges.\n\nThe default dose is 8 L per ridge. Requires sprayable weather,\ntrafficable soil, loaded chemical, fuel and permission under the field's\nmanagement rules. Check the treated range and chemical use in the result.\nFields without crop-protection support reject this operation before resource use.\n\nArgs:\n    start_ridge:      First ridge (within this farm).\n    end_ridge:        Last ridge (max 10-ridge span).\n    liters_per_ridge: Insecticide application rate (>0).\n\nFields without crop-protection support reject this operation before resource use."
+      },
+      {
+        "name": "load_fungicide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "liters": {
+              "type": "number",
+              "description": "Amount to transfer."
+            }
+          },
+          "required": [
+            "liters"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Transfer fungicide from the farm warehouse to the tractor's fungicide tank.\n\nFungicide is a separate chemical class from insecticide; the agent must\nload fungicide explicitly before calling apply_fungicide. The warehouse\npesticide pool is shared (`pesticide_liters`).\n\nArgs:\n    liters: Amount to transfer."
+      },
+      {
+        "name": "apply_fungicide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge to spray (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge to spray (within this farm, max 10-ridge span)."
+            },
+            "liters_per_ridge": {
+              "type": "number",
+              "description": "Fungicide application rate (>0)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "liters_per_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply fungicide over up to 10 contiguous ridges.\n\nLoad the fungicide tank first. Requires sprayable weather, trafficable\nsoil, a positive rate, sufficient chemical and fuel, and field permission.\nRecheck disease symptoms after treatment. Fields without crop-protection\nsupport reject this operation before resource use.\n\nArgs:\n    start_ridge:      First ridge to spray (within this farm).\n    end_ridge:        Last ridge to spray (within this farm, max 10-ridge span).\n    liters_per_ridge: Fungicide application rate (>0).\n\nFields without crop-protection support reject this operation before resource use."
+      },
+      {
+        "name": "apply_herbicide",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge to treat (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge to treat (within this farm, max 10-ridge span)."
+            },
+            "liters_per_ridge": {
+              "type": "number",
+              "description": "Herbicide application rate (>0)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "liters_per_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply herbicide over up to 10 contiguous ridges.\n\nRequires sprayable weather, trafficable soil, loaded chemical, fuel and\nfield permission. Recheck weed conditions after treatment. Fields without\ncrop-protection support reject this operation before resource use.\n\nArgs:\n    start_ridge:      First ridge to treat (within this farm).\n    end_ridge:        Last ridge to treat (within this farm, max 10-ridge span).\n    liters_per_ridge: Herbicide application rate (>0).\n\nFields without crop-protection support reject this operation before resource use."
+      },
+      {
+        "name": "mechanical_weed_control",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge to cultivate (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge to cultivate (within this farm, max 10-ridge span)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Cultivate weeds over up to 10 contiguous ridges.\n\nRequires trafficable soil, fuel and the applicable machinery-pass and\nmechanical-weeding allowance. Uses no herbicide and does not consume the\nchemical-application count. Fields without crop-protection support reject\nthis operation before resource use.\n\nArgs:\n    start_ridge: First ridge to cultivate (within this farm).\n    end_ridge:   Last ridge to cultivate (within this farm, max 10-ridge span).\n\nFields without crop-protection support reject this operation before resource use."
+      },
+      {
+        "name": "replant_seeds",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge in the target farm, inclusive.",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last local ridge in the target farm, inclusive; respect the pass limit.",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "depth_cm": {
+              "type": "number",
+              "description": "Sowing depth in cm; use the selected farm's crop range below.",
+              "minimum": 4.0,
+              "maximum": 6.0
+            },
+            "spacing_cm": {
+              "type": "number",
+              "description": "Positive in-row seed spacing in cm; resulting density must satisfy the target crop's rule.",
+              "exclusiveMinimum": 0
+            },
+            "full_replant": {
+              "type": "boolean",
+              "description": "Whether this pass resets the ridge phenology.",
+              "default": false
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge",
+            "depth_cm",
+            "spacing_cm"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Replant the target field; up to 4 contiguous ridges per pass. default (maize): completed preparation: level, base_fertilize, form_ridges; Depth 4–6 cm; target-block average soil temperature > 10 °C; target-block average soil VWC 0.2–0.35; Seed use follows 268 m ridge length and 1 planted row(s) per ridge; Observe the field's planting window; Replanting is unavailable once the ridge's crop cycle has started."
+      },
+      {
+        "name": "incorporate_residue",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First ridge (within this farm)."
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last ridge (within this farm, max 10-ridge span)."
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Incorporate crop residue over up to 10 contiguous ridges.\n\nConsumes fuel and working time and records the completed operation.\nThis tool does not report a measured increase in soil carbon or fertility.\n\nArgs:\n    start_ridge: First ridge (within this farm).\n    end_ridge:   Last ridge (within this farm, max 10-ridge span)."
+      },
+      {
+        "name": "harvest",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start_ridge": {
+              "type": "integer",
+              "description": "First local ridge in the target farm, inclusive.",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "end_ridge": {
+              "type": "integer",
+              "description": "Last local ridge in the target farm, inclusive; respect the pass limit.",
+              "minimum": 0,
+              "maximum": 63
+            }
+          },
+          "required": [
+            "start_ridge",
+            "end_ridge"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Harvest up to 4 contiguous ridges per pass. Requires dry weather, trafficable soil, fuel and grain-bin capacity. default (maize): requires mature stage MATURE and grain moisture <= 25%. "
+      },
+      {
+        "name": "unload_grain",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Unload the machine's grain bin into the farm's pending harvested-grain batch.\n\nTakes about 8 minutes. This transfer is separate from drying or admission\nto long-term warehouse storage. Check batch moisture before storing."
+      }
+    ],
+    "FieldOpsApp": [
+      {
+        "name": "apply_pesticide_manual",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "ridge_id": {
+              "type": "integer",
+              "description": "First local ridge to spray."
+            },
+            "liters_per_ridge": {
+              "type": "number",
+              "description": "Positive working-fluid litres per ridge; The standard working-fluid rate is 3 L/ridge and lower volumes reduce treatment strength.",
+              "default": 3.0
+            },
+            "advance_time": {
+              "type": "boolean",
+              "description": "Whether to count the operator working duration as elapsed time.",
+              "default": true
+            },
+            "ridge_count": {
+              "type": "integer",
+              "description": "Number of contiguous ridges, at most two.",
+              "default": 1
+            }
+          },
+          "required": [
+            "ridge_id"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Apply pesticide on one or two bound-farm ridges with a backpack sprayer.\n\nFields without hand-spray support reject this operation before resource use.\n\nArgs:\n    ridge_id: First local ridge to spray.\n    liters_per_ridge: Positive working-fluid litres per ridge; The standard working-fluid rate is 3 L/ridge and lower volumes reduce treatment strength.\n    advance_time: Whether to count the operator working duration as elapsed time.\n    ridge_count: Number of contiguous ridges, at most two.\n\nBound farm: default."
+      },
+      {
+        "name": "irrigate_ridge",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "ridge_id": {
+              "type": "integer",
+              "description": "Ridge to irrigate (within this farm)."
+            },
+            "duration_hours": {
+              "type": "number",
+              "description": "Irrigation run time in hours."
+            }
+          },
+          "required": [
+            "ridge_id",
+            "duration_hours"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Irrigate a single ridge.\n\nArgs:\n    ridge_id:       Ridge to irrigate (within this farm).\n    duration_hours: Irrigation run time in hours.\n\nBound farm: default."
+      },
+      {
+        "name": "irrigate",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "integer",
+              "description": "First local ridge ID, zero based and inclusive."
+            },
+            "end": {
+              "type": "integer",
+              "description": "Last local ridge ID, inclusive and at least start."
+            },
+            "hours": {
+              "type": "number",
+              "description": "Positive irrigation run time per ridge in hours."
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "hours"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Irrigate a contiguous range using this field's water allowance.\n\nRequires the irrigation moisture check to be below the crop's stop\nthreshold throughout the requested range. Consumes setup and running\ntime. Water delivery or its soil response may complete later; use\neffect_ready_at to schedule a recheck. Inspect already-pending irrigation\nbefore starting another run.\n\nArgs:\n    start: First local ridge ID, zero based and inclusive.\n    end: Last local ridge ID, inclusive and at least start.\n    hours: Positive irrigation run time per ridge in hours.\n\nBound farm: default."
+      },
+      {
+        "name": "irrigate_range",
+        "write_operation": true,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "integer",
+              "description": "First ridge to irrigate (within this farm)."
+            },
+            "end": {
+              "type": "integer",
+              "description": "Last ridge to irrigate (within this farm, >= start)."
+            },
+            "duration_hours": {
+              "type": "number",
+              "description": "Irrigation run time per ridge in hours."
+            }
+          },
+          "required": [
+            "start",
+            "end",
+            "duration_hours"
+          ],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Irrigate a contiguous range of ridges.\n\nArgs:\n    start:          First ridge to irrigate (within this farm).\n    end:            Last ridge to irrigate (within this farm, >= start).\n    duration_hours: Irrigation run time per ridge in hours.\n\nBound farm: default."
+      },
+      {
+        "name": "get_irrigation_log",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Return the irrigation history for all ridges.\n\nBound farm: default."
+      }
+    ],
+    "SystemApp": [
+      {
+        "name": "get_current_time",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Get the current time, date, and weekday.\n\nReturns a dictionary with the keys \"current_timestamp\" (epoch\ntimestamp), \"current_datetime\" (YYYY-MM-DD HH:MM:SS), and\n\"current_weekday\" (Monday, Tuesday, etc.)."
+      },
+      {
+        "name": "advance_time",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "seconds": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Finite non-negative seconds to advance, including fractional seconds.",
+              "default": 0.0
+            },
+            "minutes": {
+              "type": "integer",
+              "description": "Minutes to advance.",
+              "default": 0
+            },
+            "hours": {
+              "type": "integer",
+              "description": "Hours to advance.",
+              "default": 0
+            },
+            "days": {
+              "type": "integer",
+              "description": "Days to advance.",
+              "default": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Wait for the specified duration while field conditions and pending activities progress.\n\nUse this when no immediate work is needed or an activity needs time to\ncomplete. Check current conditions and operation status afterward.\n\nArgs:\n    seconds: Finite non-negative seconds to advance, including fractional seconds.\n    minutes: Minutes to advance.\n    hours: Hours to advance.\n    days: Days to advance."
+      },
+      {
+        "name": "wait_for_notification",
+        "write_operation": false,
+        "parameters_schema": {
+          "type": "object",
+          "properties": {
+            "timeout": {
+              "type": "integer",
+              "description": "Maximum number of seconds to wait.",
+              "default": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "result_schema": null,
+        "description": "Check for a notification or wait up to timeout seconds.\n\nWith timeout=0, return immediately if no notification is ready. Use a\npositive timeout for a bounded wait. Use this when no other useful work\ncan be performed.\n\nArgs:\n    timeout: Maximum number of seconds to wait."
+      }
+    ]
+  },
+  "proposed_difference": "MZ-W05 forecast-off condition must remove get_forecast; no such environment implemented"
+}

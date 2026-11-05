@@ -61,12 +61,23 @@ class BaseLLM:
             raw_parallel_tool_calls, "parallel_tool_calls"
         )
 
+    def compatible_sampling_options(self):
+        opts = {}
+        if _coerce_bool(self.params.get("send_temperature", True), "send_temperature"):
+            opts["temperature"] = self.temperature
+        if self.params.get("reasoning_effort") is not None:
+            opts["reasoning_effort"] = self.params["reasoning_effort"]
+        return opts
+
     def tool_call_options(self, tools=None):
         if tools is None:
             return {}
         return {"parallel_tool_calls": self.parallel_tool_calls}
 
     def output_token_options(self, *, parameter: str = "max_tokens"):
+        parameter = self.params.get("output_token_parameter", parameter)
+        if parameter not in {"max_tokens", "max_completion_tokens", "max_output_tokens"}:
+            raise ValueError("Unsupported output token parameter")
         return {parameter: self.max_output_tokens}
 
     def chat_completion(self, messages, tools=None):
@@ -108,6 +119,10 @@ class BaseLLM:
             BaseLLM: An instance of the appropriate client subclass.
         """
         provider = cfg.get("provider", "openai").lower()
+        if provider not in {"vllm", "openai-compatible", "llama-api"} and any(cfg.get(k) is not None for k in ("output_token_parameter", "send_temperature")):
+            raise ValueError("Explicit compatible sampling settings require a compatible chat provider")
+        if cfg.get("output_token_parameter") not in (None, "max_tokens", "max_completion_tokens"):
+            raise ValueError("Unsupported output token parameter")
         model = cfg.get("model", "gpt-4o-mini")
         temperature = cfg.get("temperature", 0.1)
         # Gather any additional parameters.
@@ -146,5 +161,12 @@ class BaseLLM:
             case "vllm":
                 from .vllm_client import VLLMClient
                 return VLLMClient(model, temperature, **extra_params)
+            case "typesafe":
+                # Jev (TypeSafe System One); only used by the farm_jev controller.
+                from .typesafe_client import TypeSafeJevClient
+                return TypeSafeJevClient(model, temperature, **extra_params)
+            case "system-one-compatible":
+                from .system_one_client import SystemOneCompatibleClient
+                return SystemOneCompatibleClient(model, temperature, **extra_params)
             case _:
                 raise ValueError(f"Unsupported LLM Provider: {provider}")

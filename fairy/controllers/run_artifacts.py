@@ -39,7 +39,17 @@ def token_usage_from_metrics(metrics: list[dict[str, Any]]) -> dict[str, Any]:
     for entry in metrics:
         tokens = entry.get("tokens") or {}
         for key in ("prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens"):
-            totals[key] += int(tokens.get(key) or 0)
+            if key in tokens and tokens[key] is None:
+                totals[key] = None
+            elif totals[key] is not None:
+                totals[key] += int(tokens.get(key) or 0)
+    if any(totals[k] is None for k in ("prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens")):
+        totals["source"] = "llm_runtime_metrics_incomplete"
+        totals["known_tokens"] = {
+            key: sum(int((e.get("tokens") or {}).get(key) or 0) for e in metrics)
+            for key in ("prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens")
+        }
+        return totals
     if totals["total_tokens"] == 0:
         totals["source"] = "not_applicable_without_llm"
     return totals

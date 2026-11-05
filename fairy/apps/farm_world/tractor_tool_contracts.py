@@ -90,33 +90,41 @@ def planting_contract(context: TractorContractContext, *, replant: bool = False)
 
     def describe(world):
         rules = _planting_rules(world, replant)
-        implement = (f"attached '{rules.required_implement}'" if rules.required_implement is not None
-                     else "no additional crop-specific implement restriction")
-        temperature = rules.soil_temperature_c.describe("°C")
+        parts = []
+        if rules.required_implement is not None:
+            parts.append(f"requires attached '{rules.required_implement}'")
+        parts.append(f"completed preparation: {', '.join(rules.required_preparation)}"
+                     if rules.required_preparation else "no preparation prerequisite")
+        parts.append(f"Depth {rules.depth_cm.describe('cm')}")
+        temperature = rules.soil_temperature_c
         exceptions = "; ".join(
             f"{seed}: {rule.describe('°C')}" for seed, rule in rules.soil_temperature_by_seed
         )
-        density = (f" Density {rules.density_plants_m2.describe('plants/m²')}."
-                   if rules.density_plants_m2 is not None else "")
-        replanting = (f" Supported replant modes: {', '.join(rules.supported_replant_modes)}. "
-                     "full_replant=True restarts the target ridge's season."
-                     if replant else "")
-        backend = getattr(getattr(world, "_physics", None), "crop_backend", None)
-        if replant and callable(getattr(backend, "check_replant", None)):
-            replanting = (" Native WOFOST cannot reset or gap-fill a ridge after its native run starts; "
-                          "it requires a new native season.")
-        preparation = (f"completed preparation: {', '.join(rules.required_preparation)}"
-                       if rules.required_preparation else "no preparation prerequisite")
-        window = ("Scenario planting windows apply." if rules.respect_scenario_window
-                  else "No scenario planting-window restriction applies to this operation.")
-        return (
-            f"requires {implement}; {preparation}. "
-            f"Depth {rules.depth_cm.describe('cm')}; target-block average soil temperature {temperature}"
-            f"{f' (seed exceptions: {exceptions})' if exceptions else ''}; "
-            f"target-block average soil VWC {rules.soil_vwc.describe()}. "
-            f"Seed use follows {world.field_length_m:g} m ridge length and "
-            f"{world.rows_per_ridge} planted row(s) per ridge.{density} {window}{replanting}"
-        )
+        if temperature.minimum is not None or temperature.maximum is not None:
+            text = f"target-block average soil temperature {temperature.describe('°C')}"
+            if exceptions:
+                text += f" (seed exceptions: {exceptions})"
+            parts.append(text)
+        elif exceptions:
+            parts.append(f"seed-specific soil temperature: {exceptions}")
+        water = rules.soil_vwc
+        if ((water.minimum is not None or water.maximum is not None)
+                and (water.minimum, water.maximum) != (0, 1)):
+            parts.append(f"target-block average soil VWC {water.describe()}")
+        if rules.density_plants_m2 is not None:
+            parts.append(f"Density {rules.density_plants_m2.describe('plants/m²')}")
+        parts.append(f"Seed use follows {world.field_length_m:g} m ridge length and "
+                     f"{world.rows_per_ridge} planted row(s) per ridge")
+        parts.append("Observe the field's planting window" if rules.respect_scenario_window
+                     else "No planting-window restriction applies to this operation")
+        if replant:
+            backend = getattr(getattr(world, "_physics", None), "crop_backend", None)
+            if callable(getattr(backend, "check_replant", None)):
+                parts.append("Replanting is unavailable once the ridge's crop cycle has started")
+            else:
+                parts.append(f"Supported replant modes: {', '.join(rules.supported_replant_modes)}")
+                parts.append("full_replant=True restarts the target ridge's season")
+        return "; ".join(parts) + "."
 
     def validate(arguments):
         error = _range_error(context, arguments, equipment.planting_max_ridges_per_pass)
@@ -176,7 +184,7 @@ def harvest_contract(context: TractorContractContext) -> OperationContract:
 def seed_loading_contract(context: TractorContractContext) -> OperationContract:
     return OperationContract(
         "Transfer the selected seed from the bound warehouse into this tractor's seed hopper. "
-        "The hopper holds one seed type at a time; field crop compatibility is checked when sowing.",
+        "The hopper holds one seed type at a time, with a capacity of 300,000 seeds; transfers are capped by free space. Field crop compatibility is checked when sowing.",
         {
             "seed_type": ParameterContract("Seed identity accepted by this loading point.", choices=context.seed_types()),
             "count": ParameterContract("Positive seed count; transfer is capped by hopper capacity.", numeric=ScalarRange(minimum=0, minimum_inclusive=False)),
@@ -187,7 +195,7 @@ def seed_loading_contract(context: TractorContractContext) -> OperationContract:
 def attachment_contract(context: TractorContractContext) -> OperationContract:
     return OperationContract(
         "Attach one implement actually owned by this tractor. Detach the currently mounted "
-        "implement before switching; crop requirements do not create equipment.",
+        "implement before switching.",
         {"implement": ParameterContract("Owned implement to mount.", choices=context.equipment().implements)},
     )
 
@@ -207,8 +215,8 @@ def ridging_contract(context: TractorContractContext) -> OperationContract:
 
     return OperationContract(
         f"Form ridges using {capability}. "
-        "An existing planted crop must be terminated through an explicit supported operation first; "
-        "this operation cannot silently erase a crop. The spacing must equal the selected field's configured geometry. "
+        "Requires an unplanted field; terminate an existing crop through a supported operation first. "
+        "The spacing must equal the selected field's configured geometry. "
         + _farm_rules(context, lambda world: f"ridge spacing {world.field_geometry.ridge_width_m:g} m."),
         {"ridge_width_m": ParameterContract("Configured target-field ridge spacing in metres.", choices=widths)},
         validate,

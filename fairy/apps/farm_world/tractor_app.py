@@ -310,12 +310,14 @@ class TractorApp(App, TractorOperations):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def apply_pesticide(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply insecticide pesticide across a contiguous block of ridges using the tractor
+        """Apply insecticide pesticide across a contiguous block of ridges using the tractor
         spray boom (up to 10 ridges per pass).
 
         Args:
-            start_ridge: First ridge to spray (0-63).
-            end_ridge:   Last ridge to spray (0-63, max 10-ridge span).
+            start_ridge: First ridge to spray (within this farm).
+            end_ridge:   Last ridge to spray (within this farm, max 10-ridge span).
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         self._bind_farm_context()
         return self._operate_apply_pesticide(
@@ -328,7 +330,7 @@ class TractorApp(App, TractorOperations):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def load_pesticide(self, liters: float) -> dict[str, Any]:
-        """Round-3 / round-4 alias for ``refill_pesticide_tank``.
+        """Transfer insecticide from the farm warehouse to the tractor's pesticide tank.
 
         Args:
             liters: Amount of pesticide (insecticide) to transfer from
@@ -346,19 +348,19 @@ class TractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float = PESTICIDE_L_PER_RIDGE,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply (insecticide) pesticide across a contiguous block of ridges using
-        the tractor spray boom (up to 10 ridges per pass).
+        """Spray insecticide over up to 10 contiguous ridges.
 
-        Routes through ``BioticPressureEngine.apply_treatment(INSECTICIDE)``
-        and opens the management residual window. Spray weather constraints
-        apply (no rain, wind below the spray limit). Round-3 alias for ``apply_pesticide``
-        with configurable per-ridge dose; default matches the legacy
-        hardcoded 8.0 L/ridge so existing scenarios stay calibrated.
+        The default dose is 8 L per ridge. Requires sprayable weather,
+        trafficable soil, loaded chemical, fuel and permission under the field's
+        management rules. Check the treated range and chemical use in the result.
+        Fields without crop-protection support reject this operation before resource use.
 
         Args:
-            start_ridge:      First ridge (0-63).
+            start_ridge:      First ridge (within this farm).
             end_ridge:        Last ridge (max 10-ridge span).
             liters_per_ridge: Insecticide application rate (>0).
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         self._bind_farm_context()
         return self._operate_spray_pesticide(
@@ -393,17 +395,19 @@ class TractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply fungicide across a contiguous block of ridges using the tractor
-        spray boom (up to 10 ridges per pass).
+        """Apply fungicide over up to 10 contiguous ridges.
 
-        Routes through `BioticPressureEngine.apply_treatment(FUNGICIDE)` and
-        opens a management-residual window for disease pressure. Spray weather
-        constraints apply (no rain, wind below the spray limit).
+        Load the fungicide tank first. Requires sprayable weather, trafficable
+        soil, a positive rate, sufficient chemical and fuel, and field permission.
+        Recheck disease symptoms after treatment. Fields without crop-protection
+        support reject this operation before resource use.
 
         Args:
-            start_ridge:      First ridge to spray (0-63).
-            end_ridge:        Last ridge to spray (0-63, max 10-ridge span).
+            start_ridge:      First ridge to spray (within this farm).
+            end_ridge:        Last ridge to spray (within this farm, max 10-ridge span).
             liters_per_ridge: Fungicide application rate (>0).
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         self._bind_farm_context()
         return self._operate_apply_fungicide(
@@ -422,17 +426,18 @@ class TractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply chemical weed control across a contiguous block of ridges.
+        """Apply herbicide over up to 10 contiguous ridges.
 
-        This is the herbicide path: it requires sprayable weather, trafficable
-        soil, tank chemical, fuel, and management-regime permission. It queues a
-        HERBICIDE treatment, so weed pressure receives both same-day knockdown
-        and the chemical residual window.
+        Requires sprayable weather, trafficable soil, loaded chemical, fuel and
+        field permission. Recheck weed conditions after treatment. Fields without
+        crop-protection support reject this operation before resource use.
 
         Args:
-            start_ridge:      First ridge to treat (0-63).
-            end_ridge:        Last ridge to treat (0-63, max 10-ridge span).
+            start_ridge:      First ridge to treat (within this farm).
+            end_ridge:        Last ridge to treat (within this farm, max 10-ridge span).
             liters_per_ridge: Herbicide application rate (>0).
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         self._bind_farm_context()
         return self._operate_apply_herbicide(
@@ -450,16 +455,18 @@ class TractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Cultivate a contiguous ridge block for mechanical weed control.
+        """Cultivate weeds over up to 10 contiguous ridges.
 
-        This is the non-chemical weed-control path for organic/low-chemical
-        scenarios. It requires trafficable soil, fuel, and machine-pass budget.
-        It queues a MECHANICAL_WEED treatment: strong same-day weed knockdown,
-        no herbicide residual, and no pesticide application count.
+        Requires trafficable soil, fuel and the applicable machinery-pass and
+        mechanical-weeding allowance. Uses no herbicide and does not consume the
+        chemical-application count. Fields without crop-protection support reject
+        this operation before resource use.
 
         Args:
-            start_ridge: First ridge to cultivate (0-63).
-            end_ridge:   Last ridge to cultivate (0-63, max 10-ridge span).
+            start_ridge: First ridge to cultivate (within this farm).
+            end_ridge:   Last ridge to cultivate (within this farm, max 10-ridge span).
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         self._bind_farm_context()
         return self._operate_mechanical_weed_control(
@@ -504,16 +511,14 @@ class TractorApp(App, TractorOperations):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def incorporate_residue(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """Tillage pass that incorporates harvested-crop residue back into the soil.
+        """Incorporate crop residue over up to 10 contiguous ridges.
 
-        Post-harvest agronomic step: returning organic matter to the soil
-        rather than burning it. Logged action only — the reduced physics
-        engine doesn't model soil organic carbon, but FOS gates verify the
-        agent followed the right post-harvest sequence.
+        Consumes fuel and working time and records the completed operation.
+        This tool does not report a measured increase in soil carbon or fertility.
 
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 10-ridge span).
+            start_ridge: First ridge (within this farm).
+            end_ridge:   Last ridge (within this farm, max 10-ridge span).
         """
         self._bind_farm_context()
         return self._operate_incorporate_residue(
@@ -543,9 +548,10 @@ class TractorApp(App, TractorOperations):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def unload_grain(self) -> dict[str, Any]:
-        """Unload the combine grain bin into the farm warehouse (trailer transfer).
-        Takes about 8 minutes. Call this when the bin is full or after the
-        final harvest pass to deposit grain into the warehouse inventory.
+        """Unload the machine's grain bin into the farm's pending harvested-grain batch.
+
+        Takes about 8 minutes. This transfer is separate from drying or admission
+        to long-term warehouse storage. Check batch moisture before storing.
         """
         self._bind_farm_context()
         return self._operate_unload_grain(self._farm_context)

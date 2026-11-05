@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "bundle_id": "management_extensions_thionville_december2019_v1",
+  "location": {
+    "name": "Thionville vicinity, France–Luxembourg border",
+    "latitude": 49.4,
+    "longitude": 6.2,
+    "elevation_m": 277.87,
+    "elevation_source": "NASA POWER response geometry, not measured trial elevation"
+  },
+  "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN,T2M_MAX,RH2M,WS2M,PRECTOTCORR,ALLSKY_SFC_SW_DWN&community=AG&longitude=6.2&latitude=49.4&start=20191201&end=20200107&format=JSON&time-standard=LST",
+  "acquired_at_utc": "2026-11-01T13:30:28.215662+00:00",
+  "weather_provider": "NASA POWER Daily Point API, AG community",
+  "api": {
+    "version": "v2.10.1",
+    "name": "POWER Daily API"
+  },
+  "source_parameter_metadata": {
+    "T2M_MIN": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Minimum"
+    },
+    "T2M_MAX": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Maximum"
+    },
+    "RH2M": {
+      "units": "%",
+      "longname": "Relative Humidity at 2 Meters"
+    },
+    "WS2M": {
+      "units": "m/s",
+      "longname": "Wind Speed at 2 Meters"
+    },
+    "PRECTOTCORR": {
+      "units": "mm/day",
+      "longname": "Precipitation Corrected"
+    },
+    "ALLSKY_SFC_SW_DWN": {
+      "units": "MJ/m^2/day",
+      "longname": "All Sky Surface Shortwave Downward Irradiance"
+    }
+  },
+  "fill_value": -999.0,
+  "weather_period": {
+    "start_date": "2019-12-01",
+    "end_date": "2020-01-07",
+    "day_count": 38,
+    "time_standard": "LST"
+  },
+  "normalization": {
+    "parameter_mapping": {
+      "T2M_MIN": "tmin_c",
+      "T2M_MAX": "tmax_c",
+      "RH2M": "relative_humidity_pct",
+      "WS2M": "wind_2m_m_s",
+      "PRECTOTCORR": "rain_mm",
+      "ALLSKY_SFC_SW_DWN": "shortwave_mj_m2_day"
+    },
+    "multipliers": {
+      "T2M_MIN": 1.0,
+      "T2M_MAX": 1.0,
+      "RH2M": 1.0,
+      "WS2M": 1.0,
+      "PRECTOTCORR": 1.0,
+      "ALLSKY_SFC_SW_DWN": 1.0
+    },
+    "rounding": null,
+    "missing_value_fill": null,
+    "rainfall_redistribution": null,
+    "radiation_adjustment": null,
+    "mean_temperature": "If needed, derive (tmin_c + tmax_c) / 2 in both formal and native executions."
+  },
+  "base_bundle": "fairy/physics/data/wofost/research/thionville_nasa2019_v1",
+  "base_weather_sha256": "513558ecad8fd8b267daac281de382c4f882564e896c87763abdc4eaa5d0ba3f",
+  "scope": "Loaded only by management_extensions. Original March-November forcing is unmodified. December is covered fully; January 1-7 is forecast padding for December 31. Does not extend the task deadline or certify operations after December 31.",
+  "raw_path": "nasa_power.original.json",
+  "raw_sha256": "a9b354725a8d7a8818bfc226735addd377e8606ac7d9e1503a59a22ad9e4ec12",
+  "raw_byte_count": 4606,
+  "weather_path": "weather.json",
+  "weather_sha256": "286b795177700d35b93808e7a06f6f543baa646ba968f8f8e76c033baa63866c",
+  "weather_byte_count": 8579
+}

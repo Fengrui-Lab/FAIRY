@@ -39,12 +39,9 @@ class SharedRobotApp(RobotOperations, App):
         Consumes 20 percentage points of this robot's shared battery and advances
         every farm by the round-trip walking time. Refused during charging or
         with less than 20 percent battery available for the full trip. Wet weather
-        produces a ground-wet warning. Species labels require an explicitly
-        supported diagnostic capability for the target field. Otherwise the
-        observation model reports generic noisy detections without species or
-        disease identity; inspect_pests and inspect_crop_health always use noisy
-        ground-inspection products when physics is active.
-        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
+        produces a ground-wet warning. Species identification depends on the target field's diagnostic
+        capabilities. Detections may be uncertain; read confidence where provided.
+        An unavailable diagnosis is not confirmed absence of a problem.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -66,14 +63,12 @@ class SharedRobotApp(RobotOperations, App):
     ) -> dict[str, Any]:
         """Inspect a local ridge range for pests using this shared ground robot.
 
-        The observation model produces noisy pest, disease and weed detections
-        when physics is active. A mission visits at most eight ridges, limited
-        by remaining battery. Every visited ridge is observed in sensor-sized
-        batches (four ridges per batch by default). Each ridge consumes
+        Detections have uncertainty. A mission visits at most eight ridges,
+        limited by remaining battery. Unvisited ridges remain uncovered. Each ridge consumes
         5 battery percentage points, leaving at least 10 percent for return.
         Advances all farms by round-trip walking time per covered ridge.
         Charging or starting battery below 15 percent refuses the inspection.
-        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
+        Unavailable diagnoses remain unknown.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -85,8 +80,8 @@ class SharedRobotApp(RobotOperations, App):
             Farm-qualified observations, covered and uncovered ridge IDs,
             shared remaining battery and wet-ground warning when applicable.
             Status partial means some requested ridges were not inspected.
-            Without physics, legacy pest/disease reads are used and weeds are
-            explicitly unknown; error reports a refused inspection.
+            Unavailable weed evidence is reported as unknown; error reports
+            a refused inspection.
         """
         farm = self.farm_environment.get_farm(farm_id)
         self.farm_environment.before_tool()
@@ -100,14 +95,12 @@ class SharedRobotApp(RobotOperations, App):
     ) -> dict[str, Any]:
         """Inspect pest/disease/weed presence and stand fraction in one target farm.
 
-        Physics-mode detections are noisy; the returned fields are the same
-        ground-inspection products as inspect_pests, labelled crop_health.
-        A mission visits at most eight ridges, reduced by remaining battery,
-        using actual sensor-sized observation batches (four ridges by default).
-        Each covered ridge consumes 5 battery percentage points, leaving at least
+        Detections have uncertainty. A mission visits at most eight ridges,
+        reduced by remaining battery. Each covered ridge consumes 5 battery percentage points, leaving at least
         10 percent for return. Advances time for every registered farm.
         Charging or starting battery below 15 percent refuses the inspection.
-        Native WOFOST maize reports stage and a noisy canopy/nutrient proxy, without biotic diagnoses.
+        Unavailable diagnoses remain unknown. Combine symptoms with soil and
+        weather evidence before deciding on treatment.
 
         Args:
             farm_id: Exact target farm ID from the available farm directory.
@@ -118,8 +111,7 @@ class SharedRobotApp(RobotOperations, App):
         Returns:
             Farm-qualified observations, covered/uncovered local ridge IDs,
             shared battery and optional ground-wet warning. Status partial means
-            incomplete coverage; error means refused. Legacy mode reads target
-            ridge pest/disease fields and reports weeds as unknown.
+            incomplete coverage; error means refused. Missing evidence is unknown.
         """
         farm = self.farm_environment.get_farm(farm_id)
         self.farm_environment.before_tool()
@@ -133,11 +125,9 @@ class SharedRobotApp(RobotOperations, App):
     ) -> dict[str, Any]:
         """Inspect emergence stand fraction in the specified farm's ridge range.
 
-        Physics mode returns visible current stand and noisy ground detections;
-        unemerged crops and harvested ground have zero visible stand. Legacy mode
-        estimates stand as 1 for planted ridges, else 0. A mission visits up to
-        eight ridges, limited by battery, with actual sensor-sized observation
-        batches (four ridges per batch by default).
+        Read current visible-stand estimates and the observation's source and
+        coverage. A mission visits up to eight ridges, limited by battery.
+        Unavailable stand evidence must not be treated as confirmed crop failure.
         Each covered ridge consumes 5 battery percentage points, leaving at least
         10 percent for return. Advances time for every registered farm.
         Charging or starting battery below 15 percent refuses the inspection.
@@ -166,7 +156,7 @@ class SharedRobotApp(RobotOperations, App):
 
         Returns:
             Device name, description, battery percentage, charging flag and
-            minutes until full according to the common simulation clock.
+            minutes until full according to the shared elapsed time.
         """
         self.farm_environment.before_tool()
         return self._check_status()
@@ -177,7 +167,7 @@ class SharedRobotApp(RobotOperations, App):
     def charge(self) -> dict[str, Any]:
         """Start charging this shared robot without selecting a farm.
 
-        Battery rises over 60 minutes of common simulation time. This call does
+        Battery rises over 60 minutes of elapsed time. This call does
         not wait or advance time. During charging the robot cannot inspect any
         registered farm. Repeated calls do not restart an active charge session.
 

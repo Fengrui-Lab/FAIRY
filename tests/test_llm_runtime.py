@@ -805,3 +805,141 @@ def test_retry_sleep_deadline_does_not_append_unsent_feedback(monkeypatch):
     assert len(agent.messages.messages) == 2
     assert agent.stop_reason == "timeout"
     assert clock["now"] == 101.0
+
+
+def _luna_response(*, call_ids=(), status="completed", reason=None, text=None):
+    from openai.types.responses import Response
+
+    output = [{"type": "reasoning", "id": "rs_" + (call_ids[0] if call_ids else "text"),
+               "summary": [], "encrypted_content": "opaque-test-reasoning"}]
+    if text is not None:
+        output.append({"type": "message", "id": "msg_test", "status": "completed",
+                       "role": "assistant", "content": [
+                           {"type": "output_text", "text": text, "annotations": []}]})
+    output.extend({"type": "function_call", "id": "fc_" + call_id,
+                   "call_id": call_id, "name": "get_time", "arguments": "{}",
+                   "status": "completed"} for call_id in call_ids)
+    return Response.model_validate({
+        "id": "resp_test", "created_at": 0, "object": "response",
+        "model": "gpt-6-luna", "status": status, "output": output,
+        "incomplete_details": {"reason": reason} if reason else None,
+        "parallel_tool_calls": False, "tool_choice": "auto", "tools": [],
+        "usage": {"input_tokens": 11, "output_tokens": 7, "total_tokens": 18,
+                  "input_tokens_details": {"cached_tokens": 4},
+                  "output_tokens_details": {"reasoning_tokens": 5}},
+    })
+
+
+def _luna_client(monkeypatch, responses, **config):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    client = BaseLLM.llm_builder({
+        "provider": "openai", "model": "gpt-6-luna",
+        "max_output_tokens": 128, "parallel_tool_calls": False,
+        **config,
+    })
+    requests = []
+    remaining = iter(responses)
+
+    def create(**kwargs):
+        requests.append(kwargs)
+        return next(remaining)
+
+    monkeypatch.setattr(client.api_client.responses, "create", create)
+    monkeypatch.setattr(client.api_client.chat.completions, "create",
+                        lambda **kwargs: pytest.fail("Luna must use Responses"))
+    return client, requests
+
+
+def test_openai_luna_reasoning_tool_round_trip(monkeypatch):
+    from fairy.agents.agent.base_agent import BaseAgent
+
+    client, requests = _luna_client(monkeypatch, [
+        _luna_response(call_ids=("call_a",)), _luna_response(text="done"),
+    ])
+    agent = BaseAgent("luna", client, system_message="Use tools")
+    tools = [{"type": "function", "function": {
+        "name": "get_time", "description": "Read scene time",
+        "parameters": {"type": "object", "properties": {}},
+    }}]
+    agent.messages.user_input("Read scene time")
+    message = agent.chat_completion(agent.messages.context(), tools)
+    assert message.tool_calls[0].id == "call_a"
+    agent.messages.tool_call_response("12:00", message.tool_calls[0], 0, None)
+    result = agent.chat_completion(agent.messages.context(), tools)
+    assert result.content == "done"
+    assert requests[0]["model"] == "gpt-6-luna"
+    assert requests[0]["reasoning"] == {"effort": "medium"}
+    assert requests[0]["max_output_tokens"] == 128
+    assert requests[0]["parallel_tool_calls"] is False
+    assert requests[0]["tools"] == [{"type": "function", **tools[0]["function"], "strict": False}]
+    assert requests[0]["store"] is False
+    assert requests[0]["include"] == ["reasoning.encrypted_content"]
+    assert "temperature" not in requests[0]
+    assert requests[1]["input"][2]["type"] == "reasoning"
+    assert requests[1]["input"][2]["encrypted_content"] == "opaque-test-reasoning"
+    assert requests[1]["input"][3]["call_id"] == "call_a"
+    assert requests[1]["input"][4] == {
+        "type": "function_call_output", "call_id": "call_a", "output": "12:00",
+    }
+    end = next(event for event in agent.runtime_events if event["event_type"] == "llm_call_end")
+    assert end["usage"]["completion_tokens_details"]["reasoning_tokens"] == 5
+    assert agent.messages.runtime_metrics[0]["tokens"] == {
+        "prompt_tokens": 11, "cached_tokens": 4, "completion_tokens": 7, "total_tokens": 18,
+    }
+    assert agent.llm_config()["api_mode"] == "responses"
+    assert agent.llm_config()["reasoning_effort"] == "medium"
+    assert agent.llm_config()["reasoning_history_policy"] == "encrypted_tool_context"
+    assert "opaque-test-reasoning" not in json.dumps(agent.runtime_events)
+    assert "opaque-test-reasoning" not in json.dumps(agent._jsonable(agent.messages.context()))
+
+
+@pytest.mark.parametrize(("status", "reason", "expected"), [
+    ("incomplete", "max_output_tokens", "output_truncated"),
+    ("incomplete", "content_filter", "response_incomplete"),
+    ("failed", None, "response_failed"),
+])
+def test_luna_rejects_partial_tools_and_accounts_usage(monkeypatch, status, reason, expected):
+    from fairy.agents.agent.base_agent import BaseAgent
+
+    client, requests = _luna_client(monkeypatch, [
+        _luna_response(call_ids=("bad",), status=status, reason=reason),
+        _luna_response(text="retry succeeded"),
+    ])
+    agent = BaseAgent("luna", client, system_message="Use tools")
+    with pytest.raises(RetryableLLMResponseError, match=expected):
+        agent.chat_completion(agent.messages.context())
+    assert len(agent.messages.context()) == 1
+    assert not client._response_turns
+    assert agent.messages.runtime_metrics[0]["tokens"]["completion_tokens"] == 7
+    assert agent.messages.runtime_metrics[0]["accepted"] is False
+    agent.chat_completion(agent.messages.context())
+    assert requests[0] == requests[1]
+
+
+def test_luna_shared_client_and_single_tool_policy(monkeypatch):
+    from fairy.agents.agent.base_agent import BaseAgent
+
+    client, requests = _luna_client(monkeypatch, [
+        _luna_response(call_ids=("a1", "a2")),
+        _luna_response(call_ids=("b1",)), _luna_response(text="done"),
+    ], reasoning_effort="high")
+    first = BaseAgent("first", client, system_message="first agent")
+    second = BaseAgent("second", client, system_message="second agent")
+    message = first.chat_completion(first.messages.context())
+    second.chat_completion(second.messages.context())
+    first.messages.tool_call_response("result", message.tool_calls[0], 0, None)
+    first.chat_completion(first.messages.context())
+    calls = [item["call_id"] for item in requests[2]["input"] if item.get("type") == "function_call"]
+    assert calls == ["a1"]
+    assert requests[2]["reasoning"] == {"effort": "high"}
+    assert requests[2]["input"][1]["id"] == "rs_a1"
+
+
+@pytest.mark.parametrize("model", ["gpt-4o-mini", "gpt-5-mini"])
+def test_luna_migration_preserves_other_openai_routes(monkeypatch, model):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    client = BaseLLM.llm_builder({"provider": "openai", "model": model})
+    requests = _capture_requests(monkeypatch, client)
+    client.chat_completion([{"role": "user", "content": "done"}])
+    assert requests[0]["model"] == model
+    assert "reasoning" not in requests[0]

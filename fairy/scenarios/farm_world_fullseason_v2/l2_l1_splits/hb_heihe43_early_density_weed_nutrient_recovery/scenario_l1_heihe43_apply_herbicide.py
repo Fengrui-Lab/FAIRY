@@ -57,8 +57,8 @@ class ScenarioL1HBHeihe43ApplyTargetedHerbicide(Scenario):
                 "3. 读取44-55垄状态，确认目标区仍有早期草害竞争。\n"
                 "4. 读取24-35垄参照区状态，确认不要把除草范围扩展到参照区。\n"
                 "5. 查看库存和喷雾设备状态，确认药剂和拖拉机/喷雾系统可用。\n"
-                "6. 装载29.4L除草剂。\n"
-                "7. 只对44-55垄定向施药；按44-53垄和54-55垄两段完成，剂量为2.4L/垄。\n"
+                "6. 装载97.92L除草剂（含2%余量）。\n"
+                "7. 只对44-55垄定向施药；按44-53垄和54-55垄两段完成，剂量为8.0L/垄。\n"
                 "8. 完成后复查44-55垄，不要追加处理健康参照区或营养恢复区。\n"
                 "9. 向我汇报喷施范围、药剂用量和对早期草害竞争损失的控制。"
             )
@@ -90,7 +90,7 @@ class ScenarioL1HBHeihe43ApplyTargetedHerbicide(Scenario):
             o_status = tractor.get_status().oracle().with_id(
                 "o_confirm_sprayer_status"
             ).depends_on(o_inventory, delay_seconds=1)
-            o_load = tractor.load_pesticide(29.4).oracle().with_id(
+            o_load = tractor.load_pesticide(97.92).oracle().with_id(
                 "o_load_herbicide_volume"
             ).depends_on(o_status, delay_seconds=1)
             spray_events, o_after_spray = apply_heihe43_herbicide_blocks(

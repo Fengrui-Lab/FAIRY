@@ -1,0 +1,7951 @@
+{
+  "number": 4,
+  "module": "fairy.scenarios.wofost.scenario_two_farm_wofost_staggered_harvest_rain_window_V2",
+  "class_name": "ScenarioTwoFarmWofostStaggeredHarvestRainWindow_V2",
+  "title": "错期双农场：共享收割机与晚雨前有限时间",
+  "actions": [
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_early_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_early_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_late_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_late_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "early挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "early整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "early"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "early起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "early",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_early",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "late挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "late整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "late"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "late起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "late",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_late",
+      "expected_error": null
+    },
+    {
+      "at": "2019-04-28T07:00:00",
+      "label": "早场播期与实际播床检查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "早场播期与实际播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "早场播期与实际播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "早场播期与实际播床检查_early_soil",
+      "round": "早场播期与实际播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "早场播期与实际播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "早场播期与实际播床检查_early_rows",
+      "round": "早场播期与实际播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 0,
+        "end_ridge": 2,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子3",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种3",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 3,
+        "end_ridge": 5,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子6",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种6",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 6,
+        "end_ridge": 8,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子9",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种9",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 9,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 12,
+        "end_ridge": 14,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子15",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种15",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 15,
+        "end_ridge": 17,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子18",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种18",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 18,
+        "end_ridge": 20,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子21",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种21",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 21,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 24,
+        "end_ridge": 26,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子27",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种27",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 27,
+        "end_ridge": 29,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early装本趟种子30",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 198000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮播种30",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 30,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_early",
+      "expected_error": null
+    },
+    {
+      "at": "2019-05-11T07:00:00",
+      "label": "晚场独立播期与播床检查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "晚场独立播期与播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "晚场独立播期与播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "晚场独立播期与播床检查_late_soil",
+      "round": "晚场独立播期与播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "晚场独立播期与播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "晚场独立播期与播床检查_late_rows",
+      "round": "晚场独立播期与播床检查",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 0,
+        "end_ridge": 2,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子3",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种3",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 3,
+        "end_ridge": 5,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子6",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种6",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 6,
+        "end_ridge": 8,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子9",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种9",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 9,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 12,
+        "end_ridge": 14,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子15",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种15",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 15,
+        "end_ridge": 17,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子18",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种18",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 18,
+        "end_ridge": 20,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子21",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种21",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 21,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 24,
+        "end_ridge": 26,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子27",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种27",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 27,
+        "end_ridge": 29,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late装本趟种子30",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 198000
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮播种30",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 30,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_late",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-01T07:00:00",
+      "label": "两播期阶段差异与长垄巡查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_early_soil",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_early_rows",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_late_soil",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_late_rows",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "early无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "early地面前1垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_early_ground",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "late无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "label": "late地面前1垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": null,
+      "checkpoint": "两播期阶段差异与长垄巡查_late_ground",
+      "round": "两播期阶段差异与长垄巡查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-20T07:00:00",
+      "label": "两场关键期正常整轮水2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-07-20_early_soil",
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-07-20_early_rows",
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-07-20_late_soil",
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-07-20_late_rows",
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early整轮补水30mm",
+      "tool": "early_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late整轮补水30mm",
+      "tool": "late_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-21T07:00:00",
+      "label": "两场灌后复查2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-07-20_early_soil",
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-07-20_early_rows",
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-07-20_late_soil",
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-07-20_late_rows",
+      "round": "两场灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-08T07:00:00",
+      "label": "两场关键期正常整轮水2019-08-08",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-08-08_early_soil",
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-08-08_early_rows",
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-08-08_late_soil",
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场关键期正常整轮水2019-08-08_late_rows",
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early整轮补水30mm",
+      "tool": "early_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late整轮补水30mm",
+      "tool": "late_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场关键期正常整轮水2019-08-08",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-09T07:00:00",
+      "label": "两场灌后复查2019-08-08",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-08-08_early_soil",
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-08-08_early_rows",
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-08-08_late_soil",
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场灌后复查2019-08-08_late_rows",
+      "round": "两场灌后复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-18T07:00:00",
+      "label": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-18_early_soil",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-18_early_rows",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-18_late_soil",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-18_late_rows",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-18",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-21T07:00:00",
+      "label": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-21_early_soil",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-21_early_rows",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-21_late_soil",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "抢收前成熟粮水与雨窗预查2019-09-21_late_rows",
+      "round": "抢收前成熟粮水与雨窗预查2019-09-21",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-22T07:00:00",
+      "label": "唯一雨前晴日共享割台优先级",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "唯一雨前晴日共享割台优先级_early_soil",
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "唯一雨前晴日共享割台优先级_early_rows",
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "唯一雨前晴日共享割台优先级_late_soil",
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "唯一雨前晴日共享割台优先级_late_rows",
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_00_00"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_00_00",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_00_00"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割1",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 1,
+        "end_ridge": 1
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源1",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_01_01"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥1",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_01_01",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库1",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_01_01"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割2",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 2,
+        "end_ridge": 2
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源2",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_02_02"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥2",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_02_02",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库2",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_02_02"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割3",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 3,
+        "end_ridge": 3
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源3",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_03_03"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥3",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_03_03",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库3",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_03_03"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 4,
+        "end_ridge": 4
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源4",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_04_04"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥4",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_04_04",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库4",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_04_04"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割5",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 5,
+        "end_ridge": 5
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源5",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_05_05"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥5",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_05_05",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库5",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_05_05"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割6",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 6,
+        "end_ridge": 6
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源6",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_06_06"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥6",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_06_06",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库6",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_06_06"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割7",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 7,
+        "end_ridge": 7
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源7",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_07_07"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥7",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_07_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库7",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_07_07"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 8,
+        "end_ridge": 8
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_08_08"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_08_08",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_08_08"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割9",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 9,
+        "end_ridge": 9
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源9",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_09_09"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥9",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_09_09",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库9",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_09_09"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割10",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 10,
+        "end_ridge": 10
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源10",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_10_10"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥10",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_10_10",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库10",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_10_10"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割11",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 11,
+        "end_ridge": 11
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源11",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_11_11"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥11",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_11_11",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库11",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_11_11"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 12,
+        "end_ridge": 12
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源12",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_12_12"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥12",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_12_12",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库12",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_12_12"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割13",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 13,
+        "end_ridge": 13
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源13",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_13_13"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥13",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_13_13",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库13",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_13_13"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割14",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 14,
+        "end_ridge": 14
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源14",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_14_14"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥14",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_14_14",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库14",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_14_14"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割15",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 15,
+        "end_ridge": 15
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源15",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_15_15"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥15",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_15_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库15",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_15_15"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 16,
+        "end_ridge": 16
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_16_16"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_16_16",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_16_16"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割17",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 17,
+        "end_ridge": 17
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源17",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_17_17"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥17",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_17_17",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库17",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_17_17"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割18",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 18,
+        "end_ridge": 18
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源18",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_18_18"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥18",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_18_18",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库18",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_18_18"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割19",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 19,
+        "end_ridge": 19
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源19",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_19_19"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥19",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_19_19",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库19",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_19_19"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 20,
+        "end_ridge": 20
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源20",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_20_20"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥20",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_20_20",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库20",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_20_20"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割21",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 21,
+        "end_ridge": 21
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源21",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_21_21"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥21",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_21_21",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库21",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_21_21"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割22",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 22,
+        "end_ridge": 22
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源22",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_22_22"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥22",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_22_22",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库22",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_22_22"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割23",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 23,
+        "end_ridge": 23
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源23",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_23_23"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥23",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_23_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库23",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_23_23"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 24,
+        "end_ridge": 24
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_24_24"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_24_24",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_24_24"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割25",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 25,
+        "end_ridge": 25
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源25",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_25_25"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥25",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_25_25",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库25",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_25_25"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "错误优先湿田挂割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "label": "错误先收晚场的真实粮水拒绝",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": "Grain moisture too high"
+    },
+    {
+      "label": "等待晚场期间卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "唯一雨前晴日共享割台优先级",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-27T07:00:00",
+      "label": "雨后粮水通行性重新检查2019-09-27",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-09-27_early_soil",
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-09-27_early_rows",
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-09-27_late_soil",
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-09-27_late_rows",
+      "round": "雨后粮水通行性重新检查2019-09-27",
+      "expected_error": null
+    },
+    {
+      "at": "2019-10-01T07:00:00",
+      "label": "雨后粮水通行性重新检查2019-10-01",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-10-01_early_soil",
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-10-01_early_rows",
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-10-01_late_soil",
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后粮水通行性重新检查2019-10-01_late_rows",
+      "round": "雨后粮水通行性重新检查2019-10-01",
+      "expected_error": null
+    },
+    {
+      "at": "2019-10-04T07:00:00",
+      "label": "雨后共同续收窗口",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early根区水分",
+      "tool": "early_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后共同续收窗口_early_soil",
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early冠层初筛",
+      "tool": "early_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early阶段粮水与公开状态",
+      "tool": "early_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后共同续收窗口_early_rows",
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late根区水分",
+      "tool": "late_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "雨后共同续收窗口_late_soil",
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late冠层初筛",
+      "tool": "late_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late阶段粮水与公开状态",
+      "tool": "late_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "雨后共同续收窗口_late_rows",
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割26",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 26,
+        "end_ridge": 26
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源26",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_26_26"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥26",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_26_26",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库26",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_26_26"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割27",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 27,
+        "end_ridge": 27
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源27",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_27_27"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥27",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_27_27",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库27",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_27_27"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 28,
+        "end_ridge": 28
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源28",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_28_28"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥28",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_28_28",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库28",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_28_28"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割29",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 29,
+        "end_ridge": 29
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源29",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_29_29"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥29",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_29_29",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库29",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_29_29"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割30",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 30,
+        "end_ridge": 30
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源30",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_30_30"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥30",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_30_30",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库30",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_30_30"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割31",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 31,
+        "end_ridge": 31
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源31",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_31_31"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥31",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_31_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库31",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_31_31"
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_00_00"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_00_00",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_00_00"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割1",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 1,
+        "end_ridge": 1
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源1",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_01_01"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥1",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_01_01",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库1",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_01_01"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割2",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 2,
+        "end_ridge": 2
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源2",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_02_02"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥2",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_02_02",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库2",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_02_02"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割3",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 3,
+        "end_ridge": 3
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源3",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_03_03"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥3",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_03_03",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库3",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_03_03"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 4,
+        "end_ridge": 4
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源4",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_04_04"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥4",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_04_04",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库4",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_04_04"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割5",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 5,
+        "end_ridge": 5
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源5",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_05_05"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥5",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_05_05",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库5",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_05_05"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割6",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 6,
+        "end_ridge": 6
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源6",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_06_06"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥6",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_06_06",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库6",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_06_06"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割7",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 7,
+        "end_ridge": 7
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源7",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_07_07"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥7",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_07_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库7",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_07_07"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 8,
+        "end_ridge": 8
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_08_08"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_08_08",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_08_08"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割9",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 9,
+        "end_ridge": 9
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源9",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_09_09"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥9",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_09_09",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库9",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_09_09"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割10",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 10,
+        "end_ridge": 10
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源10",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_10_10"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥10",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_10_10",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库10",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_10_10"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割11",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 11,
+        "end_ridge": 11
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源11",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_11_11"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥11",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_11_11",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库11",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_11_11"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 12,
+        "end_ridge": 12
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源12",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_12_12"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥12",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_12_12",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库12",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_12_12"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割13",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 13,
+        "end_ridge": 13
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源13",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_13_13"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥13",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_13_13",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库13",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_13_13"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割14",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 14,
+        "end_ridge": 14
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源14",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_14_14"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥14",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_14_14",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库14",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_14_14"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割15",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 15,
+        "end_ridge": 15
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源15",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_15_15"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥15",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_15_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库15",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_15_15"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 16,
+        "end_ridge": 16
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_16_16"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_16_16",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_16_16"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割17",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 17,
+        "end_ridge": 17
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源17",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_17_17"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥17",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_17_17",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库17",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_17_17"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割18",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 18,
+        "end_ridge": 18
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源18",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_18_18"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥18",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_18_18",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库18",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_18_18"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割19",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 19,
+        "end_ridge": 19
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源19",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_19_19"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥19",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_19_19",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库19",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_19_19"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 20,
+        "end_ridge": 20
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源20",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_20_20"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥20",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_20_20",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库20",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_20_20"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割21",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 21,
+        "end_ridge": 21
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源21",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_21_21"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥21",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_21_21",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库21",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_21_21"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割22",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 22,
+        "end_ridge": 22
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源22",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_22_22"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥22",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_22_22",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库22",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_22_22"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割23",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 23,
+        "end_ridge": 23
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源23",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_23_23"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥23",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_23_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库23",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_23_23"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 24,
+        "end_ridge": 24
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_24_24"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_24_24",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_24_24"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割25",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 25,
+        "end_ridge": 25
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源25",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_25_25"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥25",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_25_25",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库25",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_25_25"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割26",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 26,
+        "end_ridge": 26
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源26",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_26_26"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥26",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_26_26",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库26",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_26_26"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割27",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 27,
+        "end_ridge": 27
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源27",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_27_27"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥27",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_27_27",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库27",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_27_27"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 28,
+        "end_ridge": 28
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源28",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_28_28"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥28",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_28_28",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库28",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_28_28"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割29",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 29,
+        "end_ridge": 29
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源29",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_29_29"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥29",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_29_29",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库29",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_29_29"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割30",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 30,
+        "end_ridge": 30
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源30",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_30_30"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥30",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_30_30",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库30",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_30_30"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early同轮收割31",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "early",
+        "start_ridge": 31,
+        "end_ridge": 31
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early卸清并保留来源31",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "early_31_31"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early按来源必要干燥31",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "early_31_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early安全入库31",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "early_31_31"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_00_00"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_00_00",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_00_00"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割1",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 1,
+        "end_ridge": 1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源1",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_01_01"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥1",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_01_01",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库1",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_01_01"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割2",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 2,
+        "end_ridge": 2
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源2",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_02_02"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥2",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_02_02",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库2",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_02_02"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割3",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 3,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源3",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_03_03"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥3",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_03_03",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库3",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_03_03"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 4,
+        "end_ridge": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源4",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_04_04"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥4",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_04_04",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库4",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_04_04"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割5",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 5,
+        "end_ridge": 5
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源5",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_05_05"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥5",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_05_05",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库5",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_05_05"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割6",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 6,
+        "end_ridge": 6
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源6",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_06_06"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥6",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_06_06",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库6",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_06_06"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割7",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 7,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源7",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_07_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥7",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_07_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库7",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_07_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 8,
+        "end_ridge": 8
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_08_08"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_08_08",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_08_08"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割9",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 9,
+        "end_ridge": 9
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源9",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_09_09"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥9",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_09_09",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库9",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_09_09"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割10",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 10,
+        "end_ridge": 10
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源10",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_10_10"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥10",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_10_10",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库10",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_10_10"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割11",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 11,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源11",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_11_11"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥11",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_11_11",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库11",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_11_11"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 12,
+        "end_ridge": 12
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源12",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_12_12"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥12",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_12_12",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库12",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_12_12"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割13",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 13,
+        "end_ridge": 13
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源13",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_13_13"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥13",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_13_13",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库13",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_13_13"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割14",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 14,
+        "end_ridge": 14
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源14",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_14_14"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥14",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_14_14",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库14",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_14_14"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割15",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 15,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源15",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_15_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥15",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_15_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库15",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_15_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 16,
+        "end_ridge": 16
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_16_16"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_16_16",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_16_16"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割17",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 17,
+        "end_ridge": 17
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源17",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_17_17"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥17",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_17_17",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库17",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_17_17"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割18",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 18,
+        "end_ridge": 18
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源18",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_18_18"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥18",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_18_18",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库18",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_18_18"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割19",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 19,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源19",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_19_19"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥19",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_19_19",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库19",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_19_19"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 20,
+        "end_ridge": 20
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源20",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_20_20"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥20",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_20_20",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库20",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_20_20"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割21",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 21,
+        "end_ridge": 21
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源21",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_21_21"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥21",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_21_21",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库21",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_21_21"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割22",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 22,
+        "end_ridge": 22
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源22",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_22_22"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥22",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_22_22",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库22",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_22_22"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割23",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 23,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源23",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_23_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥23",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_23_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库23",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_23_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 24,
+        "end_ridge": 24
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_24_24"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_24_24",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_24_24"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割25",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 25,
+        "end_ridge": 25
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源25",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_25_25"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥25",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_25_25",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库25",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_25_25"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割26",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 26,
+        "end_ridge": 26
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源26",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_26_26"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥26",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_26_26",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库26",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_26_26"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割27",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 27,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源27",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_27_27"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥27",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_27_27",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库27",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_27_27"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 28,
+        "end_ridge": 28
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源28",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_28_28"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥28",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_28_28",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库28",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_28_28"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割29",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 29,
+        "end_ridge": 29
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源29",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_29_29"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥29",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_29_29",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库29",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_29_29"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割30",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 30,
+        "end_ridge": 30
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源30",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_30_30"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥30",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_30_30",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库30",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_30_30"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late同轮收割31",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "late",
+        "start_ridge": 31,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late卸清并保留来源31",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "late_31_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late按来源必要干燥31",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "late_31_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late安全入库31",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "late_31_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "共有仓库最后核验",
+      "tool": "Warehouse__get_inventory",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "粮食来源与安全批次",
+      "tool": "Warehouse__get_grain_batches",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "early全场交付",
+      "tool": "early_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    },
+    {
+      "label": "late全场交付",
+      "tool": "late_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "雨后共同续收窗口",
+      "expected_error": null
+    }
+  ]
+}

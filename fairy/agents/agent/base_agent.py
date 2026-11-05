@@ -41,6 +41,8 @@ class BaseAgent:
         self.workflow = Workflow()
         self.runtime_events: list[dict[str, Any]] = []
         self.runtime_event_sink = None
+        self.reasoning_events: list[dict[str, Any]] = []
+        self.reasoning_event_sink = None
         self.run_started_at_wall: float | None = None
         self.run_wall_timeout_seconds: float | None = None
 
@@ -82,8 +84,10 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            "api_mode": getattr(self.llm, "api_mode", None),
+            "reasoning_effort": getattr(self.llm, "reasoning_effort", None),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
-            "reasoning_history_policy": "exclude",
+            "reasoning_history_policy": getattr(self.llm, "reasoning_history_policy", "preserve_deepseek" if getattr(self.llm, "provider", None) == "deepseek" and getattr(self.llm, "enable_thinking", None) is True else "exclude"),
         }
 
     def chat_completion(self, messages, tools=None):
@@ -104,7 +108,7 @@ class BaseAgent:
             max_output_tokens=getattr(self.llm, "max_output_tokens", None),
             parallel_tool_calls=getattr(self.llm, "parallel_tool_calls", None),
             enable_thinking_override=getattr(self.llm, "enable_thinking", None),
-            reasoning_history_policy="exclude",
+            reasoning_history_policy=self.llm_config()["reasoning_history_policy"],
             llm_config=self.llm_config(),
             message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
@@ -121,6 +125,7 @@ class BaseAgent:
                 wall_time_seconds=elapsed_time,
                 error_type=type(exc).__name__,
                 error_message=str(exc),
+                status_code=getattr(exc, "status_code", None) or getattr(getattr(exc, "response", None), "status_code", None),
             )
             raise
         elapsed_time = round(time.perf_counter() - start_time, 6)
@@ -128,7 +133,10 @@ class BaseAgent:
         raw_message = getattr(choice, "message", None)
         raw_tool_calls = list(getattr(raw_message, "tool_calls", None) or [])
         finish_reason = getattr(choice, "finish_reason", None)
-        rejection_reason = self._response_rejection_reason(raw_message, finish_reason)
+        rejection_reason = (
+            getattr(response, "response_rejection_reason", None)
+            or self._response_rejection_reason(raw_message, finish_reason)
+        )
         # Rejected replies are logged/accounted for but never become history
         # or executable tool calls, including partially generated tool calls.
         message = (
@@ -175,8 +183,11 @@ class BaseAgent:
         raw_tool_call_details = self._tool_call_details(getattr(raw_message, "tool_calls", None) or [])
         usage = getattr(response, "usage", None)
         prompt_details = getattr(usage, "prompt_tokens_details", None)
-        self.record_event(
+        event = self.record_event(
             "llm_call_end",
+            model=getattr(self.llm,"model",None),
+            provider=getattr(self.llm,"provider",None),
+            model_version=getattr(response,"model",None),
             status="rejected" if rejection_reason else "ok",
             accepted=rejection_reason is None,
             rejection_reason=rejection_reason,
@@ -199,6 +210,28 @@ class BaseAgent:
                 "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
             },
         )
+
+        details = getattr(usage, "completion_tokens_details", None)
+        reasoning_tokens = getattr(details, "reasoning_tokens", None)
+        row = {
+            "event_index": event["event_index"], "event_type": "llm_reasoning",
+            "agent": self.name, "wall_timestamp": event["wall_timestamp"],
+            "response_id": getattr(response, "id", None),
+            "model": getattr(response, "model", None),
+            "finish_reason": finish_reason, "accepted": rejection_reason is None,
+            "reasoning": getattr(raw_message, "reasoning", None),
+            "reasoning_content": getattr(raw_message, "reasoning_content", None),
+            "reasoning_tokens": reasoning_tokens,
+            "completion_tokens": getattr(usage, "completion_tokens", None),
+            "reasoning_tokens_included_in_completion_tokens": True,
+        }
+        self.reasoning_events.append(row)
+        if self.reasoning_event_sink is not None:
+            try:
+                self.reasoning_event_sink(dict(row))
+            except Exception as exc:
+                self.reasoning_event_sink = None
+                self.log(f"WARNING: reasoning sink disabled: {type(exc).__name__}")
 
     def _enforce_tool_call_policy(self, message: Any, tool_calls: list[Any]) -> Any:
         parallel_allowed = bool(getattr(self.llm, "parallel_tool_calls", True))
@@ -252,6 +285,8 @@ class BaseAgent:
             "tool_calls",
             "function_call",
         }
+        if self.llm_config()["reasoning_history_policy"] == "preserve_deepseek":
+            allowed_keys.add("reasoning_content")
         compatible_messages: list[dict[str, Any]] = []
         for message in messages:
             jsonable_message = self._jsonable(message)

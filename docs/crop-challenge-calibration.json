@@ -1,0 +1,812 @@
+[
+  {
+    "source": "scenario_maize_l3_zonal_water_priority",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit",
+      "uniform"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 1225.2856428601453,
+    "tasks": {
+      "scenario_maize_l1_targeted_irrigation": {
+        "status": "calibrated",
+        "note": "Action contract; not an agronomic yield claim",
+        "gates": [],
+        "window_budgets": {
+          "fertilizer_used": 0.0,
+          "water_used": 5.2078125
+        }
+      },
+      "scenario_maize_l2_zonal_water_priority": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biomass_dry_kg",
+            "threshold": 2317.1222002171444
+          }
+        ],
+        "window_budgets": {
+          "fertilizer_used": 0.0,
+          "water_used": 110.00000000000001
+        }
+      },
+      "scenario_maize_l3_zonal_water_priority": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biological_dry_kg",
+            "threshold": 862.9459307821048
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 24.201672195530488,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "uniform",
+        "value": 500.6062187040642,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "wrong_zone",
+        "value": 959.4267908252655,
+        "errors": [
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 9, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.350 already >= 0.30'}",
+            "step": 64
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.338 already >= 0.30'}",
+            "step": 83
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.329 already >= 0.30'}",
+            "step": 90
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.319 already >= 0.30'}",
+            "step": 102
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.306 already >= 0.30'}",
+            "step": 109
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 9, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.312 already >= 0.30'}",
+            "step": 149
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_maize_l3_zonal_nitrogen_recovery",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit",
+      "uniform",
+      "wrong_zone"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 997.0860058076362,
+    "tasks": {
+      "scenario_maize_l1_targeted_fertilization": {
+        "status": "calibrated",
+        "note": "Action contract; not an agronomic yield claim",
+        "gates": [],
+        "window_budgets": {
+          "fertilizer_used": 33.33,
+          "water_used": 0.0
+        }
+      },
+      "scenario_maize_l2_zonal_nitrogen_recovery": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biomass_dry_kg",
+            "threshold": 3593.0537418432914
+          }
+        ],
+        "window_budgets": {
+          "fertilizer_used": 264.0,
+          "water_used": 0.0
+        }
+      },
+      "scenario_maize_l3_zonal_nitrogen_recovery": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biological_dry_kg",
+            "threshold": 956.0622923405397
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 378.75489724256516,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "uniform",
+        "value": 915.0385788734432,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "wrong_zone",
+        "value": 378.75489724256516,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_maize_l3_compound_water_n_limit",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit",
+      "water_only",
+      "nitrogen_only",
+      "uniform"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 1915.3342261251964,
+    "tasks": {
+      "scenario_maize_l2_compound_water_n_limit": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biomass_dry_kg",
+            "threshold": 5843.955948287628
+          }
+        ],
+        "window_budgets": {
+          "fertilizer_used": 264.0,
+          "water_used": 110.00000000000001
+        }
+      },
+      "scenario_maize_l3_compound_water_n_limit": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biological_dry_kg",
+            "threshold": 1686.8450605068767
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 73.39626586685378,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "water_only",
+        "value": 1458.355894888557,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "nitrogen_only",
+        "value": 168.14406286092128,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "uniform",
+        "value": 1244.3426870434237,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_maize_l3_staggered_water_priority",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit"
+    ],
+    "interpretation": "Omission contrast only; allocation priority remains unverified",
+    "reference": 4606.501939322972,
+    "tasks": {
+      "scenario_maize_l2_staggered_water_priority": {
+        "status": "experimental",
+        "note": "Allocation priority needs a feasible uniform or wrong-zone contrast",
+        "gates": [],
+        "window_budgets": {
+          "fertilizer_used": 0.0,
+          "water_used": 95.56250000000001
+        }
+      },
+      "scenario_maize_l3_staggered_water_priority": {
+        "status": "experimental",
+        "note": "Allocation priority needs a feasible uniform or wrong-zone contrast",
+        "gates": [],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 1430.9492392148989,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "uniform",
+        "value": 3126.5692531625937,
+        "errors": [
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 63, 'hours': 1.03125}: {'error': 'Ridge 22 soil VWC 0.308 already >= 0.30'}",
+            "step": 79
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 63, 'hours': 1.03125}: {'error': 'Ridge 44 soil VWC 0.324 already >= 0.30'}",
+            "step": 86
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 63, 'hours': 1.03125}: {'error': 'Ridge 44 soil VWC 0.310 already >= 0.30'}",
+            "step": 93
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "wrong_zone",
+        "value": 3685.774940702432,
+        "errors": [
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.395 already >= 0.30'}",
+            "step": 79
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 10, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.360 already >= 0.30'}",
+            "step": 86
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 10, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.352 already >= 0.30'}",
+            "step": 93
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 9, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.352 already >= 0.30'}",
+            "step": 150
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 44, 'end': 54, 'hours': 6.0}: {'error': 'Ridge 44 soil VWC 0.303 already >= 0.30'}",
+            "step": 169
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 10, 'hours': 6.0}: {'error': 'Ridge 0 soil VWC 0.310 already >= 0.30'}",
+            "step": 183
+          },
+          {
+            "error": "FieldOpsApp.irrigate {'start': 0, 'end': 9, 'hours': 2.0}: {'error': 'Ridge 0 soil VWC 0.352 already >= 0.30'}",
+            "step": 197
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_maize_l3_rain_aware_irrigation",
+    "metric": "water_used",
+    "valid_controls": [
+      "omit",
+      "immediate"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 160.3125,
+    "tasks": {
+      "scenario_maize_l2_rain_aware_irrigation": {
+        "status": "experimental",
+        "note": "Reference does not separate from the strongest matched control",
+        "gates": [],
+        "window_budgets": {
+          "fertilizer_used": 0.0,
+          "water_used": 115.50000000000001
+        }
+      },
+      "scenario_maize_l3_rain_aware_irrigation": {
+        "status": "experimental",
+        "note": "Water saving with yield preservation not demonstrated",
+        "gates": [],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 0.0,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "immediate",
+        "value": 180.3125,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_maize_l3_rainy_harvest_window",
+    "metric": "stored_kg_at_14pct",
+    "valid_controls": [
+      "miss_window"
+    ],
+    "interpretation": "Delivery-window contrast; optimal harvest timing remains unverified",
+    "reference": 3251.36,
+    "tasks": {
+      "scenario_maize_l2_rainy_harvest_window": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "stored_kg_at_14pct",
+            "threshold": 1625.68
+          }
+        ],
+        "window_budgets": {
+          "fertilizer_used": 0.0,
+          "water_used": 0.0
+        }
+      },
+      "scenario_maize_l3_rainy_harvest_window": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "stored_kg_at_14pct",
+            "threshold": 1625.68
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "miss_window",
+        "value": 0.0,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_rice_l3_zonal_water_n_allocation",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit",
+      "water_only",
+      "nitrogen_only",
+      "wrong_zone"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 535.9745921321047,
+    "tasks": {
+      "scenario_rice_l2_zonal_water_n_allocation": {
+        "status": "experimental",
+        "note": "Juvenile nitrogen observability gate pending",
+        "gates": [],
+        "window_budgets": {
+          "energy_used_kwh": 0.0,
+          "fertilizer_used": 0.0,
+          "fungicide_used_liters": 0.0,
+          "insecticide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "water_used": 990.0000000000001
+        }
+      },
+      "scenario_rice_l3_zonal_water_n_allocation": {
+        "status": "experimental",
+        "note": "Juvenile nitrogen observability gate pending",
+        "gates": [],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 33.77604815075145,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "water_only",
+        "value": 535.9745921321047,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "nitrogen_only",
+        "value": 33.77604815075145,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "wrong_zone",
+        "value": 535.9745921321047,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_rice_l3_infrastructure_water_priority",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "repair_all_first"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 1316.8654137432436,
+    "tasks": {
+      "scenario_rice_l1_channel_clearance": {
+        "status": "calibrated",
+        "note": "Action contract; not an agronomic yield claim",
+        "gates": [],
+        "window_budgets": {
+          "energy_used_kwh": 0.0,
+          "fertilizer_used": 0.0,
+          "fungicide_used_liters": 0.0,
+          "insecticide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "water_used": 0.0
+        }
+      },
+      "scenario_rice_l2_infrastructure_water_priority": {
+        "status": "experimental",
+        "note": "Reference does not separate from the strongest matched control",
+        "gates": [],
+        "window_budgets": {
+          "energy_used_kwh": 0.0,
+          "fertilizer_used": 74.25,
+          "fungicide_used_liters": 0.0,
+          "insecticide_used_liters": 0.0,
+          "repair_used_kg": 11.0,
+          "water_used": 1313.888888888889
+        }
+      },
+      "scenario_rice_l3_infrastructure_water_priority": {
+        "status": "experimental",
+        "note": "Reference does not separate from the strongest matched control",
+        "gates": [],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 0.0,
+        "errors": [
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 30
+          },
+          {
+            "error": "Irrigate before soaking",
+            "step": 32
+          },
+          {
+            "error": "Irrigate before soaking",
+            "step": 34
+          },
+          {
+            "error": "Puddling requires 24 wet hours, saturated topsoil and >=5 mm water",
+            "step": 37
+          },
+          {
+            "error": "Transplanting requires moist soil and 0..30 mm surface water",
+            "step": 50
+          },
+          {
+            "error": "No surface water to drain",
+            "step": 54
+          },
+          {
+            "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose",
+            "step": 59
+          },
+          {
+            "error": "Insufficient stock or transplanter capacity exceeded",
+            "step": 62
+          },
+          {
+            "error": "Transplanting requires a prepared, unplanted plot",
+            "step": 63
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 101
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 146
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 191
+          },
+          {
+            "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose",
+            "step": 286
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 295
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 345
+          },
+          {
+            "error": "Fertilizer requires a puddled pre-maturity plot, <=50 mm water and a valid urea dose",
+            "step": 377
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 423
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 466
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 533
+          },
+          {
+            "error": "Channel supply job must fit UTC 6:00..10:00",
+            "step": 583
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 840
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 853
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 862
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "repair_all_first",
+        "value": 1317.0680394897859,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "irrigate_first",
+        "value": 0.0,
+        "errors": [
+          {
+            "error": "Transplanting requires moist soil and 0..30 mm surface water",
+            "step": 50
+          },
+          {
+            "error": "Insufficient stock or transplanter capacity exceeded",
+            "step": 62
+          },
+          {
+            "error": "Load sufficient seedlings before transplanting",
+            "step": 63
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 840
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 853
+          },
+          {
+            "error": "Standing-grain moisture requires mature rice",
+            "step": 862
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_rice_l3_zonal_crop_protection",
+    "metric": "biological_dry_kg",
+    "valid_controls": [
+      "omit",
+      "wrong_zone"
+    ],
+    "interpretation": "Interpret only against the listed valid controls",
+    "reference": 1232.7059019192284,
+    "tasks": {
+      "scenario_rice_l1_targeted_protection": {
+        "status": "calibrated",
+        "note": "Action contract; not an agronomic yield claim",
+        "gates": [],
+        "window_budgets": {
+          "energy_used_kwh": 0.0,
+          "fertilizer_used": 0.0,
+          "fungicide_used_liters": 0.0,
+          "insecticide_used_liters": 0.101,
+          "repair_used_kg": 0.0,
+          "water_used": 0.0
+        }
+      },
+      "scenario_rice_l2_zonal_crop_protection": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biomass_dry_kg",
+            "threshold": 256.56209063447835
+          }
+        ],
+        "window_budgets": {
+          "energy_used_kwh": 0.0,
+          "fertilizer_used": 41.25,
+          "fungicide_used_liters": 0.165,
+          "insecticide_used_liters": 0.22000000000000003,
+          "repair_used_kg": 0.0,
+          "water_used": 605.0
+        }
+      },
+      "scenario_rice_l3_zonal_crop_protection": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "biological_dry_kg",
+            "threshold": 1047.3546300829544
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "omit",
+        "value": 769.3229519299553,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "wrong_zone",
+        "value": 862.0033582466806,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      },
+      {
+        "policy": "uniform",
+        "value": 907.4751084118585,
+        "errors": [
+          {
+            "error": "Insufficient onboard fuel in tractor; refuel first",
+            "step": 315
+          },
+          {
+            "error": "Insufficient onboard fuel in tractor; refuel first",
+            "step": 322
+          },
+          {
+            "error": "Insufficient onboard fuel in tractor; refuel first",
+            "step": 410
+          }
+        ],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  },
+  {
+    "source": "scenario_rice_l3_rainy_harvest_capacity",
+    "metric": "stored_kg_at_14pct",
+    "valid_controls": [
+      "miss_window"
+    ],
+    "interpretation": "Delivery-window contrast; optimal harvest timing remains unverified",
+    "reference": 1443.0262504464313,
+    "tasks": {
+      "scenario_rice_l2_rainy_harvest_capacity": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "stored_kg_at_14pct",
+            "threshold": 721.5131252232156
+          }
+        ],
+        "window_budgets": {
+          "energy_used_kwh": 14.961920318842177,
+          "fertilizer_used": 0.0,
+          "fungicide_used_liters": 0.0,
+          "insecticide_used_liters": 0.0,
+          "repair_used_kg": 0.0,
+          "water_used": 0.0
+        }
+      },
+      "scenario_rice_l3_rainy_harvest_capacity": {
+        "status": "calibrated",
+        "note": "",
+        "gates": [
+          {
+            "direction": "higher",
+            "metric": "stored_kg_at_14pct",
+            "threshold": 721.5131252232156
+          }
+        ],
+        "window_budgets": {}
+      }
+    },
+    "controls": [
+      {
+        "policy": "miss_window",
+        "value": 0.0,
+        "errors": [],
+        "matched_time": true,
+        "matched_weather": true
+      }
+    ]
+  }
+]

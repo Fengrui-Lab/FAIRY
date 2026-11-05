@@ -45,14 +45,13 @@ class ManualOpsApp(App, ManualOperations):
         Draws chemicals from the shared warehouse and records application quota
         on the selected farm. Requires sprayable weather and advances the common
         clock for the operator passes.
-        Native WOFOST maize has no crop-protection model and refuses this action.
+        Fields without hand-spray support reject this operation before resource use.
 
         Args:
             farm_id: Exact target farm ID; chemical stock comes from the shared warehouse.
             start_ridge: First local ridge ID, inclusive and zero based.
             end_ridge: Last local ridge ID; at most two ridges per call.
-            liters_per_ridge: Positive working-fluid litres per ridge. The simulation
-                backpack reference is 3 L/ridge; lower volumes reduce treatment strength.
+            liters_per_ridge: Positive working-fluid litres per ridge. The standard working-fluid rate is 3 L/ridge; lower volumes reduce treatment strength.
 
         Returns:
             Farm ID, treated ridge IDs, actual pesticide use and quota status,

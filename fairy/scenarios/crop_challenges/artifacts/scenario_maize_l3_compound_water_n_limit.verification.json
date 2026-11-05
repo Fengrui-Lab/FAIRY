@@ -1,0 +1,18 @@
+{
+  "scenario_maize_l2_compound_water_n_limit": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "c3977d4f275ad8bc9aa7b95b424c65790f63552e4dd4333425c120c474a62931",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l3_compound_water_n_limit": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "6908886440d1898923c115a8edecb742f9e33c4aab4c6a170c83bf3a3a522529",
+    "success": true,
+    "status": "calibrated"
+  }
+}

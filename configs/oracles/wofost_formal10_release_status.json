@@ -15,7 +15,7 @@
   "retained_uncalibrated": {
     "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2": {
       "number": 3,
-      "source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py",
+      "source_path": "fairy/scenarios/wofost/scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition_V2.py",
       "source_sha256_before_this_revision": "52881b3807ffc2a54f9962f0cb087266bf5758cfbf234fe7eb9a2a516bc90869",
       "core_task": "Low nutrient carryover, weak flowering-stage growth, and need-based nutritional management.",
       "status": "retained_uncalibrated",

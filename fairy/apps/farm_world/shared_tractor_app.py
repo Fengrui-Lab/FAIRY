@@ -4,6 +4,7 @@ Public tool signatures declare their real target parameters. Fixed field state i
 provided by FarmContext; fuel, implements, supplies and grain stay on this App.
 """
 from __future__ import annotations
+from fairy.apps.resource_transfer import transfer_receipt
 
 from math import isfinite
 from typing import Any
@@ -182,21 +183,27 @@ class SharedTractorApp(App, TractorOperations):
     ) -> dict[str, Any]:
         """Transfer one resource from the common stock to an onboard container."""
         self.farm_environment.before_tool()
-        if not isfinite(amount) or amount <= 0:
+        if isinstance(amount, bool) or not isfinite(amount) or amount <= 0:
             return {"error": "amount must be finite and positive"}
         current = getattr(self, payload_attribute)
         space = capacity - current
-        if space <= 0:
-            return {"msg": f"{output_key} is already full"}
-        transferred = min(amount, space)
         warehouse = self.farm_environment.warehouse
+        stock_key = {"fuel": "fuel_liters", "fertilizer": "fertilizer_kg", "pesticide": "pesticide_liters"}[warehouse_resource]
+        unit = "kg" if warehouse_resource == "fertilizer" else "L"
+        if space <= 0:
+            return {"msg": f"{output_key} is already full",
+                    **transfer_receipt(amount, 0, current, capacity, getattr(warehouse.stock, stock_key), unit)}
+        transferred = min(amount, space)
         consume = getattr(warehouse, f"consume_{warehouse_resource}")
         if not consume(transferred):
-            return {"error": f"Insufficient {warehouse_resource} in shared warehouse"}
+            return {"error": f"Insufficient {warehouse_resource} in shared warehouse",
+                    "code": "insufficient_stock", "requested": amount, "required_transfer": transferred,
+                    "available": getattr(warehouse.stock, stock_key), "remaining_capacity": space}
         setattr(self, payload_attribute, current + transferred)
         self.is_state_modified = True
         return {"status": "ok", "warehouse_id": warehouse.warehouse_id,
-                output_key: getattr(self, payload_attribute)}
+                output_key: getattr(self, payload_attribute),
+                **transfer_receipt(amount, transferred, getattr(self, payload_attribute), capacity, getattr(warehouse.stock, stock_key), unit)}
 
     def _finish_harvest(
         self,
@@ -261,7 +268,7 @@ class SharedTractorApp(App, TractorOperations):
             Warehouse ID and fuel level, or an error.
         """
         return self._load_material(
-            amount=float(liters), payload_attribute="_fuel_tank_l",
+            amount=liters, payload_attribute="_fuel_tank_l",
             capacity=_FUEL_TANK_MAX_L, warehouse_resource="fuel", output_key="fuel_tank_l",
         )
 
@@ -281,7 +288,7 @@ class SharedTractorApp(App, TractorOperations):
             Warehouse ID and spray tank level, or an error.
         """
         return self._load_material(
-            amount=float(liters), payload_attribute="_pesticide_tank_l",
+            amount=liters, payload_attribute="_pesticide_tank_l",
             capacity=_PESTICIDE_TANK_MAX_L, warehouse_resource="pesticide",
             output_key="pesticide_tank_l",
         )
@@ -303,7 +310,7 @@ class SharedTractorApp(App, TractorOperations):
             Warehouse ID and spreader level, or an error.
         """
         return self._load_material(
-            amount=float(kg), payload_attribute="_fertilizer_spreader_kg",
+            amount=kg, payload_attribute="_fertilizer_spreader_kg",
             capacity=_FERTILIZER_SPREADER_MAX_KG, warehouse_resource="fertilizer",
             output_key="fertilizer_spreader_kg",
         )
@@ -329,13 +336,14 @@ class SharedTractorApp(App, TractorOperations):
         warehouse = self.farm_environment.warehouse
         if seed_type not in warehouse.stock.seed_stock:
             return {"error": f"Unknown warehouse seed_type '{seed_type}'"}
-        if count <= 0:
+        if isinstance(count, bool) or not isinstance(count, int) or count <= 0:
             return {"error": "count must be positive"}
         if self._seed_hopper > 0 and self.seed_type != seed_type:
             return {"error": "Seed hopper contains another variety; return it first"}
         space = _SEED_HOPPER_MAX_PLANTS - self._seed_hopper
         if space <= 0:
-            return {"msg": f"Seed hopper already full for {seed_type}"}
+            return {"msg": f"Seed hopper already full for {seed_type}",
+                    **transfer_receipt(count, 0, self._seed_hopper, _SEED_HOPPER_MAX_PLANTS, warehouse.stock.seed_stock[seed_type], "seeds")}
         transferred = min(count, space)
         if not warehouse.consume_seeds(seed_type, transferred):
             return {"error": f"Insufficient {seed_type} seeds in shared warehouse: need {transferred}"}
@@ -343,7 +351,8 @@ class SharedTractorApp(App, TractorOperations):
         self._seed_hopper += transferred
         self.is_state_modified = True
         return {"status": "ok", "warehouse_id": warehouse.warehouse_id,
-                "seed_type": seed_type, "seed_hopper": self._seed_hopper}
+                "seed_type": seed_type, "seed_hopper": self._seed_hopper,
+                **transfer_receipt(count, transferred, self._seed_hopper, _SEED_HOPPER_MAX_PLANTS, warehouse.stock.seed_stock[seed_type], "seeds")}
 
     @type_check
     @app_tool()
@@ -497,7 +506,7 @@ class SharedTractorApp(App, TractorOperations):
 
         The bound operation contract publishes each farm's crop limits and the configured
         device's pass limit. Requires the target farm's declared
-        required_field_preparation_ops (legacy default level/base_fertilize/form_ridges), bare ridges, suitable
+        required_field_preparation_ops (as listed by the field capabilities), bare ridges, suitable
         soil and sufficient resources. Advances all registered farms.
 
         Args:
@@ -539,7 +548,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at the standard dose over selected farm ridges.
+        """Spray pesticide at the standard dose over selected farm ridges.
 
         Covers at most 10 ridges. Requires sprayable weather, trafficable soil, an allowed
         chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all registered farms and
@@ -554,6 +563,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -582,7 +593,7 @@ class SharedTractorApp(App, TractorOperations):
             Warehouse ID and spray tank level, or an error.
         """
         return self._load_material(
-            amount=float(liters), payload_attribute="_pesticide_tank_l",
+            amount=liters, payload_attribute="_pesticide_tank_l",
             capacity=_PESTICIDE_TANK_MAX_L, warehouse_resource="pesticide",
             output_key="pesticide_tank_l",
         )
@@ -597,7 +608,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float = PESTICIDE_L_PER_RIDGE,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Spray pesticide at an explicit per-ridge dose on the selected farm.
+        """Spray pesticide at an explicit per-ridge dose on the selected farm.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -613,6 +624,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -643,7 +656,7 @@ class SharedTractorApp(App, TractorOperations):
             Warehouse ID and fungicide tank level, or an error.
         """
         return self._load_material(
-            amount=float(liters), payload_attribute="_fungicide_tank_l",
+            amount=liters, payload_attribute="_fungicide_tank_l",
             capacity=_PESTICIDE_TANK_MAX_L, warehouse_resource="pesticide",
             output_key="fungicide_tank_l",
         )
@@ -658,7 +671,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply fungicide over selected farm ridges from the shared fungicide tank.
+        """Apply fungicide over selected farm ridges from the shared fungicide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed chemical regime, enough loaded fungicide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -674,6 +687,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -697,7 +712,7 @@ class SharedTractorApp(App, TractorOperations):
         end_ridge: int,
         liters_per_ridge: float,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Apply herbicide over selected farm ridges from the shared pesticide tank.
+        """Apply herbicide over selected farm ridges from the shared pesticide tank.
 
         Covers at most 10 ridges. Requires a positive dose, sprayable weather, trafficable soil,
         an allowed herbicide regime, enough loaded pesticide and length-scaled fuel (2 L per 268 m pass). Advances all
@@ -713,6 +728,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)
@@ -735,7 +752,7 @@ class SharedTractorApp(App, TractorOperations):
         start_ridge: int,
         end_ridge: int,
     ) -> dict[str, Any]:
-        """Native WOFOST maize biotic treatment is unsupported and is rejected before resource use. Perform mechanical weeding over selected farm ridges.
+        """Perform mechanical weeding over selected farm ridges.
 
         Covers at most 10 ridges. Requires trafficable soil, an allowed machine pass and
         mechanical-weeding quota, plus length-scaled fuel (2 L per 268 m pass). Advances all registered farms; records usage on the
@@ -750,6 +767,8 @@ class SharedTractorApp(App, TractorOperations):
 
         Returns:
             Operation result or error; farm operations include the target farm_id.
+
+        Fields without crop-protection support reject this operation before resource use.
         """
         farm = self._prepare(farm_id)
         error = self._target_error(farm_id)

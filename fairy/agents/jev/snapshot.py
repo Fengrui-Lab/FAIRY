@@ -1,0 +1,377 @@
+"""Short farm snapshot for Jev, built by code before every decision.
+
+Replaces the full action history (see docs/jev/PROGRESS.md, Part 2). Rules:
+
+- Only values that the agent's own read tools report (farm overview, inventory,
+  machine status), plus Jev's own past action results. Never other hidden
+  simulator fields, the oracle or the evaluator.
+- No weather and no sensor readings: with them in the snapshot, Jev skipped the
+  task's "check the weather / read the sensors" steps and then repeated a later
+  read (single-question test, Part 2 Step 5). Jev takes those readings with its
+  own actions, as the LLM agent does.
+- Nothing is written to the simulation. The farm-overview tool advances the
+  physics to the current time, and the physics depends on how often that
+  happens, so calling it would change the season. Instead the ridge fields are
+  read as stored after the last physics update (normally the end of Jev's last
+  action). Inventory and machine status come from their pure read tools.
+  Checked with scripts/jev_offline_check.py --no-snapshot.
+- Reads are not recorded as agent actions and are not scored.
+
+`build_snapshot` returns (snapshot for Jev, raw facts for menus and checks).
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+CST = timezone(timedelta(hours=8))
+RECENT_ACTIONS = 5
+RESULT_CHARS = 1500
+NOTIFICATIONS = 3
+REPEAT_WARNING_AT = 3
+
+# Result fields that announce when an effect will be ready (absolute sim time).
+READY_AT_FIELDS = ("effect_ready_at", "charge_complete_at")
+# Start/end argument pairs that name a ridge range.
+RANGE_ARGS = (("start_ridge", "end_ridge"), ("start", "end"))
+
+
+def ridge_ranges(ids: list[int]) -> str:
+    """[0, 1, 2, 5] -> '0-2, 5'."""
+    ids = sorted(set(ids))
+    parts: list[str] = []
+    start = prev = None
+    for i in ids:
+        if start is None:
+            start = prev = i
+        elif i == prev + 1:
+            prev = i
+        else:
+            parts.append(f"{start}-{prev}" if start != prev else f"{start}")
+            start = prev = i
+    if start is not None:
+        parts.append(f"{start}-{prev}" if start != prev else f"{start}")
+    return ", ".join(parts)
+
+
+def _fmt_time(ts: float) -> str:
+    return datetime.fromtimestamp(ts, tz=CST).strftime("%Y-%m-%d %H:%M")
+
+
+def _short(value: Any, limit: int = RESULT_CHARS) -> str:
+    text = value if isinstance(value, str) else json.dumps(value, default=str, ensure_ascii=False)
+    return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
+def _apps(toolsets: list[Any], *, enhanced: bool = False) -> dict[str, list[Any]]:
+    out: dict[str, list[Any]] = {}
+    for app in toolsets:
+        name = type(app).__name__
+        if enhanced:
+            # Inherited public read contracts, including header-maintenance tractors.
+            name = next((c.__name__ for c in type(app).__mro__ if c.__name__ in
+                         ('TractorApp','FarmWorldApp','DroneApp','RobotApp')), name)
+        out.setdefault(name, []).append(app)
+    return out
+
+
+def _ridges(farm: Any) -> list[dict[str, Any]]:
+    """The farm-overview fields of every ridge, as stored (no refresh)."""
+    return [
+        {
+            "ridge_id": r.ridge_id,
+            "planted": r.planted,
+            "harvested": r.harvested,
+            "growth_stage": r.growth_stage,
+            "grain_moisture_pct": round(r.grain_moisture_pct, 1),
+        }
+        for r in farm._ridges
+    ]
+
+
+def _crop(ridges: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Group neighbouring ridges that share planted/harvested/stage."""
+    groups: list[dict[str, Any]] = []
+    for r in ridges:
+        key = (r["planted"], r["harvested"], r["growth_stage"])
+        if groups and groups[-1]["key"] == key and groups[-1]["ids"][-1] == r["ridge_id"] - 1:
+            groups[-1]["ids"].append(r["ridge_id"])
+            groups[-1]["moist"].append(r["grain_moisture_pct"])
+        else:
+            groups.append({"key": key, "ids": [r["ridge_id"]], "moist": [r["grain_moisture_pct"]]})
+    out = []
+    for g in groups:
+        planted, harvested, stage = g["key"]
+        row: dict[str, Any] = {"ridges": ridge_ranges(g["ids"])}
+        if harvested:
+            row["status"] = "harvested"
+        elif not planted:
+            row["status"] = "not planted"
+        else:
+            row["stage"] = stage
+            lo, hi = min(g["moist"]), max(g["moist"])
+            if hi > 0:
+                row["grain_moisture_pct"] = lo if lo == hi else f"{lo}-{hi}"
+        out.append(row)
+    return out
+
+
+def _inventory(inv: dict[str, Any]) -> dict[str, Any]:
+    out = {k: v for k, v in inv.items() if k not in ("management_regime", "postharvest_market")}
+    regime = inv.get("management_regime") or {}
+    limits = {k: v for k, v in regime.items() if v not in (None, 0, 0.0) and k != "regime"}
+    if limits:
+        out["limits_and_usage"] = limits
+    market = inv.get("postharvest_market") or {}
+    out["storage"] = {
+        k: market.get(k)
+        for k in ("max_storage_moisture_pct", "drying_capacity_kg_per_day", "storage_capacity_kg")
+        if market.get(k) is not None
+    }
+    return out
+
+
+def _tool_steps(workflow: Any) -> list[Any]:
+    return [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
+
+
+def _failed(step: Any) -> bool:
+    if step.op_type == "TOOL_ERROR":
+        return True
+    result = step.content
+    if isinstance(result, dict) and isinstance(result.get("ok"), bool):
+        return not result["ok"]
+    return isinstance(result, dict) and "error" in result
+
+
+def _result_data(result: Any) -> Any:
+    """Read the native shared-service receipt without changing stored results."""
+    if isinstance(result, dict) and isinstance(result.get("ok"), bool):
+        return result.get("data")
+    return result
+
+
+def _range_of(args: dict[str, Any]) -> list[int] | None:
+    for start, end in RANGE_ARGS:
+        if isinstance(args.get(start), int) and isinstance(args.get(end), int):
+            return list(range(args[start], args[end] + 1))
+    if isinstance(args.get("ridge_id"), int):
+        return [args["ridge_id"]]
+    return None
+
+
+def work_done(steps: list[Any]) -> dict[str, str]:
+    """Successful actions of this run: ridge ranges covered, or a count."""
+    ridges: dict[str, list[int]] = {}
+    counts: dict[str, int] = {}
+    for step in steps:
+        if _failed(step) or getattr(step, "op_type", "") != "TOOL":
+            continue
+        name = step.tool_name
+        rng = _range_of(step.tool_args or {})
+        if rng is not None:
+            ridges.setdefault(name, []).extend(rng)
+        else:
+            counts[name] = counts.get(name, 0) + 1
+    out = {name: f"ridges {ridge_ranges(ids)}" for name, ids in ridges.items()}
+    out.update({name: f"{n} times" for name, n in counts.items()})
+    return out
+
+
+def pending_effects(steps: list[Any], now: float) -> list[dict[str, Any]]:
+    """Effects announced in Jev's own results that are not ready yet."""
+    out = []
+    for step in steps:
+        result = _result_data(step.content)
+        if _failed(step) or not isinstance(result, dict):
+            continue
+        for field in READY_AT_FIELDS:
+            ready = result.get(field)
+            if isinstance(ready, (int, float)) and ready > now:
+                rng = _range_of(step.tool_args or {})
+                out.append(
+                    {
+                        "from_action": step.tool_name,
+                        "ridges": ridge_ranges(rng) if rng else None,
+                        "ready_at": _fmt_time(ready),
+                        "seconds_left": int(round(ready - now)),
+                    }
+                )
+    return out
+
+
+def step_history(steps: list[Any]) -> list[str]:
+    """Every action so far, one short line each; identical neighbours merged.
+
+    '1. get_ridge_range_state(start=44, end=55): ok' or
+    '5-24. advance_time(days=1): ok (x20)'. No results: the last few actions
+    carry those in recent_actions.
+    """
+    lines: list[list[Any]] = []  # [first, last, text]
+    for i, step in enumerate(steps, 1):
+        args = ", ".join(f"{k}={v}" for k, v in (step.tool_args or {}).items() if k != "content")
+        text = f"{step.tool_name.split('__', 1)[-1]}({args}): {'failed' if _failed(step) else 'ok'}"
+        if lines and lines[-1][2] == text:
+            lines[-1][1] = i
+        else:
+            lines.append([i, i, text])
+    return [
+        f"{a}. {t}" if a == b else f"{a}-{b}. {t} (x{b - a + 1})" for a, b, t in lines
+    ]
+
+
+def repeat_count(steps: list[Any]) -> int:
+    """How many times the last action (same arguments) was repeated in a row."""
+    if not steps:
+        return 0
+    last = (steps[-1].tool_name, json.dumps(steps[-1].tool_args or {}, sort_keys=True))
+    n = 0
+    for step in reversed(steps):
+        if (step.tool_name, json.dumps(step.tool_args or {}, sort_keys=True)) != last:
+            break
+        n += 1
+    return n
+
+
+def build_snapshot(toolsets: list[Any], workflow: Any, now: float, *, enhanced_tool_adaptor: bool = False) -> tuple[dict[str, Any], dict[str, Any]]:
+    apps = _apps(toolsets, enhanced=enhanced_tool_adaptor)
+    if len(apps.get("FarmWorldApp", [])) > 1 or "PaddyWorldApp" in apps or any(hasattr(a, "runtime") for a in toolsets):
+        return _scene_snapshot(toolsets, workflow, now)
+    farm = apps["FarmWorldApp"][0]
+    ridges = _ridges(farm)
+    snap: dict[str, Any] = {
+        "time": _fmt_time(now),
+        "season_phase": farm._season_phase,
+        "crop": _crop(ridges),
+        "inventory": _inventory(farm.get_inventory()),
+    }
+    if enhanced_tool_adaptor:
+        snap["completed_field_preparation_ops"] = list(farm.completed_prep_ops)
+    machines: dict[str, Any] = {}
+    for tractor in apps.get("TractorApp", []):
+        status = tractor.get_status()
+        if not enhanced_tool_adaptor:
+            status.pop("available_implements", None)
+        machines[tractor.name] = status
+    for kind in ("DroneApp", "RobotApp"):
+        for app in apps.get(kind, []):
+            status = app.check_status()  # battery from the charge timestamps; no state change
+            machines[app.name] = {
+                k: status[k] for k in ("battery_pct", "charging", "eta_minutes_to_full") if k in status
+            }
+    snap["machines"] = machines
+
+    steps = _tool_steps(workflow)
+    snap["actions_this_run"] = work_done(steps)
+    snap["pending_effects"] = pending_effects(steps, now)
+    notes = [s for s in workflow.dag.values() if s.op_type == "system"]
+    if notes:
+        snap["notifications"] = [
+            {"time": s.time, "message": _short(s.content)} for s in notes[-NOTIFICATIONS:]
+        ]
+    recent = [
+        {
+            "action": s.tool_name,
+            "arguments": s.tool_args or {},
+            "failed": _failed(s),
+            "result": _short(s.content),
+        }
+        for s in steps[-RECENT_ACTIONS:]
+    ]
+    repeats = repeat_count(steps)
+    if repeats >= REPEAT_WARNING_AT:
+        snap["warning"] = (
+            f"The last action was repeated {repeats} times in a row with the same arguments; "
+            "repeating it again will not change the result."
+        )
+    facts = {
+        "ridges": ridges,
+        **({"completed_field_preparation_ops": snap["completed_field_preparation_ops"]} if enhanced_tool_adaptor else {}),
+        "inventory": snap["inventory"],
+        "machines": machines,
+        "pending": snap["pending_effects"],
+        "steps": steps,
+    }
+    return {"farm_now": snap, "steps_so_far": step_history(steps), "recent_actions": recent}, facts
+
+
+def _scene_snapshot(toolsets: list[Any], workflow: Any, now: float):
+    """Project public tool fields without invoking their physics-refresh wrappers."""
+    from dataclasses import asdict
+    from types import SimpleNamespace
+    from copy import deepcopy, copy
+    farms, machines, inventory, plots = {}, {}, {}, []
+    runtimes = {id(a.runtime): a.runtime for a in toolsets if hasattr(a, "runtime")}
+    for runtime in runtimes.values():
+        for farm_id, site in runtime.farms.items():
+            f = site.farm
+            ridges = _ridges(f)
+            farms[farm_id] = {"name": f.name, "ridges": ridges, "crop": _crop(ridges),
+                "season_phase": f._season_phase, "inventory": _inventory(f.get_inventory())}
+        for asset in runtime.assets.values():
+            if asset.kind == "tractor":
+                fields = {"fuel_tank_l": "_fuel_tank_l", "fertilizer_spreader_kg": "_fertilizer_spreader_kg",
+                          "seed_hopper": "_seed_hopper", "seed_type": "seed_type", "grain_bin_kg": "_grain_bin_kg",
+                          "attached_implement": "_attached_implement", "pesticide_tank_l": "_pesticide_tank_l"}
+                machines[asset.asset_id] = {k: deepcopy(asset.data[v]) for k, v in fields.items() if v in asset.data}
+                machines[asset.asset_id].update(payload_origin_farm_id=asset.payload_origin_farm_id, last_farm_id=asset.last_farm_id)
+            else:
+                machines[asset.asset_id] = {"battery_pct": asset.data.get("_battery_pct"), "charging": asset.data.get("_charging")}
+    for app in toolsets:
+        kind = type(app).__name__
+        if kind == "FarmWorldApp":
+            ridges = _ridges(app)
+            farms[app.farm_id] = {"name": app.name, "ridges": ridges,
+                "crop": _crop(ridges), "season_phase": app._season_phase,
+                "management": app._management_regime.to_dict()}
+        elif kind == "WarehouseApp":
+            inventory = {"warehouse_id": app.warehouse_id, **asdict(app.stock),
+                "harvest_grain_kg": app._grain_total("pending"),
+                "warehouse_grain_kg": app._grain_total("stored"),
+                "facilities": app._facility_state(),
+                "batches": [asdict(b) for b in app.grain_batches.values()]}
+        elif kind == "SharedTractorApp":
+            status = app._operate_get_status()
+            status.pop("source_farm_id", None)
+            status.pop("available_implements", None)
+            status.update(warehouse_id=app.farm_environment.warehouse.warehouse_id,
+                grain_cultivar_ids=list(app._grain_cultivar_ids), grain_ridge_ids=list(app._grain_ridge_ids),
+                grain_moisture_pct=max(app._grain_moistures_pct) if app._grain_moistures_pct else None)
+            machines[app.name] = status
+        elif kind in ("SharedDroneApp", "SharedRobotApp"):
+            status = copy(app)._check_status()
+            machines[app.name] = {k: status[k] for k in ("battery_pct", "charging", "eta_minutes_to_full") if k in status}
+        elif kind == "PaddyWorldApp":
+            f = app.field
+            plots = [app._plot_record(p) for p in f.plots]
+            inventory = {"seedlings": asdict(f.seedlings), "fuel_liters": f.fuel_liters,
+                "channels": [asdict(c) for c in f.channels],
+                "stored_kg_at_14pct": sum(p.stored_dry_kg / .86 for p in f.plots),
+                "storage_capacity_kg": f.storage_capacity_kg,
+                "fertilizer": {"product_id": "urea", "stock_kg": f.fertilizer_kg, "n_fraction": .46},
+                **{k: getattr(f, k) for k in ("insecticide_liters", "fungicide_liters", "repair_material_kg", "electricity_kwh", "drying_capacity_wet_kg_day")},
+                "grain_batches": [{"batch_id": b.batch_id, "plot_id": b.plot_id, "location": b.location, "wet_kg": round(b.wet_kg, 2)} for b in f.grain_batches]}
+            machines.update({m.machine_id: asdict(m) for m in f.machines})
+            machines["combine"]["grain_bin_kg"] = sum(b.wet_kg for b in f.grain_batches if b.location == "combine")
+            machines["drone"] = {"battery_pct": f.drone_battery_pct}
+    steps = _tool_steps(workflow)
+    qualified = []
+    for step in steps:
+        args = step.tool_args or {}
+        scope = {k: args[k] for k in ("farm_id", "plot_id", "asset_id") if k in args}
+        name = step.tool_name + (" " + json.dumps(scope, sort_keys=True) if scope else "")
+        qualified.append(SimpleNamespace(op_type=step.op_type, tool_name=name, tool_args=args, content=step.content))
+    pending = pending_effects(qualified, now)
+    snap = {"time": _fmt_time(now), "farms": farms, "plots": plots,
+            "inventory": inventory, "machines": machines,
+            "actions_this_run": work_done(qualified), "pending_effects": pending}
+    notes = [s for s in workflow.dag.values() if s.op_type == "system"]
+    if notes:
+        snap["notifications"] = [{"time": s.time, "message": _short(s.content)} for s in notes[-NOTIFICATIONS:]]
+    if repeat_count(steps) >= REPEAT_WARNING_AT:
+        snap["warning"] = f"The last action was repeated {repeat_count(steps)} times in a row with the same arguments; repeating it again will not change the result."
+    facts = {"farms": farms, "plots": plots, "inventory": inventory, "machines": machines, "pending": pending, "steps": steps}
+    return deepcopy({"farm_now": snap, "steps_so_far": step_history(steps),
+        "recent_actions": [{"action": s.tool_name, "arguments": s.tool_args or {}, "failed": _failed(s), "result": _short(s.content)} for s in steps[-RECENT_ACTIONS:]]}), facts

@@ -5,6 +5,8 @@ stock. Biological model factories are registered by the integration layer.
 """
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 from dataclasses import dataclass, replace
 
 from fairy.crops.rules import HarvestRules, PlantingRules, ScalarRange
@@ -118,7 +120,9 @@ _DEFINITIONS: dict[str, CropDefinition] = {
     crop.crop_id: crop for crop in (SOYBEAN, MAIZE, RICE_STANDARD)
 }
 _MAIZE_VARIANTS = {
-    crop.cultivar_id: crop for crop in (MAIZE, MAIZE_STANDARD, MAIZE_201)
+    **{crop.cultivar_id: crop for crop in (MAIZE, MAIZE_STANDARD)},
+    **{seed: replace(MAIZE_201, cultivar_id=seed, seed_types=(seed,))
+       for seed in MAIZE_WOFOST_VARIANTS}
 }
 
 

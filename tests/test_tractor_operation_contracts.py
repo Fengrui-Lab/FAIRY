@@ -370,8 +370,8 @@ def test_replant_contract_uses_its_own_rules_and_preserves_soybean_compatibility
     depth = replanting.to_open_ai()["function"]["parameters"]["properties"]["depth_cm"]
     assert (depth["minimum"], depth["maximum"]) == (4, 7)
     assert "no preparation prerequisite" in replanting.function_description
-    assert "No scenario planting-window restriction" in replanting.function_description
-    assert "target-block average" in replanting.function_description
+    assert "No planting-window restriction" in replanting.function_description
+    assert "finite °C" not in replanting.function_description
     for call in (app.replant_seeds, replanting):
         assert "error" in call(0, 3, 1.5, 25)
         assert app.effects == []

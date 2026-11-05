@@ -1,0 +1,26 @@
+{
+  "scenario_rice_l1_targeted_protection": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "892081f064e9876bc210bc32ef854574e6b8134a7240dfb3ede19adf8a3b0eb8",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_rice_l2_zonal_crop_protection": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "edf0382932a13221623bedecd3ac5c181b1c3551c5295c360fbc2d5b78e0626e",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_rice_l3_zonal_crop_protection": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "6d98899b68cfb2b4ca1645c356256784a594a5f8c75f302d3596c8eba3f05505",
+    "success": true,
+    "status": "calibrated"
+  }
+}

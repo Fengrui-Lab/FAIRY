@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "bundle_id": "thionville_nasa2019_v1",
+  "reference_kind": "public_gridded_weather_and_official_regional_model_parameters_not_field_trial_replication",
+  "location": {
+    "name": "Thionville vicinity, France–Luxembourg border",
+    "latitude": 49.4,
+    "longitude": 6.2,
+    "elevation_m": 277.87,
+    "elevation_source": "NASA POWER response geometry, not measured trial elevation"
+  },
+  "raw_path": "raw/nasa_power_thionville_20190301_20191130.original.json",
+  "raw_sha256": "2eba2e1847c75bc74f6070d5bb9397b4a3c21eb5a3c99ebcadaa7a9aabe797c4",
+  "raw_byte_count": 27912,
+  "weather_path": "weather.json",
+  "weather_sha256": "513558ecad8fd8b267daac281de382c4f882564e896c87763abdc4eaa5d0ba3f",
+  "weather_byte_count": 57932,
+  "source_url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN,T2M_MAX,RH2M,WS2M,PRECTOTCORR,ALLSKY_SFC_SW_DWN&community=AG&longitude=6.2&latitude=49.4&start=20190301&end=20191130&format=JSON&time-standard=LST",
+  "acquired_at_utc": "2026-10-26T14:13:55.566845+00:00",
+  "weather_provider": "NASA POWER Daily Point API, AG community",
+  "api": {
+    "version": "v2.10.1",
+    "name": "POWER Daily API"
+  },
+  "source_products": [
+    "MERRA2",
+    "SYN1DEG",
+    "POWER"
+  ],
+  "source_parameter_metadata": {
+    "T2M_MIN": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Minimum"
+    },
+    "T2M_MAX": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters Maximum"
+    },
+    "RH2M": {
+      "units": "%",
+      "longname": "Relative Humidity at 2 Meters"
+    },
+    "WS2M": {
+      "units": "m/s",
+      "longname": "Wind Speed at 2 Meters"
+    },
+    "PRECTOTCORR": {
+      "units": "mm/day",
+      "longname": "Precipitation Corrected"
+    },
+    "ALLSKY_SFC_SW_DWN": {
+      "units": "MJ/m^2/day",
+      "longname": "All Sky Surface Shortwave Downward Irradiance"
+    }
+  },
+  "fill_value": -999.0,
+  "weather_period": {
+    "start_date": "2019-03-01",
+    "end_date": "2019-11-30",
+    "day_count": 275,
+    "time_standard": "LST"
+  },
+  "normalization": {
+    "parameter_mapping": {
+      "T2M_MIN": "tmin_c",
+      "T2M_MAX": "tmax_c",
+      "RH2M": "relative_humidity_pct",
+      "WS2M": "wind_2m_m_s",
+      "PRECTOTCORR": "rain_mm",
+      "ALLSKY_SFC_SW_DWN": "shortwave_mj_m2_day"
+    },
+    "multipliers": {
+      "T2M_MIN": 1.0,
+      "T2M_MAX": 1.0,
+      "RH2M": 1.0,
+      "WS2M": 1.0,
+      "PRECTOTCORR": 1.0,
+      "ALLSKY_SFC_SW_DWN": 1.0
+    },
+    "rounding": null,
+    "missing_value_fill": null,
+    "rainfall_redistribution": null,
+    "radiation_adjustment": null,
+    "mean_temperature": "If needed, derive (tmin_c + tmax_c) / 2 in both formal and native executions."
+  },
+  "crop_references": [
+    {
+      "crop_name": "soybean",
+      "variety_name": "Soybean_901",
+      "seed_type": "SOYBEAN_901",
+      "official_coverage_region": "Northern-France",
+      "upstream_calendar_month_day": {
+        "sowing": "04-28",
+        "flowering": "06-25",
+        "maturity_or_harvest": "09-25"
+      },
+      "crop_path": "../../soybean.yaml",
+      "crop_sha256": "b65cf37a478542d74564094dc0760c69bd3cda99452eb6e7d327e457f87ba9a9",
+      "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+      "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/soybean.yaml",
+      "source_report": "https://edepot.wur.nl/308997",
+      "site_validation": false
+    },
+    {
+      "crop_name": "maize",
+      "variety_name": "Grain_maize_201",
+      "seed_type": "MAIZE_201",
+      "official_coverage_region": "Germany, Luxembourg",
+      "upstream_calendar_month_day": {
+        "sowing": "05-01",
+        "flowering": "07-26",
+        "maturity_or_harvest": "10-20"
+      },
+      "crop_path": "../../maize.yaml",
+      "crop_sha256": "f1bf8e3202418f294873bb3236727e07a10cd2b91c297b3660d46341a84f469d",
+      "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5",
+      "source_url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/maize.yaml",
+      "source_report": "https://edepot.wur.nl/308997",
+      "site_validation": false
+    }
+  ],
+  "sources": [
+    {
+      "title": "NASA POWER Daily API and LST convention",
+      "url": "https://power.larc.nasa.gov/docs/services/api/temporal/daily/"
+    },
+    {
+      "title": "Wageningen official WOFOST 8.1 soybean parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/wofost81/soybean.yaml"
+    },
+    {
+      "title": "Wageningen official WOFOST 8.1 maize parameters",
+      "url": "https://github.com/ajwdewit/WOFOST_crop_parameters/blob/wofost81/maize.yaml"
+    }
+  ],
+  "scope": [
+    "Both adjacent simulated farms use these identical daily meteorological inputs.",
+    "The two farms are scenario parcels near the same representative point, not measured plots.",
+    "Soil, initial nitrogen, crop density, and management are separate explicit scenario assumptions.",
+    "No measured yield or original calibration-field replication is claimed.",
+    "Regional suitability is a geographical transfer rationale, not validation at this point in 2019."
+  ]
+}

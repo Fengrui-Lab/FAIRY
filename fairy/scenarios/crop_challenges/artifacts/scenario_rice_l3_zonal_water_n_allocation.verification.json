@@ -1,0 +1,18 @@
+{
+  "scenario_rice_l2_zonal_water_n_allocation": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "b812a8e319a4f676c54ae40d0f6af4336487f84f0b89b7b9167c3209819a6fb9",
+    "success": false,
+    "status": "experimental"
+  },
+  "scenario_rice_l3_zonal_water_n_allocation": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "9d8adb161aecaf56487007f0b98ae400ee82bbd76889f29e8d06cc62f002d5c0",
+    "success": false,
+    "status": "experimental"
+  }
+}

@@ -340,7 +340,7 @@ class YieldRecoveryEngine:
         harvest_actions_by_ridge: Mapping[int, HarvestAction] | None = None,
     ) -> list[YieldRecoveryDayResult]:
         """
-        Advance yield/recovery state at most once per date.
+        Advance yield/recovery once per date, plus the legacy harvest update.
 
         Harvest actions are optional. If no harvest action is provided, the
         model only updates biological potential, grain moisture, and losses.
@@ -384,10 +384,11 @@ class YieldRecoveryEngine:
         harvest_actions_by_ridge: Mapping[int, HarvestAction],
         stress_by_ridge: Mapping[int, YieldStressInput] | None = None,
     ) -> list[YieldRecoveryDayResult]:
-        """Settle only the selected ridges at their current moisture and losses.
+        """Apply the historical drying/loss update before settling each harvest.
 
-        Harvest consumes no extra day of drying or weather exposure. The normal
-        orchestrator tick remains responsible for daily evolution.
+        A harvest performs another recovery-day update at the current date,
+        including when a regular daily update already ran. Only selected
+        ridges change, matching the historical non-target state restoration.
         """
         stress_by_ridge = stress_by_ridge or {}
         return [
@@ -395,7 +396,6 @@ class YieldRecoveryEngine:
                 self.states[ridge_id], weather, phenology_by_ridge[ridge_id],
                 growth_by_ridge[ridge_id],
                 stress_by_ridge.get(ridge_id, YieldStressInput()), action,
-                advance_daily=False,
             )
             for ridge_id, action in harvest_actions_by_ridge.items()
         ]
@@ -408,8 +408,6 @@ class YieldRecoveryEngine:
         growth: YieldGrowthInput,
         stress: YieldStressInput,
         harvest_action: HarvestAction | None,
-        *,
-        advance_daily: bool = True,
     ) -> YieldRecoveryDayResult:
         p = self.params
         tags: list[str] = []
@@ -418,7 +416,9 @@ class YieldRecoveryEngine:
             and weather.day < state.last_daily_update_day
         ):
             raise ValueError("Yield recovery cannot move backwards in date")
-        evolve_daily = advance_daily and state.last_daily_update_day != weather.day
+        evolve_daily = (
+            state.last_daily_update_day != weather.day or harvest_action is not None
+        )
 
         # Biological yield potential is updated from the growth engine until
         # first R8 maturity. After R8, only moisture/loss/recovery terms move.

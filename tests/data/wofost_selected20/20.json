@@ -1,0 +1,6536 @@
+{
+  "number": 20,
+  "title": "晚雨前有限时间内分区抢收",
+  "core": "根据各区真实成熟度、粮食含水率、2t粮箱和实际收割/卸粮耗时安排晚雨前抢收；不能等最湿区而错过已可收区，也不能把容量分趟冒充多轮农事。",
+  "world": {
+    "sowing_date": "2019-04-27",
+    "field_length_m": 2000.0,
+    "seed_stock": 7000000,
+    "warehouse_fuel_l": 5000.0,
+    "irrigation_quota_mm": 60.0
+  },
+  "events": [
+    {
+      "type": "weather",
+      "event_id": "spring_preparation_and_early_sowing",
+      "farm_id": "farm",
+      "start": "2019-04-27",
+      "end": "2019-04-30",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "late_sowing_window",
+      "farm_id": "farm",
+      "start": "2019-05-11",
+      "end": "2019-05-12",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "growth_baseline_scouting",
+      "farm_id": "farm",
+      "start": "2019-06-28",
+      "end": "2019-06-29",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "preharvest_wet_days",
+      "farm_id": "farm",
+      "start": "2019-09-12",
+      "end": "2019-09-22",
+      "rain_mm": 1.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "one_clear_harvest_day",
+      "farm_id": "farm",
+      "start": "2019-09-22",
+      "end": "2019-09-23",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "late_storm",
+      "farm_id": "farm",
+      "start": "2019-09-23",
+      "end": "2019-09-27",
+      "rain_mm": 15.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "post_storm_clear_spell",
+      "farm_id": "farm",
+      "start": "2019-09-27",
+      "end": "2019-10-20",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    }
+  ],
+  "actions": [
+    {
+      "label": "播前土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "播前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "播前库存",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {}
+    },
+    {
+      "label": "播前机具",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "正常挂载grader",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "grader"
+      }
+    },
+    {
+      "label": "正常全田level",
+      "tool": "TractorApp__level",
+      "args": {}
+    },
+    {
+      "label": "正常卸载grader",
+      "tool": "TractorApp__detach_implement",
+      "args": {}
+    },
+    {
+      "label": "level后加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "level后按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      }
+    },
+    {
+      "label": "正常挂载furrower",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "furrower"
+      }
+    },
+    {
+      "label": "正常全田form_ridges",
+      "tool": "TractorApp__form_ridges",
+      "args": {
+        "ridge_width_m": 1.1
+      }
+    },
+    {
+      "label": "正常卸载furrower",
+      "tool": "TractorApp__detach_implement",
+      "args": {}
+    },
+    {
+      "label": "form_ridges后加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "form_ridges后按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      }
+    },
+    {
+      "at": "2019-04-28",
+      "hour": 7,
+      "label": "早区播床需实测"
+    },
+    {
+      "label": "早区实际播床土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "早区实际播种天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "A每三垄装种0",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种0",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 2,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种3",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种3",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 3,
+        "end_ridge": 5,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种6",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种6",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 8,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种9",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种9",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 9,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种12",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种12",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 14,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种15",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种15",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 15,
+        "end_ridge": 17,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "A同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      }
+    },
+    {
+      "label": "A每三垄装种18",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种18",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 18,
+        "end_ridge": 20,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种21",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种21",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 21,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种24",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种24",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 24,
+        "end_ridge": 26,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种27",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "A同轮播种27",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 27,
+        "end_ridge": 29,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "A每三垄装种30",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 198000
+      }
+    },
+    {
+      "label": "A同轮播种30",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 30,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "at": "2019-05-11",
+      "hour": 7,
+      "label": "迟区播床需实测"
+    },
+    {
+      "label": "迟区实际播床土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "迟区实际播种天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "迟区播种前加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "迟区播种前按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      }
+    },
+    {
+      "label": "B每三垄装种32",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种32",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 34,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种35",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种35",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 35,
+        "end_ridge": 37,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种38",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种38",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 38,
+        "end_ridge": 40,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种41",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种41",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 41,
+        "end_ridge": 43,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种44",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种44",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 46,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种47",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种47",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 47,
+        "end_ridge": 49,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "B同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      }
+    },
+    {
+      "label": "B每三垄装种50",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种50",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 50,
+        "end_ridge": 52,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种53",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种53",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 53,
+        "end_ridge": 55,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种56",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种56",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 56,
+        "end_ridge": 58,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种59",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 297000
+      }
+    },
+    {
+      "label": "B同轮播种59",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 59,
+        "end_ridge": 61,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "B每三垄装种62",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 198000
+      }
+    },
+    {
+      "label": "B同轮播种62",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 62,
+        "end_ridge": 63,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "at": "2019-05-23",
+      "hour": 7,
+      "label": "早区出苗单垄样本"
+    },
+    {
+      "label": "仅0垄出苗样本",
+      "tool": "Robot0__inspect_emergence",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 0
+      }
+    },
+    {
+      "label": "充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "等待充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-06-01",
+      "hour": 7,
+      "label": "迟区出苗单垄样本"
+    },
+    {
+      "label": "仅40垄出苗样本",
+      "tool": "Robot0__inspect_emergence",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 40
+      }
+    },
+    {
+      "label": "充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "等待充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-06-28",
+      "hour": 7,
+      "label": "生长期独立基线巡查"
+    },
+    {
+      "label": "全田实际阶段",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "长垄大豆生长基线根水",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "长垄大豆生长基线冠层",
+      "tool": "SensorApp__read_canopy_sensors",
+      "args": {}
+    },
+    {
+      "label": "长垄大豆生长基线飞行天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "长垄大豆生长基线无人机电量",
+      "tool": "SurveyDrone__check_status",
+      "args": {}
+    },
+    {
+      "label": "长垄大豆生长基线全田粗查非确诊",
+      "tool": "SurveyDrone__fly_survey",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 63
+      }
+    },
+    {
+      "label": "长垄大豆生长基线机器人电量",
+      "tool": "Robot0__check_status",
+      "args": {}
+    },
+    {
+      "label": "两区各单垄地面样本_0_0",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 0
+      }
+    },
+    {
+      "label": "两区各单垄地面样本_40_40",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 40
+      }
+    },
+    {
+      "label": "本轮检查后充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "无人机充电",
+      "tool": "SurveyDrone__charge",
+      "args": {}
+    },
+    {
+      "label": "等待本轮检查后充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-07-20",
+      "hour": 7,
+      "label": "关键期根水检查"
+    },
+    {
+      "label": "公开阶段",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "根区亏缺",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "近期降雨",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 3
+      }
+    },
+    {
+      "label": "正常一轮补水",
+      "tool": "FieldOpsApp__irrigate",
+      "args": {
+        "start": 0,
+        "end": 63,
+        "hours": 6.0
+      }
+    },
+    {
+      "at": "2019-08-08",
+      "hour": 7,
+      "label": "关键期根水检查"
+    },
+    {
+      "label": "公开阶段",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "根区亏缺",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "近期降雨",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 3
+      }
+    },
+    {
+      "label": "正常一轮补水",
+      "tool": "FieldOpsApp__irrigate",
+      "args": {
+        "start": 0,
+        "end": 63,
+        "hours": 6.0
+      }
+    },
+    {
+      "at": "2019-09-18",
+      "hour": 7,
+      "label": "收获前分区阶段粮水和雨窗"
+    },
+    {
+      "label": "两区成熟粮水预查",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "连续雨窗预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 5
+      }
+    },
+    {
+      "at": "2019-09-21",
+      "hour": 7,
+      "label": "收获前分区阶段粮水和雨窗"
+    },
+    {
+      "label": "两区成熟粮水预查",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "连续雨窗预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 5
+      }
+    },
+    {
+      "at": "2019-09-22",
+      "hour": 7,
+      "label": "唯一雨前无雨窗"
+    },
+    {
+      "label": "雨前两区真实阶段粮水",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "雨前土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "雨前当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "明日降雨预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 3
+      }
+    },
+    {
+      "label": "雨前收割准备加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨前收割准备按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨前挂收割机",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "correct",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_0",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "首垄实际粮箱重量与容量",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_0",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_0",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_0",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_1",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 1,
+        "end_ridge": 1
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_1",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_1",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_1",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_2",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 2,
+        "end_ridge": 2
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_2",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_2",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_2",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_3",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 3,
+        "end_ridge": 3
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_3",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_3",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_3",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_4",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 4,
+        "end_ridge": 4
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_4",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_4",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_4",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_5",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 5,
+        "end_ridge": 5
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_5",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_5",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_5",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_6",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 6
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_6",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_6",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_6",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_7",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 7,
+        "end_ridge": 7
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_7",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_7",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_7",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_8",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 8,
+        "end_ridge": 8
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_8",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_8",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_8",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_9",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 9,
+        "end_ridge": 9
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_9",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_9",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_9",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_10",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 10,
+        "end_ridge": 10
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_10",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_10",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_10",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_11",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 11,
+        "end_ridge": 11
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_11",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_11",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_11",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_12",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 12
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_12",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_12",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_12",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_13",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 13,
+        "end_ridge": 13
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_13",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_13",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_13",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_14",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 14,
+        "end_ridge": 14
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_14",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_14",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_14",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_15",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 15,
+        "end_ridge": 15
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_15",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_15",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_15",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_16",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 16
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_16",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_16",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_16",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_17",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 17,
+        "end_ridge": 17
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_17",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_17",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_17",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_18",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 18,
+        "end_ridge": 18
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_18",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_18",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_18",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_19",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 19,
+        "end_ridge": 19
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_19",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_19",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_19",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_20",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 20,
+        "end_ridge": 20
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_20",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_20",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_20",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_21",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 21,
+        "end_ridge": 21
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_21",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_21",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_21",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_22",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 22,
+        "end_ridge": 22
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_22",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_22",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_22",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_23",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 23,
+        "end_ridge": 23
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_23",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_23",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_23",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_24",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 24,
+        "end_ridge": 24
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_24",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_24",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_24",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收机趟_25",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 25,
+        "end_ridge": 25
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收卸粮_25",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收干燥_25",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前同轮抢收安全入库_25",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前最后实际时钟",
+      "tool": "SystemApp__get_current_time",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨前机器卸下",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "错误优先等湿区的收割尝试",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 32
+      },
+      "arms": [
+        "wrong"
+      ],
+      "expected_error": "Grain moisture too high"
+    },
+    {
+      "label": "错误机器卸下",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "at": "2019-09-27",
+      "hour": 7,
+      "label": "暴雨后重新检查可收条件"
+    },
+    {
+      "label": "雨后全田成熟粮水",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "雨后土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "雨后天气预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 5
+      }
+    },
+    {
+      "at": "2019-10-01",
+      "hour": 7,
+      "label": "暴雨后重新检查可收条件"
+    },
+    {
+      "label": "雨后全田成熟粮水",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "雨后土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "雨后天气预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 5
+      }
+    },
+    {
+      "at": "2019-10-04",
+      "hour": 7,
+      "label": "雨后两区均达到可收粮水"
+    },
+    {
+      "label": "雨后最终分区阶段粮水",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "雨后最终土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "连续作业天气预报",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 3
+      }
+    },
+    {
+      "label": "雨后开工加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后开工按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后挂收割机",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_26",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 26,
+        "end_ridge": 26
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_26",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_26",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_26",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_27",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 27,
+        "end_ridge": 27
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_27",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_27",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_27",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_28",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 28,
+        "end_ridge": 28
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_28",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_28",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_28",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_29",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 29,
+        "end_ridge": 29
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_29",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_29",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_29",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_30",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 30,
+        "end_ridge": 30
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_30",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_30",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_30",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_31",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 31,
+        "end_ridge": 31
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_31",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_31",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_31",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_32",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 32
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_32",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_32",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_32",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_33",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 33,
+        "end_ridge": 33
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_33",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_33",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_33",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_34",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 34,
+        "end_ridge": 34
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_34",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_34",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_34",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_35",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 35,
+        "end_ridge": 35
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_35",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_35",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_35",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_36",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 36,
+        "end_ridge": 36
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_36",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_36",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_36",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_37",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 37,
+        "end_ridge": 37
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_37",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_37",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_37",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_38",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 38,
+        "end_ridge": 38
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_38",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_38",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_38",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_39",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 39,
+        "end_ridge": 39
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_39",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_39",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_39",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_40",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 40
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_40",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_40",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_40",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_41",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 41,
+        "end_ridge": 41
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_41",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_41",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_41",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_42",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 42,
+        "end_ridge": 42
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_42",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_42",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_42",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_43",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 43,
+        "end_ridge": 43
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_43",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_43",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_43",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_44",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 44
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_44",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_44",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_44",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_45",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 45,
+        "end_ridge": 45
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_45",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_45",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_45",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_46",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 46,
+        "end_ridge": 46
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_46",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_46",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_46",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_47",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 47,
+        "end_ridge": 47
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_47",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_47",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_47",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_48",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 48,
+        "end_ridge": 48
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_48",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_48",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_48",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_49",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 49,
+        "end_ridge": 49
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_49",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_49",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_49",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_50",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 50,
+        "end_ridge": 50
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_50",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_50",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_50",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_51",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 51,
+        "end_ridge": 51
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_51",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_51",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_51",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_52",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 52,
+        "end_ridge": 52
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_52",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_52",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_52",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_53",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 53,
+        "end_ridge": 53
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_53",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_53",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_53",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_54",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 54,
+        "end_ridge": 54
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_54",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_54",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_54",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_55",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 55,
+        "end_ridge": 55
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_55",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_55",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_55",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_56",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 56,
+        "end_ridge": 56
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_56",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_56",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_56",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_57",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 57,
+        "end_ridge": 57
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_57",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_57",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_57",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_58",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 58,
+        "end_ridge": 58
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_58",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_58",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_58",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_59",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 59,
+        "end_ridge": 59
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_59",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_59",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_59",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_60",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 60,
+        "end_ridge": 60
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_60",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_60",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_60",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_61",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 61,
+        "end_ridge": 61
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_61",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_61",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_61",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_62",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 62,
+        "end_ridge": 62
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_62",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_62",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_62",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_63",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 63,
+        "end_ridge": 63
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_63",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_63",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_63",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后卸下收割机",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "雨后开工加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后开工按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后挂收割机",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_0",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_0",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_0",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_0",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_1",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 1,
+        "end_ridge": 1
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_1",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_1",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_1",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_2",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 2,
+        "end_ridge": 2
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_2",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_2",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_2",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_3",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 3,
+        "end_ridge": 3
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_3",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_3",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_3",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_4",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 4,
+        "end_ridge": 4
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_4",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_4",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_4",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_5",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 5,
+        "end_ridge": 5
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_5",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_5",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_5",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_6",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 6
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_6",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_6",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_6",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_7",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 7,
+        "end_ridge": 7
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_7",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_7",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_7",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_8",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 8,
+        "end_ridge": 8
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_8",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_8",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_8",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_9",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 9,
+        "end_ridge": 9
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_9",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_9",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_9",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_10",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 10,
+        "end_ridge": 10
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_10",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_10",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_10",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_11",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 11,
+        "end_ridge": 11
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_11",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_11",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_11",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_12",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 12
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_12",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_12",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_12",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_13",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 13,
+        "end_ridge": 13
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_13",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_13",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_13",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_14",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 14,
+        "end_ridge": 14
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_14",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_14",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_14",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_15",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 15,
+        "end_ridge": 15
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_15",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_15",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_15",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_16",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 16
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_16",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_16",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_16",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_17",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 17,
+        "end_ridge": 17
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_17",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_17",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_17",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_18",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 18,
+        "end_ridge": 18
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_18",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_18",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_18",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_19",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 19,
+        "end_ridge": 19
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_19",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_19",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_19",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_20",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 20,
+        "end_ridge": 20
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_20",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_20",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_20",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_21",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 21,
+        "end_ridge": 21
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_21",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_21",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_21",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_22",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 22,
+        "end_ridge": 22
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_22",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_22",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_22",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_23",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 23,
+        "end_ridge": 23
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_23",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_23",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_23",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_24",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 24,
+        "end_ridge": 24
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_24",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_24",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_24",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_25",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 25,
+        "end_ridge": 25
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_25",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_25",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_25",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_26",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 26,
+        "end_ridge": 26
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_26",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_26",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_26",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_27",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 27,
+        "end_ridge": 27
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_27",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_27",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_27",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_28",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 28,
+        "end_ridge": 28
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_28",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_28",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_28",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_29",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 29,
+        "end_ridge": 29
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_29",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_29",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_29",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_30",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 30,
+        "end_ridge": 30
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_30",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_30",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_30",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_31",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 31,
+        "end_ridge": 31
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_31",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_31",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_31",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_32",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 32
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_32",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_32",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_32",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_33",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 33,
+        "end_ridge": 33
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_33",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_33",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_33",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_34",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 34,
+        "end_ridge": 34
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_34",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_34",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_34",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_35",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 35,
+        "end_ridge": 35
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_35",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_35",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_35",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_36",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 36,
+        "end_ridge": 36
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_36",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_36",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_36",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_37",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 37,
+        "end_ridge": 37
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_37",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_37",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_37",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_38",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 38,
+        "end_ridge": 38
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_38",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_38",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_38",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_39",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 39,
+        "end_ridge": 39
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_39",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_39",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_39",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_40",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 40
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_40",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_40",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_40",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_41",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 41,
+        "end_ridge": 41
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_41",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_41",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_41",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_42",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 42,
+        "end_ridge": 42
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_42",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_42",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_42",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_43",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 43,
+        "end_ridge": 43
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_43",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_43",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_43",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_44",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 44
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_44",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_44",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_44",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_45",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 45,
+        "end_ridge": 45
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_45",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_45",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_45",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_46",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 46,
+        "end_ridge": 46
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_46",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_46",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_46",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_47",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 47,
+        "end_ridge": 47
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_47",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_47",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_47",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_48",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 48,
+        "end_ridge": 48
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_48",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_48",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_48",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_49",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 49,
+        "end_ridge": 49
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_49",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_49",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_49",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_50",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 50,
+        "end_ridge": 50
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_50",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_50",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_50",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_51",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 51,
+        "end_ridge": 51
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_51",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_51",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_51",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_52",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 52,
+        "end_ridge": 52
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_52",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_52",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_52",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_53",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 53,
+        "end_ridge": 53
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_53",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_53",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_53",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_54",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 54,
+        "end_ridge": 54
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_54",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_54",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_54",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_55",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 55,
+        "end_ridge": 55
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_55",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_55",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_55",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_56",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 56,
+        "end_ridge": 56
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_56",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_56",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_56",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_57",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 57,
+        "end_ridge": 57
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_57",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_57",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_57",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_58",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 58,
+        "end_ridge": 58
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_58",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_58",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_58",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_59",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 59,
+        "end_ridge": 59
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_59",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_59",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_59",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油加油前实测",
+      "tool": "TractorApp__get_status",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮补油按油箱余量补给",
+      "tool": "TractorApp__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_60",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 60,
+        "end_ridge": 60
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_60",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_60",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_60",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_61",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 61,
+        "end_ridge": 61
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_61",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_61",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_61",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_62",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 62,
+        "end_ridge": 62
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_62",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_62",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_62",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收机趟_63",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 63,
+        "end_ridge": 63
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收卸粮_63",
+      "tool": "TractorApp__unload_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收干燥_63",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      },
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后同轮续收安全入库_63",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "雨后卸下收割机",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "none",
+        "wrong"
+      ]
+    },
+    {
+      "label": "全季库存交付核验",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {}
+    },
+    {
+      "label": "全田收储覆盖核验",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    }
+  ],
+  "notes": [],
+  "planting_windows": [
+    {
+      "label": "A_early",
+      "start": 0,
+      "end": 31,
+      "seed_type": "SOYBEAN_901",
+      "earliest_date": "2019-04-28"
+    },
+    {
+      "label": "B_late",
+      "start": 32,
+      "end": 63,
+      "seed_type": "SOYBEAN_901",
+      "earliest_date": "2019-05-11"
+    }
+  ],
+  "brief": "公开地块为64条2000m×1.1m长垄，一垄两行，总14.08ha；A0–31垄按4/28、B32–63垄按5/11播。场景从4/27正常整地开始，实际作业可能跨日，不能重置时间；全季并未给收割次数或天数硬上限。秋季有连雨、短无雨窗及随后较强降雨，需查逐区阶段/粮水和天气预报，按设备真实能力先收可收区。全季正常灌水两轮，不因本题逐日小水搜索。 机器粮箱2t、播种种箱30万粒；2000m长垄的播种每趟1470秒、收割1830秒、卸粮480秒、每趟油耗14.925373…L，按油箱100L余量正常补油。无人机全田4030秒，机器人单垄往返5030秒；地面样本仅各1垄，不冒充全田。作业允许跨夜，仍按每日天气/含水率判据；没有另加每天工作小时限制。",
+  "allow_wrong_errors": true,
+  "compare": "window",
+  "operation_round_group_prefixes": [
+    "A同轮播种",
+    "B同轮播种",
+    "雨前同轮抢收",
+    "雨后同轮续收"
+  ],
+  "plan": [
+    "地块改为64×2000×1.1m=14.08ha，保持45株/m²、一垄两行、工具株距4.040404…cm；每垄99000粒，总6336000粒，库存700万。播种每趟最多3垄受30万粒种箱约束。",
+    "4/27开始正常平地/起垄，真实耗时跨日，期间按实测余油正常加油；4/28早区0–31、5/11迟区32–63实际播种。没有预先伪造整地完成，也没有跳过工具时间。",
+    "出苗各单垄样本；6/28传感器—4030秒全田无人机—两区各1垄5030秒地面基线检查；7/20与8/8各30mm常规补水。",
+    "秋季9/12–22人工1mm/day雨期，9/22无雨，9/23–27人工15mm/day雨期，9/27–10/20人工无雨。温湿辐射保留固定NASA原值。不是连续小时级实况；沿用工具每日雨天禁收判据。",
+    "9/18、9/21预查；9/22公开早区R8/15.98%、迟区R8/18.18%，迟区超过18%上限。先收早区，首垄正常收割后看实际粮箱重量与2t容量。",
+    "每垄收割1830秒、卸粮480秒，单垄粮箱批次；雨前从07:00到次日雨起仅17h，26垄60,060秒，余时不足下一趟1830秒，不尝试跨雨夜抢收。持续一轮26趟，不称26轮。",
+    "9/27、10/1复查雨后粮水与通行性，10/4两区均≤18%后续收余下38垄；该连续收储会跨午夜，仍是同一轮续收。dry_grain即时抽象，不借虚构干燥瓶颈限产。",
+    "全季max_machine_passes=None，未把旧40次机械额度当收割约束。对照不抢收及误等较湿区，完整收储并比较回收损失；WOFOST干物质单列，不直接扣产量。"
+  ],
+  "control_notes": "correct在9/22合法窗口先收已达粮水要求的早区26垄，10/4续收余38垄；none完全错过雨前窗口，10/4才开始全田收获；wrong在9/22把尚18.18%的迟区列首位，32垄单垄尝试被原工具拒绝，随后误等两区一起收，亦10/4才全田收。拒绝不虚构时间或燃油惩罚；损失来自错过实际可收窗口与后续留田/风雨回收损失。3组世界、生长期水肥及每垄最终收储相同；wrong的validate失败记录仅为预期非法尝试。"
+}

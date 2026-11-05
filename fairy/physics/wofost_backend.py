@@ -7,6 +7,8 @@ points to the following day, whose rates have deliberately not been computed.
 """
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 import copy
 import hashlib
 import json
@@ -102,16 +104,18 @@ class WofostConfig:
         if self.crop_name == "maize":
             if self.cultivar_profile is not None or self.cultivar_profiles:
                 raise ValueError("Soybean cultivar profiles cannot be applied to maize")
-            if self.variety_name != "Grain_maize_201":
-                raise ValueError("Maize v1 requires variety_name='Grain_maize_201'")
+            selected_seed = public_seed(self.variety_name)
             if self.external_biotic_coupling:
                 raise ValueError("Maize v1 requires external_biotic_coupling=False; soybean pests are not adapted")
-            if any(seed not in {"*", "MAIZE_201"} for seed in (*self.cultivar_map, *self.parameter_overrides)):
-                raise ValueError("Maize configuration only accepts seed MAIZE_201")
-            if any(variety != "Grain_maize_201" for variety in self.cultivar_map.values()):
-                raise ValueError("Maize v1 only supports Grain_maize_201")
+            if any(seed not in {"*", selected_seed} for seed in self.parameter_overrides):
+                raise ValueError("Maize configuration requires the selected seed identity")
+            if any(seed != selected_seed or native_variety(seed) != variety
+                   for seed, variety in self.cultivar_map.items()):
+                raise ValueError("Maize seed / native variety mismatch")
+            if selected_seed != "MAIZE_201" and self.cultivar_map != {selected_seed: self.variety_name}:
+                raise ValueError("Nonhistorical maize requires explicit cultivar_map identity")
         else:
-            other_crop_seeds = {"MAIZE_201", "MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"}
+            other_crop_seeds = set(MAIZE_WOFOST_VARIANTS) | {"MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"}
             wrong_seeds = other_crop_seeds.intersection(
                 (*self.cultivar_map, *self.parameter_overrides, *self.cultivar_profiles)
             )
@@ -457,10 +461,18 @@ class WofostBackend:
         )
 
     def _variety_for_seed(self, seed: str) -> str:
+        if self.config.crop_name == "maize":
+            if seed == "*":
+                return self.config.variety_name
+            expected = native_variety(seed)
+            if expected != self.config.variety_name or self.config.cultivar_map.get(seed, expected) != expected:
+                raise ValueError("Maize seed / native variety mismatch")
+            self._require_explicit_cultivar(seed)
+            return expected
         if seed != "*" and (
             (self.config.crop_name == "maize" and seed != "MAIZE_201")
             or (self.config.crop_name == "soybean"
-                and seed in {"MAIZE_201", "MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"})
+                and seed in (set(MAIZE_WOFOST_VARIANTS) | {"MAIZE_STANDARD", "MAIZE_EARLY_2026", "RICE_STANDARD"}))
         ):
             raise ValueError(f"Seed {seed!r} does not match WOFOST crop {self.config.crop_name!r}")
         self._require_explicit_cultivar(seed)

@@ -14,12 +14,11 @@ class RobotService(SharedFarmService):
 
     @service_tool(OperationType.WRITE, routing=("farm_id", "asset_id"))
     def inspect_ridge(self, farm_id: FarmId, asset_id: AssetId, ridge_id: RidgeId) -> dict[str, Any]:
-        """Walk one whole ridge and report the legacy pest/disease diagnosis.
+        """Walk one whole ridge to inspect pest and disease evidence.
 
         Requires an eligible robot with at least 20% battery and no charging.
-        Consumes battery and advances the shared clock. Rain adds a wet-ground
-        warning, not a rejection. This legacy diagnosis uses threshold-based
-        detections; use inspect_crop_health for observation-model scouting.
+        Consumes battery and working time. Rain adds a wet-ground warning.
+        Read the field's available diagnoses and confidence where provided.
 
         Args:
             farm_id: Farm containing the ridge to inspect.
@@ -42,9 +41,8 @@ class RobotService(SharedFarmService):
         Spends battery and shared time. At most the first eight requested
         ridges are covered; battery may reduce coverage further. Inspect
         covered_ridges and uncovered_ridges even when the receipt succeeds.
-        Physics-mode detections include observation error; this does not
-        replace surveying ridges that were not visited. Without active physics,
-        weed evidence is unavailable (null detection, zero confidence, unknown band).
+        Detections have observation uncertainty; this does not
+        replace surveying ridges that were not visited. Unavailable weed evidence is reported as unknown, not confirmed absence.
 
         Args:
             farm_id: Farm containing every requested local ridge.
@@ -67,11 +65,9 @@ class RobotService(SharedFarmService):
 
         Requires an eligible, noncharging robot with at least 15% battery.
         Spends battery and shared time. Visits at most eight ridges per call
-        and may visit fewer when battery is limiting. Physics-mode results
-        include noisy pest/disease/weed detections and an ordinal leaf nutrition
-        diagnosis; check coverage before treating or scheduling the next pass.
-        Without active physics, weed evidence is unavailable (null detection,
-        zero confidence, unknown band) and leaf nutrition is not diagnosed.
+        and may visit fewer when battery is limiting. Read the available diagnoses, uncertainty and coverage before treating
+        or scheduling the next pass. Missing weed or nutrition evidence is unknown,
+        not confirmed absence or adequacy.
 
         Args:
             farm_id: Farm containing every requested local ridge.
@@ -90,15 +86,12 @@ class RobotService(SharedFarmService):
     def inspect_emergence(
         self, farm_id: FarmId, asset_id: AssetId, start_ridge: RidgeId, end_ridge: RidgeId,
     ) -> dict[str, Any]:
-        """Check stand establishment in an inclusive local ridge range.
+        """Inspect stand establishment in an inclusive local ridge range.
 
-        Requires an eligible, noncharging robot with at least 15% battery.
-        Spends battery and advances the shared clock. Covers at most the first
-        eight requested ridges, possibly fewer under battery limits. The
-        current model reports stand_fraction for visited ridges; no estimate
-        is made for uncovered ridges. Base any replant decision on covered
-        observations and the crop's planting constraints. Without active physics,
-        stand is a binary planted/unplanted proxy and weed evidence is unavailable.
+        Requires an eligible robot with at least 15% battery and no charging.
+        Uses battery and working time, visiting at most eight ridges. Check
+        covered and uncovered ridges and the available stand evidence before
+        planning replanting. An unavailable estimate is not confirmed crop failure.
 
         Args:
             farm_id: Farm whose emergence should be inspected.

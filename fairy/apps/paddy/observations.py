@@ -23,10 +23,20 @@ def crop_report(world, plot):
              "tillering_proxy" if dvs >= .25 else "establishment_proxy")
     rftra = backend.last_rates.get("RFTRA")
     rfrgrl = backend.last_rates.get("RFRGRL")
+    # WOFOST81 leaf dynamics applies this factor only to juvenile leaf-area
+    # expansion (DVS < .2, LAI < .75), not general season-long N sufficiency.
+    last_day = next((e["day"] for e in reversed(backend.journal) if e["kind"] == "day"), None)
+    lai = float(backend.crop_values.get("LAI") or 0)
+    valid_n = (plot.planted and not backend.maturity and last_day is not None
+               and dvs is not None and dvs < .2 and lai < .75
+               and isinstance(rfrgrl, (float, int)) and math.isfinite(rfrgrl))
     return {"plot_id": plot.plot_id, "stage": stage,
             "canopy_cover_fraction": round(1 - math.exp(-.6 * float(backend.crop_values.get("LAI") or 0)), 2),
             "wilting_index": round(1 - rftra, 2) if rftra is not None else None,
-            "nitrogen_stress_signal": ("low" if rfrgrl is None or rfrgrl >= .95 else "elevated"),
+            "nitrogen_stress_signal": ("low" if rfrgrl >= .95 else "elevated") if valid_n else "unknown",
+            "nitrogen_signal_date": last_day,
+            "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+            "nitrogen_signal_applicable": bool(valid_n),
             "stage_uncertainty": "management proxy; no tiller or panicle counts",
             "maturity_observed": bool(backend.maturity)}
 
@@ -39,7 +49,11 @@ class PaddyObservationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def read_water_sensors(self, plot_id: str) -> dict:
-        """Read plot pond depth and estimated root-zone VWC. This is not a groundwater tube reading."""
+        """Read plot pond depth and estimated root-zone VWC. This is not a groundwater tube reading.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = require_plot(self.world, plot_id)
         water = self.world.backends[plot_id].water.ledger()
         return self.world.observe(f"water:{plot_id}", {
@@ -51,7 +65,11 @@ class PaddyObservationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def inspect_crop(self, plot_id: str) -> dict:
-        """Spend 15 minutes inspecting crop stage, canopy cover and stress symptoms."""
+        """Spend 15 minutes inspecting crop stage, canopy cover and stress symptoms.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = require_plot(self.world, plot_id)
         self.world.run_job(900)
         return self.world.observe(f"crop:{plot_id}", crop_report(self.world, p))
@@ -59,7 +77,12 @@ class PaddyObservationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def measure_grain_moisture(self, plot_id: str | None = None, batch_id: str | None = None) -> dict:
-        """Measure standing mature grain or a harvested batch; select exactly one target."""
+        """Measure standing mature grain or a harvested batch; select exactly one target.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview. Supply exactly one of plot_id or batch_id.
+            batch_id: Exact grain-batch ID from the grain listing. Supply exactly one of plot_id or batch_id.
+        """
         self.world.advance_physics_time()
         if (plot_id is None) == (batch_id is None):
             raise ValueError("Select exactly one plot_id or batch_id")
@@ -78,7 +101,12 @@ class PaddyObservationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def inspect_pests(self, plot_id: str) -> dict:
-        """Spend 15 minutes scouting insect, disease and weed symptoms (empirical severity proxies)."""
+        """Spend 15 minutes inspecting insect, disease and weed symptoms. Severity scores are field estimates; combine them with other evidence when choosing treatment.
+
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = require_plot(self.world, plot_id)
         self.world.run_job(900)
         return self.world.observe(f"pests:{plot_id}", {"plot_id": plot_id,
@@ -88,7 +116,12 @@ class PaddyObservationApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def inspect_establishment(self, plot_id: str) -> dict:
-        """Sample established stand fraction after transplanting; no individual-plant counts are simulated."""
+        """Sample the established stand fraction after transplanting. This is an estimated proportion, not a complete individual-plant count.
+
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         p = require_plot(self.world, plot_id)
         if not p.planted:
             raise ValueError("Transplant before inspecting establishment")

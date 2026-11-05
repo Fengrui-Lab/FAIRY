@@ -1,4 +1,5 @@
 """Shared machinery assets; physical work consumes onboard resources."""
+from fairy.apps.resource_transfer import transfer_receipt
 from dataclasses import asdict
 
 from fairy.apps.app import App
@@ -15,7 +16,11 @@ class PaddyMachineryApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_machine_status(self, machine_id: str | None = None) -> dict:
-        """Inspect tractor, transplanter or combine fuel, implement and onboard loads."""
+        """Inspect tractor, transplanter or combine fuel, implement and onboard loads.
+
+        Args:
+            machine_id: Exact machine ID from the machinery status listing. None lists every machine.
+        """
         self.world.advance_physics_time()
         machines = [self.world.machine(machine_id)] if machine_id else self.world.field.machines
         return {"machines": [asdict(m) for m in machines],
@@ -27,22 +32,36 @@ class PaddyMachineryApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def refuel(self, machine_id: str, liters: float) -> dict:
-        """Transfer a finite amount from warehouse fuel into the selected machine tank."""
+        """Transfer a finite amount from warehouse fuel into the selected machine tank.
+
+        Args:
+            machine_id: Exact machine ID from the machinery status listing.
+            liters: Positive fuel volume in L.
+        """
         self.world.advance_physics_time()
         m = self.world.machine(machine_id)
         amount = positive(liters, "liters")
-        if amount > self.world.field.fuel_liters or amount + m.fuel_liters > m.tank_capacity_liters:
-            raise ValueError("Insufficient warehouse fuel or tank capacity")
+        remaining = m.tank_capacity_liters - m.fuel_liters
+        if amount > self.world.field.fuel_liters:
+            raise ValueError(f"Insufficient warehouse fuel: requested={amount}, available={self.world.field.fuel_liters}, remaining_capacity={remaining}")
+        if amount > remaining:
+            raise ValueError(f"Fuel tank capacity exceeded: requested={amount}, remaining_capacity={remaining}, available={self.world.field.fuel_liters}")
         self.world.run_job(300)
         self.world.field.fuel_liters -= amount
         m.fuel_liters += amount
         self.world.record("refuel", machine_id=machine_id, liters=amount)
-        return {"status": "ok", "fuel_liters": m.fuel_liters}
+        return {"status": "ok", "fuel_liters": m.fuel_liters,
+                **transfer_receipt(amount, amount, m.fuel_liters, m.tank_capacity_liters, self.world.field.fuel_liters, "L")}
 
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def attach_implement(self, machine_id: str, implement: str) -> dict:
-        """Attach puddler, spreader or sprayer to the tractor; other machines are dedicated assets."""
+        """Attach puddler, spreader or sprayer to the tractor; other machines are dedicated assets.
+
+        Args:
+            machine_id: Exact machine ID from the machinery status listing.
+            implement: Supported implement name for the selected machine.
+        """
         self.world.advance_physics_time()
         m = self.world.machine(machine_id)
         if m.kind != "tractor" or implement not in {"puddler", "spreader", "sprayer"}:
@@ -57,7 +76,11 @@ class PaddyMachineryApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def detach_implement(self, machine_id: str) -> dict:
-        """Detach the tractor implement after completing a work sequence."""
+        """Detach the tractor implement after completing a work sequence.
+
+        Args:
+            machine_id: Exact machine ID from the machinery status listing.
+        """
         self.world.advance_physics_time()
         m = self.world.machine(machine_id)
         if m.kind != "tractor" or m.implement is None:

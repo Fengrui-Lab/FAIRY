@@ -55,12 +55,12 @@ def _tuples(value):
     return tuple(_tuples(v) for v in value) if isinstance(value, list) else value
 
 
-def export_maize_checkpoint(scenario, label):
+def export_maize_checkpoint(scenario, label, *, source_digest=None):
     farm = scenario.get_typed_app(FarmWorldApp)
     result = {
         "schema_version": SCHEMA,
         "source_l3_scenario_id": scenario.spec.scenario_id,
-        "source_fingerprint": source_fingerprint(scenario.spec.variant),
+        "source_fingerprint": source_digest or source_fingerprint(scenario.spec.variant),
         "variant": scenario.spec.variant,
         "checkpoint_label": label,
         "farm": export_farm_checkpoint_state(

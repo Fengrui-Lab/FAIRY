@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "candidate_specs": 10,
+  "complete_phase1_task_texts": 10,
+  "current_tool_catalogs": 10,
+  "planned_pilot_runs": 4,
+  "executed_pilot_runs": 0,
+  "model_requests": 0,
+  "all_original_python_sources_unchanged": true,
+  "old_base200_removed_from_target_tasks": true,
+  "dose_calculation_checks": true,
+  "N01_actual_irrigation_plan_identical_zero": true,
+  "candidate_runtime_prompt_equality": "not yet implemented; required Phase2 release check",
+  "E1_E2_not_claimed": true,
+  "full_contract_documents_exist": true,
+  "all10_interface_files_hashed": true,
+  "linked_plan_files_exist": true,
+  "production_preservation_verified_after_documents": true
+}

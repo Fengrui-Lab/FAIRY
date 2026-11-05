@@ -178,7 +178,7 @@ def test_replay_executes_reads_and_writes_and_restores_pre_execution_errors(
         _step(
             "step2",
             "ReplayApp__missing_tool",
-            content="KeyError: ReplayApp__missing_tool",
+            content="KeyError: 'ReplayApp__missing_tool'",
             op_type="TOOL_ERROR",
         ),
     ]
@@ -198,7 +198,7 @@ def test_replay_executes_reads_and_writes_and_restores_pre_execution_errors(
     ]
     assert events[0].metadata.return_value == {"value": 1}
     assert events[2].failed()
-    assert events[2].metadata.exception == "KeyError: ReplayApp__missing_tool"
+    assert events[2].metadata.exception == "KeyError: 'ReplayApp__missing_tool'"
 
 
 def test_replay_rejects_missing_method_on_recorded_success(
@@ -222,10 +222,13 @@ def test_replay_does_not_execute_tool_after_argument_parse_error(
     parse_error = _step(
         "step0",
         "ReplayApp__mutate",
-        content="JSONDecodeError: Expecting value",
+        content=("JSONDecodeError: Expecting property name enclosed in double quotes: "
+                 "line 1 column 2 (char 1)\nRaw arguments: {\n***"),
         op_type="TOOL_ERROR",
         error_stage="tool_args_parse",
     )
+    parse_error.update(error_type="JSONDecodeError", raw_arguments="{",
+        error_message="Expecting property name enclosed in double quotes: line 1 column 2 (char 1)")
 
     _, env, info = rebatch._replay_fairy_run_bundle(_bundle([parse_error]))
 
@@ -324,6 +327,71 @@ def test_replay_repeated_same_epoch_reads_do_not_move_physics_backwards(
     assert farm.physics.last_physics_sim_time == start
 
 
+def test_legacy_time_consuming_read_starts_at_previous_call_end(monkeypatch):
+    class SurveyApp(App):
+        @event_registered(OperationType.READ)
+        def survey(self):
+            self.time_manager.add_offset(300)
+            return {"status": "ok"}
+
+    survey = SurveyApp()
+    scenario = Scenario(start_time=1000.0, apps=[survey])
+    Engine(None, scenario)
+    monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
+    step = _step("survey", f"{survey.name}__survey", content={"status": "ok"})
+    step.pop("time_before")
+    step.pop("time_after")
+    step["time"] = 1300.0
+
+    _, _, info = rebatch._replay_fairy_run_bundle(_bundle([step]))
+
+    assert info["n_executed"] == 1
+    assert info["legacy_timing_steps"] == 1
+    assert survey.time_manager.time() == 1300.0
+
+
+@pytest.mark.parametrize("notification_after", [None, 1800])
+def test_legacy_notification_wait_replays_from_previous_call_end(
+    monkeypatch: pytest.MonkeyPatch, notification_after: int | None,
+) -> None:
+    from fairy.apps.system import SystemApp
+
+    system = SystemApp()
+    scenario = Scenario(start_time=1000.0, apps=[system])
+    engine = Engine(None, scenario)
+    notification = None
+    if notification_after is not None:
+        notification = SimpleNamespace(
+            time_start=1000.0 + notification_after, triggered=False,
+            start=lambda _time: None, step=lambda: "charge complete",
+        )
+        engine.schedule_dynamic_event(notification)
+    monkeypatch.setattr(rebatch, "_instantiate_scenario_for_replay", lambda *a, **k: scenario)
+    # Old agents retained only second-resolution end times, including time
+    # between calls. A notification can also arrive before the full timeout.
+    end = 1000.0 + (notification_after or 3600) + 11.0
+    steps = [
+        _step("before", "SystemApp__get_current_time", content={}),
+        _step("wait", "SystemApp__wait_for_notification", content=None,
+              tool_args={"timeout": 3600}),
+        _step("after", "SystemApp__get_current_time", content={}),
+    ]
+    for step, timestamp in zip(steps, [1000.0, end, end]):
+        step.pop("time_before")
+        step.pop("time_after")
+        step["time"] = timestamp
+
+    _, env, info = rebatch._replay_fairy_run_bundle(_bundle(steps))
+
+    assert info["n_replayed"] == 3
+    assert info["legacy_timing_steps"] == 3
+    assert info["exec_errors"] == 0
+    assert system.time_manager.time() == end
+    assert env.event_log.list_view()[1].event_time == 1000.0
+    if notification is not None:
+        assert notification.triggered
+
+
 def test_run_report_persists_replay_initialization_metadata() -> None:
     report = build_run_report(
         scenario_id="scenario_x",
@@ -386,3 +454,26 @@ def test_old_bundle_recovers_scenario_kwargs_from_results_csv(tmp_path: Path) ->
     assert bundle is not None
     assert bundle["scenario_kwargs"] == {"detailed_briefing": True}
     assert bundle["init_kwargs"] == {"sensor_count": 2}
+
+
+def test_replay_refusal_ignores_only_mission_id() -> None:
+    from copy import deepcopy
+    from fairy.controllers.engine import _verify_replay_response, ReplayDivergenceError
+
+    recorded = {"status": "partial", "mission_id": "original",
+                "surveyed_ridges": [], "observations": [],
+                "battery_remaining_pct": 23.5, "duration_minutes": 0.5,
+                "warning": "Battery low", "farm_id": "FarmWorldApp"}
+    step = SimpleNamespace(name="step65", content=recorded)
+    tool = SimpleNamespace(class_instance=object(), name="fly_survey")
+    actual = {**recorded, "mission_id": "replayed"}
+    before = deepcopy(recorded), deepcopy(actual)
+    assert _verify_replay_response(step, actual, tool) is True
+    assert (recorded, actual) == before
+    without_id = {k: v for k, v in actual.items() if k != "mission_id"}
+    assert _verify_replay_response(step, without_id, tool) is True
+    for field, value in [("battery_remaining_pct", 20.0),
+                         ("surveyed_ridges", [51]), ("warning", "Different refusal"),
+                         ("farm_id", "AnotherFarm"), ("status", "ok")]:
+        with pytest.raises(ReplayDivergenceError):
+            _verify_replay_response(step, {**actual, field: value}, tool)

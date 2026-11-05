@@ -6,6 +6,8 @@ those environmental transitions have a single owner in physics_orchestrator.
 """
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS
+
 from datetime import date, datetime, timedelta
 from math import isfinite
 from dataclasses import replace
@@ -30,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class SoybeanDynamics:
-    """Adapt soybean growth and report actual increments for nutrient settlement."""
+    """Adapt soybean growth while retaining legacy nutrient-proxy accounting."""
     observation_traits = CropObservationTraits(unstressed_root_vwc=0.20, diagnosed_pest_type="aphid", diagnosed_disease_type="leaf_spot")
 
     def __init__(self, num_ridges: int, *, model: SoybeanCropModel | None = None) -> None:
@@ -45,7 +47,7 @@ class SoybeanDynamics:
         except ValueError as exc:
             raise ValueError(f"Unknown seed for the compatibility crop engines: {event.seed_type!r}") from exc
         expected_crop = getattr(getattr(self, "crop_profile", None), "crop_type", "soybean")
-        actual_crop = ("maize" if seed in {SeedType.MAIZE_STANDARD, SeedType.MAIZE_201}
+        actual_crop = ("maize" if seed in MAIZE_WOFOST_VARIANTS or seed == SeedType.MAIZE_STANDARD
                        else "rice" if seed == SeedType.RICE_STANDARD else "soybean")
         if actual_crop != expected_crop:
             raise ValueError(f"Seed {event.seed_type!r} does not match crop {expected_crop!r}")
@@ -129,13 +131,12 @@ class SoybeanDynamics:
         _initialize_soybean_from_ridges(world, target_sim_time)
 
     def management_inputs(self, physics: FarmPhysicsState) -> dict[int, ManagementCropInput]:
-        # Today's growth is computed after management and soil. None explicitly
-        # defers uptake; the orchestrator settles the increment returned below.
-        # A numeric zero would incorrectly declare that no biomass was grown.
+        # Preserve main's compatibility contract: growth does not debit this
+        # composite nutrient index. WOFOST owns its separate native N balance.
         return {
             rid: ManagementCropInput(
                 stage=ManagementGrowthStage(state.stage.value),
-                daily_biomass_g_m2=None,
+                daily_biomass_g_m2=0.0,
             )
             for rid, state in self.phenology.states.items()
         }
@@ -152,7 +153,7 @@ class SoybeanDynamics:
         physics: FarmPhysicsState,
         day: date,
         weather: WeatherInputs,
-    ) -> dict[int, float]:
+    ) -> None:
         for rid, grain in self.yield_recovery.states.items():
             if grain.harvested:
                 self.phenology.states[rid].planted = False
@@ -226,22 +227,12 @@ class SoybeanDynamics:
             )
             for rid in physics.management.states
         }
-        # Take the baseline after emergence initialization: the seed-funded
-        # initial biomass is not new growth drawing on the soil nutrient proxy.
-        # Differences retain native precision, unlike rounded diagnostic results.
-        biomass_before = {
-            rid: state.aboveground_biomass_g_m2 for rid, state in self.canopy.states.items()
-        }
         physics.canopy.update_day(
             weather=weather["canopy"],
             phenology_by_ridge=canopy_phenology_inputs,
             soil_by_ridge=canopy_soil_inputs,
             management_by_ridge=canopy_management_inputs,
         )
-        return {
-            rid: state.aboveground_biomass_g_m2 - biomass_before[rid]
-            for rid, state in self.canopy.states.items()
-        }
 
     def advance_after_biotics(self, physics, day, weather, harvest_actions):
         pending_harvest = harvest_actions

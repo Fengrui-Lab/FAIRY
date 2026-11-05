@@ -7,7 +7,7 @@
     {
       "number": 1,
       "scenario_id": "scenario_full_season_fastdraining_dry_patch_irrigation_V2",
-      "source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_fastdraining_dry_patch_irrigation_V2.py",
+      "source_path": "fairy/scenarios/wofost/scenario_full_season_fastdraining_dry_patch_irrigation_V2.py",
       "class_name": "ScenarioFullSeasonFastDrainingDryPatchIrrigation_V2",
       "original_core": "识别20–31垄局部快失水干斑并定向补水",
       "status": "complete",
@@ -57,7 +57,7 @@
     {
       "number": 2,
       "scenario_id": "scenario_full_season_hb_two_dry_patches_one_irrigation_V2",
-      "source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_two_dry_patches_one_irrigation_V2.py",
+      "source_path": "fairy/scenarios/wofost/scenario_full_season_hb_two_dry_patches_one_irrigation_V2.py",
       "class_name": "ScenarioFullSeasonHBTwoDryPatchesOneIrrigation_V2",
       "original_core": "两块干斑中按真实灌溉收益分配仅够一块的水",
       "status": "complete",
@@ -97,7 +97,7 @@
     {
       "number": 3,
       "scenario_id": "scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2",
-      "source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2.py",
+      "source_path": "fairy/scenarios/wofost/scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2.py",
       "class_name": "ScenarioFullSeasonHBHN60HighFastdrainDryR5R6_V2",
       "original_core": "高密度田24–39垄更早缺水，分区补水",
       "status": "complete",
@@ -146,7 +146,7 @@
       "source_sha256_before": "a43bd4c06f2d7cbb28e13f6c0bb4c9717d9db3681893fa3bb9936d102b22bc6b",
       "original_scenario_id": "scenario_full_season_hb_hn60_high_dryr5r6_water_demand",
       "planned_wofost_id": "scenario_full_season_hb_hn60_high_dryr5r6_water_demand_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_hn60_high_dryr5r6_water_demand_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_hn60_high_dryr5r6_water_demand_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBHN60HighDryR5R6WaterDemand_V2"
     },
     {
@@ -161,7 +161,7 @@
       "source_sha256_before": "6b7fe6a33eabf0884121b2b488823ac6e3100bbb5f08259fcb6f3c9e8dcde2ec",
       "original_scenario_id": "scenario_full_season_hb_organic_patch_weed_mechanical_capacity",
       "planned_wofost_id": "scenario_full_season_hb_organic_patch_weed_mechanical_capacity_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_organic_weed_pressure_allowed_inputs_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_organic_weed_pressure_allowed_inputs_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBOrganicPatchWeedMechanicalCapacity_V2"
     },
     {
@@ -176,7 +176,7 @@
       "source_sha256_before": "9be0da9e9ff3bb46e285029c595a6cc59c22eb5c8fe5f85cc454be66e76c45c8",
       "original_scenario_id": "scenario_full_season_hb_mechanical_weed_trafficability_window",
       "planned_wofost_id": "scenario_full_season_hb_mechanical_weed_trafficability_window_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_mechanical_weed_control_soil_wetness_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_mechanical_weed_control_soil_wetness_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBMechanicalWeedTrafficabilityWindow_V2"
     },
     {
@@ -191,7 +191,7 @@
       "source_sha256_before": "0d61349f460ae314884ed98ee5a193d56653a1f89d46387b16200af358fef266",
       "original_scenario_id": "scenario_full_season_hb_lowinput_waterlimited_weed_pressure",
       "planned_wofost_id": "scenario_full_season_hb_lowinput_waterlimited_weed_pressure_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_lowinput_waterlimited_weed_pressure_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_lowinput_waterlimited_weed_pressure_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBLowinputWaterlimitedWeedPressure_V2"
     },
     {
@@ -206,7 +206,7 @@
       "source_sha256_before": "d7c9325fc023b6f8b834ae6f24c18bedb8b2663dfb791275bb19c7247e33c2fc",
       "original_scenario_id": "scenario_full_season_hb_lowdensity_weed_dry_competition",
       "planned_wofost_id": "scenario_full_season_hb_lowdensity_weed_dry_competition_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_lowdensity_weed_dry_competition_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_lowdensity_weed_dry_competition_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBLowdensityWeedDryCompetition_V2"
     },
     {
@@ -221,7 +221,7 @@
       "source_sha256_before": "49468f8b265cd84b58572036fc67bce2699f2ae714a3bb0c5d7afc01dc9b248a",
       "original_scenario_id": "scenario_full_season_heinong84_threshold_insect_limited_spray",
       "planned_wofost_id": "scenario_full_season_heinong84_threshold_insect_limited_spray_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_threshold_insect_limited_spray_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_heinong84_threshold_insect_limited_spray_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHeinong84ThresholdInsectLimitedSpray_V2"
     },
     {
@@ -236,7 +236,7 @@
       "source_sha256_before": "7c9e7073c84fba606bd002ecf0ce89d309d07b42dfdb82c6f3428341ae6899b8",
       "original_scenario_id": "scenario_full_season_heinong84_low_chemical_wet_disease",
       "planned_wofost_id": "scenario_full_season_heinong84_low_chemical_wet_disease_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_low_chemical_wet_disease_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_heinong84_low_chemical_wet_disease_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHeinong84LowChemicalWetDisease_V2"
     },
     {
@@ -251,7 +251,7 @@
       "source_sha256_before": "89fce5d40c310aafafaef92c902cffeedbf018da4e80dc6e36c49353a38e6469",
       "original_scenario_id": "scenario_full_season_hb_highdensity_wetjune_limited_fungicide",
       "planned_wofost_id": "scenario_full_season_hb_highdensity_wetjune_limited_fungicide_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_highdensity_wetjune_limited_fungicide_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_highdensity_wetjune_limited_fungicide_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBHighdensityWetjuneLimitedFungicide_V2"
     },
     {
@@ -266,7 +266,7 @@
       "source_sha256_before": "cc76efc8728bff502044ef4c75d498328959544f4b8483ecf19dcc19684f3de9",
       "original_scenario_id": "scenario_full_season_hb_wetjune_shortwindow_trafficability",
       "planned_wofost_id": "scenario_full_season_hb_wetjune_shortwindow_trafficability_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_shortwindow_trafficability_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_shortwindow_trafficability_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneShortwindowTrafficability_V2"
     },
     {
@@ -281,7 +281,7 @@
       "source_sha256_before": "363b8a99499f0841d3c790f6900cea3b819a066d309b9a444e0d29cc60e7095f",
       "original_scenario_id": "scenario_full_season_hb_wetjune_highdensity_poordrainage_disease",
       "planned_wofost_id": "scenario_full_season_hb_wetjune_highdensity_poordrainage_disease_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_highdensity_poordrainage_disease_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_highdensity_poordrainage_disease_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneHighdensityPoordrainageDisease_V2"
     },
     {
@@ -296,7 +296,7 @@
       "source_sha256_before": "3af37462fc397dde15ceccd83026cccec09f7e3527c4305057fa25e8ba37b8cd",
       "original_scenario_id": "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease",
       "planned_wofost_id": "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneSoyhistoryPoordrainageDisease_V2"
     },
     {
@@ -311,7 +311,7 @@
       "source_sha256_before": "369884d9d31e9aca313d3213fbe84d1173a65dd3fbacd0dcab576eebdbb99bcc",
       "original_scenario_id": "scenario_full_season_hb_dryr5r6_insect_threshold_waterstress",
       "planned_wofost_id": "scenario_full_season_hb_dryr5r6_insect_threshold_waterstress_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_dryr5r6_insect_threshold_waterstress_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_dryr5r6_insect_threshold_waterstress_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBDryR5R6InsectThresholdWaterstress_V2"
     },
     {
@@ -326,7 +326,7 @@
       "source_sha256_before": "3f3edf4358c5a21e2309ca432b62d12503c74886f0ab7ea64ed6bdd4b3b9cc36",
       "original_scenario_id": "scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis",
       "planned_wofost_id": "scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBLeaffeederVsDiseaseSpotsDiagnosis_V2"
     },
     {
@@ -341,7 +341,7 @@
       "source_sha256_before": "f6945c196376fe34fe455bc04b88b2cfe64bd3320e4465ec8f3c52a513728bb1",
       "original_scenario_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide",
       "planned_wofost_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_wetjune_disease_recheck_after_fungicide_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_wetjune_disease_recheck_after_fungicide_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBWetjuneDiseaseRecheckAfterFungicide_V2"
     },
     {
@@ -356,7 +356,7 @@
       "source_sha256_before": "6d3a0eacf36d1dfa23383e8506d56f7039c8396fa6bfdf49225bfdcc1c43e9bd",
       "original_scenario_id": "scenario_full_season_hb_drought_recovery_false_disease_signal",
       "planned_wofost_id": "scenario_full_season_hb_drought_recovery_false_disease_signal_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_drought_recovery_false_disease_signal_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_drought_recovery_false_disease_signal_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBDroughtRecoveryFalseDiseaseSignal_V2"
     },
     {
@@ -371,7 +371,7 @@
       "source_sha256_before": "9aae3b0a392c684026afa5504c5ae321ae8c740e69a8a8bf78690a08ce20d1f5",
       "original_scenario_id": "scenario_full_season_hb_coolwet_flowering_disease_risk",
       "planned_wofost_id": "scenario_full_season_hb_coolwet_flowering_disease_risk_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_coolwet_flowering_disease_risk_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_coolwet_flowering_disease_risk_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBCoolwetFloweringDiseaseRisk_V2"
     },
     {
@@ -386,7 +386,7 @@
       "source_sha256_before": "23fadb2e3193ced34b219eda3e637df3072f1cfe5e5e0c530ec6b5dbf5c9b72e",
       "original_scenario_id": "scenario_full_season_hb_laterain_insect_risk",
       "planned_wofost_id": "scenario_full_season_hb_laterain_insect_risk_V2",
-      "planned_wofost_source_path": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_laterain_insect_risk_V2.py",
+      "planned_wofost_source_path": "fairy/scenarios/wofost/scenario_full_season_hb_laterain_insect_risk_V2.py",
       "planned_wofost_class_name": "ScenarioFullSeasonHBLaterainInsectRisk_V2"
     }
   ],

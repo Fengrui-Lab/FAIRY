@@ -1,0 +1,165 @@
+{
+  "contract_version": "h01-evaluation-handoff-v0.1",
+  "status": "design_contract_not_a_production_H01_implementation",
+  "scope": {
+    "purpose_zh": "为一个机械回收外围试点明确既有结果字段、计划新增分项账及只读汇总数据流。",
+    "existing_reference_version": "basic-management-v1.1",
+    "existing_reference_status": "W01/N01已结案；本合同不重新验收、不改写其评分或原始证据。",
+    "cross_environment_pairing": "forbidden: W01 and N01 are different environments and are not a causal pair",
+    "candidate_feasibility_authority": "The actual candidate validator and its audited operation/input/terminal contracts; never this field reader."
+  },
+  "existing_fields": {
+    "native_success": {
+      "json_path": "$.success",
+      "meaning": "Existing ScenarioValidationResult success; assigned from production_success. It is not a yield-quality score."
+    },
+    "scenario_version": {
+      "json_path": "$.metadata.scenario_version"
+    },
+    "status": {
+      "json_path": "$.metadata.status"
+    },
+    "execution_complete": {
+      "json_path": "$.metadata.execution_complete",
+      "type": "boolean"
+    },
+    "production_success": {
+      "json_path": "$.metadata.production_success",
+      "type": "boolean"
+    },
+    "postharvest_applicability": {
+      "json_path": "$.metadata.postharvest_applicability"
+    },
+    "failures": {
+      "json_path": "$.metadata.failures",
+      "type": "array"
+    },
+    "mature_yield": {
+      "json_path": "$.metadata.mature_TWSO_kg_DM_ha",
+      "unit": "kg_DM_per_ha"
+    },
+    "actual_stored_grain": {
+      "json_path": "$.metadata.warehouse_kg_at_14pct",
+      "unit": "kg_at_14pct",
+      "primary_quantity": true
+    },
+    "effective_irrigation": {
+      "json_path": "$.metadata.effective_irrigation_field_mm",
+      "unit": "mm"
+    },
+    "native_maturity_per_ridge": {
+      "json_path": "$.metadata.native_per_ridge[*]",
+      "fields": [
+        "ridge",
+        "DOM",
+        "TWSO"
+      ]
+    },
+    "native_irrigation_per_ridge": {
+      "json_path": "$.metadata.water_by_ridge[*]",
+      "fields": [
+        "ridge",
+        "TOTIRR_cm",
+        "area_m2"
+      ]
+    },
+    "tool_errors": {
+      "json_path": "$.metadata.tool_errors",
+      "role": "retained_diagnostics_not_an_automatic_failure_count"
+    },
+    "warnings": {
+      "json_path": "$.metadata.warnings",
+      "current_rule": "The v1.1 candidate validator fails on any unreviewed warning."
+    },
+    "legacy_validation": {
+      "json_path": "$.metadata.legacy_native_validation",
+      "role": "preserved_diagnostic_only",
+      "not_a_fallback_for": [
+        "success",
+        "warehouse_kg_at_14pct",
+        "execution_complete",
+        "production_success"
+      ]
+    }
+  },
+  "primary_outcome_contract": {
+    "source": "$.metadata.warehouse_kg_at_14pct",
+    "unit": "kg_at_14pct",
+    "positive_closed_outcome": "Use the exact reported quantity when the actual candidate validator confirms execution_complete=true, production_success=true, no failures, and a finite positive warehouse quantity.",
+    "zero_closed_outcome": "Use exact zero when the actual validator reports execution_complete=true, production_success=false, status=zero_yield_completed, no failures, and a finite zero warehouse quantity. Do not change production_success to true.",
+    "failed_or_incomplete_outcome": "Retain the raw reported warehouse quantity, flags, status and failures. Set primary_outcome=null. Do not convert the quantity to zero or present it as validated safe delivery.",
+    "missing_or_invalid_fields": "Retain the source evaluation and report adapter issues; do not use a legacy fallback or fill missing values with zero.",
+    "normalization": "none: do not clip or normalize by a reference yield; the reference is not an optimum",
+    "validator_boundary": "Basic field consistency is not a new feasibility validator. A future H01 validator must audit the new mechanical process and loss ledger."
+  },
+  "planned_H01_fields": {
+    "status": "not_present_in_existing_v1.1_evaluation_and_not_implemented_by_this_handoff",
+    "fields": [
+      {
+        "proposed_json_path": "$.metadata.h01.recovered_dm_kg",
+        "unit": "kg_DM",
+        "meaning": "Actual full-field recovered dry matter from the native recovery ledger before display rounding; not mature TWSO times an assumed constant recovery rate."
+      },
+      {
+        "proposed_json_path": "$.metadata.h01.machine_loss_dm_kg",
+        "unit": "kg_DM",
+        "meaning": "Actual machine-attributed dry matter loss under the trial's explicitly defined loss decomposition. Other field losses must not be assigned to this category."
+      },
+      {
+        "proposed_json_path": "$.metadata.h01.harvest_batches[*]",
+        "required_fields": [
+          "operation_id",
+          "ridge_ids",
+          "area_m2",
+          "harvest_started_at",
+          "harvest_finished_at",
+          "harvest_registered_at",
+          "condition_at_start",
+          "q_pass",
+          "recovered_dm_kg",
+          "machine_loss_dm_kg"
+        ],
+        "meaning": "An immutable quality snapshot taken after immediate legality checks and before harvest time advances. The exact same q_pass is supplied to HarvestAction and FarmActionRecord when settlement is registered; a later repair cannot change this batch."
+      }
+    ],
+    "loss_accounting_requirements": [
+      "The same native harvest loss is applied once, not also subtracted by the summary adapter.",
+      "Record the applicable loss components and any clipping so their attribution is explicit.",
+      "Keep mature dry matter, recovered dry matter and actual standard-moisture warehouse mass separate.",
+      "Check the mechanical trial's actual loss and mass ledger in the candidate validator; the reader does not reconstruct a physical ledger."
+    ]
+  },
+  "handoff_reader": {
+    "path": "tools/read_management_result.py",
+    "status": "provided_in_this_handoff_only",
+    "interface": "python tools/read_management_result.py --evaluation EXISTING_EVALUATION_JSON --output NEW_OUTPUT_JSON",
+    "reads": "one existing evaluation file",
+    "writes": "one new JSON artifact; never overwrites an existing file",
+    "does_not": [
+      "run a simulation",
+      "run candidate validation",
+      "replay PCSE history",
+      "change existing evidence",
+      "pair W01 with N01",
+      "add an existing FAIRY CLI command"
+    ]
+  },
+  "planned_production_summary": {
+    "status": "planned_not_implemented",
+    "proposed_entry": "scripts/summarize_maize_h01.py",
+    "not_an_existing_command": "There is no summarize action in the frozen run_maize_basic_reference.py; its actions are preflight and run.",
+    "data_flow": [
+      "Accepted public actions update the native recovery process and an immutable batch ledger.",
+      "The actual H01 candidate validator evaluates terminal feasibility and the new loss ledger.",
+      "The run stores evaluation.json plus batch and operation evidence without changing old runs.",
+      "A future read-only production summary reads those outputs, preserves raw flags and quantities, and displays the declared primary outcome and process decomposition.",
+      "Any paired difference is computed only for explicitly matched H01 configurations, initial states and external events; never from the existing W01 and N01 environments."
+    ]
+  },
+  "included_field_wiring_example": {
+    "output": "results/existing_n01_field_adapter.json",
+    "source_identity": "Existing frozen N01 v1.1 positive-reference evaluation",
+    "evidence_label_zh": "历史字段接线校验；不是H01结果，不是新增全季验收，不是配对比较。",
+    "new_model_runs": 0
+  }
+}

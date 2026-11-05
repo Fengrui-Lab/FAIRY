@@ -5,29 +5,12 @@
   "variant": "normal",
   "source_l3_scenario_id": "scenario_rice_l3_normal",
   "source_checkpoint_label": "before_transplant",
-  "initial_checkpoint_sha256": "7c0cb55e06fc7224bbf957a612bce7d641591cafaa89b3d780f052bb74e8a64a",
+  "initial_checkpoint_sha256": "3e8247cdfdcaa67e13c45729c404b078c28a7f7b60a72ba9716ec633993dfc95",
   "config_fingerprint": "f4aad6cfa3f9d11b213d293d8e93b439d8aef54f4ade908d38ffbd9d76b95632",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "e3e558b80e4457d918b31bca1580140c13fe51bf1e6b9073d6edf1ad7f6041c7",
+  "expected_final_state_sha256": "9a1156e365157b2551feae24496681068c85648e7fbc1b6991e75649fc62b1f9",
   "checkpoint_steps": {},
   "steps": [
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
-    {
-      "tool_name": "PaddyMachineryApp__get_machine_status",
-      "tool_args": {
-        "machine_id": "transplanter"
-      },
-      "duration_seconds": 0.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_inventory",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
     {
       "tool_name": "PaddyOpsApp__load_seedlings",
       "tool_args": {
@@ -44,11 +27,12 @@
         "area_m2": 1000.0
       },
       "duration_seconds": 1800.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "96ac3e57d9ab93dcd1abb836772019c6ec9b4642f07d847c04315c7203d9ebe1",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    32,
+    34
   ]
 }

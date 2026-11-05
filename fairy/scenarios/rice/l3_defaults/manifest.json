@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "files": {
+    "challenge_plans/scenario_rice_l3_zonal_water_n_allocation.json": "b7a0cd05aae24b2350698ad58a01740d494b8943ec685aacb29c8c8563d2781f",
+    "challenge_plans/scenario_rice_l3_infrastructure_water_priority.json": "6dbf1e4b93822802eb3c9636c85dd3a6f5399ab7dd3da3b9b1c96a984185e605",
+    "challenge_plans/scenario_rice_l3_zonal_crop_protection.json": "69a5448d83e946387ca98080579a99e248c47dea8d409a4e22892798a9b9c5d9",
+    "challenge_plans/scenario_rice_l3_rainy_harvest_capacity.json": "1be79527cde32a336acad9e6fbaadd14aa1658d134a93ac64557280dbbef90e6",
+    "detailed_briefings.json": "a5e2e7f8fc30b106479ca3b60eca405d6d88047e5e2f669106c1dadfb7c7d7eb",
+    "split_challenges/scenario_rice_l3_zonal_water_n_allocation.json": "a366ec10d66984fc8e729c0d780f903644d1d562f6f5b14cb2c55062baf48166",
+    "split_challenges/scenario_rice_l3_infrastructure_water_priority.json": "497d1b09a65957776097ee812ea2008548a419d65a4417d551298613b9efdfed",
+    "split_challenges/scenario_rice_l3_zonal_crop_protection.json": "e1021afe187576b5d1569fd6f5386f085ddfc9c54e71fbc7845f090c0e1052f9",
+    "split_challenges/scenario_rice_l3_rainy_harvest_capacity.json": "fed7424f0eedbfd1e5fbc422f70e081f3f71f592931ca039bccaf8df49df5c59",
+    "split_briefings.json": "69ecf4adf68ec140c3f4e8a8c77d0d5f86343356f038654c2f257d67bfc52612"
+  },
+  "scenarios": {
+    "scenario_rice_l3_normal": {
+      "tool_calls": 199,
+      "stored_kg_at_14pct": 2021.4609525738856,
+      "expected_final_state_sha256": "3107fa62807a218d80e5ce8681ba400da2e6864a40729d564ef3fb555f5bb0bd",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_normal"
+    },
+    "scenario_rice_l3_water_limit": {
+      "tool_calls": 224,
+      "stored_kg_at_14pct": 2021.4350877480597,
+      "expected_final_state_sha256": "a3ff3d9b95d7a8aa88c4a96c236cb90afeeb46e4fa8083841572f37c1c966485",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 5,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_water_limit"
+    },
+    "scenario_rice_l3_nitrogen_limit": {
+      "tool_calls": 199,
+      "stored_kg_at_14pct": 932.0221814837382,
+      "expected_final_state_sha256": "bcf094fed424f8577662e265bc6ef54fcd3c8489d8a10702267dfe7b597331a6",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 29.9,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "splits": [
+          0.1111111111111111,
+          0.4444444444444444,
+          0.4444444444444444
+        ]
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_nitrogen_limit"
+    },
+    "scenario_rice_l3_biotic": {
+      "tool_calls": 256,
+      "stored_kg_at_14pct": 1902.7190652243607,
+      "expected_final_state_sha256": "310d4ac88e5ab5831231f97f0406fc8ffd69437bf1caf54b6ead1021b7d7af17",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 7,
+        "protection_trigger": 0.1
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_biotic"
+    },
+    "scenario_rice_l3_infrastructure": {
+      "tool_calls": 204,
+      "stored_kg_at_14pct": 2021.4609525738856,
+      "expected_final_state_sha256": "5e6b285418433d67c1a60c6be2f011978afae2a28c1575a8d93e855e253cf163",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_infrastructure"
+    },
+    "scenario_rice_l3_equipment_limit": {
+      "tool_calls": 228,
+      "stored_kg_at_14pct": 2021.4609525738854,
+      "expected_final_state_sha256": "43873d3015506b707408ac9ba520f61bc091ddc35c36bef4bd482c5252ef1cb5",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest",
+        "queue_harvest": true
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_equipment_limit"
+    },
+    "scenario_rice_l3_poor_stand": {
+      "tool_calls": 204,
+      "stored_kg_at_14pct": 2022.0924663024628,
+      "expected_final_state_sha256": "5810ad8a5815ba6cd7a072c4ba6fae6ac4c2eca8452d5be5dc8b76c29b1f1258",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_poor_stand"
+    },
+    "scenario_rice_l3_late_rain": {
+      "tool_calls": 238,
+      "stored_kg_at_14pct": 1977.363270244603,
+      "expected_final_state_sha256": "e5dcc3086b2b7b9da91581122f39b5f96dfd83a3d19b8e63cf2b083819ef07c5",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "preferred"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_late_rain"
+    },
+    "scenario_rice_l3_zonal_water_n_allocation": {
+      "tool_calls": 233,
+      "stored_kg_at_14pct": 1304.4123274970311,
+      "expected_final_state_sha256": "dad2b52faa9e5f3ca5010792a8c0d508cfc3f28ee5338371ede5fb801d53c8a3",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 5,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          14,
+          35
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 7,
+        "protection_trigger": 0.25,
+        "p1_share": 0.6,
+        "splits": [
+          0.1111111111111111,
+          0.4444444444444444,
+          0.4444444444444444
+        ]
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_zonal_water_n_allocation"
+    },
+    "scenario_rice_l3_infrastructure_water_priority": {
+      "tool_calls": 232,
+      "stored_kg_at_14pct": 2024.2226039388906,
+      "expected_final_state_sha256": "6c81d5bbd814f16c9e6c69af439ca50512b3020c58ee3546f5b5c9f84a1213c7",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 5,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_infrastructure_water_priority"
+    },
+    "scenario_rice_l3_zonal_crop_protection": {
+      "tool_calls": 319,
+      "stored_kg_at_14pct": 1910.6152831426502,
+      "expected_final_state_sha256": "dd68476e79f081d473f65811a02a32d87d380e25e9069fed89255223cd6d2c24",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 3,
+        "protection_trigger": 0.1
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_zonal_crop_protection"
+    },
+    "scenario_rice_l3_rainy_harvest_capacity": {
+      "tool_calls": 252,
+      "stored_kg_at_14pct": 1951.7669184300094,
+      "expected_final_state_sha256": "d7ed5f14c60dd564cfad89e9d514bcdaaf166dd0f886e5a38332801cf505ca1f",
+      "management_parameters": {
+        "n_total": 414,
+        "water": "root20",
+        "water_interval": 7,
+        "crop_interval": 14,
+        "daily_from": 85,
+        "fert_calendar": true,
+        "fert_days": [
+          18,
+          38
+        ],
+        "preplant_target": 20,
+        "late_drain": "natural",
+        "stop_water_stage": "late_grain_filling",
+        "pest_interval": 14,
+        "protection_trigger": 0.25,
+        "harvest_mode": "earliest"
+      },
+      "release_id": "rice_oracle_release_20261101_v1",
+      "oracle_directory": "validation_runs/rice_oracle_release_20261101_v1/scenario_rice_l3_rainy_harvest_capacity"
+    }
+  }
+}

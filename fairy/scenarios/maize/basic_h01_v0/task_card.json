@@ -1,0 +1,206 @@
+{
+  "document_version": "h01-task-card-0.1",
+  "date": "2026-11-03",
+  "time_zone": "Asia/Shanghai",
+  "status": "design_frozen_for_local_probe_not_registered",
+  "candidate_id": "MZ-H01",
+  "proposed_runtime_id": "scenario_maize_l3_basic_h01_v0",
+  "proposed_evaluation_version": "basic-h01-v0.1",
+  "title": "玉米割台防落穗部件维护",
+  "representation": "简化工程情境；不是具体收割机型号、故障程度或维修时长的实测模型",
+  "admitted_as_new_L3": false,
+  "objective": {
+    "public": "在公开资源、期限、安全及全周期完成约束下，尽量提高实际安全入库的14%标准粮量。",
+    "primary_result": "evaluation.json: $.metadata.warehouse_kg_at_14pct",
+    "feasibility": "实际新候选validate输出；继承已核对的v1.1终态语义并明确记录新候选版本",
+    "preserve": [
+      "execution_complete",
+      "production_success",
+      "status",
+      "成熟TWSO",
+      "实际回收干物质",
+      "原生FOS及路径指标"
+    ],
+    "do_not_optimize_against": "原生FOS/路径指标不能覆盖本候选的实际入库kg比较",
+    "zero_yield": "合法零产闭环保留execution_complete=true、production_success=false及0 kg；失败/缺失不填0。"
+  },
+  "parent_environment": {
+    "reuse": "现有N01 v1.1的candidate_spec('N01')与初始化；独立候选，不修改或覆盖N01。",
+    "identity_source": "已归档maize-l3-v11-reference-20261103/frozen-source/fairy/scenarios/maize/basic_management.py",
+    "identity_sha256": "63fcd7e1483f93a90f5ec289583735a308ee2aad22ed31b1db2aeda0e70f22b4",
+    "farm_count": 1,
+    "field_count": 1,
+    "ridges": 64,
+    "ridge_area_m2": 201,
+    "field_area_ha": 1.2864,
+    "root_depth_m": 0.4,
+    "weather": "现有N01合成哈尔滨天气；不新增天气处理、不作为实测当地气候",
+    "cultivar": "MAIZE_201 / Grain_maize_201；未本地标定",
+    "irrigation_quota_field_equivalent_mm": 0,
+    "fertilizer_product_stock_and_quota_kg": 360,
+    "fertilizer_n_fraction": 0.46,
+    "native_n_recovery": 0.7,
+    "native_crop_dynamics": "不改WOFOST品种、土壤、生长参数和原有损失系数。",
+    "scope_of_claim": "模型内机械回收任务；不新增现实田间产量或维修收益声明。"
+  },
+  "mechanism": {
+    "component": "header_ear_retention",
+    "condition_values": [
+      "serviceable",
+      "maintenance_required"
+    ],
+    "initial_condition": "maintenance_required",
+    "fault_kind": "只模拟回收性能异常；不引入人身危险故障、停机安全认证或运行中故障。",
+    "state_dynamics": "固定初始机况；仅成功维修切换；无自发劣化、无随机抽样。",
+    "q_by_condition": {
+      "serviceable": 0.95,
+      "maintenance_required": 0.85
+    },
+    "parameter_identity": {
+      "q_serviceable": "原公共收割q=0.95，直接沿用",
+      "q_maintenance_required": "本次冻结的工程假设，不是文献标定",
+      "inspection_duration_s": "600秒，工程假设",
+      "repair_duration_s": "3600秒，工程假设",
+      "q_to_loss": "沿用固定提交原生回收引擎的0.10*(1-q)，不另加季末扣产"
+    },
+    "expected_direct_loss_change_without_clipping": {
+      "extra_machine_loss_fraction": 0.01,
+      "statement": "q=.85到.95对应机械损失率下降1个百分点；只是代码与设定的直接后果，不是预期全季胜者或现实损失预测。"
+    },
+    "no_result_tuning": "看局部或全季结果后不调整这些参数来制造预定赢家；改变即登记新设计版本。",
+    "maturity_effect": "机况不直接改成熟TWSO；合法动作耗时仍自然推进环境。",
+    "effect_boundary": "一次收割通过即时合法性检查后、推进作业时间前冻结q_pass；同一个q_pass进入HarvestAction和FarmActionRecord。",
+    "repeat_repair": "已正常时already_serviceable，0额外维修时间、0额外资源、无q增益。",
+    "service_scope": "只影响之后开始的作业；已结算回收、粮箱、接粮区及仓库不重算。",
+    "persistence": [
+      "schema_version",
+      "condition",
+      "last_inspection_at",
+      "last_service_at"
+    ],
+    "compatibility": "扩展关闭且相同动作/时间推进时q=.95；不向W01/N01增加新工具或改任务。"
+  },
+  "proposed_public_tools": {
+    "implemented": false,
+    "app": "候选专用TractorApp子类；工具精确名称待实际注册后核对",
+    "inspect_header": {
+      "args": {},
+      "duration_seconds": 600,
+      "semantics": "有耗时和检查记录的操作；不是纯无副作用READ。",
+      "returns": [
+        "status",
+        "component",
+        "condition",
+        "started_at",
+        "inspection_completed_at",
+        "duration_seconds"
+      ],
+      "does_not_return": [
+        "内部q",
+        "未来天气",
+        "推荐隐藏收获日期"
+      ],
+      "does_not_do": [
+        "调用HarvestAction",
+        "改变机况",
+        "追加机械损失"
+      ],
+      "success_status": "inspection_completed"
+    },
+    "service_header": {
+      "args": {},
+      "duration_seconds_when_needed": 3600,
+      "requires_prior_inspection": false,
+      "precondition": "同步串行工具调用边界；不支持运行中检修。",
+      "transition": "仅在成功完成维修时maintenance_required->serviceable",
+      "returns": [
+        "status",
+        "component",
+        "before_condition",
+        "condition",
+        "started_at",
+        "service_completed_at",
+        "duration_seconds"
+      ],
+      "repeated_normal_status": "already_serviceable",
+      "failure_semantics": "保留真实耗时与状态；失败不默认为维修完成。",
+      "success_status": "service_completed"
+    },
+    "refusal_and_warning_policy": "沿用本候选公开规则。可恢复拒绝记录为诊断，真实安全/未审查warning仍阻止成功；维护建议本身是condition字段，不伪装unsafe warning，也不删除真实unsafe信息。",
+    "state_exposure": "设备完整状态导出用于审计与后续恢复；Agent公开状态按任务卡边界，内部q不自动曝光。",
+    "no_existing_capability_claim": "固定提交不存在停车/熄火状态工具，本卡不声称已实现。"
+  },
+  "information_contract": {
+    "actual_menu_gate": "实现后导出Engine实际task、附加指令及tool schema，与本卡及agent_task.zh.txt逐项核对。",
+    "action_information": "公开工具回执可用于推理；取得回执的操作代价与评价后果按公开规则保留。",
+    "irrigation_units_reference": "后续交付候选用ΔI_field*A_field/(A_covered*t_run)得mm/h；Q=ΔI_field*A_field/(1000*t_run)得m3/h。H01不实现灌溉扩展。",
+    "local_tool_menu": "基底单田通过get_inventory.management_regime公开额度；不假设get_management_status同时暴露。",
+    "no_fault_diagnosis_claim": "首版精确检查可直接报告机况；固定维护策略有效可以作为基础任务通过。"
+  },
+  "pilot": {
+    "current_scope": "任务卡与原生回收引擎局部探针；当前不实现公开新工具，不运行全季或LLM。",
+    "local_probe": {
+      "source_commit": "cc00de087c4ed73ddedd8023f4796891971a0db5",
+      "import_original_files": [
+        "fairy/physics/yield_recovery_engine.py",
+        "fairy/physics/crop_profiles.py"
+      ],
+      "specimen": "人工构造的成熟回收引擎状态，不是完整农场checkpoint，不是WOFOST预测。",
+      "biological_yield_g_DM_m2": 1000,
+      "grain_moisture_initial_fraction": 0.24,
+      "date": "2026-08-15",
+      "maturity_date": "2026-08-13",
+      "weather": {
+        "air_temp_mean_c": 18,
+        "rain_mm": 0,
+        "solar_rad_mj_m2": 10,
+        "wind_ms": 2,
+        "relative_humidity_pct": 60
+      },
+      "treatments": [
+        "q=.85完成收获",
+        "q=.95完成收获"
+      ],
+      "semantic_check": "同一初态单独提交pass_completed=false，记录其是否改变水分；禁止当作检查工具。",
+      "acceptance": "相同生物量/相同收获触发顺序/相同天气，实际回收差可从原生损失账解释。仅证明局部引擎响应。"
+    },
+    "future_fullseason_pair": {
+      "status": "planned_not_run",
+      "count": 2,
+      "shared": "同一未播种N01派生环境、故障初态、预算、公开观察和生长管理；同一参考控制器与相同N120公开基施、0人工灌水。",
+      "A": "在首次公开合法收获机会前完成检查；需要维护时维修，再继续原公共收储控制器。",
+      "B": "相同时点完成相同检查；保留原机况继续合法收获和收储。",
+      "timing": "检查/维修自然耗时；保留原生结束时天气和含水率复查；不免费同步两组收获时钟。",
+      "target_nitrogen_kg_ha": 120,
+      "product_kg": 335.58260869565214,
+      "nitrogen_is_reference_not_task_requirement": true,
+      "outcomes": "可行性分开报告；入库kg差=A-B允许负值，不要求A赢，不以FOS单分代替。",
+      "cap": "本试点最多一个冻结实例、两条全季；不自动扩矩阵或重跑旧W01/N01。",
+      "public_tool_integration_prerequisite": "新的两个公开工具和一次原生合法收割的q/日志一致性先局部核对。"
+    }
+  },
+  "decision_rules": {
+    "fixed_strategy": "基本维护动作有可解释后果且流程成立即可按基础任务判断，不因策略固定而降级。",
+    "tiny_effect": "不拿舍入/浮点噪声充管理后果；也不统一要求5%。",
+    "no_preset_winner": true,
+    "duplicate_task": "独立判断任务结构是否值得新增编号，不能与简单策略或弱效应混为一项。",
+    "diagnostic_upgrade": "局部多条件仅用于筛选；完整L3诊断标签另查实际公开信息、固定预防策略及正常补救，本轮不要求。",
+    "stop": "机制、单位或结算不成立则停止；保留失败，不放大故障或禁止正常补救。",
+    "published_scenario_count_increment": 0
+  },
+  "exclusions": [
+    "全平台外围框架",
+    "病虫草模块",
+    "湿粮腐损/队列",
+    "完整机械模型",
+    "多田",
+    "使用相关磨损",
+    "运行中维修",
+    "真实短段试收",
+    "现实定量维修效应校准",
+    "L1/L2派生",
+    "完整跨进程checkpoint验收",
+    "新增天气/根深/品种矩阵"
+  ],
+  "frozen_at_utc": "2026-11-03 06:12:24 UTC"
+}

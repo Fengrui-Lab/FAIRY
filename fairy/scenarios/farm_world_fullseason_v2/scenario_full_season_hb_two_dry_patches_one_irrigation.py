@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from fairy.apps.farm_world import FarmWorldApp, SensorApp, WeatherApp
-from fairy.apps.system import SystemApp
 from fairy.scenarios.scenario import Scenario
 from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_batch_catalog import (
     get_spec,
@@ -39,26 +37,7 @@ class ScenarioFullSeasonHBTwoDryPatchesOneIrrigation(Scenario):
         init_batch_apps(self, SPEC)
 
     def _after_named_step(self, prev: Any, label: str) -> Any:
-        if label != "before_whole_field_harvest_checks":
-            return prev
-        # Recorded original-world replay: one more day is needed for grain
-        # moisture. This fixed workflow wait leaves SPEC and physics unchanged.
-        weather = self.get_typed_app(WeatherApp)
-        sensor = self.get_typed_app(SensorApp)
-        farm = self.get_typed_app(FarmWorldApp)
-        system = self.get_typed_app(SystemApp)
-        prev = (weather.get_current_weather().oracle()
-                .with_id("o_compat_original_harvest_weather")
-                .depends_on(prev, delay_seconds=1))
-        prev = (sensor.read_soil_sensors().oracle()
-                .with_id("o_compat_original_harvest_soil")
-                .depends_on(prev, delay_seconds=1))
-        prev = (farm.get_ridge_range_state(0, 63).oracle()
-                .with_id("o_compat_original_harvest_grain_state")
-                .depends_on(prev, delay_seconds=1))
-        return (system.advance_time(days=1).oracle()
-                .with_id("o_compat_wait_existing_grain_drydown_window")
-                .depends_on(prev, delay_seconds=1))
+        return prev
 
     def build_events_flow(self) -> None:
         build_batch_events(self, SPEC)

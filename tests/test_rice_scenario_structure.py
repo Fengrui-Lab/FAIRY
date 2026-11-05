@@ -38,14 +38,15 @@ SCENARIO_IDS = (
     + tuple(f"scenario_rice_l3_{variant}" for variant in L3_VARIANTS)
 )
 EXPECTED_CHECKPOINTS = {
+    "refuel": "before_refuel", "repair_bund": "before_bund_repair",
     "irrigate": "before_irrigate", "drain": "before_drain",
     "puddle": "before_puddle", "transplant": "before_transplant",
-    "harvest": "before_harvest", "observe_water": "after_transplant",
+    "harvest": "before_harvest", "observe_water": "before_water_observation",
     "dry": "before_dry", "store": "before_store", "fertilize": "before_topdress",
     "scout": "before_treat", "gap_fill": "after_transplant",
-    "irrigation_management": "management_start", "harvest_storage": "before_drain",
+    "irrigation_management": "management_start", "harvest_storage": "before_harvest",
     "nutrition_management": "management_start", "crop_protection": "before_treat",
-    "harvest_batches": "before_drain",
+    "harvest_batches": "before_harvest",
 }
 EXPECTED_VARIANTS = {
     "scout": "biotic", "crop_protection": "biotic", "gap_fill": "poor_stand",
@@ -56,7 +57,9 @@ EXPECTED_VARIANTS = {
 
 def test_registry_preserves_28_ids_with_independent_declared_classes():
     registered = {sid for sid in list_scenarios() if sid.startswith("scenario_rice_")}
-    assert registered == set(SCENARIO_IDS) == set(SPECS)
+    from fairy.scenarios.crop_challenges.catalog import TASKS
+    assert registered == set(SPECS) | {sid for sid in TASKS if sid.startswith("scenario_rice_")}
+    assert set(SCENARIO_IDS) == set(SPECS)
     classes = [get_scenario_class(sid) for sid in SCENARIO_IDS]
     assert len(set(classes)) == len({cls.__module__ for cls in classes}) == 28
 

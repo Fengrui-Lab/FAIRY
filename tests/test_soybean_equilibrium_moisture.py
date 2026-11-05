@@ -129,14 +129,14 @@ def test_liquid_rain_uptake_is_bounded_by_wet_basis_cap_and_actual_water_mass():
     assert "rain_rewetting_limited_by_incoming_water" in result.tags
 
 
-def test_repeated_same_day_reads_and_harvest_do_not_dry_grain_again():
+def test_same_day_reads_are_idempotent_but_harvest_repeats_drydown():
     engine = mature_engine(moisture=.15)
     step(engine)
     after = engine.states[0].grain_moisture_frac
     step(engine)
     assert engine.states[0].grain_moisture_frac == after
     step(engine, harvest=True)
-    assert engine.states[0].grain_moisture_frac == after
+    assert engine.states[0].grain_moisture_frac < after
     assert engine.states[0].harvested
 
 

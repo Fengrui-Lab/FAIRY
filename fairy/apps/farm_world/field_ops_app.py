@@ -59,13 +59,12 @@ class FieldOpsApp(IrrigationApp, ManualOperations):
     ) -> dict[str, Any]:
         """Apply pesticide on one or two bound-farm ridges with a backpack sprayer.
 
-        Native WOFOST maize has no crop-protection model and refuses this action.
+        Fields without hand-spray support reject this operation before resource use.
 
         Args:
             ridge_id: First local ridge to spray.
-            liters_per_ridge: Positive working-fluid litres per ridge; the simulation
-                backpack reference is 3 L/ridge and lower volumes reduce treatment strength.
-            advance_time: Whether to advance time for the operator passes.
+            liters_per_ridge: Positive working-fluid litres per ridge; The standard working-fluid rate is 3 L/ridge and lower volumes reduce treatment strength.
+            advance_time: Whether to count the operator working duration as elapsed time.
             ridge_count: Number of contiguous ridges, at most two.
         """
         farm = FarmContext(getattr(self._farm_world_app, "farm_id", "farm"),

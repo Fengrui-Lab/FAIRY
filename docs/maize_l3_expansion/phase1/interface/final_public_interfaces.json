@@ -1,0 +1,102 @@
+[
+  {
+    "candidate": "MZ-N01",
+    "readiness": "pilot_first",
+    "text_sha256": "8e732a5db14e3fc07f0dc9585a42e35b0efb6087f711b76a136f4db78e6029fd",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "1d7e1a5961fa102784203ac2b0e16f7b5bd1a13aa28bf083f2e4a4d4eb0f2a90",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-N02",
+    "readiness": "defer_information_gate",
+    "text_sha256": "0729e8101c0b4e9231fb4105b2192157ff1d5152e7cae57a13ac1eb89055bf66",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "1d7e1a5961fa102784203ac2b0e16f7b5bd1a13aa28bf083f2e4a4d4eb0f2a90",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-N03",
+    "readiness": "mechanism_diagnostic_only",
+    "text_sha256": "2432e49e2446e0db53d84530aa832db1461b86058bf40a0d7628dbe658e60863",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "2a7714482d8ad65c9b331883af7ab36276568b01d0b1cb027b0921ebef6e5e51",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-S01",
+    "readiness": "screen_next",
+    "text_sha256": "dfb86005444a8a4b14e4364a5fe94e115f922e69769caae4e096f927f8aac2e8",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "1d7e1a5961fa102784203ac2b0e16f7b5bd1a13aa28bf083f2e4a4d4eb0f2a90",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-S02",
+    "readiness": "merge_into_MZ-S01",
+    "text_sha256": "0be5b8ca07bf1fc2d3e9cef136fda0c631865ae5abea7913ea23ce3358e4e1c4",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "1d7e1a5961fa102784203ac2b0e16f7b5bd1a13aa28bf083f2e4a4d4eb0f2a90",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-W01",
+    "readiness": "pilot_first",
+    "text_sha256": "092b2ac3e0d94ee5287efec308892afebff3a4955d9d41d96652e3c1a93bbd5b",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "2a7714482d8ad65c9b331883af7ab36276568b01d0b1cb027b0921ebef6e5e51",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-W02",
+    "readiness": "screen_next",
+    "text_sha256": "e047a620cbffc325b64948ce9ccce636eb1ed65667aaa9eaceced5100b490a20",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "2a7714482d8ad65c9b331883af7ab36276568b01d0b1cb027b0921ebef6e5e51",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-W03",
+    "readiness": "defer_low_priority",
+    "text_sha256": "a2917126f151f6317ac44093461d5e488674b85889b521b636ec9dccb6fa12ad",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "2a7714482d8ad65c9b331883af7ab36276568b01d0b1cb027b0921ebef6e5e51",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-W04",
+    "readiness": "environment_variant_of_MZ-W01",
+    "text_sha256": "e043d09380d2043476612df7026fd8625fdb83df114a69eb460ea8fcb1ea8aa1",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "2a7714482d8ad65c9b331883af7ab36276568b01d0b1cb027b0921ebef6e5e51",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  },
+  {
+    "candidate": "MZ-W05",
+    "readiness": "defer_information_gate",
+    "text_sha256": "212bf109a5d9c8081b4bbba104ba2dc8794764d8253d73556b10d1b113be98ad",
+    "additional_system_sha256": "afdc8bf65e948947c816e9c19b8ca01ceb9efdde8244afffdb2575cd29726ddd",
+    "observed_tool_catalog_sha256": "46d87fb55cdaf8885b15884f426ceecb3fc84cbe869f47d61ccf9d8bd6c1505a",
+    "phase1_target_text_complete": true,
+    "candidate_runtime_received_text_verified": false,
+    "release_gate": "Phase2 compare actual Agent envelope and tools with these phase1 targets"
+  }
+]

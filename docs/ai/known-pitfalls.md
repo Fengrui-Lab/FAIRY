@@ -135,6 +135,17 @@
   subsequent requests. Existing historical logs are not rewritten.
   `llm_call_start.enable_thinking_override=null` means no client override;
   it does not prove whether the server enabled thinking.
+- As of 2026-11-01, `gpt-6-luna` uses Responses with explicit `medium`
+  reasoning. Inspect `llm_config.api_mode=responses` and
+  `llm_config.reasoning_effort=medium`; actual usage is normalized to
+  `llm_call_end.usage.completion_tokens_details.reasoning_tokens`.
+  `reasoning_history_policy=encrypted_tool_context` means encrypted protocol
+  items for tool turns are replayed from client memory, without being added to
+  public message history, logs or exports. This cache is process-local, so
+  exported transcripts alone do not restore encrypted reasoning after restart.
+  Other providers retain the existing exclusion policy. The output-token cap
+  still covers both reasoning and visible output; truncation remains a rejected,
+  billed attempt and does not execute partial tools.
 - On 2026-10-20, the user requested full console diagnostics specifically for
   `empty_response`: `BaseAgent.chat_completion()` prints the returned `reasoning`
   and `reasoning_content` fields as JSON before raising the existing retryable
@@ -298,3 +309,12 @@
   `llm_call_start.messages` records whether it was actually sent. The `response_policy.retry_changes_request` is now true. Use a
   fresh output directory and distinguish this policy from historical retries
   that resent unchanged requests. Token/call/tool accounting is unchanged.
+
+
+### Thinking integration (2026-11-01)
+
+- DeepSeek accepts explicit `--enable-thinking true/false`; omitted preserves the service default. The official `thinking.type` field is used, and SDK retry configuration is forwarded.
+- Explicit DeepSeek thinking preserves `reasoning_content` in subsequent tool conversation requests. Qwen/vLLM history behavior is unchanged.
+- New CLI agent runs write `<scenario>.reasoning.jsonl` and link it as `artifacts.reasoning_log`. Rows correlate with `llm_call_end` using the same record index and include response ID, both native reasoning fields, acceptance/finish status, and token counts. Missing reasoning-token counts remain null. Rejected/truncated replies are recorded too. Live records use the existing credential redaction path.
+- `completion_tokens` already includes reasoning tokens: never add them again. Separate storage does not create a separate generation budget. Full runtime request histories remain intact, including protocol-required reasoning history.
+- Pipeline `run_settings.defaults.thinking_max_output_tokens=8192` applies only when the selected LLM service explicitly has `enable_thinking=true`; the ordinary budget remains 2048. Historical frozen configurations without this key retain their prior budget. No existing attempts are rewritten.

@@ -1,0 +1,3312 @@
+{
+  "number": 3,
+  "module": "fairy.scenarios.wofost.scenario_two_farm_wofost_soybean_maize_nitrogen_budget_V2",
+  "class_name": "ScenarioTwoFarmWofostSoybeanMaizeNitrogenBudget_V2",
+  "title": "大豆与玉米：有限共有氮肥的作物差异分配",
+  "actions": [
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_soybean_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_soybean_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_maize_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_maize_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "soybean核对原生作物能力",
+      "tool": "soybean_Farm__get_crop_capabilities",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "soybean"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "soybean",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "maize核对原生作物能力",
+      "tool": "maize_Farm__get_crop_capabilities",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_soybean",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "maize"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装基肥",
+      "tool": "Tractor__load_fertilizer",
+      "args": {
+        "kg": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize施基肥",
+      "tool": "Tractor__base_fertilize",
+      "args": {
+        "farm_id": "maize",
+        "total_kg": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "maize",
+        "ridge_width_m": 0.75
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_maize",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "maize_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "MAIZE_201",
+        "count": 5360
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 5.0,
+        "seed_spacing_cm": 20.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_maize",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-01T07:00:00",
+      "label": "冷春后的两作物建立与实际阶段",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_soybean_soil",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_soybean_rows",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_maize_soil",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_maize_rows",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "soybean无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "soybean地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_soybean_ground",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "maize无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "label": "maize地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "冷春后的两作物建立与实际阶段_maize_ground",
+      "round": "冷春后的两作物建立与实际阶段",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-10T07:00:00",
+      "label": "复核两作物氮投入历史与共有余量",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "复核两作物氮投入历史与共有余量_soybean_soil",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "复核两作物氮投入历史与共有余量_soybean_rows",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "复核两作物氮投入历史与共有余量_maize_soil",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "复核两作物氮投入历史与共有余量_maize_rows",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean雨天地面复核阶段及营养代理",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": "soybean_nutrition_recheck",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize雨天地面复核阶段及营养代理",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": "maize_nutrition_recheck",
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "追肥前共同肥料库存",
+      "tool": "Warehouse__get_inventory",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "共有剩余一轮100kg产品装载",
+      "tool": "Tractor__load_fertilizer",
+      "args": {
+        "kg": 100.0
+      },
+      "arms": [
+        "correct",
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize一次追肥分趟0",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 0,
+        "end_ridge": 9,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize一次追肥分趟10",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 10,
+        "end_ridge": 19,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize一次追肥分趟20",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 20,
+        "end_ridge": 29,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "maize一次追肥分趟30",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 30,
+        "end_ridge": 31,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean一次追肥分趟0",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 0,
+        "end_ridge": 9,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean一次追肥分趟10",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 10,
+        "end_ridge": 19,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean一次追肥分趟20",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 20,
+        "end_ridge": 29,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "label": "soybean一次追肥分趟30",
+      "tool": "Tractor__apply_fertilizer",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 30,
+        "end_ridge": 31,
+        "kg_per_ridge": 3.125
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "复核两作物氮投入历史与共有余量",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-17T07:00:00",
+      "label": "投入后两作物生长复查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "投入后两作物生长复查_soybean_soil",
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "投入后两作物生长复查_soybean_rows",
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "投入后两作物生长复查_maize_soil",
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "投入后两作物生长复查_maize_rows",
+      "round": "投入后两作物生长复查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-01T07:00:00",
+      "label": "maize关键期根水2019-07-01",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-07-01_maize_soil",
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-07-01_maize_rows",
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize整轮补水30mm",
+      "tool": "maize_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-01",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-02T07:00:00",
+      "label": "maize灌后复查2019-07-01",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-07-01_maize_soil",
+      "round": "maize灌后复查2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-07-01_maize_rows",
+      "round": "maize灌后复查2019-07-01",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-05T07:00:00",
+      "label": "soybean关键期根水2019-07-05",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-07-05_soybean_soil",
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-07-05_soybean_rows",
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean整轮补水30mm",
+      "tool": "soybean_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-05",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-06T07:00:00",
+      "label": "soybean灌后复查2019-07-05",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-07-05_soybean_soil",
+      "round": "soybean灌后复查2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-07-05_soybean_rows",
+      "round": "soybean灌后复查2019-07-05",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-15T07:00:00",
+      "label": "maize关键期根水2019-07-15",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-07-15_maize_soil",
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-07-15_maize_rows",
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize整轮补水30mm",
+      "tool": "maize_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-07-15",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-16T07:00:00",
+      "label": "maize灌后复查2019-07-15",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-07-15_maize_soil",
+      "round": "maize灌后复查2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-07-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-07-15_maize_rows",
+      "round": "maize灌后复查2019-07-15",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-20T07:00:00",
+      "label": "soybean关键期根水2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-07-20_soybean_soil",
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-07-20_soybean_rows",
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean整轮补水30mm",
+      "tool": "soybean_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-21T07:00:00",
+      "label": "soybean灌后复查2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-07-20_soybean_soil",
+      "round": "soybean灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-07-20_soybean_rows",
+      "round": "soybean灌后复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-01T07:00:00",
+      "label": "maize关键期根水2019-08-01",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-08-01_maize_soil",
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-08-01_maize_rows",
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize整轮补水30mm",
+      "tool": "maize_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-01",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-02T07:00:00",
+      "label": "maize灌后复查2019-08-01",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-08-01_maize_soil",
+      "round": "maize灌后复查2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-01",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-08-01_maize_rows",
+      "round": "maize灌后复查2019-08-01",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-05T07:00:00",
+      "label": "soybean关键期根水2019-08-05",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-08-05_soybean_soil",
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean关键期根水2019-08-05_soybean_rows",
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean整轮补水30mm",
+      "tool": "soybean_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean关键期根水2019-08-05",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-06T07:00:00",
+      "label": "soybean灌后复查2019-08-05",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-08-05_soybean_soil",
+      "round": "soybean灌后复查2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "soybean灌后复查2019-08-05",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "soybean灌后复查2019-08-05_soybean_rows",
+      "round": "soybean灌后复查2019-08-05",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-15T07:00:00",
+      "label": "maize关键期根水2019-08-15",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-08-15_maize_soil",
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize关键期根水2019-08-15_maize_rows",
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize整轮补水30mm",
+      "tool": "maize_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize关键期根水2019-08-15",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-16T07:00:00",
+      "label": "maize灌后复查2019-08-15",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-08-15_maize_soil",
+      "round": "maize灌后复查2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "maize灌后复查2019-08-15",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "maize灌后复查2019-08-15_maize_rows",
+      "round": "maize灌后复查2019-08-15",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-20T07:00:00",
+      "label": "灌浆期两作物复核",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "灌浆期两作物复核_soybean_soil",
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "灌浆期两作物复核_soybean_rows",
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "灌浆期两作物复核_maize_soil",
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "灌浆期两作物复核_maize_rows",
+      "round": "灌浆期两作物复核",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-09T07:00:00",
+      "label": "大豆独立成熟收获",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean根区水分",
+      "tool": "soybean_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "大豆独立成熟收获_soybean_soil",
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean冠层初筛",
+      "tool": "soybean_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean阶段粮水与公开状态",
+      "tool": "soybean_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "大豆独立成熟收获_soybean_rows",
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "soybean_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "soybean_00_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "soybean_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "soybean_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "soybean_08_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "soybean_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "soybean_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "soybean_16_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "soybean_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "soybean",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "soybean_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "soybean_24_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "soybean_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "大豆独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-20T07:00:00",
+      "label": "玉米独立成熟收获",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize根区水分",
+      "tool": "maize_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "玉米独立成熟收获_maize_soil",
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize冠层初筛",
+      "tool": "maize_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize阶段粮水与公开状态",
+      "tool": "maize_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "玉米独立成熟收获_maize_rows",
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "maize_header"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "maize_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "maize_00_07",
+        "target_moisture_pct": 14.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "maize_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "maize_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "maize_08_15",
+        "target_moisture_pct": 14.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "maize_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "maize_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "maize_16_23",
+        "target_moisture_pct": 14.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "maize_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "maize",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "maize_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "maize_24_31",
+        "target_moisture_pct": 14.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "maize_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "共有仓库最后核验",
+      "tool": "Warehouse__get_inventory",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "粮食来源与安全批次",
+      "tool": "Warehouse__get_grain_batches",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "soybean全场交付",
+      "tool": "soybean_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    },
+    {
+      "label": "maize全场交付",
+      "tool": "maize_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "玉米独立成熟收获",
+      "expected_error": null
+    }
+  ]
+}

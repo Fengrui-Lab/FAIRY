@@ -58,8 +58,10 @@ class WeatherEvent:
     start_date: date
     duration_days: int
 
-    # For rain_event.
-    total_rain_mm: float | None = None
+    # Historical rain_event amount: allocate across matching days in each
+    # query window. A one-day query receives the whole amount. Retain this
+    # behavior, RNG consumption and rounding for existing scenarios.
+    rain_mm: float | None = None
 
     # For cold_spell / heat_wave.
     temp_delta_c: float | None = None
@@ -69,6 +71,29 @@ class WeatherEvent:
 
     # Optional label stored in daily weather tags.
     label: str | None = None
+
+    # Opt-in whole-event total, independent of the weather query window.
+    # Keyword-only keeps historical positional WeatherEvent arguments stable.
+    total_rain_mm: float | None = field(default=None, kw_only=True)
+
+    def __post_init__(self) -> None:
+        if self.rain_mm is not None and self.total_rain_mm is not None:
+            raise ValueError("Specify only one of rain_mm and total_rain_mm")
+
+    @classmethod
+    def from_state(cls, state: dict) -> WeatherEvent:
+        """Restore both historical and current serialized event dictionaries.
+
+        Historical snapshots used total_rain_mm for the legacy query-window
+        amount and have no rain_mm key. Current dataclass exports include both
+        keys, preserving the explicitly selected behavior on round trips.
+        """
+        values = dict(state)
+        if "rain_mm" not in values:
+            values["rain_mm"] = values.pop("total_rain_mm", None)
+        if isinstance(values["start_date"], str):
+            values["start_date"] = date.fromisoformat(values["start_date"])
+        return cls(**values)
 
 
 @dataclass
@@ -440,9 +465,7 @@ class WeatherGenerator:
                 raise ValueError("WeatherEvent.duration_days must be positive")
 
             daily_rain = None
-            if event.event_type == "rain_event":
-                if event.total_rain_mm is None:
-                    raise ValueError("rain_event requires total_rain_mm")
+            if event.event_type == "rain_event" and event.total_rain_mm is not None:
                 # Allocate the whole event before selecting a query window.
                 # Daily physics and forecasts often request just one date.
                 daily_rain = self._split_rain_event(
@@ -461,8 +484,17 @@ class WeatherGenerator:
             tag = event.label or event.event_type
 
             if event.event_type == "rain_event":
-                for d in affected_days:
-                    rain = daily_rain[(d - event.start_date).days]
+                if daily_rain is None:
+                    if event.rain_mm is None:
+                        raise ValueError("rain_event requires rain_mm or total_rain_mm")
+                    daily_amounts = self._split_legacy_rain_event(
+                        event.rain_mm, len(affected_days)
+                    )
+                else:
+                    daily_amounts = [
+                        daily_rain[(d - event.start_date).days] for d in affected_days
+                    ]
+                for d, rain in zip(affected_days, daily_amounts):
                     w = by_day[d]
                     w.rain_mm = round(w.rain_mm + rain, 2)
                     w.is_raining = w.rain_mm > 0.1
@@ -506,6 +538,13 @@ class WeatherGenerator:
 
             else:
                 raise ValueError(f"Unsupported event_type: {event.event_type}")
+
+    def _split_legacy_rain_event(self, rain_mm: float, n_days: int) -> list[float]:
+        """Keep the historical per-query split, shared RNG and rounding."""
+        if n_days == 1:
+            return [round(float(rain_mm), 2)]
+        weights = self.rng.dirichlet(np.ones(n_days))
+        return [round(float(x), 2) for x in weights * rain_mm]
 
     def _split_rain_event(
         self, total_rain_mm: float, n_days: int, *, start_date: date

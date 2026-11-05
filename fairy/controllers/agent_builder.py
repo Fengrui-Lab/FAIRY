@@ -11,6 +11,8 @@ from fairy.controllers.agent_config import (
     AgentConfigBuilder as ControllerConfigBuilder,
     AppAgentConfig,
     AppAgentConfigBuilder,
+    DEFAULT_APP_AGENT_SYSTEM_MESSAGE,
+    FARM_WORLD_APP_AGENT_SYSTEM_MESSAGE,
     ControllerAgentConfig,
     FARM_WORLD_FUNCTION_CALL_SYSTEM_PROMPT,
     get_farm_world_system_prompt,
@@ -38,6 +40,10 @@ CONTROLLER_FAMILIES = [
     "farm_tree_search",
     "farm_critic_refiner",
     "farm_graph_memory",
+    "farm_jev",
+    "farm_llm_jev",
+    "farm_qwen_snapshot",
+    "farm_llm_snapshot",
 ]
 
 
@@ -255,13 +261,15 @@ class ResearchARESimulationAgent(Agent):
         if not isinstance(first_message, dict) or first_message.get("role") != "system":
             return
         content = str(first_message.get("content") or "")
-        if "Today's date in 'YYYY-MM-DD HH' format is" in content:
-            return
+        marker = "\n\nTask start time: "
+        content = content.split(marker, 1)[0]
+        calendar = getattr(self, "simulation_timezone", None) or CST
         date_str = datetime.fromtimestamp(
-            self.time_manager.time(), tz=CST
-        ).strftime("%Y-%m-%d %H")
+            self.time_manager.time(), tz=calendar
+        ).isoformat(sep=" ", timespec="minutes")
         first_message["content"] = (
-            f"{content}\n\nToday's date in 'YYYY-MM-DD HH' format is {date_str}"
+            f"{content}{marker}{date_str} ({calendar}). "
+            "Check the time tool for the current time after operations or waiting."
         )
 
     def run(self, input, **kwargs):
@@ -320,10 +328,18 @@ class AppAgentBuilder:
         runtime = getattr(app, "runtime", None)
         if runtime is not None:
             tools.extend(service for service in runtime.apps if service.name == "World" and service is not app)
+        system_prompt = app_agent_config.system_prompt
+        agricultural_app = any(
+            cls.__module__.startswith(("fairy.apps.farm_world.", "fairy.apps.paddy."))
+            for cls in type(app).__mro__
+        )
+        if agricultural_app and system_prompt.startswith(DEFAULT_APP_AGENT_SYSTEM_MESSAGE):
+            system_prompt = (FARM_WORLD_APP_AGENT_SYSTEM_MESSAGE
+                             + system_prompt[len(DEFAULT_APP_AGENT_SYSTEM_MESSAGE):])
         return Agent(
             name=app_agent_config.agent_name,
             llm=llm,
-            system_message=app_agent_config.system_prompt,
+            system_message=system_prompt,
             toolsets=tools,
         )
 
@@ -361,15 +377,80 @@ def build_controller_agent(
     llm: Any,
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
+    fallback_llm: Any = None,
+    fallback_confidence: float = 0.6,
+    jev_state: str = "snapshot",
+    done_check: bool = False,
+    decision_confidence_source: str = "provider",
+    qwen_context_policy: str = "bounded_history",
+    hybrid_mode: str = "full",
+    jev_llm: Any = None,
+    jev_prompt_note: bool = False,
+    enforced_tool_adaptor: bool = False,
 ) -> ResearchARESimulationAgent:
+    if type(enforced_tool_adaptor) is not bool:
+        raise ValueError("enforced_tool_adaptor must be boolean")
+    if enforced_tool_adaptor and family_id != "farm_jev":
+        raise ValueError("enforced_tool_adaptor requires farm_jev")
+    explicit_system_message = system_message is not None
     if system_message is None:
         system_message = get_farm_world_system_prompt_for_apps(toolsets)
+    if family_id == "farm_llm_jev":
+        if fallback_llm is not None or hybrid_mode != "full":
+            raise ValueError("farm_llm_jev does not use fallback or hybrid-mode")
+        from fairy.agents.jev.llm_driven_agent import build_llm_driven_jev_agent
+        agent = build_llm_driven_jev_agent(family_id, llm=llm, jev_llm=jev_llm,
+            toolsets=toolsets, system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            prompt_note=jev_prompt_note)
+        if done_check:
+            agent.enable_done_check(toolsets or [])
+        return agent
+    if jev_llm is not None or jev_prompt_note:
+        raise ValueError("--jev-model and --jev-prompt-note require farm_llm_jev")
+    if family_id in {"farm_qwen_snapshot", "farm_llm_snapshot"}:
+        from fairy.agents.jev.qwen_agent import QwenSnapshotAgent
+        if fallback_llm is not None:
+            raise ValueError("Pure Qwen does not use a fallback model")
+        return QwenSnapshotAgent(name=family_id, llm=llm, fallback_llm=llm,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            toolsets=toolsets, hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            # The snapshot LLM inherited guidance before this Jev-only switch.
+            # Preserve its existing inputs; do not silently change the LLM control.
+            enforced_tool_adaptor=True,
+            qwen_context_policy=qwen_context_policy)
+    if family_id == "farm_jev":
+        # Jev picks actions from a menu instead of generating tool calls.
+        from fairy.agents.jev.jev_agent import JevAgent
+
+        if not callable(getattr(llm, "system_one", None)):
+            raise ValueError("farm_jev requires a client implementing system_one")
+        return JevAgent(
+            name=family_id,
+            llm=llm,
+            system_message=system_message or DEFAULT_FARM_SYSTEM_MESSAGE,
+            toolsets=toolsets,
+            hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            fallback_llm=fallback_llm,
+            fallback_confidence=fallback_confidence,
+            state_mode=jev_state,
+            confidence_source=decision_confidence_source,
+            qwen_context_policy=qwen_context_policy,
+            hybrid_mode=hybrid_mode,
+            enforced_tool_adaptor=enforced_tool_adaptor,
+        )
+    if fallback_llm is not None:
+        raise ValueError("--fallback-model is only used by the farm_jev controller")
+    if hybrid_mode != "full":
+        raise ValueError("--hybrid-mode is only used by the farm_jev controller")
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
     ).build(family_id)
-    return AgentBuilder().build(
+    agent = AgentBuilder().build(
         agent_config=config,
         llm=llm,
         toolsets=toolsets,
-        system_message=system_message,
+        system_message=system_message if explicit_system_message else None,
     )
+    if done_check:
+        agent.enable_done_check(toolsets or [])
+    return agent

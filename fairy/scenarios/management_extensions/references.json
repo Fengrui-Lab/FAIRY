@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "rotation": {
+    "source": "https://extension.umn.edu/agriculture/crop-production/soybean/soybean-cyst-nematode-management-guide",
+    "title": "University of Minnesota Extension: Soybean cyst nematode management guide",
+    "accessed": "2026-10-31",
+    "rule": "At or above 10000 SCN eggs per 100 cubic centimetres of soil, plant a nonhost crop for one or more years until density drops below that level. Maize is a nonhost; soybean is a host.",
+    "scope": "Evidence-informed decision rule in a synthetic task. No SCN reproduction, mortality, resistance phenotype, or SCN yield loss is simulated.",
+    "reports": "18000 and 12000 are independent hardcoded lab-report fixtures, not consecutive outputs or fitted observations."
+  },
+  "biology": {
+    "backend": "native WOFOST",
+    "cultivars": {
+      "SOYBEAN_901": "Soybean_901",
+      "MAIZE_201": "Grain_maize_201"
+    },
+    "weather": "Pinned real Thionville NASA POWER daily forcing, March-November 2019, 49.4N/6.2E; see fairy/physics/data/wofost/research/thionville_nasa2019_v1/manifest.json",
+    "geometry": {
+      "reference": "fairy/scenarios/two_farm/scenario_two_farm_wofost_soybean_maize_full_season.py: NUM_RIDGES=64, FIELD_LENGTH_M=268",
+      "B1_B2_C2": {
+        "ridges": 64,
+        "length_m": 268,
+        "width_m": 0.75,
+        "area_m2": 12864,
+        "area_ha": 1.2864
+      },
+      "C1": {
+        "ridges": 64,
+        "length_m": 268,
+        "width_m": 1.1,
+        "area_m2": 18867.2,
+        "area_ha": 1.88672
+      },
+      "rotation_boundary": "Selecting another crop in B preserves its existing 12864 m2 land boundary."
+    },
+    "density": "Soybean two rows/ridge, 100*2/(1.1*40) cm spacing, 754688 seeds on C1; maize one row/ridge, 20 cm spacing, 85760 seeds. Explicit model targets, not field-optimal prescriptions.",
+    "checkpoint": "Full native maturity and safe harvest/storage; soybean 2019-09-09, maize 2019-09-20 reference windows; deadline November 30.",
+    "weather_extension": {
+      "manifest": "fairy/scenarios/management_extensions/data/thionville_december2019_v1/manifest.json",
+      "operations_through": "2019-12-31",
+      "forecast_buffer_through": "2020-01-07",
+      "scope": "Only these four extension scenarios; preserve original March-November values, shared bundle and defaults. Does not change the November 30 task deadline."
+    }
+  },
+  "economics": {
+    "currency": "DEMO; integer minor units, 100 per currency unit",
+    "budget_minor": {
+      "B1_B2_C2": 857600,
+      "C1": 1257813
+    },
+    "prices": "Synthetic DEMO prices, not market quotes. Actual seed payment or endowed-seed replacement value, consumed fertilizer and fuel, irrigation volume and actual drying are all included.",
+    "discount": "Identical 754688-seed soybean lots: 754688 cents regular, or 754688 minus 188672 discount = 566016 cents.",
+    "total_cost": "Identical 85760-seed maize lots: 428800 plus 257280 delivery = 686080 cents; alternative 557440 with free delivery.",
+    "delivery": "Immediate; no travel-time model. Each offer has exactly one indivisible lot.",
+    "objective": "At least 99% of the highest tested safe stored grain, then minimum accounted production cost within the finite tested management set.",
+    "production_prices_minor": {
+      "fertilizer_per_kg": 50,
+      "fuel_per_liter": 100,
+      "water_per_m3": 2,
+      "dried_grain_per_kg": 10,
+      "endowed_1000_maize_seeds_replacement_value": 6500,
+      "endowed_6000_soybean_seeds_replacement_value": 4500
+    },
+    "budget_scope": "The procurement cash account is debited only for seed orders. The same initial limit also caps total accounted production cost, including endowed inputs when consumed. The two views are not summed or double charged."
+  },
+  "machinery": {
+    "plant_ridges_per_pass": 4,
+    "fertilizer_ridges_per_pass": 10,
+    "harvest_ridges_per_pass": 4,
+    "seed_hopper_seeds": 300000,
+    "fertilizer_spreader_kg": 500,
+    "fuel_tank_liters": 100,
+    "grain_bin_kg": 2000,
+    "fuel_warehouse_liters": 800,
+    "storage_kg": 20000,
+    "drying_kg_per_day": 20000,
+    "harvest_batches": 16
+  },
+  "optimization_scope": "Fresh normal-size runs use fixed crop parameters and local weather. Fertilizer search bounded by 600 kg product/ha, irrigation by 180 mm. Highest feasible tested stored grain defines the 99% threshold. No old/current yield is used as baseline; management timings are not globally optimized."
+}

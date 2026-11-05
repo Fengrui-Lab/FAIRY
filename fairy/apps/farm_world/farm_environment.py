@@ -8,7 +8,7 @@ Weather inputs are shared because this first two-farm scene uses one region.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 from math import isfinite
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
@@ -169,10 +169,36 @@ class FarmEnvironment:
             raise ValueError("Cannot synchronize farm physics backwards")
         self._syncing = True
         try:
-            return {
+            results = {
                 farm_id: farm.world._advance_physics_time_local(target)
                 for farm_id, farm in self.farms.items()
             }
+            # These native worlds settle yesterday's forcing at midnight.  The
+            # common station must still publish today's working conditions,
+            # including before sowing and on idempotent same-time reads.  This
+            # projection neither integrates a crop day nor fills the daily
+            # biological-input cache; its current day may already be cached.
+            if any(
+                farm.world._physics is not None
+                and farm.world._physics.engines_active
+                and farm.world._physics.crop_backend_name == "wofost"
+                and (getattr(farm.world._physics, "scenario_metadata", None) or {}).get("daily_settlement")
+                == "completed_calendar_day"
+                for farm in self.farms.values()
+            ):
+                from fairy.apps.farm_world.physics_orchestrator import _build_weather_inputs
+
+                source = next(farm.world._physics for farm in self.farms.values()
+                              if farm.world.physics_active)
+                _build_weather_inputs(
+                    self.weather,
+                    datetime.fromtimestamp(target, self.simulation_timezone).date(),
+                    physics=source,
+                    advance_weather=False,
+                    update_soil_vwc=False,
+                    align_date_to_tick=True,
+                )
+            return results
         finally:
             self._syncing = False
 

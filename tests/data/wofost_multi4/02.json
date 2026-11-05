@@ -1,0 +1,2848 @@
+{
+  "number": 2,
+  "module": "fairy.scenarios.wofost.scenario_two_farm_wofost_shared_spray_diagnosis_V2",
+  "class_name": "ScenarioTwoFarmWofostSharedSprayDiagnosis_V2",
+  "title": "两场叶片异常：病虫鉴别与共有药液预算",
+  "actions": [
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_west_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_west_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_east_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_east_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "west挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "west整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "west"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "west起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "west",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_west",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "east挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "east整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "east"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "east起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "east",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_east",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_east",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-01T07:00:00",
+      "label": "正常建立检查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "正常建立检查_west_soil",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "正常建立检查_west_rows",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "正常建立检查_east_soil",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "正常建立检查_east_rows",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "west无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "west地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "正常建立检查_west_ground",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "east无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "label": "east地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "正常建立检查_east_ground",
+      "round": "正常建立检查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-27T07:00:00",
+      "label": "叶片异常不能跨场套用诊断",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_west_soil",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_west_rows",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_east_soil",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_east_rows",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_west_ground",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "叶片异常不能跨场套用诊断_east_ground",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west异常区四垄地面确诊",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": "west_diagnosis",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east异常区四垄地面确诊",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": "east_diagnosis",
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west共有药液定量装载",
+      "tool": "Tractor__load_pesticide",
+      "args": {
+        "liters": 128.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮针对性处理8",
+      "tool": "Tractor__spray_pesticide",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 8,
+        "end_ridge": 17,
+        "liters_per_ridge": 8.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮针对性处理18",
+      "tool": "Tractor__spray_pesticide",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 18,
+        "end_ridge": 23,
+        "liters_per_ridge": 8.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east共有药液定量装载",
+      "tool": "Tractor__load_fungicide",
+      "args": {
+        "liters": 60.8
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮针对性处理4",
+      "tool": "Tractor__apply_fungicide",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 4,
+        "end_ridge": 13,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮针对性处理14",
+      "tool": "Tractor__apply_fungicide",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 14,
+        "end_ridge": 19,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west共有药液定量装载",
+      "tool": "Tractor__load_fungicide",
+      "args": {
+        "liters": 60.8
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮针对性处理8",
+      "tool": "Tractor__apply_fungicide",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 8,
+        "end_ridge": 17,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮针对性处理18",
+      "tool": "Tractor__apply_fungicide",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 18,
+        "end_ridge": 23,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east共有药液定量装载",
+      "tool": "Tractor__load_pesticide",
+      "args": {
+        "liters": 128.0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮针对性处理4",
+      "tool": "Tractor__spray_pesticide",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 4,
+        "end_ridge": 13,
+        "liters_per_ridge": 8.0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮针对性处理14",
+      "tool": "Tractor__spray_pesticide",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 14,
+        "end_ridge": 19,
+        "liters_per_ridge": 8.0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "叶片异常不能跨场套用诊断",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-01T07:00:00",
+      "label": "施药后复查残余压力",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "施药后复查残余压力_west_soil",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "施药后复查残余压力_west_rows",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "施药后复查残余压力_east_soil",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "施药后复查残余压力_east_rows",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人重新充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "等待充电满一小时",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "west同一区域药后复查",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": "west_recheck",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "label": "east同一区域药后复查",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": "east_recheck",
+      "round": "施药后复查残余压力",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-20T07:00:00",
+      "label": "关键期水分与阶段检查2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-07-20_west_soil",
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-07-20_west_rows",
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-07-20_east_soil",
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-07-20_east_rows",
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west整轮补水30mm",
+      "tool": "west_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east整轮补水30mm",
+      "tool": "east_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-21T07:00:00",
+      "label": "次日补水复查2019-07-20",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "次日补水复查2019-07-20_west_soil",
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "次日补水复查2019-07-20_west_rows",
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "次日补水复查2019-07-20_east_soil",
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "次日补水复查2019-07-20_east_rows",
+      "round": "次日补水复查2019-07-20",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-08T07:00:00",
+      "label": "关键期水分与阶段检查2019-08-08",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-08-08_west_soil",
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-08-08_west_rows",
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-08-08_east_soil",
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "关键期水分与阶段检查2019-08-08_east_rows",
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west整轮补水30mm",
+      "tool": "west_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east整轮补水30mm",
+      "tool": "east_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "关键期水分与阶段检查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-09T07:00:00",
+      "label": "次日补水复查2019-08-08",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "次日补水复查2019-08-08_west_soil",
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "次日补水复查2019-08-08_west_rows",
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "次日补水复查2019-08-08_east_soil",
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "次日补水复查2019-08-08_east_rows",
+      "round": "次日补水复查2019-08-08",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-20T07:00:00",
+      "label": "独立成熟及来源收储",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west根区水分",
+      "tool": "west_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "独立成熟及来源收储_west_soil",
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west冠层初筛",
+      "tool": "west_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west阶段粮水与公开状态",
+      "tool": "west_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "独立成熟及来源收储_west_rows",
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east根区水分",
+      "tool": "east_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "独立成熟及来源收储_east_soil",
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east冠层初筛",
+      "tool": "east_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east阶段粮水与公开状态",
+      "tool": "east_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "独立成熟及来源收储_east_rows",
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "west_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "west_00_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "west_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "west_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "west_08_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "west_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "west_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "west_16_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "west_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "west",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "west_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "west_24_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "west_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "east_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "east_00_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "east_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "east_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "east_08_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "east_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "east_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "east_16_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "east_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "east",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "east_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "east_24_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "east_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "共有仓库最后核验",
+      "tool": "Warehouse__get_inventory",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "粮食来源与安全批次",
+      "tool": "Warehouse__get_grain_batches",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "west全场交付",
+      "tool": "west_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    },
+    {
+      "label": "east全场交付",
+      "tool": "east_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "独立成熟及来源收储",
+      "expected_error": null
+    }
+  ]
+}

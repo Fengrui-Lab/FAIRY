@@ -1,0 +1,26 @@
+{
+  "scenario_maize_l1_targeted_irrigation": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "a5b04e43661f81c6071e47117882097d09a208f7ab86265ca0c2c0ff1e5a7f52",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l2_zonal_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "88ef8ca649fad48a46a1b131a97fb71096d5d13e4a5bb124277d5eeae9133175",
+    "success": true,
+    "status": "calibrated"
+  },
+  "scenario_maize_l3_zonal_water_priority": {
+    "replay_verified": true,
+    "pure_build": true,
+    "source_continuation_verified": true,
+    "physical_state_digest": "5aabb8a8b854515ecde0187883c4580548b058f06796372ae3682b8af6f73f3b",
+    "success": true,
+    "status": "calibrated"
+  }
+}

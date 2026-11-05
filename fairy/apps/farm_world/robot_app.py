@@ -47,15 +47,11 @@ class RobotApp(RobotOperations, App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_ridge(self, ridge_id: int) -> dict[str, Any]:
-        """
-        Send this robot dog to walk the full length of a ridge and back, reporting
-        pest and disease presence at ground level.
+        """Walk the full length of one ridge and back to inspect ground-level crop condition.
 
-        Use this to ground-truth anomalies flagged by drone surveys.
-        Diagnostic species labels are returned only when the field's configured
-        observation capability supports them; otherwise detections are noisy
-        and do not identify pest species or disease identity.
-        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
+        Use this to investigate anomalies. Read the returned diagnoses and their
+        confidence; species identification depends on the field's diagnostic
+        capabilities. An unavailable diagnosis is not confirmed absence of a problem.
 
         Args:
             ridge_id:  Local ridge ID, from 0 to this farm's num_ridges - 1.
@@ -67,16 +63,12 @@ class RobotApp(RobotOperations, App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_pests(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """
-        Walk a contiguous ridge range, returning ground-level pest detections.
+        """Inspect a ridge range for ground-level pest, disease and weed evidence.
 
-        Routes through the ObservationModel — results are noisy and may include
-        false positives/negatives. A mission visits up to eight ridges, limited
-        by battery. The observation model samples every visited ridge in batches
-        (four ridges per batch by default). Unvisited ridges are explicitly
-        returned as uncovered. Use after
-        an aerial drone survey flagged an anomaly to confirm cause.
-        Native WOFOST maize reports establishment/stage and marks biotic diagnoses as not simulated.
+        A mission visits up to eight ridges, limited by battery. Check covered
+        and uncovered ridges before planning follow-up work. Detections have
+        uncertainty and may miss or misidentify a problem. Unavailable diagnoses
+        are unknown, not evidence that a problem is absent.
 
         Args:
             start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.
@@ -89,17 +81,12 @@ class RobotApp(RobotOperations, App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_crop_health(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """
-        Walk a contiguous ridge range, returning ground-level pest + disease detections
-        plus visible canopy health diagnostics.
+        """Inspect visible crop condition and available pest, disease and weed evidence.
 
-        Use this when you need to discriminate among nutrient stress, drought
-        stress, and biotic causes of low NDVI. The robot can return both pest
-        and disease confidence scores per ridge in one pass.
-        A mission visits up to eight ridges, limited by battery. Each visited
-        ridge receives an actual observation-model product in sensor-sized
-        batches (four ridges by default); unvisited ridges are uncovered.
-        Native WOFOST maize reports stage and a noisy canopy/nutrient proxy, without biotic diagnoses.
+        A mission visits up to eight ridges, limited by battery. Read coverage,
+        symptoms and confidence together with soil and weather observations when
+        assessing the cause of poor growth. This inspection alone does not establish
+        a nutrient-deficiency diagnosis. Unavailable diagnoses remain unknown.
 
         Args:
             start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.
@@ -114,15 +101,11 @@ class RobotApp(RobotOperations, App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_emergence(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
-        """
-        Walk a contiguous ridge range, returning per-ridge emergence stand
-        estimates (fraction of expected plants visible).
+        """Estimate the fraction of expected plants currently visible in a ridge range.
 
-        Used in the early-season emergence-check loop. Stand fraction below
-        0.7 typically indicates a replant decision.
-        A mission visits up to eight ridges, limited by battery, using actual
-        sensor-sized observation batches (four ridges per batch by default).
-        Unemerged crops and harvested ground have zero visible stand.
+        A mission visits up to eight ridges, limited by battery. Read coverage
+        before interpreting stand estimates. Assess gap distribution, crop stage
+        and the remaining planting window before deciding whether to replant.
 
         Args:
             start_ridge: First local ridge, from 0 to this farm's num_ridges - 1.

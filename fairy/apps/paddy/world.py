@@ -206,7 +206,11 @@ class PaddyWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_plot_state(self, plot_id: str) -> dict:
-        """Read plot work records and previously acquired observations, including their timestamps."""
+        """Read plot work records and previously acquired observations, including their timestamps.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview.
+        """
         self.advance_physics_time()
         p = self.plot(plot_id)
         if p is None:
@@ -217,7 +221,11 @@ class PaddyWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_operation_log(self, plot_id: str | None = None) -> dict:
-        """Read completed operations and metered resource use, optionally filtered by plot ID."""
+        """Read completed operations and metered resource use, optionally filtered by plot ID.
+
+        Args:
+            plot_id: Exact hydraulic-plot ID from the field overview. None selects all applicable plots.
+        """
         return {"operations": copy.deepcopy([a for a in self.actions if plot_id is None or a.get("plot_id") == plot_id])}
 
     def outcome_summary(self):
@@ -293,7 +301,8 @@ class PaddyWeatherApp(WeatherApp):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_current_weather(self) -> dict:
-        """Return today's synthetic scenario weather, also used by the rice model."""
+        """Read today's weather for this field.
+        """
         return self._current_weather_dict()
 
     def _current_weather_dict(self):
@@ -307,7 +316,12 @@ class PaddyWeatherApp(WeatherApp):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_forecast(self, days: int = 7) -> dict:
-        """Get up to seven days of deterministic scenario forecast (not historical observations)."""
+        """Read up to seven days of weather forecast for this field.
+
+
+        Args:
+            days: Number of forecast days requested, from 1 to 7.
+        """
         self.world.advance_physics_time()
         today = datetime.fromtimestamp(self.world.sim_time, timezone.utc).date()
         forecast = []

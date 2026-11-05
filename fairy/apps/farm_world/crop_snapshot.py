@@ -212,7 +212,7 @@ def restore_physics(snapshot: dict | None, num_ridges: int,
         profile["start_date"] = date.fromisoformat(profile["start_date"])
         profile["monthly_climate"] = {int(key): MonthlyClimate(**row)
                                       for key, row in profile["monthly_climate"].items()}
-        profile["weather_events"] = [WeatherEvent(**{**row, "start_date": date.fromisoformat(row["start_date"])})
+        profile["weather_events"] = [WeatherEvent.from_state(row)
                                      for row in profile["weather_events"]]
         profile["biotic_outbreaks"] = [BioticOutbreak(**{**row, "pressure_type": TreatmentType(row["pressure_type"])})
                                       for row in profile["biotic_outbreaks"]]

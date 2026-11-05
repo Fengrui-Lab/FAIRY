@@ -9,6 +9,8 @@ Legacy default layout: 268 m × 71 m, 64 ridges, ridge width 1.1 m. [PDF-p1]
 
 from __future__ import annotations
 
+from fairy.crops.maize_identity import MAIZE_WOFOST_VARIANTS, native_variety, public_seed
+
 import logging
 import json
 import math
@@ -332,7 +334,8 @@ class FarmWorldApp(App):
         if backend is None:
             return None
         from fairy.physics.crop_profiles import get_crop_profile as get_native_profile
-        return get_native_profile(backend.config.crop_name)
+        profile = get_native_profile(backend.config.crop_name)
+        return replace(profile, seed_type=public_seed(backend.config.variety_name)) if backend.config.crop_name == "maize" else profile
 
     @property
     def is_native_maize(self) -> bool:
@@ -371,7 +374,7 @@ class FarmWorldApp(App):
         elif self._explicit_crop_id is not None:
             definition = get_crop_definition(self._explicit_crop_id, self._cultivar_id)
         else:
-            seed = ("MAIZE_201" if self.is_native_maize else
+            seed = (public_seed(self.variety_name) if self.is_native_maize else
                     self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id)
             definition = get_crop_definition(self.crop_type, seed)
         # Scenario preparation remains an explicit field-level contract.
@@ -387,7 +390,7 @@ class FarmWorldApp(App):
         if self._explicit_crop_id is not None:
             base = get_crop_definition(self._explicit_crop_id, self._cultivar_id)
         else:
-            seed = "MAIZE_201" if self.is_native_maize else self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id
+            seed = public_seed(self.variety_name) if self.is_native_maize else self.crop_profile.seed_type if self.crop_type != "soybean" else self._cultivar_id
             base = get_crop_definition(self.crop_type, seed)
         self._validate_definition_override(definition, base)
         self._crop_definition_override = definition
@@ -679,7 +682,7 @@ class FarmWorldApp(App):
             selected = config.get("crop_id")
             native = (state_dict.get("physics_state") or {}).get("crop_backend_name") == "wofost"
             seed = (config.get("cultivar_id") if selected is not None else
-                    "MAIZE_201" if native and config["crop_type"] == "maize" else
+                    public_seed((state_dict.get("physics_state") or {})["crop_backend_state"]["config"]["variety_name"]) if native and config["crop_type"] == "maize" else
                     get_crop_profile(config["crop_type"]).seed_type if config["crop_type"] != "soybean" else None)
             self._validate_definition_override(override, get_crop_definition(selected or config["crop_type"], seed))
         inventory = InventoryState.from_dict(state_dict["inventory"]) if self.shared_warehouse is None else None
@@ -826,15 +829,14 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_ridge_state(self, ridge_id: int) -> dict[str, Any]:
-        """
-        Return an operational state lookup for one ridge.
+        """Return an operational state lookup for one ridge.
 
         Includes planting status, seed type, growth stage, days since planting,
-        grain moisture, yield-potential proxy, and days since pesticide application.
+        grain moisture, estimated yield potential, and days since pesticide application.
 
-        Under WOFOST, nutrient_index is mapped from the juvenile exponential
-        leaf-area growth factor RFRGRL. It is not a general nitrogen-sufficiency
-        measurement; a low value at flowering alone does not justify fertilizing.
+        nutrient_index is an indicative crop-condition value, not a measured soil
+        nitrogen concentration. A low value alone does not establish a nutrient
+        deficiency; assess crop stage and other field evidence before fertilizing.
 
         Args:
             ridge_id: Ridge identifier within the configured farm.
@@ -851,11 +853,10 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_ridge_range_state(self, start: int, end: int) -> dict[str, Any]:
-        """
-        Return the full state of ridges from start to end (inclusive).
+        """Read the available operational status from start to end (inclusive).
 
         Includes planting status, seed type, growth stage, days since planting,
-        grain moisture, yield-potential proxy, and days since pesticide application.
+        grain moisture, estimated yield potential, and days since pesticide application.
 
         Args:
             start: First ridge ID
@@ -876,7 +877,8 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
-        """Return legacy single-farm stock and local management/storage requirements."""
+        """Read this farm's seed, chemical, fertilizer, fuel and grain stocks, resource allowances and drying and storage requirements.
+        """
         if self.shared_warehouse is not None:
             return {"error": "Read common stock through Warehouse.get_inventory and field limits through get_management_status",
                     "warehouse_id": self.shared_warehouse.warehouse_id}
@@ -1298,11 +1300,14 @@ class FarmWorldApp(App):
         if backend is not None and backend.config.crop_name != self.crop_name:
             return "Crop identity does not match the native backend; restore a complete farm checkpoint"
         if self.is_native_maize:
-            return None if seed_type == "MAIZE_201" else "The native maize crop requires MAIZE_201 seeds"
+            expected = public_seed(self.variety_name)
+            if seed_type != expected or seed_type not in self.crop_definition.seed_types:
+                return f"The native maize crop requires {expected} seeds"
+            return official_seed_backend_error(seed_type, self._physics)
         if self._explicit_crop_id is not None and seed_type not in self.crop_definition.seed_types:
             return f"Seed {seed_type} is not permitted by the selected crop/cultivar rules"
-        if seed_type == "MAIZE_201":
-            return "MAIZE_201 seeds require crop_name='maize' with the WOFOST backend"
+        if seed_type in MAIZE_WOFOST_VARIANTS:
+            return f"{seed_type} seeds require crop_name='maize' with the WOFOST backend"
         if seed_type not in self.crop_definition.seed_types:
             return f"Seed {seed_type!r} is not supported by this farm's crop rules"
         if seed_crop_type(seed_type) != self.crop_type:
@@ -1507,14 +1512,11 @@ class FarmWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def commit_daily_physics(self) -> dict[str, Any]:
-        """
-        Force a full daily physics tick at the current simulation time.
+        """Wait one day and update the field conditions.
 
-        Use this when you've taken several actions and want to advance the
-        world by exactly one day so their delayed effects (canopy growth,
-        biotic pressure decay, soil dry-down) become visible. Most agents
-        should prefer ``SystemApp.advance_time(days=N)`` to advance multiple
-        days; this is the single-day version with explicit "commit" semantics.
+        This advances time by 24 hours; it is not a refresh at the current time.
+        Use SystemApp.advance_time for a different duration. If daily field
+        updates are inactive, this call reports no action.
         """
         if not self.physics_active:
             return {"status": "noop", "reason": "physics_inactive"}
@@ -1533,18 +1535,19 @@ class FarmWorldApp(App):
         nutrient_amount: float,
         water_mm: float,
     ) -> dict[str, Any]:
-        """
-        Apply nutrient and carrier water to a ridge range.
+        """Apply nutrient and carrier water to a ridge range.
 
-        The nutrient amount is normalized (1.0 = a typical strong dose).
+        nutrient_amount is a dose multiplier: 1.0 uses 30 kg of fertilizer
+        product per treated ridge. Total product use is 30 x nutrient_amount
+        x the number of treated ridges.
         ``water_mm`` is the per-ridge carrier-water depth; it consumes the
         irrigation quota and enters the soil water balance.
 
         Args:
             start_ridge:     First ridge (within the configured farm).
             end_ridge:       Last ridge (within the configured farm, inclusive, >= start_ridge).
-            nutrient_amount: Normalized nutrient input (>0); typical 0.5-1.5.
-            water_mm:        Carrier-water metadata in millimetres (>=0).
+            nutrient_amount: Positive dose multiplier; 1.0 uses 30 kg of product per treated ridge.
+            water_mm:        Carrier-water depth per treated ridge in mm (>=0); consumes water allowance.
         """
         if not 0 <= start_ridge <= end_ridge < self.num_ridges:
             return {"error": f"Invalid ridge range [{start_ridge}, {end_ridge}]"}
@@ -1644,14 +1647,12 @@ class FarmWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def dry_grain(self, target_moisture_pct: float = 13.0) -> dict[str, Any]:
-        """
-        Dry harvested grain in storage to a target moisture percentage.
+        """Dry the pending harvested-grain batch before long-term storage.
 
-        Used post-harvest when grain came in above the safe storage moisture
-        window (usually 13-14%). The drying step advances the yield-recovery
-        state's grain_moisture_frac for harvested ridges, and flips the
-        inventory's `grain_dried` flag so subsequent `store_grain()` knows
-        the grain is safe for long-term storage.
+        The target must be 11-16% and no greater than the configured storage
+        limit. The pending batch must fit the configured drying capacity.
+        Already safe batches may be skipped. Read the final batch moisture and
+        quantity in the result.
 
         Args:
             target_moisture_pct: Target storage moisture, typically 13.0.
@@ -1661,6 +1662,9 @@ class FarmWorldApp(App):
             return {"error": "Dry an explicit batch through Warehouse.dry_grain(batch_id)"}
         if not 11.0 <= float(target_moisture_pct) <= 16.0:
             return {"error": "target_moisture_pct must be in [11, 16]"}
+        if self._inventory.harvest_grain_kg <= 0:
+            return {"error": "No pending grain batch to dry", "code": "no_pending_grain",
+                    "trailer_grain_kg": self._inventory.harvest_grain_kg}
         market = self._postharvest_market
         if float(target_moisture_pct) > market.max_storage_moisture_pct:
             return {
@@ -1727,15 +1731,12 @@ class FarmWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def store_grain(self) -> dict[str, Any]:
-        """
-        Finalise harvested grain into long-term warehouse storage.
+        """Move the pending harvested-grain batch into long-term warehouse storage.
 
-        Moves the trailer's `harvest_grain_kg` into the warehouse's
-        `warehouse_grain_kg` and zeroes the trailer. Records an action for
-        the workflow validator + FOS gate matchers so the post-harvest
-        sequence (harvest → dry → store) is observable end-to-end. A strict
-        facility rejects unknown or unsafe moisture; the historical permissive
-        single-farm facility admits it with a warning.
+        Requires free storage capacity. Check batch moisture and the configured
+        safe-storage limit first. Strict facilities reject unknown or unsafe
+        moisture; permissive facilities may transfer it with a spoilage warning.
+        Read the result: a completed transfer alone does not establish safe storage.
         """
         if self.shared_warehouse is not None:
             return {"error": "Store an explicit batch through Warehouse.store_grain(batch_id)"}
@@ -2345,14 +2346,13 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_crop_capabilities(self) -> dict[str, Any]:
-        """Read this field's crop, permitted seed, geometry and operation rules.
+        """Read this field's permitted seeds, layout and planting and harvest requirements.
 
-        Rules include seed-specific temperature limits, planting depth, VWC,
-        supported replant modes, mature stages and required implements. They
-        are the same typed rules used by tools and execution. Crop needs do
-        not imply that a device owns the required implement. Nutrition metadata
-        distinguishes the availability proxy from measured N/P/K and fertilizer
-        product mass from elemental nutrient mass.
+        Includes replanting rules, maturity and moisture limits, required implements
+        and storage requirements. Equipment status lists the implements actually
+        available. Check the replant tool for any crop-cycle restrictions.
+        Nutrition information distinguishes indicative values from soil nutrient
+        measurements and fertilizer product mass from elemental nutrient mass.
         """
         return self.crop_capabilities()
 

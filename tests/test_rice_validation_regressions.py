@@ -84,7 +84,7 @@ class RefuelRecoveryLLM:
     def chat_completion(self, messages, tools=None):
         self.calls += 1
         if self.calls <= 2:
-            arguments = {"machine_id": "tractor", "liters": 100 if self.calls == 1 else 10}
+            arguments = {"machine_id": "tractor", "liters": 100 if self.calls == 1 else 59}
             call = SimpleNamespace(
                 id=f"call{self.calls}", type="function",
                 function=SimpleNamespace(name="PaddyMachineryApp__refuel", arguments=json.dumps(arguments)),

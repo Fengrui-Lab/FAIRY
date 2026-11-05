@@ -54,7 +54,8 @@ def completed():
 
 
 def test_three_independent_scenario_modules_use_the_common_event_runtime():
-    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | set(TASK_SPECS)
+    from fairy.scenarios.crop_challenges.catalog import TASKS
+    assert {sid for sid in list_scenarios() if sid.startswith("scenario_maize_")} == set(IDS) | set(TASK_SPECS) | {sid for sid in TASKS if sid.startswith("scenario_maize_")}
     for scenario_id in IDS:
         cls = get_scenario_class(scenario_id)
         path = Path(inspect.getfile(cls))
@@ -121,7 +122,10 @@ def test_full_season_oracles_mature_harvest_and_safely_store_all_64_ridges(scena
     assert farm._inventory.seed_stock["MAIZE_201"] == 100000 - 64 * 1340
     assert tractor._seed_hopper == tractor._grain_bin_kg == 0
     assert farm._inventory.harvest_grain_kg == 0
-    assert farm._inventory.warehouse_grain_kg > 0
+    # Guard against a technically completed but severely under-managed reference.
+    # Market-basis mass, with unchanged synthetic climate and native cultivar.
+    yield_floor = {"normal": 15000.0, "water_limit": 5000.0, "nitrogen_limit": 13000.0}
+    assert farm._inventory.warehouse_grain_kg > yield_floor[scenario.spec.variant]
     for state in farm.physics.yield_recovery.states.values():
         assert state.harvest_date >= state.maturity_date
         assert state.grain_moisture_frac <= 0.14 + 1e-9

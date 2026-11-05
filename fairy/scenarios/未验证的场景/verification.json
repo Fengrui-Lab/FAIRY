@@ -1,0 +1,13 @@
+{
+  "excluded_canonical": 9,
+  "excluded_alias": 1,
+  "explicit_lookup_rejected": 10,
+  "retained_maize_registered": 9,
+  "newly_removed": [
+    "scenario_rice_l3_equipment_limit",
+    "scenario_rice_l3_zonal_crop_protection"
+  ],
+  "other_registration_unchanged": true,
+  "model_requests": 0,
+  "simulation_runs": 0
+}

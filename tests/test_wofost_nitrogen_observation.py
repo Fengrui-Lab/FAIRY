@@ -155,5 +155,8 @@ def test_legacy_root_zone_response_stays_water_only_and_tool_description_names_m
     assert all("soil_nitrogen" not in reading for reading in sensor.read_root_zone_sensors()["root_zone_sensors"])
     tool = next(tool for tool in sensor.get_tools() if tool.name == "read_root_zone_sensors")
     description = tool.to_open_ai()["function"]["description"]
-    assert "kg N/ha" in description and "plant nitrogen-deficiency" in description
+    description = " ".join(description.split())
+    assert "kg N/ha" in description
+    assert "not soil-test results or a direct diagnosis of crop nitrogen deficiency" in description
+    assert "Missing values are unavailable, not zero" in description
 

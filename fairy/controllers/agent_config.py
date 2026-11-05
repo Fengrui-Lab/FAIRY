@@ -152,7 +152,7 @@ You always prioritize accuracy and reliability in your responses."""
 )
 
 FARM_WORLD_GENERAL_SYSTEM_PROMPT = textwrap.dedent(
-    """You are an experienced farm manager for the farms configured in this scenario. Manage field preparation, planting, crop monitoring, and harvest using each farm's own crop profile, field dimensions, ridge count, associated weather, and inventory. Read the task and farm overview for the actual configuration; do not assume a fixed field size or crop. When World tools are present, read the environment directory: shared service tools require explicit farm_id and asset_id. One asset retains fuel, battery, equipment and payload across farms. Materials come from the shared warehouse; obey any origin rules declared by the actual tool service. Ridge IDs are local to the selected farm. Legacy single-farm tools may bind their target in the app name. All sites share one simulation clock, so time spent working at one farm also passes at the other farms.
+    """You are an experienced farm manager. Complete the user's farming task using the actual crops, field layouts, equipment, supplies and observations available to you.
 
 You think and act like a seasoned farmer: practical, methodical, and grounded in real agronomic knowledge."""
 )
@@ -187,7 +187,7 @@ You must always follow the cycle:
 === TOOL CALL RULES ===
 - Use the provided tool schema for tool calls; do not hand-write JSON action blobs in the assistant message.
 - Only ONE tool call is allowed per turn.
-- Each tool call represents one physical action.
+- Tool calls may read information or perform a physical action.
 - Use real values, not placeholders.
 - If a tool takes no input, call it with an empty argument object.
 - For booleans, use true/false in lowercase.
@@ -231,13 +231,11 @@ Fundamental rules for task execution:
 )
 
 FARM_WORLD_ENVIRONMENT_INSTRUCTIONS = textwrap.dedent(
-    """You are managing the configured farms through the registered tool services. Shared operations identify their target by farm_id and their physical equipment by asset_id; read World__describe_environment when available. Apply crop-specific rules from the farm overview and capabilities. Fixed sensor and irrigation Apps belong to their named farm; shared mobile operations retain equipment state. Warehouse stock is shared, while each field owns its water allowance, crop state and observations.
+    """You manage the farm or farms described in the task through the provided tools.
 
-Available tools are provided through the function-calling tool schema.
+Available tools are provided through the function-calling tool schema. Follow each tool's declared targets, requirements and result format.
 
-Shared agricultural tools return a receipt with ok, tool, applicable target IDs, time_before, time_after, data and error. Treat only ok=true as success and read the business result from data; error=null on success. A failure with partial_effects=unknown requires checking current state before retrying. SystemApp, task interfaces and legacy single-farm tools retain their existing return formats.
-
-Read-only tools provide observations; operation tools perform their declared actions and may advance the common simulation clock. Call one tool, observe the result, then decide the next step. Only message the user when the full task is done or cannot be completed.
+Tool calls may read information or perform a physical action. Operations may consume time and resources; check results and any pending completion time before proceeding. Call one tool, observe the result, then decide the next step. Only message the user when the full task is done or cannot be completed.
 
 {environment_hints}"""
 )
@@ -302,7 +300,7 @@ def get_farm_world_system_prompt(
         prompt = SYSTEM_PROMPT_TEMPLATE.format(
             general_instructions=("You manage a transplanted rice paddy. Each hydraulic plot has its own "
                 "area, water and crop state. Inspect the actual field and inventory through the tools. "
-                "Purchased seedlings and built canals are available; prepare the field, transplant, "
+                "Check seedling stocks and irrigation infrastructure; prepare the field, transplant, "
                 "manage water, harvest and dry/store grain as required by the task."),
             agent_instructions=(ARE_FUNCTION_CALL_AGENT_INSTRUCTIONS if mode == "are"
                                 else FUNCTION_CALL_AGENT_INSTRUCTIONS),
@@ -310,7 +308,7 @@ def get_farm_world_system_prompt(
                 "PaddyOpsApp for operations, PaddyMachineryApp for fuel/implements, PaddyInfrastructureApp for repairs, "
                 "PaddyDroneApp for aerial surveys, WeatherApp for weather and SystemApp to advance time. "
                 "Observe tool preconditions and shared water, seedlings, fuel and storage constraints. "
-                "Water depths are mm; observed crop stages are labelled management proxies. "
+                "Water depths are mm; crop stages are broad field assessments. "
                 "Finish each plot’s partial transplant batches within one UTC day. Dry and store grain in separate operations. "
                 "Read plot maturity and harvest readiness before harvesting. "
                 "Perform physical operations sequentially and inspect their results."),
@@ -319,12 +317,11 @@ def get_farm_world_system_prompt(
         prompt = SYSTEM_PROMPT_TEMPLATE.format(
             general_instructions=("You manage a grain maize farm through field preparation, sowing, "
                 "crop monitoring, water and nitrogen management, harvest, drying and storage. "
-                "Use the scenario's field dimensions, seed inventory and resource limits. "
-                "The reference cultivar is not calibrated to a local commercial hybrid."),
+                "Use the field's dimensions, seed inventory and resource limits."),
             agent_instructions=(ARE_FUNCTION_CALL_AGENT_INSTRUCTIONS if mode == "are"
                                 else FUNCTION_CALL_AGENT_INSTRUCTIONS),
             environment_instructions=("Use the supplied farm, tractor, field operations, sensor, robot, "
-                "weather and time tools. Each physical operation consumes time and resources. "
+                "weather and time tools. Operations may consume time and resources as stated by each tool. "
                 "Inspect soil moisture, crop development, nitrogen status and grain moisture before acting. "
                 "Crop stages are coarse observations: pre-emergence, vegetative, reproductive and mature. "
                 "Maturity alone does not imply harvest readiness; grain must meet the equipment's moisture limit. "
@@ -342,6 +339,16 @@ DEFAULT_APP_AGENT_SYSTEM_MESSAGE = SYSTEM_PROMPT_TEMPLATE.format(
     general_instructions=GENERAL_SYSTEM_PROMPT_TEMPLATE,
     agent_instructions=FUNCTION_CALL_AGENT_INSTRUCTIONS,
     environment_instructions=ARE_SIMULATION_ENVIRONMENT_INSTRUCTIONS.format(
+        environment_hints=APP_AGENT_HINTS,
+    ),
+)
+
+
+FARM_WORLD_APP_AGENT_SYSTEM_MESSAGE = SYSTEM_PROMPT_TEMPLATE.format(
+    general_instructions=("Assist with the farm work delegated to you using your available tools. "
+                          "Report completed work, relevant observations and any unfinished part."),
+    agent_instructions=FUNCTION_CALL_AGENT_INSTRUCTIONS,
+    environment_instructions=FARM_WORLD_ENVIRONMENT_INSTRUCTIONS.format(
         environment_hints=APP_AGENT_HINTS,
     ),
 )

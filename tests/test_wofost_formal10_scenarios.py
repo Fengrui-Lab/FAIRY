@@ -36,7 +36,6 @@ from fairy.tool_utils import OperationType
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "fairy/scenarios/farm_world_fullseason_v2"
 PREFIX = "scenario_full_season_"
 VERSION_ROWS = json.loads((ROOT / "configs/oracles/wofost_scenario_versions.json").read_text())["rows"]
 VERSION_BY_LEGACY = {row["legacy_id"]: row for row in VERSION_ROWS}

@@ -1,0 +1,2606 @@
+{
+  "number": 1,
+  "module": "fairy.scenarios.wofost.scenario_two_farm_wofost_soil_water_diagnosis_V2",
+  "class_name": "ScenarioTwoFarmWofostSoilWaterDiagnosis_V2",
+  "title": "相邻浅土与深土大豆：分场水分诊断",
+  "actions": [
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_shallow_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_shallow_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "initial_deep_soil",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "initial_deep_rows",
+      "round": "initial",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "shallow"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "shallow",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_shallow",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep挂平地机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "grader"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep整平",
+      "tool": "Tractor__level",
+      "args": {
+        "farm_id": "deep"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "卸平地机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "挂起垄机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "furrower"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep起垄",
+      "tool": "Tractor__form_ridges",
+      "args": {
+        "farm_id": "deep",
+        "ridge_width_m": 1.1
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "卸起垄机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "准备_deep",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep挂相应播种机",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "soybean_planter"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子0",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种0",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子4",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种4",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子8",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种8",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子12",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种12",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子16",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种16",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子20",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种20",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子24",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种24",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep装本趟种子28",
+      "tool": "Tractor__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 47168
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮播种28",
+      "tool": "Tractor__plant_seeds",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.545454545454546
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "label": "卸播种机",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "播种_deep",
+      "expected_error": null
+    },
+    {
+      "at": "2019-06-01T07:00:00",
+      "label": "出苗建立与跨场电量",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_shallow_soil",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_shallow_rows",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_deep_soil",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_deep_rows",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "shallow无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "shallow地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_shallow_ground",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "deep无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "label": "deep地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "出苗建立与跨场电量_deep_ground",
+      "round": "出苗建立与跨场电量",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-20T07:00:00",
+      "label": "第一次关键期正常补水",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "第一次关键期正常补水_shallow_soil",
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "第一次关键期正常补水_shallow_rows",
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "第一次关键期正常补水_deep_soil",
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "第一次关键期正常补水_deep_rows",
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow整轮补水30mm",
+      "tool": "shallow_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "label": "deep整轮补水30mm",
+      "tool": "deep_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第一次关键期正常补水",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-21T07:00:00",
+      "label": "补水后实际日结算复查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "补水后实际日结算复查_shallow_soil",
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "补水后实际日结算复查_shallow_rows",
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "补水后实际日结算复查_deep_soil",
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "补水后实际日结算复查_deep_rows",
+      "round": "补水后实际日结算复查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-30T07:00:00",
+      "label": "土壤差异诊断与额外一轮水",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_shallow_soil",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_shallow_rows",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_deep_soil",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_deep_rows",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享无人机充电",
+      "tool": "Drone__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享机器人充电",
+      "tool": "Robot__charge",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "共同经过一小时充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "seconds": 3600
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_shallow_ground",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep无人机全田粗查",
+      "tool": "Drone__fly_survey",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep地面前四垄代表样本",
+      "tool": "Robot__inspect_crop_health",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": "土壤差异诊断与额外一轮水_deep_ground",
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow整轮补水30mm",
+      "tool": "shallow_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": [
+        "correct"
+      ],
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep整轮补水30mm",
+      "tool": "deep_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": [
+        "wrong"
+      ],
+      "checkpoint": null,
+      "round": "土壤差异诊断与额外一轮水",
+      "expected_error": null
+    },
+    {
+      "at": "2019-07-31T07:00:00",
+      "label": "分场水分恢复复查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "分场水分恢复复查_shallow_soil",
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "分场水分恢复复查_shallow_rows",
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "分场水分恢复复查_deep_soil",
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "分场水分恢复复查_deep_rows",
+      "round": "分场水分恢复复查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-08T07:00:00",
+      "label": "第二次常规整轮水",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "第二次常规整轮水_shallow_soil",
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "第二次常规整轮水_shallow_rows",
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "第二次常规整轮水_deep_soil",
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "第二次常规整轮水_deep_rows",
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow整轮补水30mm",
+      "tool": "shallow_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep整轮补水30mm",
+      "tool": "deep_Irrigation__irrigate",
+      "args": {
+        "start": 0,
+        "end": 31,
+        "hours": 6.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "第二次常规整轮水",
+      "expected_error": null
+    },
+    {
+      "at": "2019-08-09T07:00:00",
+      "label": "灌后复查",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "灌后复查_shallow_soil",
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "灌后复查_shallow_rows",
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "灌后复查_deep_soil",
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "灌后复查_deep_rows",
+      "round": "灌后复查",
+      "expected_error": null
+    },
+    {
+      "at": "2019-09-20T07:00:00",
+      "label": "两场分别核查成熟与粮水",
+      "arms": null
+    },
+    {
+      "label": "共同当前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共同未来天气",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 4
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow根区水分",
+      "tool": "shallow_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场分别核查成熟与粮水_shallow_soil",
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow冠层初筛",
+      "tool": "shallow_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow阶段粮水与公开状态",
+      "tool": "shallow_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场分别核查成熟与粮水_shallow_rows",
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep根区水分",
+      "tool": "deep_Sensor__read_soil_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": "两场分别核查成熟与粮水_deep_soil",
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep冠层初筛",
+      "tool": "deep_Sensor__read_canopy_sensors",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep阶段粮水与公开状态",
+      "tool": "deep_Farm__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 31
+      },
+      "arms": null,
+      "checkpoint": "两场分别核查成熟与粮水_deep_rows",
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "shallow_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "shallow_00_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "shallow_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "shallow_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "shallow_08_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "shallow_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "shallow_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "shallow_16_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "shallow_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "shallow",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "shallow_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "shallow_24_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "shallow_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "挂适用割台",
+      "tool": "Tractor__attach_implement",
+      "args": {
+        "implement": "harvester"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割0",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 0,
+        "end_ridge": 3
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割4",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 4,
+        "end_ridge": 7
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep卸清并保留来源0",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "deep_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep按来源必要干燥0",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "deep_00_07",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep安全入库0",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "deep_00_07"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割8",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 8,
+        "end_ridge": 11
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割12",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 12,
+        "end_ridge": 15
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep卸清并保留来源8",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "deep_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep按来源必要干燥8",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "deep_08_15",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep安全入库8",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "deep_08_15"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割16",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 16,
+        "end_ridge": 19
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割20",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 20,
+        "end_ridge": 23
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep卸清并保留来源16",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "deep_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep按来源必要干燥16",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "deep_16_23",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep安全入库16",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "deep_16_23"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共享油箱检查",
+      "tool": "Tractor__get_status",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "从共有仓库正常补油",
+      "tool": "Tractor__refuel",
+      "args": {
+        "liters": 100.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割24",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 24,
+        "end_ridge": 27
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep同轮收割28",
+      "tool": "Tractor__harvest",
+      "args": {
+        "farm_id": "deep",
+        "start_ridge": 28,
+        "end_ridge": 31
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep卸清并保留来源24",
+      "tool": "Tractor__unload_grain",
+      "args": {
+        "batch_id": "deep_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep按来源必要干燥24",
+      "tool": "Warehouse__dry_grain",
+      "args": {
+        "batch_id": "deep_24_31",
+        "target_moisture_pct": 13.0
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep安全入库24",
+      "tool": "Warehouse__store_grain",
+      "args": {
+        "batch_id": "deep_24_31"
+      },
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "卸割台",
+      "tool": "Tractor__detach_implement",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "共有仓库最后核验",
+      "tool": "Warehouse__get_inventory",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "粮食来源与安全批次",
+      "tool": "Warehouse__get_grain_batches",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "shallow全场交付",
+      "tool": "shallow_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    },
+    {
+      "label": "deep全场交付",
+      "tool": "deep_Farm__get_farm_overview",
+      "args": {},
+      "arms": null,
+      "checkpoint": null,
+      "round": "两场分别核查成熟与粮水",
+      "expected_error": null
+    }
+  ]
+}

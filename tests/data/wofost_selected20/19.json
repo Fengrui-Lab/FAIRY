@@ -1,0 +1,1286 @@
+{
+  "number": 19,
+  "title": "杂草与病害造成的长势异常",
+  "core": "无人机的绿色覆盖和长势异常不能直接当病因；早期草害与后期病害分阶段地面确认，再分别机械除草和杀菌。两类操作不可互相替代。",
+  "world": {
+    "irrigation_quota_mm": 30.0,
+    "warehouse_pesticide_l": 61.0,
+    "active_ingredient_cap_kg": 0.061,
+    "max_fungicide_applications": 1,
+    "max_machine_passes": 2,
+    "max_mechanical_weed_ridges": 16
+  },
+  "events": [
+    {
+      "type": "pressure",
+      "event_id": "early_green_weed_patch",
+      "farm_id": "farm",
+      "start": "2019-05-24",
+      "end": "2019-05-25",
+      "ridge_start": 6,
+      "ridge_end": 21,
+      "kind": "weed",
+      "value": 0.8,
+      "mode": "set",
+      "repeat": "once"
+    },
+    {
+      "type": "weather",
+      "event_id": "seedling_diagnosis_and_work",
+      "farm_id": "farm",
+      "start": "2019-05-28",
+      "end": "2019-05-30",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    },
+    {
+      "type": "weather",
+      "event_id": "wet_canopy_spell",
+      "farm_id": "farm",
+      "start": "2019-06-18",
+      "end": "2019-07-03",
+      "rain_mm": 6.0
+    },
+    {
+      "type": "pressure",
+      "event_id": "later_canopy_disease_patch",
+      "farm_id": "farm",
+      "start": "2019-06-25",
+      "end": "2019-06-26",
+      "ridge_start": 34,
+      "ridge_end": 49,
+      "kind": "disease",
+      "value": 0.65,
+      "mode": "set",
+      "repeat": "once"
+    },
+    {
+      "type": "weather",
+      "event_id": "disease_diagnosis_and_work",
+      "farm_id": "farm",
+      "start": "2019-07-04",
+      "end": "2019-07-06",
+      "rain_mm": 0.0,
+      "wind_ms": 2.0
+    }
+  ],
+  "actions": [
+    {
+      "label": "播前土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "播前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "播前库存",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {}
+    },
+    {
+      "label": "播前机具",
+      "tool": "TractorApp__get_status",
+      "args": {}
+    },
+    {
+      "label": "挂载grader",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "grader"
+      }
+    },
+    {
+      "label": "全田level",
+      "tool": "TractorApp__level",
+      "args": {}
+    },
+    {
+      "label": "卸下grader",
+      "tool": "TractorApp__detach_implement",
+      "args": {}
+    },
+    {
+      "label": "挂载furrower",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "furrower"
+      }
+    },
+    {
+      "label": "全田form_ridges",
+      "tool": "TractorApp__form_ridges",
+      "args": {
+        "ridge_width_m": 1.1
+      }
+    },
+    {
+      "label": "卸下furrower",
+      "tool": "TractorApp__detach_implement",
+      "args": {}
+    },
+    {
+      "label": "批量装种_0",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 300000
+      }
+    },
+    {
+      "label": "同轮播种_0",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 3,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_4",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 4,
+        "end_ridge": 7,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_8",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 8,
+        "end_ridge": 11,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_12",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 15,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_16",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 19,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "批量装种_20",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 265320
+      }
+    },
+    {
+      "label": "同轮播种_20",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 20,
+        "end_ridge": 23,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_24",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 24,
+        "end_ridge": 27,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_28",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 28,
+        "end_ridge": 31,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_32",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 35,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_36",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 36,
+        "end_ridge": 39,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "批量装种_40",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 265320
+      }
+    },
+    {
+      "label": "同轮播种_40",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 43,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_44",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 47,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_48",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 48,
+        "end_ridge": 51,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_52",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 52,
+        "end_ridge": 55,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "同轮播种_56",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 56,
+        "end_ridge": 59,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "label": "批量装种_60",
+      "tool": "TractorApp__load_seeds",
+      "args": {
+        "seed_type": "SOYBEAN_901",
+        "count": 18384
+      }
+    },
+    {
+      "label": "同轮播种_60",
+      "tool": "TractorApp__plant_seeds",
+      "args": {
+        "start_ridge": 60,
+        "end_ridge": 63,
+        "depth_cm": 4.0,
+        "seed_spacing_cm": 4.04040404040404
+      }
+    },
+    {
+      "at": "2019-05-23",
+      "hour": 7,
+      "label": "等待出苗"
+    },
+    {
+      "label": "出苗前电量",
+      "tool": "Robot0__check_status",
+      "args": {}
+    },
+    {
+      "label": "仅0至3垄出苗样本",
+      "tool": "Robot0__inspect_emergence",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 3
+      }
+    },
+    {
+      "label": "下轮检查前充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "等待下轮检查前充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-05-28",
+      "hour": 7,
+      "label": "苗期绿色覆盖异常定位"
+    },
+    {
+      "label": "苗期绿色与作物根水",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "苗期绿色与作物冠层",
+      "tool": "SensorApp__read_canopy_sensors",
+      "args": {}
+    },
+    {
+      "label": "苗期绿色与作物飞行天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "苗期绿色与作物无人机电量",
+      "tool": "SurveyDrone__check_status",
+      "args": {}
+    },
+    {
+      "label": "苗期绿色与作物全田粗查非确诊",
+      "tool": "SurveyDrone__fly_survey",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 63
+      }
+    },
+    {
+      "label": "苗期绿色与作物机器人电量",
+      "tool": "Robot0__check_status",
+      "args": {}
+    },
+    {
+      "label": "异常两端及健康参照_4_11",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 4,
+        "end_ridge": 11
+      }
+    },
+    {
+      "label": "异常两端及健康参照_12_19",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 19
+      }
+    },
+    {
+      "label": "补齐检查前充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "等待补齐检查前充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "label": "异常两端及健康参照_20_23",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 20,
+        "end_ridge": 23
+      }
+    },
+    {
+      "label": "异常两端及健康参照_54_57",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 54,
+        "end_ridge": 57
+      }
+    },
+    {
+      "label": "本轮检查后充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "无人机充电",
+      "tool": "SurveyDrone__charge",
+      "args": {}
+    },
+    {
+      "label": "等待本轮检查后充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-05-29",
+      "hour": 7,
+      "label": "确认草区机械除草窗口",
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草资源",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草机具",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "cultivator"
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草_6",
+      "tool": "TractorApp__mechanical_weed_control",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 15
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草_16",
+      "tool": "TractorApp__mechanical_weed_control",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 21
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认草区机械除草卸机具",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "at": "2019-05-29",
+      "hour": 7,
+      "label": "错误把草绿覆盖当病害窗口",
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害资源",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害机具",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "sprayer"
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害装药",
+      "tool": "TractorApp__load_fungicide",
+      "args": {
+        "liters": 60.8
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害_6",
+      "tool": "TractorApp__apply_fungicide",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 15,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害_16",
+      "tool": "TractorApp__apply_fungicide",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 21,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把草绿覆盖当病害卸机具",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "at": "2019-06-03",
+      "hour": 7,
+      "label": "苗期处理后复查"
+    },
+    {
+      "label": "苗期复查根水",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "苗期草区复查_6_9",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 6,
+        "end_ridge": 9
+      }
+    },
+    {
+      "label": "苗期草区复查_18_21",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 18,
+        "end_ridge": 21
+      }
+    },
+    {
+      "label": "本轮检查后充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "无人机充电",
+      "tool": "SurveyDrone__charge",
+      "args": {}
+    },
+    {
+      "label": "等待本轮检查后充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-07-04",
+      "hour": 7,
+      "label": "湿季新异常定位鉴别"
+    },
+    {
+      "label": "湿季公开阶段",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "湿季异常根水",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "湿季异常冠层",
+      "tool": "SensorApp__read_canopy_sensors",
+      "args": {}
+    },
+    {
+      "label": "湿季异常飞行天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "湿季异常无人机电量",
+      "tool": "SurveyDrone__check_status",
+      "args": {}
+    },
+    {
+      "label": "湿季异常全田粗查非确诊",
+      "tool": "SurveyDrone__fly_survey",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 63
+      }
+    },
+    {
+      "label": "湿季异常机器人电量",
+      "tool": "Robot0__check_status",
+      "args": {}
+    },
+    {
+      "label": "湿季异常全覆盖与边界_32_39",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 39
+      }
+    },
+    {
+      "label": "湿季异常全覆盖与边界_40_47",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 47
+      }
+    },
+    {
+      "label": "补齐检查前充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "等待补齐检查前充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "label": "湿季异常全覆盖与边界_48_55",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 48,
+        "end_ridge": 55
+      }
+    },
+    {
+      "label": "本轮检查后充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "无人机充电",
+      "tool": "SurveyDrone__charge",
+      "args": {}
+    },
+    {
+      "label": "等待本轮检查后充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-07-05",
+      "hour": 7,
+      "label": "确认病区局部杀菌窗口",
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌资源",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌机具",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "sprayer"
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌装药",
+      "tool": "TractorApp__load_fungicide",
+      "args": {
+        "liters": 60.8
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌_34",
+      "tool": "TractorApp__apply_fungicide",
+      "args": {
+        "start_ridge": 34,
+        "end_ridge": 43,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌_44",
+      "tool": "TractorApp__apply_fungicide",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 49,
+        "liters_per_ridge": 3.8
+      },
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "label": "确认病区局部杀菌卸机具",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "correct"
+      ]
+    },
+    {
+      "at": "2019-07-05",
+      "hour": 7,
+      "label": "错误把病弱长势当草害窗口",
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害土壤通行性",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害资源",
+      "tool": "FarmWorldApp__get_inventory",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害机具",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "cultivator"
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害_34",
+      "tool": "TractorApp__mechanical_weed_control",
+      "args": {
+        "start_ridge": 34,
+        "end_ridge": 43
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害_44",
+      "tool": "TractorApp__mechanical_weed_control",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 49
+      },
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "label": "错误把病弱长势当草害卸机具",
+      "tool": "TractorApp__detach_implement",
+      "args": {},
+      "arms": [
+        "wrong"
+      ]
+    },
+    {
+      "at": "2019-07-10",
+      "hour": 7,
+      "label": "湿季处理后复查"
+    },
+    {
+      "label": "湿季复查根水",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "病区两端复查_34_37",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 34,
+        "end_ridge": 37
+      }
+    },
+    {
+      "label": "病区两端复查_46_49",
+      "tool": "Robot0__inspect_crop_health",
+      "args": {
+        "start_ridge": 46,
+        "end_ridge": 49
+      }
+    },
+    {
+      "label": "本轮检查后充电",
+      "tool": "Robot0__charge",
+      "args": {}
+    },
+    {
+      "label": "无人机充电",
+      "tool": "SurveyDrone__charge",
+      "args": {}
+    },
+    {
+      "label": "等待本轮检查后充电",
+      "tool": "SystemApp__advance_time",
+      "args": {
+        "hours": 1
+      }
+    },
+    {
+      "at": "2019-08-08",
+      "hour": 7,
+      "label": "关键期根水检查"
+    },
+    {
+      "label": "公开阶段",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "根区亏缺",
+      "tool": "SensorApp__read_root_zone_sensors",
+      "args": {}
+    },
+    {
+      "label": "近期降雨",
+      "tool": "WeatherApp__get_forecast",
+      "args": {
+        "days": 3
+      }
+    },
+    {
+      "label": "正常一轮补水",
+      "tool": "FieldOpsApp__irrigate",
+      "args": {
+        "start": 0,
+        "end": 63,
+        "hours": 6.0
+      }
+    },
+    {
+      "at": "2019-09-20",
+      "hour": 7,
+      "label": "成熟与收获窗口"
+    },
+    {
+      "label": "成熟与粮水",
+      "tool": "FarmWorldApp__get_ridge_range_state",
+      "args": {
+        "start": 0,
+        "end": 63
+      }
+    },
+    {
+      "label": "收前土壤",
+      "tool": "SensorApp__read_soil_sensors",
+      "args": {}
+    },
+    {
+      "label": "收前天气",
+      "tool": "WeatherApp__get_current_weather",
+      "args": {}
+    },
+    {
+      "label": "安装收割机",
+      "tool": "TractorApp__attach_implement",
+      "args": {
+        "implement": "harvester"
+      }
+    },
+    {
+      "label": "同轮收割_0",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 0,
+        "end_ridge": 3
+      }
+    },
+    {
+      "label": "同轮收割_4",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 4,
+        "end_ridge": 7
+      }
+    },
+    {
+      "label": "合批卸粮_0",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_0",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_0",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_8",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 8,
+        "end_ridge": 11
+      }
+    },
+    {
+      "label": "同轮收割_12",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 12,
+        "end_ridge": 15
+      }
+    },
+    {
+      "label": "合批卸粮_8",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_8",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_8",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_16",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 16,
+        "end_ridge": 19
+      }
+    },
+    {
+      "label": "同轮收割_20",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 20,
+        "end_ridge": 23
+      }
+    },
+    {
+      "label": "合批卸粮_16",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_16",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_16",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_24",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 24,
+        "end_ridge": 27
+      }
+    },
+    {
+      "label": "同轮收割_28",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 28,
+        "end_ridge": 31
+      }
+    },
+    {
+      "label": "合批卸粮_24",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_24",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_24",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_32",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 32,
+        "end_ridge": 35
+      }
+    },
+    {
+      "label": "同轮收割_36",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 36,
+        "end_ridge": 39
+      }
+    },
+    {
+      "label": "合批卸粮_32",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_32",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_32",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_40",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 40,
+        "end_ridge": 43
+      }
+    },
+    {
+      "label": "同轮收割_44",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 44,
+        "end_ridge": 47
+      }
+    },
+    {
+      "label": "合批卸粮_40",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_40",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_40",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_48",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 48,
+        "end_ridge": 51
+      }
+    },
+    {
+      "label": "同轮收割_52",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 52,
+        "end_ridge": 55
+      }
+    },
+    {
+      "label": "合批卸粮_48",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_48",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_48",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "同轮收割_56",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 56,
+        "end_ridge": 59
+      }
+    },
+    {
+      "label": "同轮收割_60",
+      "tool": "TractorApp__harvest",
+      "args": {
+        "start_ridge": 60,
+        "end_ridge": 63
+      }
+    },
+    {
+      "label": "合批卸粮_56",
+      "tool": "TractorApp__unload_grain",
+      "args": {}
+    },
+    {
+      "label": "必要干燥_56",
+      "tool": "FarmWorldApp__dry_grain",
+      "args": {
+        "target_moisture_pct": 13.0
+      }
+    },
+    {
+      "label": "安全入库_56",
+      "tool": "FarmWorldApp__store_grain",
+      "args": {}
+    },
+    {
+      "label": "收后卸机具",
+      "tool": "TractorApp__detach_implement",
+      "args": {}
+    }
+  ],
+  "notes": [],
+  "brief": "公开巡查单元为0–31、32–63垄，统一播期与官方Soybean_901。苗期可能混入杂草绿色，湿季可能有病害；绿色覆盖不等于大豆叶面积，低NDVI也不等于病害。用无人机异常区和两端地面检查确认范围，再选择机械或杀菌剂，不预先透露真实病草位置。机械资源只够16垄一次、药量只够16垄一次，须正确区分两种原因。",
+  "plan": [
+    "4/28统一建植，5/23仅0–3垄出苗样本，不称全田检查。苗期5/24一次外接草害，后期6/25另一区一次外接病害；两事件均世界自身注入。",
+    "5/28传感器—全田无人机定位异常—机器人覆盖4–23垄两端与54–57参照，确认6–21草区；5/29机械除草16垄，两趟同一轮。6/3复查。",
+    "6/18–7/3人工6mm/day湿期。7/4按同样层次定位新异常，再24垄地面覆盖32–55边界，确认34–49病区；7/5定向60.8L杀菌，一个施药日。7/10复查。",
+    "两种诊断不可交换：草区杀菌无除草作用，病区机械除草无杀菌作用；错误管理两类资源总量与正确相同。",
+    "8/8检查根水后30mm常规补水；9/20确认R8/粮水/天气，容量分趟收获、13%干燥和安全入库。"
+  ],
+  "control_notes": "correct苗期机械草区、湿季杀菌病区；none省略这两类关键干预；wrong把两种处理对象交换：5/29草区杀菌60.8L，7/5病区机械16垄。正确与错误的化学量、机械垄次/机趟和其他输入相同，不虚构错误药剂额外药害。"
+}

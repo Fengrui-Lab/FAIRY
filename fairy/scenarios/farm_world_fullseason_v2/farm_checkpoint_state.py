@@ -345,9 +345,8 @@ def _restore_embedded_weather(physics: Any, state: Mapping[str, Any]) -> None:
             int(month): MonthlyClimate(**values)
             for month, values in profile["monthly_climate"].items()
         }
-        profile["weather_events"] = [WeatherEvent(**{
-            **event, "start_date": date.fromisoformat(event["start_date"])
-        }) for event in profile.get("weather_events", [])]
+        profile["weather_events"] = [WeatherEvent.from_state(event)
+                                   for event in profile.get("weather_events", [])]
         profile["biotic_outbreaks"] = [BioticOutbreak(**{
             **event, "pressure_type": TreatmentType(event["pressure_type"])
         }) for event in profile.get("biotic_outbreaks", [])]

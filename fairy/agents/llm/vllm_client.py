@@ -25,6 +25,8 @@ class VLLMClient(BaseLLM):
             api_key=self.api_key,
             base_url=self.base_url,
             timeout=self.request_timeout,
+            **({"http_client": kwargs["http_client"]} if "http_client" in kwargs else {}),
+            **({"max_retries": kwargs["max_retries"]} if "max_retries" in kwargs else {}),
         )
 
     def chat_completion(self, messages, tools=None):
@@ -32,7 +34,7 @@ class VLLMClient(BaseLLM):
             "model": self.model,
             "messages": messages,
             "tools": tools,
-            "temperature": self.temperature,
+            **self.compatible_sampling_options(),
             **self.output_token_options(),
             **self.tool_call_options(tools),
         }

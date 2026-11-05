@@ -60,6 +60,11 @@ class PaddyPlot:
             if not math.isfinite(getattr(self, key)) or not 0 <= getattr(self, key) <= 1:
                 raise ValueError(f"Invalid {key}")
         positive(self.bund_leak_mm_day, "bund leakage", zero=True)
+        # Optional, per-plot engineering assumptions survive preparation and
+        # are already included in the field/checkpoint configuration digest.
+        for key in ("puddled_sope_cm_day", "puddled_ksub_cm_day"):
+            if key in self.soil:
+                positive(self.soil[key], key, zero=True)
 
     @property
     def unit(self):

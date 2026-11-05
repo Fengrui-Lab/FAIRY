@@ -5,28 +5,18 @@
   "variant": "poor_stand",
   "source_l3_scenario_id": "scenario_rice_l3_poor_stand",
   "source_checkpoint_label": "after_transplant",
-  "initial_checkpoint_sha256": "844b89419dfeb47f4876ea44b101b7a8d42996112594bc6eaceb919e40b04e23",
+  "initial_checkpoint_sha256": "e16d4cca350f9f51568ad81194945037bdc946a3414f17c3301e8538dd9c14bd",
   "config_fingerprint": "62abf630532968126eb2922ce559623133abf2d9f7ac39394a8f76f294dffe04",
   "pcse_version": "6.0.13",
-  "expected_final_state_sha256": "b93387966d97d76b1ada42636aed548cdd9b6b13bde3f14b72eec4e786b2500d",
+  "expected_final_state_sha256": "0d14a57bef0ce6ff2e97abe443a839d39e794fd056e8b51f3a8ad78469b9d328",
   "checkpoint_steps": {},
   "steps": [
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
-    },
     {
       "tool_name": "PaddyObservationApp__inspect_establishment",
       "tool_args": {
         "plot_id": "p1"
       },
       "duration_seconds": 600.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_inventory",
-      "tool_args": {},
-      "duration_seconds": 0.0
     },
     {
       "tool_name": "PaddyObservationApp__read_water_sensors",
@@ -42,13 +32,6 @@
         "quantity": 18750
       },
       "duration_seconds": 600.0
-    },
-    {
-      "tool_name": "PaddyMachineryApp__get_machine_status",
-      "tool_args": {
-        "machine_id": "transplanter"
-      },
-      "duration_seconds": 0.0
     },
     {
       "tool_name": "PaddyOpsApp__replant_seedlings",
@@ -71,11 +54,12 @@
         "plot_id": "p1"
       },
       "duration_seconds": 600.0
-    },
-    {
-      "tool_name": "PaddyWorldApp__get_farm_overview",
-      "tool_args": {},
-      "duration_seconds": 0.0
     }
+  ],
+  "source_l3_plan_sha256": "7a33a94279f2dc395c83f66a253948102b24b51e0c904c6c5fe0cca73f3164ad",
+  "source_release": "rice_oracle_release_20261101_v1",
+  "source_step_range": [
+    37,
+    43
   ]
 }

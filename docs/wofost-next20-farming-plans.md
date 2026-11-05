@@ -15,9 +15,9 @@
 
 | 本轮编号 | 保留的主要考点与完整场景 | 状态 |
 |---:|---|---|
-| 01 | [识别20–31垄局部快失水干斑并定向补水](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_fastdraining_dry_patch_irrigation_V2.py) | 已校正并回放 |
-| 02 | [两块干斑中按真实灌溉收益分配仅够一块的水](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_two_dry_patches_one_irrigation_V2.py) | 已校正并回放 |
-| 03 | [高密度田24–39垄更早缺水，分区补水](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2.py) | 已校正并回放 |
+| 01 | [识别20–31垄局部快失水干斑并定向补水](../fairy/scenarios/wofost/scenario_full_season_fastdraining_dry_patch_irrigation_V2.py) | 已校正并回放 |
+| 02 | [两块干斑中按真实灌溉收益分配仅够一块的水](../fairy/scenarios/wofost/scenario_full_season_hb_two_dry_patches_one_irrigation_V2.py) | 已校正并回放 |
+| 03 | [高密度田24–39垄更早缺水，分区补水](../fairy/scenarios/wofost/scenario_full_season_hb_hn60_high_fastdrain_dryr5r6_V2.py) | 已校正并回放 |
 | 04 | [高密度群体在R5/R6的供水安排](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_hn60_high_dryr5r6_water_demand.py) | 待处理 |
 | 05 | [有机禁药，机械能力仅够最高草压16垄](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_organic_weed_pressure_allowed_inputs.py) | 待处理 |
 | 06 | [草害已出现，湿土阻碍机械作业，等待可通行窗口](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_hb_mechanical_weed_control_soil_wetness.py) | 待处理 |

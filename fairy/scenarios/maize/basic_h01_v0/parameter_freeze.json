@@ -1,0 +1,40 @@
+{
+  "version": "h01-local-probe-input-0.1",
+  "registered_before_probe": true,
+  "source_commit": "cc00de087c4ed73ddedd8023f4796891971a0db5",
+  "fixed_at_utc": "2026-11-03 06:12:24 UTC",
+  "q_serviceable": 0.95,
+  "q_maintenance_required": 0.85,
+  "inspection_duration_seconds": 600,
+  "repair_duration_seconds": 3600,
+  "parameter_class": "q_fault与耗时为未标定工程假设；probe不执行检查/维修耗时。",
+  "probe": {
+    "source_commit": "cc00de087c4ed73ddedd8023f4796891971a0db5",
+    "import_original_files": [
+      "fairy/physics/yield_recovery_engine.py",
+      "fairy/physics/crop_profiles.py"
+    ],
+    "specimen": "人工构造的成熟回收引擎状态，不是完整农场checkpoint，不是WOFOST预测。",
+    "biological_yield_g_DM_m2": 1000,
+    "grain_moisture_initial_fraction": 0.24,
+    "date": "2026-08-15",
+    "maturity_date": "2026-08-13",
+    "weather": {
+      "air_temp_mean_c": 18,
+      "rain_mm": 0,
+      "solar_rad_mj_m2": 10,
+      "wind_ms": 2,
+      "relative_humidity_pct": 60
+    },
+    "treatments": [
+      "q=.85完成收获",
+      "q=.95完成收获"
+    ],
+    "semantic_check": "同一初态单独提交pass_completed=false，记录其是否改变水分；禁止当作检查工具。",
+    "acceptance": "相同生物量/相同收获触发顺序/相同天气，实际回收差可从原生损失账解释。仅证明局部引擎响应。"
+  },
+  "source_sha256": {
+    "fairy/physics/yield_recovery_engine.py": "6ab8fadb82e27b8ebe764c11851953fb158812912bbda4b66527a2ff9e424dc0",
+    "fairy/physics/crop_profiles.py": "e976bb99ec9660853169895700ffa086da3ee3ebd28298a7033cd3bc56d09af0"
+  }
+}

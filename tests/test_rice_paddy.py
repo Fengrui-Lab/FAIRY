@@ -242,6 +242,10 @@ def test_rice_baseline_focus_projection_and_no_action(monkeypatch, tmp_path):
     wrong["initial_checkpoint_sha256"] = "wrong"
     with pytest.raises(ValueError, match="checkpoint"):
         compare_outcome(engine.scenario, wrong)
+    stale = copy.deepcopy(baseline)
+    stale.pop("source_l3_plan_sha256")
+    with pytest.raises(ValueError, match="installed L3 split"):
+        compare_outcome(engine.scenario, stale)
     growing, _ = ready_world("after_transplant")
     with pytest.raises(RuntimeError, match="native maturity"):
         project_outcome(growing, max_days=1)
@@ -289,7 +293,7 @@ def test_rice_controller_uses_crop_context_and_live_tools():
             assert "transplanted rice" in str(messages)
             self.calls += 1
             call = NS(id="irrigate", type="function", function=NS(name="PaddyOpsApp__irrigate",
-                          arguments=json.dumps({"plot_id": "p1", "water_mm": 30.})))
+                          arguments=json.dumps({"plot_id": "p1", "water_mm": 20.})))
             message = NS(content=None, tool_calls=[call]) if self.calls == 1 else NS(content="done", tool_calls=None)
             return NS(choices=[NS(message=message)], usage=None)
 

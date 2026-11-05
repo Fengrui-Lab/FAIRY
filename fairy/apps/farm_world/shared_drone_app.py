@@ -93,7 +93,7 @@ class SharedDroneApp(DroneOperations, App):
         """Start charging this shared drone; no farm is selected.
 
         Charging is asynchronous: battery rises over 30 minutes of the common
-        simulation clock. This call does not wait or advance the clock, and a
+        elapsed time. This call does not wait or advance the clock, and a
         charging drone cannot survey any registered farm until charging completes.
 
         Returns:

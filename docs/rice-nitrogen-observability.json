@@ -1,0 +1,353 @@
+{
+  "experiment": "isolated 2x2 WOFOST81 juvenile-N proxy; fixed IR72 structural-transfer parameters",
+  "days": 7,
+  "required_separation_days": 3,
+  "separated_wet_n_dates": [],
+  "three_day_n_observability_gate": false,
+  "groups": {
+    "dry_low_n": [
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 0.84,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-01",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 0.97,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-02",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-03",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-04",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-05",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-06",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "tillering_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-07",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      }
+    ],
+    "dry_high_n": [
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 0.84,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-01",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 0.97,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-02",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-03",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-04",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-05",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-06",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "tillering_proxy",
+        "canopy_cover_fraction": 0.03,
+        "wilting_index": 1.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-07",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      }
+    ],
+    "wet_low_n": [
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.04,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-01",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.04,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-02",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.05,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-03",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.06,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-04",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.07,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-05",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.08,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-06",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "tillering_proxy",
+        "canopy_cover_fraction": 0.09,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-07",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      }
+    ],
+    "wet_high_n": [
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.04,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-01",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.04,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "low",
+        "nitrogen_signal_date": "2026-01-02",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": true,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.05,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-03",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.06,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-04",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.07,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-05",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "establishment_proxy",
+        "canopy_cover_fraction": 0.08,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-06",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      },
+      {
+        "plot_id": "p1",
+        "stage": "tillering_proxy",
+        "canopy_cover_fraction": 0.09,
+        "wilting_index": 0.0,
+        "nitrogen_stress_signal": "unknown",
+        "nitrogen_signal_date": "2026-01-07",
+        "nitrogen_signal_basis": "WOFOST juvenile leaf-area limitation proxy; not soil nitrogen measurement",
+        "nitrogen_signal_applicable": false,
+        "stage_uncertainty": "management proxy; no tiller or panicle counts",
+        "maturity_observed": false
+      }
+    ]
+  }
+}
