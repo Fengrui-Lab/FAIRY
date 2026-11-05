@@ -69,19 +69,19 @@ class SystemApp(App):
         """
         Advance the simulation clock by a specified amount of time.
 
-        Use this fast-forward tool when waiting for biological or physical
-        processes to play out, such as crop growth, soil drying, treatment
-        residual decay, irrigation effects, or post-harvest drying. After time
-        advances, subsequent state reads reflect the evolved world.
+        This is the canonical "fast-forward" tool. Use it when waiting for
+        biological or physical processes (crop growth, soil drying, treatment
+        residual decay, post-harvest drying) to play out. After the time
+        advances, any subsequent state read will reflect the evolved world.
 
         Args:
             seconds: Seconds to advance.
             minutes: Minutes to advance.
-            hours: Hours to advance.
-            days: Days to advance.
+            hours:   Hours to advance.
+            days:    Days to advance.
 
         Returns:
-            A dictionary containing the new current time.
+            A dict containing the new current time.
         """
         total_seconds = (
             int(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400

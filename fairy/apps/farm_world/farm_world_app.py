@@ -827,7 +827,7 @@ class FarmWorldApp(App):
 
     @type_check
     @app_tool()
-    @event_registered(operation_type=OperationType.WRITE)
+    @event_registered(operation_type=OperationType.READ)
     def commit_daily_physics(self) -> dict[str, Any]:
         """
         Force a full daily physics tick at the current simulation time.

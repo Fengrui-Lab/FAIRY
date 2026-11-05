@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import time
 from pathlib import Path
@@ -147,6 +148,12 @@ def main() -> None:
         help="Maximum completion tokens per LLM call",
     )
     parser.add_argument("--endpoint", default=None, help="OpenAI-compatible base URL for --agent provider")
+    parser.add_argument("--enable-thinking", type=_str_to_bool, default=None,
+                        help="Thinking override for the main model; omitted uses server default")
+    parser.add_argument("--request-timeout-seconds", type=float, default=None,
+                        help="Timeout for each LLM request")
+    parser.add_argument("--retrieved-context-path", type=Path, default=None,
+                        help="JSON context map for the retrieved L3 briefing")
     parser.add_argument("--parallel-tool-calls", type=_str_to_bool, default=True, help="Allow the model to return multiple tool calls in one LLM turn")
     parser.add_argument("--max-tool-calls", type=int, default=300, help="Maximum tool calls for --agent")
     parser.add_argument("--timeout-seconds", type=float, default=1200.0, help="Wall-time limit for --agent")
@@ -179,10 +186,24 @@ def main() -> None:
         return
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
+    if args.request_timeout_seconds is not None and args.request_timeout_seconds <= 0:
+        parser.error("--request-timeout-seconds must be positive")
     if not args.scenario:
         parser.error("--scenario is required unless --list is used")
     scenario_class = get_scenario_class(args.scenario)
     scenario_kwargs = _json_object_arg(args.scenario_kwargs, "--scenario-kwargs")
+    if args.retrieved_context_path is not None:
+        context_path = args.retrieved_context_path.expanduser().resolve()
+        try:
+            payload = json.loads(context_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            parser.error(f"Invalid --retrieved-context-path: {exc}")
+        contexts = payload.get("contexts") if isinstance(payload, dict) else None
+        if not isinstance(contexts, dict) or not isinstance(contexts.get(args.scenario), str) or not contexts[args.scenario].strip():
+            parser.error(f"Retrieved context has no nonempty text for {args.scenario}")
+        if payload.get("mode") not in (None, scenario_kwargs.get("detailed_briefing")):
+            parser.error("Retrieved context mode differs from detailed_briefing")
+        os.environ["FARM_FAIRY_RETRIEVED_CONTEXT_PATH"] = str(context_path)
     init_kwargs = _json_object_arg(args.init_kwargs, "--init-kwargs")
     output_dir = Path(args.output_dir)
     workflow_path = Path(args.workflow) if args.workflow else output_dir / f"{args.scenario}.oracle.json"
@@ -280,6 +301,8 @@ def main() -> None:
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
+                "enable_thinking": args.enable_thinking,
+                **({"timeout": args.request_timeout_seconds} if args.request_timeout_seconds is not None else {}),
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
         )
