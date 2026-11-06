@@ -68,6 +68,7 @@ def _short(value: Any, limit: int = RESULT_CHARS) -> str:
 def _apps(toolsets: list[Any]) -> dict[str, list[Any]]:
     out: dict[str, list[Any]] = {}
     for app in toolsets:
+        app = getattr(app, "wrapped_app", app)  # A2A wrappers hold the real app
         out.setdefault(type(app).__name__, []).append(app)
     return out
 
@@ -129,7 +130,11 @@ def _inventory(inv: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_steps(workflow: Any) -> list[Any]:
-    return [s for s in workflow.dag.values() if s.op_type in ("TOOL", "TOOL_ERROR")]
+    # A2A delegation calls are not farm actions; the expert's real calls are their own steps.
+    return [
+        s for s in workflow.dag.values()
+        if s.op_type in ("TOOL", "TOOL_ERROR") and not str(s.tool_name).endswith("__expert_agent")
+    ]
 
 
 def _failed(step: Any) -> bool:

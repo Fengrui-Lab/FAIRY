@@ -805,3 +805,17 @@ Option `--jev-prompt-note true` (default off) adds a short neutral note to the s
 - Details: `review.md`, section 16.4.
 
 Spent: about $1.20. Part 2 total: about $11.7.
+
+## Step 24 – A2A: global LLM with local Jev experts (2026-11-05, branch `jev-a2a-wip`, code `6616efb`)
+
+gpt-6-luna is the main agent; each of the 8 field apps sits behind `<App>__expert_agent(task)`, run by a Jev expert (`fairy/agents/jev/a2a_expert.py`, `SharedTraceAppAgent` in `fairy/controllers/app_agent.py`). The LLM keeps the clock tools and the message to the user. Jev picks from the same menus as the hybrid, for that app's tools only; numbers in the job become menu options. Code writes the reply. A job ends on "done", after 10 actions, below confidence 0.4 or on a repeat without change; the last two go back to the LLM. Expert actions go into the main workflow so the run can be scored. 121 tests: 120 pass, 1 fails because `rg` is not installed here.
+
+- First version on `grain_moisture_sensor_failure_harvest`: finished, 8.27%, $0.21, 80 of 231 jobs with no action. Jev picked ridges outside the job's range. Added: no "done" before the first action, job ridge range limits the ridge menus, reply shows what Jev wanted.
+- Final version, 3 scenarios: 14.24%, 22.35%, -1.64%, all finished.
+- Existing A2A with gpt-6-luna experts, same 3 scenarios (expert actions in the main workflow, reasoning "medium" for experts): 0 of 3 finished, 85.99%, 57.16%, 100.00%. Not run on all 19.
+- 19 L3-mini, 1 run each, in parallel: 18 of 19 finished, average grain loss 16.3% (baseline 13.1: 6.4%, hybrid: 7.3%), total $2.69 ($1.94 LLM, $0.75 Jev), 183 actions and 8.4 min per run. compacted_headland_stand_recovery used all 300 actions (24 of 64 ridges, 62.61%).
+- 2,670 jobs: 11.6% no action, 70.7% one action, 17.6% two or more; 463 unsure, 58 stuck. Jev experts took 3,128 of 3,480 farm actions (90%).
+- Replay matched the live stored grain on all 19.
+- Details and tables: `review.md`, section 17. Runs: `Synkrasis/jev_a2a_runs`.
+
+Spent: about $3.77.

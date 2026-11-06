@@ -19,7 +19,13 @@ from fairy.controllers.agent_config import (
     AppAgentConfigBuilder,
     get_farm_world_system_prompt,
 )
-from fairy.controllers.app_agent import apply_a2a_to_apps, collect_a2a_traces
+from fairy.controllers.app_agent import (
+    AppAgent,
+    SharedTraceAppAgent,
+    apply_a2a_to_apps,
+    attach_main_agent,
+    collect_a2a_traces,
+)
 from fairy.controllers.engine import Engine
 from fairy.controllers.run_artifacts import (
     build_run_report,
@@ -159,6 +165,8 @@ def main() -> None:
     parser.add_argument("--a2a-provider", default=None, help="A2A app-agent provider; defaults to main provider")
     parser.add_argument("--a2a-endpoint", default=None, help="A2A app-agent endpoint; defaults to main endpoint")
     parser.add_argument("--a2a-max-tool-calls", type=int, default=None, help="Maximum tool calls per A2A expert agent; defaults to --max-tool-calls")
+    parser.add_argument("--a2a-shared-trace", type=_str_to_bool, default=False, help="A2A: record the experts' real tool calls in the main workflow, so the run can be scored (always on with Jev experts)")
+    parser.add_argument("--a2a-min-confidence", type=float, default=0.4, help="Jev experts (--a2a-provider typesafe): hand the job back to the main agent below this confidence")
     parser.add_argument("--fallback-provider", default=None, help="farm_jev: LLM provider that decides when Jev is unsure")
     parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
@@ -300,6 +308,9 @@ def main() -> None:
             app_model = args.a2a_model or args.model
             app_endpoint = args.a2a_endpoint or args.endpoint
 
+            jev_experts = app_provider == "typesafe"
+            shared_trace = jev_experts or args.a2a_shared_trace
+
             def _build_app_llm():
                 return BaseLLM.llm_builder(
                     {
@@ -309,13 +320,29 @@ def main() -> None:
                         "max_output_tokens": args.max_output_tokens,
                         "parallel_tool_calls": args.parallel_tool_calls,
                         **({"base_url": app_endpoint} if app_endpoint else {}),
+                        **(
+                            {"reasoning_effort": args.reasoning_effort}
+                            if args.a2a_shared_trace and args.reasoning_effort and not jev_experts
+                            else {}
+                        ),
                     }
                 )
 
+            if jev_experts:
+                from fairy.agents.jev.a2a_expert import JevAppAgentBuilder
+
+                app_agent_builder = JevAppAgentBuilder(
+                    list(scenario.apps or []),
+                    scenario_task=str(scenario_kwargs.get("agent_task_override") or ""),
+                    min_confidence=args.a2a_min_confidence,
+                )
+            else:
+                app_agent_builder = AppAgentBuilder()
             a2a_result = apply_a2a_to_apps(
                 list(scenario.apps or []),
                 llm_factory=_build_app_llm,
-                app_agent_builder=AppAgentBuilder(),
+                app_agent_builder=app_agent_builder,
+                wrapper_class=SharedTraceAppAgent if shared_trace else AppAgent,
                 app_agent_config_builder=AppAgentConfigBuilder(),
                 app_prop=args.a2a_app_prop,
                 policy=args.a2a_policy,
@@ -333,6 +360,8 @@ def main() -> None:
                 "model": app_model,
                 "provider": app_provider,
                 "endpoint": app_endpoint,
+                "expert_kind": "jev" if jev_experts else "llm",
+                "shared_trace": shared_trace,
             }
         fallback_llm = None
         if args.fallback_model:
@@ -350,14 +379,19 @@ def main() -> None:
             jev_llm = BaseLLM.llm_builder(
                 {"provider": "typesafe", "model": args.jev_model, "temperature": args.temperature}
             )
+        system_message = get_farm_world_system_prompt(
+            args.system_prompt_mode,
+            parallel_tool_calls=args.parallel_tool_calls,
+        )
+        if a2a_metadata.get("expert_kind") == "jev":
+            from fairy.agents.jev.a2a_expert import MANAGER_NOTE
+
+            system_message = f"{system_message.rstrip()}\n\n{MANAGER_NOTE}\n"
         agent = build_controller_agent(
             args.controller,
             llm=llm,
             toolsets=scenario.apps,
-            system_message=get_farm_world_system_prompt(
-                args.system_prompt_mode,
-                parallel_tool_calls=args.parallel_tool_calls,
-            ),
+            system_message=system_message,
             fallback_llm=fallback_llm,
             fallback_confidence=args.fallback_confidence,
             jev_state=args.jev_state,
@@ -369,6 +403,7 @@ def main() -> None:
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event
         )
+        attach_main_agent(list(scenario.apps or []), agent)
         engine = Engine(agent=agent, scenario=scenario)
         workflow = None
         final_message = None

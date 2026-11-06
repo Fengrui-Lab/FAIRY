@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -120,10 +121,114 @@ class AppAgent(App):
         )
 
 
+class SharedTraceAppAgent(AppAgent):
+    """AppAgent whose expert writes into the main agent's run.
+
+    The plain AppAgent gives every delegation a new workflow and drops it, so
+    the real farm actions are lost and the run cannot be replayed or scored.
+    Here the expert's tool calls land in the main workflow, its events in the
+    main runtime log, and its actions count toward the main action limit (a
+    delegation itself costs nothing). Works for LLM and Jev experts.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.main_agent: Agent | None = None
+        self.jobs: list[dict[str, Any]] = []
+        self.all_runtime_metrics: list[dict[str, Any]] = []
+
+    def get_tools(self):
+        tools = super().get_tools()
+        describe = getattr(self.app_agent, "describe_tools", None)
+        if describe is not None:
+            for tool in tools:
+                tool.function_description = f"{tool.function_description}\n\n{describe()}"
+        return tools
+
+    @app_tool()
+    @event_registered(operation_type=OperationType.READ)
+    def expert_agent(self, task: str) -> str:
+        """
+        Hand one job to the expert for this app.
+
+        The expert acts on the farm with this app's tools and returns what it did.
+        """
+        main = self.main_agent
+        if main is None:
+            raise RuntimeError("SharedTraceAppAgent needs main_agent; see attach_main_agent")
+        expert = self.app_agent
+        expert.set_time_manager(self.time_manager)
+        expert.messages = Messages(
+            provider=getattr(expert.llm, "provider", "openai"),
+            system_message=expert.system_message,
+        )
+        expert.workflow = main.workflow
+        expert.runtime_events = main.runtime_events
+        expert.runtime_event_sink = main.runtime_event_sink
+        expert.tool_call_count = 0
+        expert.llm_turn_count = 0
+        if hasattr(expert, "start_job"):
+            expert.start_job()
+        else:
+            task = self._format_delegated_user_message(str(task), self.time_manager.time())
+        timeout = None
+        if main.run_wall_timeout_seconds is not None and main.run_started_at_wall is not None:
+            timeout = main.run_wall_timeout_seconds - (time.perf_counter() - main.run_started_at_wall)
+        limit = None
+        try:
+            answer = expert.run(str(task), max_tool_calls=self.max_tool_calls, timeout_seconds=timeout)
+        except AgentRunLimitExceeded as exc:
+            limit = exc.limit_type
+            answer = (
+                f"Expert agent stopped because it reached {exc.limit_type}={exc.limit_value}. "
+                "Treat this result as partial and verify completion before continuing."
+            )
+        finally:
+            main.tool_call_count += max(0, expert.tool_call_count - 1)
+            self.all_runtime_metrics.extend(expert.messages.runtime_metrics)
+        result = expert.job_report(limit) if hasattr(expert, "job_report") else str(answer)
+        self.last_answer = result
+        self.last_tool_call_count = expert.tool_call_count
+        self.jobs.append(
+            {
+                "task": str(task),
+                "actions": expert.tool_call_count,
+                "limit": limit,
+                **(expert.job_summary() if hasattr(expert, "job_summary") else {}),
+            }
+        )
+        return result
+
+    def trace(self) -> dict[str, Any]:
+        return {
+            "wrapper_app_name": self.name,
+            "wrapped_app_name": getattr(self.wrapped_app, "name", self.wrapped_app.__class__.__name__),
+            "wrapped_app_class": self.wrapped_app.__class__.__name__,
+            "app_agent": self.app_agent_name,
+            "max_tool_calls": self.max_tool_calls,
+            "last_answer": self.last_answer,
+            "job_count": len(self.jobs),
+            "tool_call_count": sum(j["actions"] for j in self.jobs),
+            "llm_turn_count": 0,
+            "jobs": self.jobs,
+            "runtime_metrics": self.all_runtime_metrics,
+        }
+
+
+def attach_main_agent(apps: list[Any], agent: Agent) -> None:
+    """Link shared-trace wrappers to the main agent, once it exists."""
+    for app in apps:
+        if isinstance(app, SharedTraceAppAgent):
+            app.main_agent = agent
+
+
 def collect_a2a_traces(apps: list[Any]) -> list[dict[str, Any]]:
     traces: list[dict[str, Any]] = []
     for app in apps:
         if not isinstance(app, AppAgent):
+            continue
+        if isinstance(app, SharedTraceAppAgent) and app.main_agent is not None:
+            traces.append(app.trace())
             continue
         traces.append(
             {
@@ -180,6 +285,7 @@ def apply_a2a_to_apps(
     app_agent_name: str = "default_app_agent",
     seed: int = 0,
     max_tool_calls: int | None = None,
+    wrapper_class: type[AppAgent] = AppAgent,
 ) -> A2AResult:
     if app_prop <= 0:
         return A2AResult(
@@ -237,7 +343,7 @@ def apply_a2a_to_apps(
         wrapper_max_tool_calls = config.max_iterations
         if max_tool_calls is not None:
             wrapper_max_tool_calls = min(config.max_iterations, max_tool_calls)
-        wrapper = AppAgent(
+        wrapper = wrapper_class(
             wrapped_app=app,
             app_agent=expert_agent,
             app_agent_name=resolved_app_agent_name,

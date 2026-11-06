@@ -256,7 +256,7 @@ def _load_fairy_run_bundle(cell_dir: Path) -> dict[str, Any] | None:
     }
 
 
-def _iter_fairy_tool_steps(workflow: Any) -> list[dict[str, Any]]:
+def _iter_fairy_tool_steps(workflow: Any, a2a_shared_trace: bool = False) -> list[dict[str, Any]]:
     raw_steps = workflow.values() if isinstance(workflow, dict) else workflow
     steps: list[dict[str, Any]] = []
     for raw_step in raw_steps or []:
@@ -265,6 +265,14 @@ def _iter_fairy_tool_steps(workflow: Any) -> list[dict[str, Any]]:
         if raw_step.get("op_type") == "USER":
             continue
         if not raw_step.get("tool_name"):
+            continue
+        # With a shared A2A trace the expert's real tool calls are their own steps, so
+        # the delegation call is skipped. Without one the real calls are not in this
+        # workflow; such a run must keep failing replay, not score as "did nothing".
+        if a2a_shared_trace and (
+            str(raw_step["tool_name"]).endswith("__expert_agent")
+            or str(raw_step["tool_name"]).startswith("FinalAnswerTool__")
+        ):
             continue
         steps.append(raw_step)
     return steps
@@ -368,7 +376,10 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
     apps_by_name = {a.name: a for a in scenario.apps or []}
     apps_by_class = {a.__class__.__name__: a for a in scenario.apps or []}
 
-    tool_steps = _iter_fairy_tool_steps(bundle.get("workflow"))
+    a2a_report = (bundle.get("run_report") or {}).get("a2a") or {}
+    tool_steps = _iter_fairy_tool_steps(
+        bundle.get("workflow"), a2a_shared_trace=bool(a2a_report.get("shared_trace"))
+    )
     info = {
         "scenario_id": scenario_id,
         "start_time": effective_start_time,

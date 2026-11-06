@@ -370,9 +370,11 @@ class Engine:
     def outcome_summary(self) -> dict[str, Any]:
         farm_world = next(
             (
-                app
-                for app in self.scenario.apps or []
-                if app.__class__.__name__ == "FarmWorldApp"
+                candidate
+                for candidate in (
+                    getattr(app, "wrapped_app", app) for app in self.scenario.apps or []
+                )
+                if candidate.__class__.__name__ == "FarmWorldApp"
             ),
             None,
         )
