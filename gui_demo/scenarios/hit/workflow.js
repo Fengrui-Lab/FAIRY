@@ -35,9 +35,9 @@ export function mountHitWorkflow(container, { events = [], step = 0, onSelect = 
   const entries = source.map((event, index) => ({ event, index, sequence: Number(event.sequence), equipment: event.equipment || '' }));
   const entryBySequence = new Map(entries.map(entry => [entry.sequence, entry]));
   const lanes = [
-    { label: 'Equipment operations', mark: 'E', subtitle: '设备操作' },
-    { label: 'Image processing', mark: 'I', subtitle: '图像处理' },
-    { label: 'Result presentation', mark: 'R', subtitle: '结果呈现' },
+    { label: 'Equipment operations', mark: 'E'},
+    { label: 'Image processing', mark: 'I'},
+    { label: 'Result presentation', mark: 'R'},
   ];
   const laneFor = entry => ({ equipment: 0, processing: 1, presentation: 2 })[entry.event.category] ?? 0;
   const scopeLabel = entry => entry.equipment || 'Single field';
@@ -86,7 +86,7 @@ export function mountHitWorkflow(container, { events = [], step = 0, onSelect = 
     // These category labels are longer than the original farm names.
     // Keep the shared rail width and typography, allowing the text to wrap.
     heading.style.whiteSpace = 'normal';
-    label.append(element('span', 'wf-farm-mark', lane.mark), heading, element('small', '', lane.subtitle));
+    label.append(element('span', 'wf-farm-mark', lane.mark), heading);
     rail.append(label);
   });
 
