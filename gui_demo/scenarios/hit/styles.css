@@ -1,0 +1,31 @@
+/* Only loaded for the HIT scenario. The existing UI stylesheet is unchanged. */
+.hit-app .hit-placeholder{margin:14px;border:1px dashed #ccd6d9;border-radius:5px;min-height:145px;display:grid;place-content:center;gap:10px;text-align:center;padding:20px;background:#f7f9f8;color:#8b999f;font-size:10px;line-height:1.7}
+.hit-app .hit-placeholder .icon{margin:auto;width:25px;height:25px;color:#9ba9ac}
+.hit-app .hit-placeholder b{font-weight:500;color:#6d818c;font-size:11px}
+.hit-app .hit-preview-scene{height:210px;position:relative;background:#f0f3ef;border-bottom:1px solid #dce3df}
+.hit-app .hit-preview-scene canvas,.hit-app .hit-preview-scene svg{display:block;width:100%;height:100%}
+.hit-app .hit-preview-context{padding:9px 14px;color:#8a989d;font-size:9px;border-bottom:1px solid #e5e9e8}
+.hit-app .hit-detail-json{margin-top:16px}
+.hit-app .hit-detail-json pre{font-size:10px;white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7f7;padding:12px;border-radius:4px;color:#6c7d86;max-height:260px;overflow:auto}
+.hit-app .hit-timeline .time-chip{width:64px}
+.hit-app .hit-timeline .time-chip.active{width:240px}
+.hit-app .hit-timeline .jump-label{font-size:9px;color:#94a0a5;margin-left:8px}
+.hit-app .hit-processing-result{margin:14px;background:#f3f5f3;border:1px solid #dce2df;border-radius:4px;overflow:hidden}
+.hit-app .hit-processing-result a{display:block}
+.hit-app .hit-processing-result img{display:block;width:100%;height:auto;max-height:300px;object-fit:contain}
+.hit-app .hit-processing-result figcaption{padding:8px 10px;background:#fff;font-size:9px;line-height:1.6;color:#8a989d}
+.hit-app .hit-mask-note{color:#8a9891;font-size:9px;line-height:1.4;margin-left:12px}
+.hit-app .hit-crop-key{display:flex;gap:9px;flex-wrap:wrap}
+.hit-app .hit-crop-key span{display:flex;align-items:center;gap:5px}
+.hit-app .hit-crop-key i{width:9px;height:9px;border-radius:2px}
+.hit-app .legend{width:205px}
+.hit-app .tool-button b{font-weight:450;line-height:1.6;display:block}
+.hit-app .tool-key{margin-bottom:14px}
+.hit-app .empty-note{font-size:10px;color:#8b999f;line-height:1.7;padding:14px}
+.hit-app .hit-farm-info{padding:12px 14px;font-size:10px;line-height:1.8;color:#7a8c95}
+.hit-app .hit-farm-info strong{font-weight:500;color:#566e7c}
+.hit-app #workflow-preview{width:380px}
+.hit-app .drawer pre{overflow-wrap:anywhere;white-space:pre-wrap;font-size:10px;line-height:1.65;background:#f6f8f8;padding:12px;border-radius:4px}
+.hit-app .hit-subtle-note{font-size:9px;color:#8b9a9f;line-height:1.65;margin:10px 14px}
+.hit-app .hit-phase{display:block;font-size:9px;color:#7b8f99}
+@media(max-width:1100px){.hit-app .legend{width:170px}}

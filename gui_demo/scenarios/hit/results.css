@@ -1,0 +1,34 @@
+.hit-results { color: #565653; font-family: inherit; font-size: 11px; min-width: 0; margin: 0 14px 14px; }
+.hit-results *, .hit-results *::before, .hit-results *::after { box-sizing: border-box; }
+.hit-results h4 { margin: 14px 0 9px; font-size: 11px; font-weight: 600; color: #4c4c48; }
+.hit-results .hit-results-pending, .hit-results .hit-results-caption { margin: 9px 0; color: #898983; font-size: 10px; line-height: 1.5; }
+.hit-results .hit-results-map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 7px; }
+.hit-results .hit-results-map-toolbar > span { color: #898983; font-size: 9px; }
+.hit-results .hit-results-map-toolbar > div { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+.hit-results .hit-results-map-toolbar button { border: 1px solid #dcdcd9; border-radius: 5px; background: #fff; color: #65655e; min-width: 24px; height: 25px; padding: 0 6px; font: inherit; font-size: 10px; cursor: pointer; }
+.hit-results .hit-results-map-toolbar button:disabled { opacity: .4; cursor: default; }
+.hit-results .hit-results-map-toolbar button:hover:not(:disabled) { background: #f2f2f0; }
+.hit-results .hit-results-zoom { display: inline-block; min-width: 18px; text-align: center; font-size: 9px; font-variant-numeric: tabular-nums; }
+.hit-results .hit-results-map { position: relative; height: 240px; width: 100%; overflow: hidden; border: 1px solid #deded9; border-radius: 7px; background: #f0f0ed; cursor: grab; touch-action: none; isolation: isolate; }
+.hit-results .hit-results-map.hit-results-panning { cursor: grabbing; }
+.hit-results .hit-results-map:focus-visible, .hit-results button:focus-visible, .hit-results input:focus-visible { outline: 2px solid #77776e; outline-offset: 2px; }
+.hit-results .hit-results-tiles { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hit-results .hit-results-tile { position: absolute; width: 256px; height: 256px; max-width: none; margin: 0; border: 0; pointer-events: none; user-select: none; }
+.hit-results .hit-results-overlay { position: absolute; z-index: 1; max-width: none; margin: 0; border: 0; pointer-events: none; user-select: none; }
+.hit-results .hit-results-overlay[data-hit-asset="satelliteMask"] { z-index: 2; }
+.hit-results .hit-results-attribution { position: absolute; right: 0; bottom: 0; z-index: 3; padding: 2px 4px; background: rgba(255,255,255,.9); color: #66665f; font-size: 8px; text-decoration: none; cursor: pointer; }
+.hit-results .hit-results-attribution:hover { text-decoration: underline; }
+.hit-results .hit-results-opacity { display: grid; gap: 8px; padding-top: 10px; }
+.hit-results .hit-results-opacity label { display: grid; grid-template-columns: 106px minmax(40px, 1fr) 30px; align-items: center; gap: 7px; color: #777770; font-size: 10px; }
+.hit-results .hit-results-opacity input { width: 100%; margin: 0; height: 14px; accent-color: #7a8478; cursor: pointer; }
+.hit-results .hit-results-opacity output { text-align: right; font-variant-numeric: tabular-nums; }
+.hit-results .hit-results-network-note { color: #8c7860; font-size: 10px; line-height: 1.4; margin: 9px 0 0; }
+.hit-results .hit-results-network-note[hidden] { display: none; }
+.hit-results .hit-results-legend { position: absolute; top: 8px; left: 8px; z-index: 3; display: block; width: 138px; max-width: 44%; height: auto; max-height: 94px; object-fit: contain; margin: 0; padding: 4px; border: 1px solid #deded9; border-radius: 4px; background: rgba(255,255,255,.94); pointer-events: none; }
+.hit-results .hit-results-image-link { display: block; color: inherit; }
+.hit-results .hit-results-lightboard { background: #f5f5f2; border-radius: 6px; overflow: hidden; }
+.hit-results .hit-results-drone-image { display: block; width: 100%; height: auto; max-width: 100%; border: 1px solid #deded9; border-radius: 6px; object-fit: contain; }
+.hit-results .hit-results-drone-image[hidden], .hit-results .hit-results-image-status[hidden] { display: none; }
+.hit-results .hit-results-image-status { display: block; padding: 24px 12px; color: #898983; font-size: 10px; text-align: center; }
+.hit-results.hit-results-compact .hit-results-map { height: 220px; }
+.hit-results.hit-results-compact .hit-results-map-toolbar > span { font-size: 8px; }
