@@ -97,6 +97,7 @@ class OutcomeBreakdown:
     focus_yield_preserved_ratio: float | None = None
     focus_normalized_yield_score: float | None = None
     recovered_yield_loss_v2: float | None = None
+    farm_yields: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         def _r(v: float | None, n: int = 4) -> float | None:
@@ -124,6 +125,8 @@ class OutcomeBreakdown:
             "expects_agent_harvest": self.expects_agent_harvest,
             "safety_violation_details": self.safety_violation_details,
         }
+        if self.farm_yields is not None:
+            out["farms"] = self.farm_yields
         if self.extrapolation is not None:
             out["extrapolation"] = self.extrapolation
         if self.focus_ridge_ids is not None:

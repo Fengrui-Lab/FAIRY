@@ -43,6 +43,7 @@ from pathlib import Path
 from typing import Any
 
 from fairy.scenarios.fos.gates import GateResult, GateSpec
+from fairy.scenarios.fos.multi_farm import yield_is_mature
 from fairy.scenarios.fos.provenance import (
     crop_backend_provenance,
     validate_baseline_provenance,
@@ -108,7 +109,11 @@ def _compute_recovered_yield_floor_kg(
     """
     target_physics = physics
     farm_world = _try_get_farm_world(scenario)
-    if farm_world is not None:
+    needs_projection = any(
+        not bool(getattr(state, "harvested", False))
+        for state in physics.yield_recovery.states.values()
+    )
+    if farm_world is not None and needs_projection:
         try:
             temp_farm_world = copy.deepcopy(farm_world)
             temp_physics = getattr(temp_farm_world, "_physics", None)
@@ -140,7 +145,7 @@ def _compute_recovered_yield_floor_kg(
             )
             recovered_kg += recovered * ridge_area_m2 / 1000.0
             continue
-        if not bool(getattr(yld_state, "r8_reached", False)):
+        if not yield_is_mature(yld_state):
             continue
         field_loss = float(getattr(yld_state, "field_loss_fraction", 0.0))
         recovered_kg += (
@@ -231,13 +236,18 @@ def evaluate_fos(
     if expects_agent_harvest is None:
         expects_agent_harvest = bool(getattr(scenario, "expects_agent_harvest", True))
 
+    from fairy.scenarios.fos.multi_farm import farms_for_scenario, extrapolate_fleet, yield_provenance
+    multiple_farms = len(farms_for_scenario(scenario)) > 1
     extrapolation_status: dict[str, Any] | None = None
     if extrapolate_to_maturity:
-        farm_world = _try_get_farm_world(scenario)
-        if farm_world is not None:
-            extrapolation_status = _extrapolate_physics_to_maturity(
-                farm_world, max_days=extrapolation_max_days
-            )
+        if multiple_farms:
+            extrapolation_status = extrapolate_fleet(scenario, extrapolation_max_days)
+        else:
+            farm_world = _try_get_farm_world(scenario)
+            if farm_world is not None:
+                extrapolation_status = _extrapolate_physics_to_maturity(
+                    farm_world, max_days=extrapolation_max_days
+                )
 
     # Oracle baselines are produced *with* extrapolation to R8. Comparing
     # an agent run that stopped mid-season against an R8 baseline would
@@ -246,7 +256,7 @@ def evaluate_fos(
     # extrapolation (apples-to-apples). Without extrapolation, fall back
     # to the legacy yield_ratio so existing oracle audits stay green.
     scenario_id = getattr(scenario, "scenario_id", None)
-    provenance = crop_backend_provenance(_try_get_farm_world(scenario))
+    provenance = yield_provenance(scenario, _try_get_farm_world(scenario))
     if (
         donothing_biological_kg is not None or donothing_per_ridge_g_m2 is not None
     ) and (provenance["backend"] != "legacy" or donothing_provenance is not None):
@@ -926,10 +936,17 @@ def _compute_outcome(
     unharvested_mature_count = 0
     crop_loss_fraction = 0.0
     ridge_area_m2 = 0.0
-    if physics is not None and getattr(physics, "engines_active", False):
-        ridge_area_m2 = farm_world.ridge_area_m2
+    from fairy.scenarios.fos.multi_farm import farms_for_scenario
+    farms = farms_for_scenario(scenario) or ([farm_world] if farm_world is not None else [])
+    if len(farms) > 1 and focus_ridge_ids:
+        raise ValueError("Multi-farm focus ridges require farm-qualified IDs; bare ridge IDs are ambiguous")
+    planted_count = 0
+    for current_farm in farms:
+        physics = getattr(current_farm, "_physics", None)
+        if physics is None or not getattr(physics, "engines_active", False):
+            continue
+        ridge_area_m2 = current_farm.ridge_area_m2
         recovery_mass_factor = _biological_to_recovery_mass_factor(physics)
-        planted_count = 0
 
         # Field-median biological yield, used as the relative reference for
         # detecting "growing-stage collapse" without baking in a brittle
@@ -948,7 +965,7 @@ def _compute_outcome(
             biological = yld_state.biological_yield_g_m2
             recovered = yld_state.recovered_yield_g_m2_at_market_moisture
             harvested = bool(getattr(yld_state, "harvested", False))
-            r8_reached = bool(getattr(yld_state, "r8_reached", False))
+            r8_reached = yield_is_mature(yld_state)
             biological_for_recovery = biological * recovery_mass_factor
             if not (ever_planted or biological > 0.0):
                 continue
@@ -1004,13 +1021,17 @@ def _compute_outcome(
     recovered_yield_loss_v2: float | None = None
     if oracle_recovered_yield_kg is not None and oracle_recovered_yield_kg > 0.0:
         recovered_yield_loss = 1.0 - (recovered_kg / oracle_recovered_yield_kg)
-        if physics is not None and getattr(physics, "engines_active", False):
-            recovered_yield_loss_v2 = 1.0 - (
+        active_farms = [f for f in farms if getattr(getattr(f, "_physics", None), "engines_active", False)]
+        if active_farms:
+            from types import SimpleNamespace
+            recovered_yield_loss_v2 = 1.0 - sum(
                 _compute_recovered_yield_floor_kg(
-                    scenario, physics, ridge_area_m2
-                )
-                / oracle_recovered_yield_kg
-            )
+                    scenario if len(farms) == 1 else SimpleNamespace(
+                        start_time=getattr(scenario, "start_time", None),
+                        get_typed_app=lambda _type, field=f: field),
+                    f._physics, f.ridge_area_m2)
+                for f in active_farms
+            ) / oracle_recovered_yield_kg
 
     safety_violations, safety_details = _count_safety_violations(env)
 
@@ -1107,12 +1128,18 @@ def _compute_outcome(
             )
             focus_nys = max(0.0, min(1.0, raw_fnys))
 
+    farm_yields = None
+    if len(farms) > 1:
+        from fairy.scenarios.fos.multi_farm import fleet_yields
+        if all(getattr(getattr(f, "_physics", None), "engines_active", False) for f in farms):
+            farm_yields = fleet_yields(scenario)["farms"]
     return outcome_score, OutcomeBreakdown(
         yield_ratio=yield_ratio,
         agent_recovered_yield_kg=recovered_kg,
         oracle_recovered_yield_kg=oracle_recovered_yield_kg,
         recovered_yield_loss=recovered_yield_loss,
         recovered_yield_loss_v2=recovered_yield_loss_v2,
+        farm_yields=farm_yields,
         scenario_potential_kg=potential_kg,
         agent_biological_kg=agent_biological_kg,
         oracle_biological_kg=oracle_biological_kg,

@@ -58,6 +58,8 @@ import re
 import sys
 import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -166,7 +168,9 @@ def _instantiate_scenario_for_replay(
     scenario = cls(**constructor_kwargs)
     if task_override is not None:
         scenario.agent_task_override = task_override
-    if start_time is not None:
+    checkpoint_clock = (type(scenario).__module__.startswith("fairy.scenarios.management_extensions")
+                        and callable(getattr(scenario, "_load_initial_checkpoint", None)))
+    if start_time is not None and not checkpoint_clock:
         scenario.start_time = float(start_time)
     if seed is not None:
         scenario.seed = int(seed)
@@ -175,6 +179,11 @@ def _instantiate_scenario_for_replay(
     # benign here — we don't run them through the env, only call tools
     # directly via the agent's trace.
     scenario.setup(**dict(init_kwargs or {}))
+    if checkpoint_clock and start_time is not None and abs(scenario.start_time - float(start_time)) > 1e-6:
+        raise ReplayDivergenceError("Recorded takeover start does not match the restored checkpoint")
+    if type(scenario).__module__.startswith("fairy.scenarios.management_extensions"):
+        from scripts.management_replay_metrics import initial_input_fingerprint
+        scenario._replay_initial_fingerprint = initial_input_fingerprint(scenario)
     # Register the same scene clock, System hooks, and runtime observers as
     # CLI replay. Binding only the public apps leaves a farm environment on
     # its constructor clock and changes operation timing/state.
@@ -234,12 +243,26 @@ def _load_fairy_run_bundle(cell_dir: Path) -> dict[str, Any] | None:
         or workflow_path.name.removesuffix(".agent_workflow.json")
     )
     csv_config = _scenario_config_from_results_csv(cell_dir)
+    manifest_config = {}
+    for parent in (cell_dir, *cell_dir.parents):
+        candidate = parent / "cells" / f"{scenario_id}.json"
+        if not candidate.is_file():
+            continue
+        try:
+            record = json.loads(candidate.read_text())
+        except (OSError, ValueError):
+            continue
+        if record.get("cell_dir") and Path(record["cell_dir"]).resolve() != cell_dir.resolve():
+            continue
+        manifest_config = {"scenario_kwargs": _parse_json_object_cell(record.get("scenario_kwargs")),
+                           "init_kwargs": _parse_json_object_cell(record.get("scenario_initialization_kwargs"))}
+        break
     scenario_kwargs = run_report.get("scenario_kwargs")
     init_kwargs = run_report.get("init_kwargs")
     if not isinstance(scenario_kwargs, dict):
-        scenario_kwargs = csv_config.get("scenario_kwargs", {})
+        scenario_kwargs = csv_config.get("scenario_kwargs") or manifest_config.get("scenario_kwargs", {})
     if not isinstance(init_kwargs, dict):
-        init_kwargs = csv_config.get("init_kwargs", {})
+        init_kwargs = csv_config.get("init_kwargs") or manifest_config.get("init_kwargs", {})
     return {
         "cell_dir": cell_dir,
         "workflow_path": workflow_path,
@@ -333,6 +356,32 @@ def _workflow_step_times(
         return float(previous_post_time if previous_post_time is not None else post_time), post_time, False
 
     return float(previous_post_time or post_time), post_time, False
+
+
+def _verify_saved_trace_response(step: Any, content: Any, tool: Any) -> bool:
+    """Ignore only documented uuid4 inspection labels in wheat block checks.
+
+    Partial visits retain exact coverage, observations, warning, battery and
+    time comparisons. UUIDs are diagnostic labels from RobotOperations, not
+    crop observations. Neither the saved trace nor the live result is edited.
+    """
+    if str(step.tool_name or "").endswith("__inspect_blocks"):
+        from fairy.scenarios.management_extensions.apps.winter_wheat_scouting_apps import WheatScoutRobot
+
+        owner = getattr(tool, "class_instance", getattr(tool, "__self__", None))
+        if isinstance(owner, WheatScoutRobot):
+            def canonical(value):
+                result = deepcopy(value)
+                if isinstance(result, dict) and isinstance(result.get("observations"), list):
+                    for observation in result["observations"]:
+                        if (isinstance(observation, dict)
+                                and isinstance(observation.get("inspection_id"), str)
+                                and re.fullmatch(r"[0-9a-f]{8}", observation["inspection_id"])):
+                            observation["inspection_id"] = "<uuid4 inspection label>"
+                return result
+
+            return _verify_replay_response(replace(step, content=canonical(step.content)), canonical(content), tool)
+    return _verify_replay_response(step, content, tool)
 
 
 def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str, Any]]:
@@ -466,7 +515,7 @@ def _replay_fairy_run_bundle(bundle: dict[str, Any]) -> tuple[Any, Any, dict[str
                 raise ReplayDivergenceError(
                     f"{step.get('name')} {tool_name}: recorded success raised "
                     f"{type(exc).__name__}: {exc}") from exc
-            if _verify_replay_response(recorded_step, content, tools_map.get(tool_name) or method):
+            if _verify_saved_trace_response(recorded_step, content, tools_map.get(tool_name) or method):
                 info["expected_error_events"] += 1
         info["n_executed"] += int(invoked)
 
@@ -1120,6 +1169,8 @@ def replay_one_cell(
         row["status"] = "no_agent_workflow"
         return row
     run_report = bundle.get("run_report") or {}
+    row["run_type"] = run_report.get("run_type", "agent")
+    row["artifact_origin"] = run_report.get("artifact_origin", "")
     scenario_id = str(bundle.get("scenario_id") or "")
     if scenario_id:
         row["scenario"] = scenario_id
@@ -1138,7 +1189,8 @@ def replay_one_cell(
         row["model_type_size"] = report_model_type_size
     row.update(usage_metrics)
     row["detailed_briefing"] = (
-        _detailed_briefing_from_results_csv(cell_dir)
+        _normalize_detailed_briefing_value((bundle.get("scenario_kwargs") or {}).get("detailed_briefing"))
+        or _detailed_briefing_from_results_csv(cell_dir)
         or _detailed_briefing_from_detail_status(row.get("detail_status"))
     )
 
@@ -1156,7 +1208,26 @@ def replay_one_cell(
         row["status"] = "replay_failed"
         row["error"] = f"{type(exc).__name__}: {exc}"
         row["traceback"] = traceback.format_exc(limit=3)
+        from scripts.management_replay_metrics import is_management_scenario, workflow_metrics_after_replay_failure
+        if is_management_scenario(scenario_id):
+            return workflow_metrics_after_replay_failure(
+                bundle, row, out_root, rel, extrapolate=extrapolate,
+                max_days=extrapolation_max_days, path_correctness_v2=path_correctness_v2, pc2_tol=pc2_tol)
         return row
+
+    from scripts.management_replay_metrics import is_management_scenario, evaluate_management_replay
+    if is_management_scenario(info["scenario_id"]):
+        try:
+            return evaluate_management_replay(
+                scenario, env, info, bundle, row, out_root / rel,
+                extrapolate=extrapolate, max_days=extrapolation_max_days,
+                path_correctness_v2=path_correctness_v2, pc2_tol=pc2_tol,
+                oracle_cache_dir=out_root / "management_oracles",
+            )
+        except Exception as exc:
+            row.update(status="management_metrics_failed", error=f"{type(exc).__name__}: {exc}",
+                       traceback=traceback.format_exc(limit=4), physical_replay_verified=True)
+            return row
 
     # Construct an independent do-nothing world using the actual replayed
     # backend/configuration, rather than silently constructing a legacy crop.
@@ -1251,6 +1322,14 @@ def replay_one_cell(
     fos_path.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
     row["fos_path"] = str(fos_path)
 
+    _add_fos_report_columns(row, report)
+    _add_workflow_columns(row, scenario, env, fos_path,
+                          path_correctness_v2=path_correctness_v2, pc2_tol=pc2_tol)
+
+    return row
+
+
+def _add_fos_report_columns(row: dict[str, Any], report: Any) -> None:
     comp = report.components
     ob = report.outcome_breakdown
     eb = report.efficiency_breakdown
@@ -1364,6 +1443,12 @@ def replay_one_cell(
         }
     )
 
+
+
+def _add_workflow_columns(
+    row: dict[str, Any], scenario: Any, env: Any, fos_path: Path,
+    *, path_correctness_v2: bool = True, pc2_tol: float = 2.0,
+) -> None:
     # ---- Optional: legacy v1 + relaxed-numeric v2 path_correctness -------
     # When --path-correctness-v2 is set, we emit BOTH:
     #   * v1 (legacy): path_correctness / coverage / ktc_raw / ktc_adjusted /
@@ -1495,8 +1580,6 @@ def replay_one_cell(
         import traceback as _tb
         row["farm_fos_error"] = f"{type(exc).__name__}: {exc}"
         row["farm_fos_traceback"] = _tb.format_exc(limit=3)
-
-    return row
 
 
 def _replay_one_cell_safe(*args, **kwargs) -> dict[str, Any]:
@@ -1891,6 +1974,8 @@ def main() -> int:
             "Defaults already exclude specific deepseek sweeps."
         ),
     )
+    ap.add_argument("--management-only", action="store_true",
+                    help="Only the registered management-extension scenes; use native crop/season metrics.")
     args = ap.parse_args()
 
     roots = [root.expanduser() for group in args.root for root in group]
@@ -1902,10 +1987,30 @@ def main() -> int:
 
     multi_root = len(roots) > 1
     cell_items: list[tuple[Path, Path]] = []
+    seen_cells = set()
+    root_names = [root.name for root in roots]
     for root in roots:
         root_cells = _discover_cells(root, recursive=args.recursive)
         root_prefix = _root_output_prefix(root) if multi_root else Path()
-        cell_items.extend((cell, root_prefix / cell.name) for cell in root_cells)
+        if multi_root and root_names.count(root.name) > 1:
+            import hashlib
+            root_prefix = Path(str(root_prefix) + "_" + hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:8])
+        for cell in root_cells:
+            resolved = cell.resolve()
+            if resolved in seen_cells or _is_relative_to(resolved, args.out_root.resolve()):
+                continue
+            seen_cells.add(resolved)
+            relative = cell.relative_to(root) if args.recursive else Path(cell.name)
+            cell_items.append((cell, root_prefix / relative))
+    if args.management_only:
+        from scripts.management_replay_metrics import is_management_scenario
+        filtered = []
+        for cell, rel in cell_items:
+            bundle = _load_fairy_run_bundle(cell) or {}
+            if (is_management_scenario(bundle.get("scenario_id", ""))
+                    and (bundle.get("run_report") or {}).get("run_type") != "oracle"):
+                filtered.append((cell, rel))
+        cell_items = filtered
     excluded_raw = list(_DEFAULT_EXCLUDED_SWEEP_DIRS)
     if args.exclude_dir:
         excluded_raw.extend(args.exclude_dir)
@@ -2119,6 +2224,15 @@ def main() -> int:
 
     # Print a quick aggregate summary.
     ok = [r for r in rows if r.get("status") == "ok"]
+    if args.management_only:
+        # Native roots/closed seasons have no generic soybean FOS outcome.
+        # Report each valid management metric with its own denominator.
+        for key in ("yield_loss(%)", "recovered_yield_loss(%)", "relative_operating_cost_gap(%)",
+                    "relative_net_operating_return_gap(%)", "ktc(%)", "coverage(%)", "bfcl_success(%)"):
+            values = [float(r[key]) for r in rows if r.get(key) not in (None, "")]
+            mean = f"{sum(values) / len(values):.4f}" if values else "NA"
+            print(f"Management {key}: valid_n={len(values)}/{len(rows)} mean={mean}")
+        ok = []  # The legacy aggregate below requires a generic FOS report.
     if ok:
 
         def _f(key: str, r: dict) -> float:
@@ -2257,6 +2371,9 @@ def main() -> int:
                     f"avg_agent_reused={avg_reused:.2f}  "
                     f"avg_agent_fresh={avg_fresh:.2f}"
                 )
+
+    from scripts.management_replay_metrics import export_management_tables
+    export_management_tables(rows, args.out_root)
 
     return 0
 

@@ -3,6 +3,8 @@
 Rice IDs (or --scenarios rice) use the area-aware rice_outcome_v2 schema and
 native WOFOST 8.1 maturity. They are evaluated by fairy.scenarios.rice.evaluation;
 the ridge/R8 FOS description below applies only to the existing soybean tasks.
+Multi-farm tasks use schema v4: farm-qualified ridges, each farm's own area,
+and shared-clock maturity (R8 for soybean, R6 for native maize).
 
 For each requested scenario this script:
   1. Looks up the scenario class in the registry.
@@ -223,15 +225,12 @@ class BaselineResult:
         default_factory=lambda: {"backend": "legacy"}
     )
     ridge_area_m2: float = 268.0 * 1.1
+    farms: dict[str, Any] | None = None
+    oracle_validation: dict[str, Any] | None = None
 
 
 def _require_single_farm_baseline(scenario: Any) -> Any:
-    """The FOS cache format identifies a ridge only by its local integer ID.
-
-    Reject a fleet rather than silently publishing the first site's yield as
-    the whole scenario. Fleet scenarios use per-farm oracle workflow/state
-    validation and Engine.evaluation_report instead of this legacy FOS cache.
-    """
+    """Guard the legacy schema v3 branch against flattening multiple farms."""
     from fairy.apps.farm_world.multi_farm import farm_world_apps
 
     farms = farm_world_apps(scenario.apps or [])
@@ -296,12 +295,16 @@ def _build_donothing_biological_kg(
 
     _ensure_selected_l2_l1_scenario_imported(scenario_id)
     cls = registry.get_scenario(scenario_id)
-    scenario = cls(
-        crop_backend=crop_backend,
-        crop_backend_options=crop_backend_options or {},
-    )
+    constructor = {"crop_backend": crop_backend, "crop_backend_options": crop_backend_options or {}}
+    scenario = cls(**constructor)
     scenario.initialize()  # apps + physics init, NO oracle events run
     Engine(agent=None, scenario=scenario)
+
+    from fairy.scenarios.fos.multi_farm import farms_for_scenario, extrapolate_fleet, fleet_yields, fleet_provenance
+    if len(farms_for_scenario(scenario)) > 1:
+        extrap = extrapolate_fleet(scenario, extrapolation_max_days)
+        return {**fleet_yields(scenario), "extrapolation": extrap,
+                "crop_backend_provenance": fleet_provenance(scenario)}
 
     farm_world = _require_single_farm_baseline(scenario)
     if farm_world is None:
@@ -379,10 +382,8 @@ def _build_one_baseline(
 
     _ensure_selected_l2_l1_scenario_imported(scenario_id)
     cls = registry.get_scenario(scenario_id)
-    scenario = cls(
-        crop_backend=crop_backend,
-        crop_backend_options=crop_backend_options or {},
-    )
+    constructor = {"crop_backend": crop_backend, "crop_backend_options": crop_backend_options or {}}
+    scenario = cls(**constructor)
 
     t0 = time.time()
     engine = Engine(agent=None, scenario=scenario)
@@ -395,6 +396,37 @@ def _build_one_baseline(
             len(tool_errors),
         )
 
+    from fairy.scenarios.fos.multi_farm import (
+        farms_for_scenario, extrapolate_fleet, fleet_yields, fleet_provenance,
+    )
+    if len(farms_for_scenario(scenario)) > 1:
+        validation = engine.evaluation_report(workflow)["validation"]
+        if tool_errors or validation.get("success") is False:
+            raise ValueError(f"Cannot publish failing multi-farm oracle {scenario_id}: {validation}")
+        extrap = extrapolate_fleet(scenario, extrapolation_max_days)
+        if not extrap.get("reached_maturity"):
+            raise ValueError(f"Multi-farm oracle maturity unavailable for {scenario_id}: {extrap}")
+        yields = fleet_yields(scenario)
+        ridges = [r for farm in yields["farms"].values() for r in farm["ridges"].values()]
+        donothing = None
+        if include_donothing:
+            idle = cls(**constructor)
+            idle.setup()
+            Engine(None, idle)
+            dn_extrap = extrapolate_fleet(idle, extrapolation_max_days)
+            donothing = {**fleet_yields(idle), "extrapolation": dn_extrap,
+                         "crop_backend_provenance": fleet_provenance(idle)}
+        return BaselineResult(
+            scenario_id=scenario_id, biological_yield_g_m2_per_ridge=[],
+            biological_yield_kg_total=yields["biological_yield_kg_total"],
+            recovered_yield_g_m2_per_ridge=[], recovered_yield_kg_total=yields["recovered_yield_kg_total"],
+            ridges_planted=sum(r["planted"] or r["biological_yield_kg"] > 0 for r in ridges),
+            ridges_r8=sum(r["mature"] for r in ridges),
+            ridges_harvested=sum(r["harvested"] for r in ridges), extrapolation=extrap,
+            duration_s=round(time.time() - t0, 2), donothing=donothing, tool_errors=tool_errors,
+            crop_backend_provenance=fleet_provenance(scenario), farms=yields["farms"],
+            oracle_validation=validation,
+        )
     farm_world = _require_single_farm_baseline(scenario)
     if farm_world is None:
         raise RuntimeError(
@@ -510,6 +542,16 @@ def _baseline_to_dict(b: BaselineResult) -> dict[str, Any]:
         "extrapolation": b.extrapolation,
         "build_duration_s": b.duration_s,
     }
+    if b.farms is not None:
+        d["schema_version"] = 4
+        d["outcome_schema"] = "multi_farm_yield_v1"
+        d["farms"] = b.farms
+        d["oracle_validation"] = b.oracle_validation
+        d["ridges_total"] = sum(len(farm["ridges"]) for farm in b.farms.values())
+        d["ridges_mature"] = d.pop("ridges_r8")
+        # No fictitious shared ridge area or flattened local ridge indexes.
+        for key in ("ridge_area_m2", "biological_yield_g_m2_per_ridge", "recovered_yield_g_m2_per_ridge"):
+            d.pop(key)
     if b.donothing is not None:
         d["donothing"] = b.donothing
     if b.tool_errors:
