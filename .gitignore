@@ -16,3 +16,4 @@ fos_exports/
 workflow_exports/
 fairy/scenarios/crop_challenges/artifacts/.publish.lock
 gui_demo/screenshots/
+gui_demo/scenarios/hit/source/
