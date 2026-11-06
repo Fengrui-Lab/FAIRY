@@ -819,3 +819,15 @@ gpt-6-luna is the main agent; each of the 8 field apps sits behind `<App>__exper
 - Details and tables: `review.md`, section 17. Runs: `Synkrasis/jev_a2a_runs`.
 
 Spent: about $3.77.
+
+## Step 25 – Better hybrid (2026-11-04, branch `jev-better-hybrid`)
+
+Options added, all off by default: lean LLM memory, LLM plan note for Jev, action budget note, fallback reasoning effort. Decisions and the 4-scenario test: `docs/jev/better_hybrid.md`.
+
+**Flag: the earlier hybrid did not use medium reasoning.** In every earlier hybrid run (sections 13-15, all of `jev_single_farm_L3mini_runs`) the LLM helper ran gpt-6-luna on Chat Completions with reasoning `none`. LLM alone ran on the Responses API with reasoning `medium`. Earlier reports do not say this. The new version runs its helper with `medium`, so any comparison of it with the old hybrid also includes this change.
+
+Full run: new version only (`hybrid_lean_plan_budget_medium`), 19 L3-mini, 3 runs each. Compared with the existing LLM-alone and hybrid runs; those were not rerun.
+
+Result (2026-11-05): 57 runs, 56 finished; average grain loss 7.4% (LLM alone 6.4%, old hybrid 7.3%), so flat; $1.76 per 19 runs (LLM alone $1.19, old hybrid $2.37); 3.9 min per run; Jev decides 67%. One failure is new and caused by the plan note: Jev followed a stale "wait" plan 166 times for almost two years (not fixed). Details: `docs/jev/better_hybrid.md`.
+
+Spent: about $8 (tests $2.30, full run $5.30, interrupted run about $0.10).

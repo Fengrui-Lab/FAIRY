@@ -11,6 +11,10 @@ Settings (folder names as in the shared run package):
     hybrid_jev_plus_llm                  Jev decides, gpt-6-luna when Jev is unsure
     ablation_hybrid_full_history         hybrid with --jev-state history
     ablation_hybrid_reflex               hybrid with --hybrid-mode reflex
+    hybrid_lean_memory                   hybrid with a short LLM memory (docs/jev/better_hybrid.md)
+    hybrid_lean_plan                     + the LLM writes next steps for Jev
+    hybrid_lean_plan_budget              + Jev and the LLM see the actions left
+    hybrid_lean_plan_budget_medium       + the LLM uses medium reasoning, as in LLM alone
     ablation_llm_with_jev_tool           gpt-6-luna, ReAct, done check, optional ask_jev tool
     ablation_llm_with_jev_tool_and_note  same with a note about Jev in the system prompt
     a2a_llm_manager_jev_experts          gpt-6-luna runs the farm through one Jev expert per app
@@ -32,6 +36,7 @@ import os
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 SCENARIO_LIST = Path("scripts/fullseason/l3_mini_20_scenario_ids.txt")
@@ -45,6 +50,8 @@ HYBRID = [
     "--controller", "farm_jev", "--provider", "typesafe", "--model", "jev-latest",
     "--parallel-tool-calls", "true", "--fallback-model", "gpt-6-luna", "--fallback-confidence", "0.4",
 ]
+LEAN = [*HYBRID, "--fallback-memory", "lean"]
+PLAN = [*LEAN, "--plan-note", "true"]
 LLM_JEV_TOOL = [
     *LLM, "--controller", "farm_llm_jev", "--done-check", "true", "--jev-model", "jev-latest",
 ]
@@ -56,6 +63,10 @@ SETTINGS = {
     "hybrid_jev_plus_llm": HYBRID,
     "ablation_hybrid_full_history": [*HYBRID, "--jev-state", "history"],
     "ablation_hybrid_reflex": [*HYBRID, "--hybrid-mode", "reflex"],
+    "hybrid_lean_memory": LEAN,
+    "hybrid_lean_plan": PLAN,
+    "hybrid_lean_plan_budget": [*PLAN, "--budget-note", "true"],
+    "hybrid_lean_plan_budget_medium": [*PLAN, "--budget-note", "true", "--fallback-reasoning-effort", "medium"],
     "ablation_llm_with_jev_tool": LLM_JEV_TOOL,
     "ablation_llm_with_jev_tool_and_note": [*LLM_JEV_TOOL, "--jev-prompt-note", "true"],
     "a2a_llm_manager_jev_experts": [
@@ -109,6 +120,7 @@ def main() -> None:
     parser.add_argument("--scenarios", default=None, help="Comma-separated; default: the 19 L3-mini")
     parser.add_argument("--max-tool-calls", type=int, default=300)
     parser.add_argument("--timeout-seconds", type=float, default=3600.0)
+    parser.add_argument("--workers", type=int, default=1, help="Runs at once (they only wait on APIs)")
     parser.add_argument("--dry-run", action="store_true", help="Print the commands, run nothing")
     args = parser.parse_args()
 
@@ -117,9 +129,10 @@ def main() -> None:
     if unknown:
         parser.error(f"unknown settings {unknown}; choose from {list(SETTINGS)}")
     scenarios = args.scenarios.split(",") if args.scenarios else l3mini_scenarios()
-    for scenario in scenarios:
-        for setting in settings:
-            run_one(args, scenario, setting)
+    cells = [(scenario, setting) for scenario in scenarios for setting in settings]
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for future in [pool.submit(run_one, args, *cell) for cell in cells]:
+            future.result()
 
 
 if __name__ == "__main__":

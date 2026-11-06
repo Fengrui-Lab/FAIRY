@@ -676,3 +676,85 @@ Existing A2A here means FAIRY's A2A with gpt-6-luna experts, `--a2a-app-prop 1.0
 One run per scenario.
 
 Spent: about $3.77 (test runs $1.08, 19 runs $2.69).
+
+## 18. Better hybrid: the LLM writes a plan for Jev (branch `jev-better-hybrid`, 2026-11-05)
+
+### 18.1 What is new in this setup
+
+**The main change is the plan note.** In the old hybrid, Jev and the LLM shared nothing about what comes next: the LLM made one decision and Jev went on without knowing why. Now, at every hand-off, the LLM makes its decision and also writes its expected next steps in one line. Jev sees that line in its state until the next hand-off, and is told to follow it unless the farm has changed. So the LLM now plans, Jev carries the plan out, and Jev's low confidence is what asks for a new plan.
+
+Example written by the LLM: "Allow R7 grain to dry down; recheck moisture and weather before starting the harvest sequence."
+
+| | Old hybrid | New hybrid |
+|---|---|---|
+| What the LLM gives Jev | Nothing; only the action it took | **The action plus its next steps** |
+| LLM memory, per remembered turn | Full state, 15-17k characters, 20 turns | Short state, changes only, up to 80 turns |
+| Actions left | Not shown | Shown to Jev and the LLM, with a warning |
+| LLM reasoning | `none` | `medium` (see the flag in `PROGRESS.md`, Step 25) |
+
+The rest of the loop is unchanged: Jev picks from the same menus, the same 0.4 confidence rule hands off to the LLM, and the same done check applies. All new behaviour is behind options and off by default (`--plan-note`, `--fallback-memory lean`, `--budget-note`, `--fallback-reasoning-effort`).
+
+Only the four changes together were run on all 19 scenarios, so their separate effects on the full set are unknown. The plan note is what raised Jev's share in the 4-scenario test (52% to 65%); lean memory is what cut the LLM's cost. Design and the 4-scenario test: `better_hybrid.md`.
+
+### 18.2 Results (19 L3-mini; new hybrid 3 runs each, the others 1 run each)
+
+Run 2026-11-04 and 05, code `55b9377`. LLM alone and the old hybrid were not rerun; they are the runs of sections 13 and 13.1.
+
+| | LLM alone (13.1) | Old hybrid (13) | New hybrid |
+|---|---|---|---|
+| Runs | 19 | 19 | 57 |
+| Seasons finished | 19 of 19 | 18 of 19 | 56 of 57 |
+| Average grain loss | **6.4%** | 7.3% | 7.4% |
+| Median grain loss | 7.5% | 5.2% | **4.6%** |
+| Total cost, per 19 runs | **$1.19** | $2.37 | $1.76 |
+| Jev cost / LLM cost | – / $1.19 | $1.11 / $1.26 | $1.24 / $0.52 |
+| Average time per run | 7.1 min | **3.4 min** | 3.9 min |
+| Average actions per run | 137 | 143 | 159 |
+| Jev's share of decisions | – | 50% | **67%** |
+
+New hybrid per repeat: 7.3%, 10.6%, 4.3% grain loss; $1.60, $1.79, $1.90.
+
+| Grain loss, new minus other (95% interval, resampling scenarios) | LLM alone | Old hybrid |
+|---|---|---|
+| All 19 scenarios | +1.0 (-2.9 to +5.7) | +0.2 (-8.8 to +6.8) |
+| The 15 not used in the 4-scenario test | -0.2 (-3.4 to +2.8) | +2.4 (-0.2 to +5.3) |
+
+| Scenario | LLM alone | Old hybrid | New, run 1 | Run 2 | Run 3 | New, mean |
+|---|---|---|---|---|---|---|
+| cloudy_wet_low_radiation_biomass | 13.8% | 0.9% | 4.6% | 0.1% | 0.1% | 1.6% |
+| compacted_headland_stand_recovery | 8.7% | 61.5% **not finished** | 1.9% | -4.6% | -5.0% | -2.6% |
+| cool_august_lategrain_laterain | 3.7% | 8.3% | 19.0% | 0.2% | 0.2% | 6.5% |
+| drought_recovery_false_disease_signal | 3.1% | 3.4% | 4.7% | 100.0% **not finished** | 0.6% | 35.1% |
+| dryer_capacity_batch_harvest_storage | 0.1% | 6.1% | 14.2% | 0.4% | 2.0% | 5.5% |
+| dryr5r6_hn58_std_waterlimit | 1.8% | 5.2% | 8.2% | 1.7% | 4.1% | 4.7% |
+| dryr5r6_insect_threshold_waterstress | 7.5% | 1.2% | -1.9% | 7.2% | 4.7% | 3.3% |
+| grain_moisture_sensor_failure_harvest | 5.8% | 0.0% | 11.1% | 21.2% | 8.1% | 13.5% |
+| heinong58_resistant_biotic_water_budget_priority | 8.4% | 11.5% | 3.3% | 10.0% | 2.5% | 5.2% |
+| heinong84_edge_low_fertility | 5.1% | 4.7% | 14.5% | 5.9% | 4.2% | 8.2% |
+| hn60_high_fastdrain_dryr5r6 | 0.5% | 5.7% | 1.8% | 3.2% | -0.0% | 1.7% |
+| laterain_shattering_drying_tradeoff | 14.4% | 0.1% | 1.2% | 1.2% | 1.2% | 1.2% |
+| local_soil_constraint_nutrition_patch | -9.7% | -9.1% | -2.5% | -11.2% | -10.6% | -8.1% |
+| micronutrient_deficiency_flowering_patch | 8.4% | 8.6% | 6.3% | 18.4% | 2.3% | 9.0% |
+| organic_patch_weed_mechanical_capacity | 8.4% | 4.2% | 14.3% | 3.9% | 8.6% | 8.9% |
+| organic_residue_weed_establishment | 13.7% | -0.3% | 14.9% | 14.9% | 16.2% | 15.3% |
+| poordrainage_wetjune_disease_trafficability | 11.3% | 7.4% | 2.6% | 10.1% | 11.6% | 8.1% |
+| soy_after_soy_wetjune_disease | 13.2% | 9.0% | 8.4% | 13.0% | 8.1% | 9.8% |
+| staggered_wetjune_canopy_disease | 3.5% | 9.5% | 12.8% | 5.8% | 23.3% | 14.0% |
+
+### 18.3 Findings
+
+1. **Grain loss is flat.** No setting is shown better or worse. The 3 repeats of one scenario differ by 9 points at the median, and LLM alone and the old hybrid have only one run each.
+2. **On the 15 untouched scenarios the old hybrid looks better** (3.9% vs 6.2%), just inside the interval. Those 15 leave out the 4 chosen for being bad for the old hybrid, so that number flatters it, but it is not a win for the new version.
+3. **Cost fell 26% against the old hybrid**, all from the LLM (down 59%); Jev rose 12% because it makes more decisions. Still 48% above LLM alone. The 4-scenario test overstated the saving.
+4. **Jev's share rose from 50% to 67%**, with about 55 LLM calls per run.
+5. **The tool-switching lead is not solved:** when Jev is unsure the LLM still picks a different tool in 65% of hand-offs. There are fewer hand-offs, not less disagreement.
+6. **Time is not a clean comparison:** these runs went 6 to 12 at once; the old runs went one at a time.
+7. **The 300-action failure of section 13 was not fixed by this work.** The unchanged hybrid also finished that scenario when rerun once (1.9%, `better_hybrid.md`).
+
+### 18.4 New failure, caused by the plan note
+
+Drought recovery, run 2: nothing harvested, 100% loss, 300 actions, simulated date June 2028. The LLM's last plan, on 21 Aug 2026, said to let the grain dry and check again. Jev followed it with "advance 4 days" 166 times in a row at confidence 0.6 or higher, so it never handed off and the plan was never replaced. The repeat check misses this because each wait changes the clock, and Jev ignored the warnings in its state.
+
+Without this run the new hybrid's average would be about 5.7%; that is an observation, not a result, since the run is part of what was tested. 17 of 57 runs had 6 or more Jev waits in a row, with no clear extra grain loss. **Not fixed:** the numbers above are for the code as run. Proposed fix: a plan expires, and a few waits in a row go back to the LLM.
+
+Spent: about $8. All experiments so far: about $32 (status report total of $24 plus this).

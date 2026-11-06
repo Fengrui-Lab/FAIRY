@@ -171,6 +171,10 @@ def main() -> None:
     parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
     parser.add_argument("--done-check", type=_str_to_bool, default=False, help="LLM agents: refuse \"done\" while visible work is left (max 2 times; same rule as farm_jev)")
+    parser.add_argument("--fallback-reasoning-effort", default=None, help="farm_jev: reasoning effort of the fallback LLM; default keeps the model's default ('none' for gpt-6-luna)")
+    parser.add_argument("--fallback-memory", choices=["full", "lean"], default="full", help="farm_jev: the fallback LLM's memory keeps the full state per turn (full, default) or a short one (lean)")
+    parser.add_argument("--plan-note", type=lambda v: v.lower() == "true", default=False, help="farm_jev: the fallback LLM writes its next steps for Jev (true/false, default false)")
+    parser.add_argument("--budget-note", type=lambda v: v.lower() == "true", default=False, help="farm_jev: show Jev and the LLM how many actions are left (true/false, default false)")
     parser.add_argument("--hybrid-mode", choices=["full", "reflex"], default="full", help="farm_jev with --fallback-model: the LLM takes the whole decision (full, default) or only fills in the arguments of Jev's tool when Jev is unsure of the tool (reflex)")
     parser.add_argument("--jev-model", default=None, help="farm_llm_jev: Jev model the LLM can ask through the ask_jev tool (provider typesafe)")
     parser.add_argument("--jev-prompt-note", type=_str_to_bool, default=False, help="farm_llm_jev: add a short neutral note about Jev to the system prompt")
@@ -372,6 +376,7 @@ def main() -> None:
                     "temperature": args.temperature,
                     "max_output_tokens": args.max_output_tokens,
                     "parallel_tool_calls": False,
+                    **({"reasoning_effort": args.fallback_reasoning_effort} if args.fallback_reasoning_effort else {}),
                 }
             )
         jev_llm = None
@@ -399,6 +404,9 @@ def main() -> None:
             hybrid_mode=args.hybrid_mode,
             jev_llm=jev_llm,
             jev_prompt_note=args.jev_prompt_note,
+            fallback_memory=args.fallback_memory,
+            plan_note=args.plan_note,
+            budget_note=args.budget_note,
         )
         agent.runtime_event_sink = lambda event: _append_live_progress(
             progress_log_path, event

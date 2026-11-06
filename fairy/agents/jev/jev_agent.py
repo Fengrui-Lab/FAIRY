@@ -31,6 +31,14 @@ picks the tool. Only Jev's confidence on the tool counts: at or above the
 threshold Jev also picks the arguments; below it the LLM gets only Jev's tool
 and fills in its arguments. Repeats and "done" refused twice still go to the
 LLM as in the default mode.
+
+Better-hybrid options (all off by default; docs/jev/better_hybrid.md):
+- fallback_memory="lean": the LLM's memory keeps a short state per turn instead
+  of the full one, and stays append-only so its input keeps hitting the cache.
+- plan_note: the LLM writes its expected next steps in a `next_steps` argument
+  added to its tool schemas; Jev sees them in its state until the next hand-off.
+- budget_note: Jev and the LLM see how many actions are left, and a warning when
+  they run short of what the rest of the season needs.
 """
 
 from __future__ import annotations
@@ -93,6 +101,36 @@ FILL_INSTRUCTIONS = (
     "choose its arguments."
 )
 HYBRID_MODES = ("full", "reflex")
+FALLBACK_MEMORIES = ("full", "lean")
+
+# Lean memory: turns are short, so far more of them fit. Past MAX the oldest are
+# cut to KEEP (one uncached request), and the next state is sent in full again.
+LEAN_MEMORY_MAX_TURNS = 80
+LEAN_MEMORY_KEEP_TURNS = 40
+LEAN_ALWAYS = ("time", "season_phase", "crop", "pending_effects", "notifications", "warning")
+LEAN_IF_CHANGED = ("inventory", "machines")
+
+# Plan note: the model writes no text next to a tool call (tested), so the note
+# is one more required tool argument; it is removed before the tool runs.
+PLAN_ARG = "next_steps"
+PLAN_ARG_DESCRIPTION = (
+    "Not passed to the tool. One short plain line for the agent that takes the next steps "
+    "if you are not asked: what should happen after this call, in order, naming actions, "
+    "ridges and how long to wait (for example: 'inspect ridges 8-11, then advance 3 days, "
+    "then read soil sensors')."
+)
+PLAN_MAX_CHARS = 400
+PLAN_INSTRUCTIONS = (
+    " If the state has a plan_from_advisor, follow its next step that is not done yet, unless "
+    "the farm has changed so that it no longer fits. When the plan says to wait, advance time."
+)
+
+# Budget note: rough action counts for what is left (no oracle): one harvest pass
+# covers 4 ridges and needs a harvest, an unload and a store.
+BUDGET_HALF_SHARE = 0.5
+BUDGET_RIDGES_PER_PASS = 4
+BUDGET_ACTIONS_PER_PASS = 3
+BUDGET_MARGIN = 40
 
 # Fallback memory (Part 2, Step 11): earlier fallback requests and the LLM's calls
 # stay in its input, append-only, so each request is the previous one plus new
@@ -143,15 +181,23 @@ class JevAgent(Agent):
         state_mode: str = "snapshot",
         hybrid_mode: str = "full",
         num_ridges: int | None = None,
+        fallback_memory: str = "full",
+        plan_note: bool = False,
+        budget_note: bool = False,
     ) -> None:
         if state_mode not in ("snapshot", "history"):
             raise ValueError(f"Unknown Jev state mode: {state_mode}")
         if hybrid_mode not in HYBRID_MODES:
             raise ValueError(f"Unknown hybrid mode: {hybrid_mode}")
+        if fallback_memory not in FALLBACK_MEMORIES:
+            raise ValueError(f"Unknown fallback memory: {fallback_memory}")
         self.fallback_llm = fallback_llm
         self.fallback_confidence = fallback_confidence
         self.state_mode = state_mode
         self.hybrid_mode = hybrid_mode
+        self.fallback_memory = fallback_memory
+        self.plan_note = plan_note
+        self.budget_note = budget_note
         super().__init__(
             name=name,
             llm=llm,
@@ -167,6 +213,7 @@ class JevAgent(Agent):
         if self._num_ridges is None:
             raise ValueError("JevAgent needs a farm app with num_ridges in its toolsets")
         self.tool_menus: dict[str, ToolMenu] = {}
+        self._max_tool_calls: int | None = None
         self._reset_telemetry()
 
     def _reset_telemetry(self) -> None:
@@ -188,12 +235,18 @@ class JevAgent(Agent):
         self._llm_seen_steps = 0
         self._last_tool_probabilities: dict[str, float] = {}
         self._fanout = {"hits": 0, "misses": 0}
+        self._llm_sent: dict[str, str] = {}
+        self._plan: dict[str, Any] | None = None
+        self._plans_written = 0
         self.telemetry: dict[str, Any] = {
             "family_id": self.name,
             "planning_mode": f"jev_menu_choice_{self.state_mode}",
             "fallback_model": getattr(self.fallback_llm, "model", None),
             "fallback_confidence": self.fallback_confidence if self.fallback_llm else None,
             "hybrid_mode": self.hybrid_mode,
+            "fallback_memory": self.fallback_memory,
+            "plan_note": self.plan_note,
+            "budget_note": self.budget_note,
         }
 
     # ------------------------------------------------------------------
@@ -202,6 +255,7 @@ class JevAgent(Agent):
 
     def run(self, input, **kwargs):
         self._reset_telemetry()
+        self._max_tool_calls = kwargs.get("max_tool_calls")
         self.tool_menus = build_tool_menus(
             self.tools_map, task_text=self._menu_task_text(str(input)), num_ridges=self._num_ridges
         )
@@ -261,6 +315,7 @@ class JevAgent(Agent):
                 "llm_decisions": self._llm_decisions,
                 "llm_argument_fills": self._llm_argument_fills,
                 "llm_tokens": dict(self._llm_tokens),
+                "plans_written": self._plans_written,
                 "max_state_chars": max(chars) if chars else None,
                 "avg_state_chars": round(sum(chars) / len(chars)) if chars else None,
             }
@@ -380,7 +435,11 @@ class JevAgent(Agent):
         """Jev's tool and arguments; arguments are None when skip_args_below skipped them."""
         tool_question = {
             "type": "choice",
-            "instructions": self.tool_instructions if self.state_mode == "snapshot" else PART1_TOOL_INSTRUCTIONS,
+            "instructions": (
+                (self.tool_instructions + (PLAN_INSTRUCTIONS if self.plan_note else ""))
+                if self.state_mode == "snapshot"
+                else PART1_TOOL_INSTRUCTIONS
+            ),
             "criteria": {
                 **{
                     name: menu.description
@@ -526,6 +585,8 @@ class JevAgent(Agent):
             [t for t in self.tool_schemas if t["function"]["name"] == fill_tool]
             if fill_tool else self.tool_schemas
         )
+        if self.plan_note and not fill_tool:
+            tools = self._with_plan_arg(tools)
         self.record_event(
             "llm_fallback_start",
             status="running",
@@ -571,10 +632,14 @@ class JevAgent(Agent):
             except json.JSONDecodeError:
                 args = None
             decided = (name, args) if name in self.tools_map and isinstance(args, dict) else None
+        plan = None
+        if decided is not None and self.plan_note and not fill_tool:
+            plan = decided[1].pop(PLAN_ARG, None)
+            self._store_plan(plan)
         if fill_tool and decided is not None and decided[0] != fill_tool:
             decided = None
         if decided is not None and self.state_mode == "snapshot":
-            self._remember_llm_turn(messages[-1]["content"], decided)
+            self._remember_llm_turn(messages[-1]["content"], decided, plan)
         self.record_event(
             "llm_fallback_end",
             status="ok" if decided else "rejected",
@@ -583,6 +648,7 @@ class JevAgent(Agent):
             wall_time_seconds=latency,
             tokens=tokens,
             decision=list(decided) if decided else None,
+            plan=plan,
             content=getattr(message, "content", None),
         )
         return decided
@@ -622,7 +688,13 @@ class JevAgent(Agent):
                 "tool_calls": [{
                     "id": turn["id"],
                     "type": "function",
-                    "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)},
+                    "function": {
+                        "name": name,
+                        "arguments": json.dumps(
+                            {**args, PLAN_ARG: turn["plan"]} if turn.get("plan") else args,
+                            ensure_ascii=False,
+                        ),
+                    },
                 }],
             })
             step = steps[turn["step"]] if turn["step"] < len(steps) else None
@@ -634,6 +706,8 @@ class JevAgent(Agent):
             messages.append({"role": "tool", "tool_call_id": turn["id"], "content": result})
         # recent_actions left out: the LLM's own results and the actions since cover them.
         current = {k: v for k, v in state.items() if k not in ("task", "recent_actions")}
+        if self.fallback_memory == "lean":
+            current = self._lean_state(current)
         messages.append({
             "role": "user",
             "content": self._since_last_llm_turn(steps)
@@ -643,6 +717,75 @@ class JevAgent(Agent):
             + json.dumps(current, ensure_ascii=False, default=str),
         })
         return messages
+
+    def _lean_state(self, current: dict[str, Any]) -> dict[str, Any]:
+        """The current state without what the LLM has already seen or can read above.
+
+        steps_so_far is replaced by the LLM's own turns and the "actions since"
+        lines. The first state after a start or a cut is sent in full, so nothing
+        is lost when old turns go. Kept as sent, so the memory stays append-only.
+        """
+        now = current.get("farm_now", {})
+        lean: dict[str, Any] = {k: now[k] for k in LEAN_ALWAYS if k in now}
+        first = not self._llm_sent
+        for key in LEAN_IF_CHANGED:
+            text = json.dumps(now.get(key), sort_keys=True, default=str)
+            if first or self._llm_sent.get(key) != text:
+                lean[key] = now.get(key)
+            self._llm_sent[key] = text
+        if first:
+            lean["actions_this_run"] = now.get("actions_this_run")
+        return {
+            "farm_now": lean,
+            **{k: v for k, v in current.items() if k not in ("farm_now", "steps_so_far")},
+        }
+
+    def _with_plan_arg(self, tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        out = []
+        for tool in tools:
+            parameters = dict(tool["function"].get("parameters") or {"type": "object"})
+            parameters["properties"] = {
+                **(parameters.get("properties") or {}),
+                PLAN_ARG: {"type": "string", "description": PLAN_ARG_DESCRIPTION},
+            }
+            parameters["required"] = [*(parameters.get("required") or []), PLAN_ARG]
+            out.append({**tool, "function": {**tool["function"], "parameters": parameters}})
+        return out
+
+    def _store_plan(self, plan: Any) -> None:
+        """A missing or empty note keeps the earlier plan."""
+        if not isinstance(plan, str) or not plan.strip():
+            return
+        self._plans_written += 1
+        self._plan = {
+            "written_at": self._snapshot.get("farm_now", {}).get("time"),
+            "next_steps": plan.strip()[:PLAN_MAX_CHARS],
+        }
+
+    def _budget(self) -> dict[str, Any] | None:
+        """Actions left against a rough need for the rest of the season."""
+        if not self._max_tool_calls:
+            return None
+        used = len(self._facts.get("steps", []))
+        left = self._max_tool_calls - used
+        to_harvest = sum(1 for r in self._facts.get("ridges", []) if not r["harvested"])
+        need = -(-to_harvest // BUDGET_RIDGES_PER_PASS) * BUDGET_ACTIONS_PER_PASS
+        budget: dict[str, Any] = {
+            "actions_used": used,
+            "actions_left": left,
+            "actions_needed_for_harvest": need,
+        }
+        if left < need + BUDGET_MARGIN:
+            budget["warning"] = (
+                "Almost out of actions: do only what harvest and storage need, and advance time "
+                "to harvest instead of inspecting."
+            )
+        elif used >= self._max_tool_calls * BUDGET_HALF_SHARE:
+            budget["warning"] = (
+                "Over half of the actions are used: skip inspections and field sweeps that "
+                "will not change a decision."
+            )
+        return budget
 
     def _since_last_llm_turn(self, steps: list[Any]) -> str:
         """Jev's actions since the LLM's last call, with time and a short result."""
@@ -659,7 +802,9 @@ class JevAgent(Agent):
             head += f" ({len(since) - len(lines)} earlier ones not shown)"
         return head + ":\n" + "\n".join(lines)
 
-    def _remember_llm_turn(self, current_message: str, decided: tuple[str, dict[str, Any]]) -> None:
+    def _remember_llm_turn(
+        self, current_message: str, decided: tuple[str, dict[str, Any]], plan: Any = None
+    ) -> None:
         """Keep the request's last message as sent, so the next request starts with this one."""
         steps = self._facts.get("steps", [])
         name, args = decided
@@ -668,10 +813,13 @@ class JevAgent(Agent):
             "call": None if name == DONE_OPTION else (name, args),
             "id": f"fallback_call_{self._action_count}",
             "step": len(steps),
+            "plan": plan if isinstance(plan, str) else None,
         })
         self._llm_seen_steps = len(steps) + (0 if name == DONE_OPTION else 1)
-        if len(self._llm_turns) > FALLBACK_MEMORY_MAX_TURNS:
-            self._llm_turns = self._llm_turns[-FALLBACK_MEMORY_KEEP_TURNS:]
+        lean = self.fallback_memory == "lean"
+        if len(self._llm_turns) > (LEAN_MEMORY_MAX_TURNS if lean else FALLBACK_MEMORY_MAX_TURNS):
+            self._llm_turns = self._llm_turns[-(LEAN_MEMORY_KEEP_TURNS if lean else FALLBACK_MEMORY_KEEP_TURNS):]
+            self._llm_sent = {}
 
     def _last_was_report(self) -> bool:
         """No report straight after a report: Jev sent up to 5 in a row (Part 2, Step 6)."""
@@ -791,6 +939,11 @@ class JevAgent(Agent):
             }
         else:
             state = {"task": task, **self._snapshot}
+            if self.plan_note and self._plan:
+                state["plan_from_advisor"] = dict(self._plan)
+            budget = self._budget() if self.budget_note else None
+            if budget:
+                state["action_budget"] = budget
         if self._notes:
             state["notes"] = list(self._notes)
         self._state_chars.append(len(json.dumps(state, default=str, ensure_ascii=False)))
