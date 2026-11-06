@@ -37,3 +37,21 @@
 
 /* Original Fairy artwork is embedded as image data, independent of a local path. */
 .brand-symbol{width:42px;height:42px;flex-shrink:0;border:0;border-radius:8px;overflow:hidden}.brand-logo{display:block;width:100%;height:100%;object-fit:contain}
+
+/* Keep the view labels on one line, including beside the scrolling tool list. */
+.mode-switch{flex-shrink:0}
+.mode-switch button{min-width:0;white-space:nowrap;gap:4px;padding-inline:3px}
+.mode-switch .icon{width:16px;height:16px}
+
+/* The overview uses the full canvas; individual plots retain their equipment rail. */
+.viewport.overview-mode{--equipment-width:0px}
+.overview-mode .equipment-tray{display:none}
+
+/* Compact farm summary, leaving more height for both farm views. */
+.main.farm-view{padding-top:12px;gap:10px}
+.farm-view .view-header{min-height:40px}
+.farm-view .eyebrow{margin-bottom:4px}
+.farm-view .world-time small{margin-bottom:4px}
+.farm-view .select-control select{padding-block:6px}
+.farm-view .metrics{min-height:52px}
+.farm-view .metric{padding:7px 17px;gap:4px}
