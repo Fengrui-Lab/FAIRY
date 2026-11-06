@@ -254,5 +254,24 @@
       "simulated-plant-3d.png",
       "simulated-gallery.png"
     ]
+  },
+  "ui_cleanup_20261106": {
+    "status": "passed",
+    "browser_checks": [
+      "2D/3D view labels and color legends have no provenance notes",
+      "Crop observation parameters precede plant image",
+      "Equipment details precede survey result",
+      "Sidebar requested text removed",
+      "Workflow fills available width without a reserved preview column",
+      "Hover opens transient popup; leaving hides it; click pins; close unpins",
+      "No console errors"
+    ],
+    "regressions": [
+      "check-demo.mjs",
+      "check-refinement.mjs",
+      "check-survey-map.mjs",
+      "check-simulated-assets.mjs"
+    ],
+    "data_and_png_changes": false
   }
 }

@@ -101,8 +101,8 @@ for (const [farmId, step, ridgeId, expectedId] of scenarios) {
   assert.equal(rasterShown(rendered), true);
   assert.equal(rasterShown(schematic), false);
   assert.ok(schematic.includes('class="ev-plant-svg"'));
-  assert.ok(rendered.includes('AI-generated simulation example'));
-  assert.ok(rendered.includes('not a photograph or measured symptom severity'));
+  assert.ok(rendered.includes('Plant image'));
+  assert.ok(rendered.includes('State view'));
   assert.ok(rendered.includes(`data-plant-example="${expectedId}"`));
   assert.ok(metrics(rendered).length > 0, 'Compared cards actually contain recorded metrics');
   assert.deepEqual(metrics(rendered), metrics(schematic), 'Raster/schematic switching preserves every displayed metric');
@@ -141,16 +141,14 @@ for (const url of ['javascript:alert(1)', 'file:///private/tmp/plant.png', '/Use
 }
 
 const legend = illustrativeNDVILegend();
-assert.match(legend, /illustrative palette/i);
-assert.match(legend, /Pixels are not measured NDVI values/);
-assert.match(legend, /Synthetic spatial pattern/);
+assert.match(legend, /<strong>NDVI<\/strong>/);
 for (const tick of ['0.00', '0.25', '0.50', '0.75', '1.00']) assert.ok(legend.includes(`>${tick}</span>`));
 for (const slot of filled.filter(asset => asset.role === 'ndvi_example')) {
   const event = events[slot.survey_sequence - 1], farm = model.farmById[slot.farm_id];
   const example = { ...slot, url: new URL(slot.url, 'http://demo.invalid/gui_demo/').href };
   const shown = surveyEvidence({ event, farm, example, source: 'example' });
   const recorded = surveyEvidence({ event, farm, example, source: 'recorded' });
-  assert.ok(shown.includes(legend), 'Every synthetic NDVI image carries its uncalibrated illustrative legend');
+  assert.ok(shown.includes(legend), 'Every NDVI image carries its color legend');
   assert.ok(!recorded.includes(legend), 'Recorded ridge maps keep their separate measurement scale');
   assert.deepEqual(metrics(shown), metrics(recorded));
 }

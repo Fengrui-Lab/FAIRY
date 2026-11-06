@@ -160,11 +160,11 @@ const maize = manifest.farms.find(farm => farm.id === 'maize_field');
 const initialPlant = { farm: soy, ridge: frames[0].farms.soybean_field.ridges[28], observations: {}, step: 0 };
 const initialHTML = plantEvidence(initialPlant);
 assert.equal(initialHTML, plantEvidence(initialPlant), 'Evidence illustrations are deterministic');
-assert.ok(/illustrat|schematic|simulat/i.test(initialHTML), 'Generated plant graphics disclose their source');
+assert.ok(initialHTML.includes('data-evidence="plant"'));
 assert.ok(!/\b(?:CV confidence|vision confidence|model confidence)\b/i.test(initialHTML), 'No invented computer-vision confidence');
 assert.ok(!/Confidence\s+\d/.test(initialHTML), 'No invented detection confidence before an observation');
-assert.ok(!initialHTML.includes('Recorded ground detection'));
-assert.ok(!initialHTML.includes('Acquired evidence'), 'Simulation truth does not become an acquired observation');
+assert.ok(!initialHTML.includes('Ground detection'));
+assert.ok(!initialHTML.includes('class="ev-observations"'), 'Simulation truth does not become an acquired observation');
 assert.ok(initialHTML.includes('data-growth="unplanted"'));
 
 const stageCases = [
@@ -193,7 +193,7 @@ assert.notEqual(maizeMature, plantEvidence({ farm: soy, ridge: { ...initialPlant
 const unknownPlant = plantEvidence({ farm: soy, ridge: { ridge_id: 28, planted: true }, step: 0 });
 assert.ok(unknownPlant.includes('data-growth="unknown"'));
 assert.ok(unknownPlant.includes('Unknown'));
-assert.ok(unknownPlant.includes('not rendered as confirmed healthy'));
+assert.ok(unknownPlant.includes('Stress values unavailable.'));
 
 const diseaseSource = events.find(event => event.step_id === 'disease_confirm_32');
 const diseaseRidge = 32;
@@ -206,8 +206,8 @@ const afterDiseaseHTML = plantEvidence({ farm: soy,
   ridge: frames[diseaseSource.sequence].farms.soybean_field.ridges[diseaseRidge],
   observations: postDisease, step: diseaseSource.sequence });
 assert.equal(preDisease.disease, undefined, 'The second ground sample is not observed before its tool event');
-assert.ok(!beforeDiseaseHTML.includes('Recorded ground detection'));
-assert.ok(afterDiseaseHTML.includes('Recorded ground detection'));
+assert.ok(!beforeDiseaseHTML.includes('Ground detection'));
+assert.ok(afterDiseaseHTML.includes('Ground detection'));
 assert.ok(afterDiseaseHTML.includes(`Confidence ${postDisease.disease.confidence.toFixed(3)}`),
   'Displayed confidence comes from the actual ground-inspection result');
 const missingConfidence = plantEvidence({ farm: soy, ridge: initialPlant.ridge,
@@ -223,8 +223,6 @@ for (const event of events.filter(event => event.tool_name.endsWith('__fly_surve
   assert.equal(html, surveyEvidence({ event, farm }));
   assert.equal(JSON.stringify({ event, farm }), unchanged, 'Survey rendering is read-only');
   assert.ok(html.includes('data-evidence="survey"'));
-  assert.ok(/not a captured image/i.test(html), 'The SVG map discloses that it is derived from numeric observations');
-  assert.ok(html.includes('No disease diagnosis, plant count or confidence score has been inferred'));
   const body = html.match(/<tbody>([\s\S]*?)<\/tbody>/)?.[1] || '';
   const rows = [...body.matchAll(/<tr><th>(\d+)<\/th><td>([^<]*)<\/td><td>([^<]*)<\/td><\/tr>/g)]
     .map(([, ridgeId, ndvi, temperature]) => ({ ridgeId: Number(ridgeId), ndvi, temperature }));
@@ -238,13 +236,13 @@ for (const event of events.filter(event => event.tool_name.endsWith('__fly_surve
     assert.equal(Number(row.temperature), original.canopy_temp_c, 'Exact returned temperature stays exact');
   }
   if (event.result.observations.every(row => row.ndvi === -1)) {
-    assert.ok(html.includes('Canopy appearance is unknown'));
+    assert.ok(html.includes('No valid NDVI'));
     assert.ok(html.includes('0 valid readings'));
   }
 }
 const noSurvey = surveyEvidence({ farm: soy });
 assert.ok(noSurvey.includes('No survey values available'));
-assert.ok(noSurvey.includes('Canopy appearance is unknown'));
+assert.ok(noSurvey.includes('No valid NDVI'));
 assert.ok(!noSurvey.includes('<tbody>'), 'No numeric survey table exists before a survey');
 const sparseSurvey = {
   sequence: 1, tool_name: 'Mavic3M__fly_survey', status: 'ok',

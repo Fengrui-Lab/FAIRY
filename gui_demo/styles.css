@@ -10,6 +10,11 @@
 @media(min-width:721px) and (max-width:1100px){.workflow-area{position:relative;flex-direction:row;min-height:0}.workflow-host{min-height:0}.preview-pane{position:absolute;right:8px;top:90px;bottom:48px;width:290px;height:auto;z-index:4;box-shadow:0 8px 30px #253b4920}.preview-pane:has(.preview-empty){display:none}}
 
 .preview-pane:not([data-pinned="true"]){pointer-events:none}
+/* Workflow details float over the canvas and reserve no layout space. */
+.workflow-area{display:block;min-height:0}.workflow-host{height:100%;min-height:0}
+#workflow-preview{position:fixed;inset:auto;width:360px;max-width:calc(100vw - 32px);height:auto;max-height:min(620px,calc(100dvh - 100px));z-index:15;box-shadow:0 12px 40px #253b492b;overflow:auto;overscroll-behavior:contain}
+#workflow-preview[hidden]{display:none}
+#workflow-preview[data-pinned="true"]{pointer-events:auto}
 
 .pip .media-placeholder{height:48px;gap:4px}.pip .media-placeholder>.icon{display:none}
 

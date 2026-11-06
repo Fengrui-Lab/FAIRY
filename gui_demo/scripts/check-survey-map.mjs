@@ -273,8 +273,8 @@ for (const slot of exampleSlots) {
   assert.equal(hasExampleOption(defaultWithImage), true);
   const shown = surveyEvidence({ event, farm, example, source: 'example' });
   assert.equal(hasExampleImage(shown), true, 'A valid NDVI example is available only for its exact event and farm');
-  assert.ok(shown.includes('Illustrative NDVI map'));
-  assert.ok(shown.includes('Example imagery is independent of the recorded ridge values'));
+  assert.ok(shown.includes('NDVI image'));
+  assert.ok(shown.includes('Ridge map'));
   assert.ok(metricMarkup(baseline) && exactValues(baseline) && coverageMarkup(baseline),
     'The reference panel contains the numeric summaries, exact rows and coverage being compared');
   assert.equal(metricMarkup(shown), metricMarkup(baseline), 'Example selection preserves measured summary values');
