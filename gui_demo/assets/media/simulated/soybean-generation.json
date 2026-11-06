@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "generated_on": "2026-11-05",
+  "generation_mode": "built-in image_gen",
+  "tool": "image_gen.imagegen",
+  "skill": "imagegen / SKILL.md",
+  "purpose": "Synthetic botanical illustrations for the UI plant card, never captured observations, diagnostic evidence, or rendered simulator outputs.",
+  "source_preservation": "All original generated files retained unchanged; PNG copies saved in the staging directory. No image post-processing.",
+  "shared_constraints": {
+    "requested_aspect_ratio": "3:2 landscape",
+    "background": "opaque warm white/off-white",
+    "style": "polished scientific 3D botanical illustration",
+    "no_embedded_text": true,
+    "no_diagnostic_boxes": true
+  },
+  "assets": [
+    {
+      "name": "soybean-seedling",
+      "inspection": "Passed visual inspection: full single plant visible; correct early growth form; natural colors and white/off-white background; no text or diagnostic overlay.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: newly established soybean seedling. A short fresh green upright stem, two rounded cotyledons close to its base, a pair of young simple leaves, and the first developing trifoliate leaf at the top. Compact delicate young plant, clearly early growth. No flowers, pods, leaf spots or wilt.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "Soybean seedling",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-c6b3b7a3-c3ca-450c-8341-102779e0e7de.png",
+      "file": "soybean-seedling.png"
+    },
+    {
+      "name": "soybean-vegetative",
+      "inspection": "Passed visual inspection: full single plant visible; correct early growth form; natural colors and white/off-white background; no text or diagnostic overlay.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: vigorous vegetative soybean before flowering. A compact, bushy young plant with branching upright stems and several unmistakable trifoliate leaves, oval pointed leaflets, healthy medium green foliage. Leaf clusters occupy the center without becoming a dense indistinct ball. No flowers, pods, leaf spots or wilt.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "Soybean vegetative",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-4166aff7-f114-45eb-8120-c5369833a779.png",
+      "file": "soybean-vegetative.png"
+    },
+    {
+      "name": "soybean-flowering",
+      "inspection": "Passed visual inspection: whole green flowering soybean with small purple blossoms and clear trifoliate leaves; no spots, pods, text or overlays.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: flowering soybean. A branching bushy medium-sized soybean plant with healthy medium green trifoliate leaves and a modest number of small pale lavender-purple flowers at stem nodes. Fine botanical details visible. No pods, leaf spotting or wilt.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "Soybean flowering",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-2c9ecb06-5b13-4512-8bf3-ff98f8412222.png",
+      "file": "soybean-flowering.png"
+    },
+    {
+      "name": "soybean-disease",
+      "inspection": "Passed visual inspection: flowering whole soybean with moderate generic spotting/chlorosis, majority green canopy, one leaf close-up, no diagnostic labels or boxes.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: flowering soybean with moderate generic foliar stress. One branching bushy flowering soybean plant with medium green trifoliate leaves and small pale lavender-purple flowers at stem nodes. Some lower and mid-canopy leaflets show scattered irregular brown leaf spots and gentle yellow chlorotic halos/patches, while much of the canopy remains healthy green. Do not imply a specific pathogen or diagnostic certainty. Add one small separate close-up detail of a single attached-looking soybean leaflet in the lower-right blank background, showing the same generic brown spotting and yellowing clearly, without a border, circle, box, text, line or arrow. The main whole plant remains dominant and fully visible. Not extreme rot, not dead or completely defoliated.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "Flowering soybean with generic leaf spotting/chlorosis; no pathogen specified.",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-1faebfbb-d682-45dd-9c81-3a16af0c7717.png",
+      "file": "soybean-disease.png"
+    },
+    {
+      "name": "soybean-followup",
+      "inspection": "Passed visual inspection: early young green soybean pods and remaining purple flowers; several leaves retain visible spotting and chlorosis; leaf detail contains residual marks; not shown as cured.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: follow-up soybean at the R3 beginning-pod stage, with persistent generic foliar stress after a treatment illustration. Show one branching bushy medium-sized soybean plant with medium green trifoliate leaves and a few small young green soybean pods starting at the nodes, plus a few remaining small pale lavender-purple flowers. Most foliage is green, but several lower and mid-canopy leaflets visibly retain small brown spots, pale chlorotic patches and light yellow margins. Spotting should be less extensive than the moderate disease illustration, while still clearly present. Do not portray a healthy or cured plant, miraculous recovery, or named pathogen. Add one small separate close-up detail of a single soybean leaflet in the lower-right blank background, showing several residual brown spots and subtle yellowed areas, without a border, circle, box, text, line or arrow. The whole main plant stays dominant and fully visible. This is an illustrative stage/state concept, not measurement evidence.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "R3 beginning pods with residual generic spotting/chlorosis; illustrative follow-up, not evidence of a cure.",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-5c9ea199-4706-4763-a49e-38fbd43431f7.png",
+      "file": "soybean-followup.png"
+    },
+    {
+      "name": "soybean-mature",
+      "inspection": "Passed visual inspection: standing mature plant with abundant tan pods, brown stems, limited naturally yellow/tan foliage; no text, close-up or overlays.",
+      "tool_arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a botanical simulation illustration for an agricultural software plant card.\nCreate one high-quality landscape image in approximately 3:2 aspect ratio (1536 by 1024 composition). Show a single soybean plant, Glycine max, on a small oval patch of natural brown soil, isolated against a clean warm-white/off-white studio background. The whole plant, stem base and soil patch are fully visible with generous margins, centered composition, straight-on slightly elevated three-quarter viewpoint. Polished scientific 3D illustration with realistic botanical structure and soft tactile detail, natural leaf colors and subtle leaf veins, soft diffuse studio light, restrained natural shadows. It must be clearly an illustrative synthetic botanical model, not a field photograph. Maintain an uncluttered, consistent visual language suitable for a small white UI card.\nNo text, letters, captions, numbers, diagnostic boxes, arrows, logos, watermarks, chart, grid or UI. No multiple plants, no landscape, no pot, no human, no equipment, no detached leaf detail unless explicitly requested below.\nStage: physiologically mature soybean nearing harvest. A single upright branched soybean plant with many naturally tan/light-brown fuzzy pods clustered along branches, visible pod shapes, dry brown stems, and a limited number of remaining yellow-ochre to dry tan trifoliate leaves. Naturally senescent mature appearance, clearly different from green vegetative plants, but standing intact on its soil patch. No disease close-up, no green immature bean edamame cluster, no harvest machinery.",
+        "transparent_background": false
+      },
+      "synthetic": true,
+      "depicts": "Soybean mature",
+      "output_hint": "Original built-in generation retained; this file is a byte-identical project copy.",
+      "source_file": "exec-eeaa3696-a3df-45f4-9a26-b3694febf3fd.png",
+      "file": "soybean-mature.png"
+    }
+  ]
+}

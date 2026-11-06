@@ -1,0 +1,136 @@
+{
+  "schema_version": "fairy-simulated-plant-images/1",
+  "generation_mode": "built-in image_gen",
+  "generated_date": "2026-11-05",
+  "crop": "maize",
+  "image_count": 6,
+  "synthetic": true,
+  "is_measured_evidence": false,
+  "source_files_preserved": true,
+  "selection_note": "The two stress-related outputs were assigned by visual severity after generation: the image requested as water-stress became followup, and the more heavily rolled and damaged image requested as followup became water-stress. Exact original prompts, intended roles and source files are preserved. The followup image retains substantial stress; differences are illustrative and not calibrated to soil VWC or proof of treatment recovery.",
+  "assets": [
+    {
+      "id": "maize-seedling",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: a young maize seedling with four small, fresh medium-green blade leaves, a short slender stem and no tassel or ear. The new upright central leaf and the two spreading lower leaves are clearly visible. A modest healthy early-growth form; maintain botanical maize leaf shape. The small seedling still occupies a useful centered portion of the card, rather than becoming a tiny speck.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: a young maize seedling with four small, fresh medium-green blade leaves, a short slender stem and no tassel or ear. The new upright central leaf and the two spreading lower leaves are clearly visible. A modest healthy early-growth form; maintain botanical maize leaf shape. The small seedling still occupies a useful centered portion of the card, rather than becoming a tiny speck.",
+        "transparent_background": false
+      },
+      "inspection": {
+        "status": "accepted",
+        "notes": "Young maize with small number of broad blade leaves, no tassel or ear; single centered plant on soil, white background; no text."
+      },
+      "prompt_intended_id": "maize-seedling",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1289321,
+      "sha256": "e04fb14db426c1561f66e12e057e1e15633939c3ec13f664a7dcee05ec459c03",
+      "source_file": "exec-76bf75bf-3576-4add-a149-b303ea2f393e.png",
+      "file": "maize-seedling.png"
+    },
+    {
+      "id": "maize-vegetative",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: a maize plant in vegetative growth around V6, clearly taller and leafier than a seedling, with a sturdy green stem, alternating long lanceolate leaves and visible leaf sheaths. About eight visibly distinct leaves arranged naturally. Fresh green broad leaves with gentle natural curvature. No tassel, no ear, no flowers; this is a leafy vegetative plant before reproduction.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: a maize plant in vegetative growth around V6, clearly taller and leafier than a seedling, with a sturdy green stem, alternating long lanceolate leaves and visible leaf sheaths. About eight visibly distinct leaves arranged naturally. Fresh green broad leaves with gentle natural curvature. No tassel, no ear, no flowers; this is a leafy vegetative plant before reproduction.",
+        "transparent_background": false
+      },
+      "inspection": {
+        "status": "accepted",
+        "notes": "Clearly larger leafy vegetative maize with alternating leaves and no tassel or ear; single centered plant on soil, white background; no text."
+      },
+      "prompt_intended_id": "maize-vegetative",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1417466,
+      "sha256": "99094f731d2baed343da347cb2c957c0b87382e04d55f732eabcdee078d597f3",
+      "source_file": "exec-3012510c-2b12-4250-a92d-e08d2570e0db.png",
+      "file": "maize-vegetative.png"
+    },
+    {
+      "id": "maize-reproductive",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around early ear development (R2 to R3), with a slender segmented green stalk, about eleven naturally alternating long green blade leaves, a distinct delicate pale-gold branched tassel at the very top, and one clearly visible substantial green-husked ear emerging from the middle-right of the stalk with a little brownish silk. Keep the ear attached at a botanical leaf axil. Leaves are predominantly open with natural arching, not perfectly rigid. The plant is complete, including all tips and tassel, and is not a crop field.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around early ear development (R2 to R3), with a slender segmented green stalk, about eleven naturally alternating long green blade leaves, a distinct delicate pale-gold branched tassel at the very top, and one clearly visible substantial green-husked ear emerging from the middle-right of the stalk with a little brownish silk. Keep the ear attached at a botanical leaf axil. Leaves are predominantly open with natural arching, not perfectly rigid. The plant is complete, including all tips and tassel, and is not a crop field.",
+        "transparent_background": false
+      },
+      "inspection": {
+        "status": "accepted",
+        "notes": "Complete reproductive maize with branched tassel and attached green-husked ear; predominantly green naturally curved leaves; white backdrop and no text."
+      },
+      "prompt_intended_id": "maize-reproductive",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1325996,
+      "sha256": "29c43dcb0a9bd6dae2bff7b5b0bd0f27f24ffc817a923e9ef68bfaebda2744b0",
+      "source_file": "exec-9fbc11ff-2471-44be-b389-273b06106749.png",
+      "file": "maize-reproductive.png"
+    },
+    {
+      "id": "maize-followup",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around R2 to R3 under visible water stress: a slender segmented green stalk, about eleven naturally alternating long leaves, a delicate pale-gold branched tassel at the top, and one clearly visible green-husked ear at the middle-right with a little brownish silk. Several upper and middle blade leaves have noticeably rolled edges and narrower folded profiles; multiple lower and middle leaves droop. Keep the plant alive and mostly muted green, with a few small tan dry leaf tips, not dead or severely brown. The small soil patch looks mildly dry, somewhat dusty with a few subtle cracks. This is a synthetic educational visualization of water stress, not a diagnosis from a photograph. Preserve a clear complete full-plant silhouette.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around R2 to R3 under visible water stress: a slender segmented green stalk, about eleven naturally alternating long leaves, a delicate pale-gold branched tassel at the top, and one clearly visible green-husked ear at the middle-right with a little brownish silk. Several upper and middle blade leaves have noticeably rolled edges and narrower folded profiles; multiple lower and middle leaves droop. Keep the plant alive and mostly muted green, with a few small tan dry leaf tips, not dead or severely brown. The small soil patch looks mildly dry, somewhat dusty with a few subtle cracks. This is a synthetic educational visualization of water stress, not a diagnosis from a photograph. Preserve a clear complete full-plant silhouette.",
+        "transparent_background": false
+      },
+      "inspection": {
+        "status": "accepted",
+        "notes": "Selected as follow-up because its leaves are visibly less tightly rolled and less damaged than the heavier stress candidate. It still has noticeable rolling, droop, dry tips and dry soil. This is a qualitative illustration, not measured recovery."
+      },
+      "prompt_intended_id": "maize-water-stress",
+      "width": 1536,
+      "height": 1024,
+      "role_reassigned": true,
+      "bytes": 1295615,
+      "sha256": "b23cd09eb0e959cd50ec55a4a97a5ec215b11f60a2baa2cbe53243f1da01ebc3",
+      "source_file": "exec-f04ba701-6d42-4a4c-9240-47ea7042192e.png",
+      "file": "maize-followup.png"
+    },
+    {
+      "id": "maize-water-stress",
+      "prompt_intended_id": "maize-followup",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around R3 milk stage at a follow-up with only modest improvement from water stress. A slender segmented green stalk, about eleven alternating long leaves, delicate pale-gold branched tassel, and one substantial green-husked ear at middle-right with short brown silk. IMPORTANT: it is still visibly water-stressed, not restored to a lush healthy plant. Several upper leaves must retain noticeably rolled edges and narrow folded profiles. The lower and middle leaves still droop, but a little less strongly than a distinctly stressed plant. Keep muted olive-green leaves, a few small dry tan tips and thin damaged leaf edges. Some leaves are slightly more open, with only a modest improvement in posture. Keep the small soil patch dry-looking, with a few faint cracks; do not show wet soil, watering or vibrant fresh-green regrowth. This follow-up image is a synthetic illustrative state, not proof of measured recovery. Show the entire plant without cropping.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one reproductive maize plant around R3 milk stage at a follow-up with only modest improvement from water stress. A slender segmented green stalk, about eleven alternating long leaves, delicate pale-gold branched tassel, and one substantial green-husked ear at middle-right with short brown silk. IMPORTANT: it is still visibly water-stressed, not restored to a lush healthy plant. Several upper leaves must retain noticeably rolled edges and narrow folded profiles. The lower and middle leaves still droop, but a little less strongly than a distinctly stressed plant. Keep muted olive-green leaves, a few small dry tan tips and thin damaged leaf edges. Some leaves are slightly more open, with only a modest improvement in posture. Keep the small soil patch dry-looking, with a few faint cracks; do not show wet soil, watering or vibrant fresh-green regrowth. This follow-up image is a synthetic illustrative state, not proof of measured recovery. Show the entire plant without cropping.",
+        "transparent_background": false
+      },
+      "width": 1536,
+      "height": 1024,
+      "role_reassigned": true,
+      "inspection": {
+        "status": "accepted",
+        "notes": "Originally generated for follow-up, but visual inspection found tighter rolling and more dry leaf-edge damage than the earlier stress candidate. Assigned to the water-stress role after comparison; living green reproductive maize retains a tassel and husked ear."
+      },
+      "bytes": 1335401,
+      "sha256": "9b82f8df061c005b2ea6d08daa0bab039abd61fb8c9a401d69845ad19e4d9922",
+      "source_file": "exec-a8c493fb-390e-437c-8cb9-b31f8d6ad7e1.png",
+      "file": "maize-water-stress.png"
+    },
+    {
+      "id": "maize-mature",
+      "prompt_intended_id": "maize-mature",
+      "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one mature maize plant at physiological maturity (R6), full standing plant before harvest. A slender sturdy stalk and long leaves predominantly straw-yellow, golden beige and light ochre, with dry natural arching and some remaining muted olive at the upper stem. A dry pale-gold branched tassel remains at the top. One large attached mature ear at the middle-right is wrapped in dry papery pale-yellow husks, with a small opening revealing a few rows of golden kernels and short brown silk. Keep the ear botanically attached and the whole plant recognizable. No fresh seedlings, no harvest machinery, no disembodied ear. Natural dry soil patch; polished scientific botanical render.",
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: scientific-educational.\nAsset type: a standalone raster botanical simulation illustration for a farm-management plant card.\nScene/backdrop: clean white to very light warm off-white seamless background. One isolated full maize (Zea mays) plant rooted in a small oval patch of brown soil, with a subtle contact shadow. No surrounding field, no pot, no extra plants.\nStyle/medium: polished scientific 3D botanical illustration, plausibly structured leaves and stem, crisp silhouettes, restrained natural materials, soft studio daylight from upper left. Clearly rendered educational illustration rather than a documentary photograph.\nComposition/framing: landscape approximately 3:2; the complete plant centered in the canvas with generous white margins, all leaf tips and roots' soil patch visible, soil patch centered near the lower fifth. Slight three-quarter eye-level view. Match the same visual language throughout a six-state maize illustration set.\nConstraints: no text, letters, numbers, legends, UI, diagnostic boxes, arrows, logos, watermark, border, split panels, inset, or plant comparison. Do not imply this is a real acquired photograph.\nSubject/state: one mature maize plant at physiological maturity (R6), full standing plant before harvest. A slender sturdy stalk and long leaves predominantly straw-yellow, golden beige and light ochre, with dry natural arching and some remaining muted olive at the upper stem. A dry pale-gold branched tassel remains at the top. One large attached mature ear at the middle-right is wrapped in dry papery pale-yellow husks, with a small opening revealing a few rows of golden kernels and short brown silk. Keep the ear botanically attached and the whole plant recognizable. No fresh seedlings, no harvest machinery, no disembodied ear. Natural dry soil patch; polished scientific botanical render.",
+        "transparent_background": false
+      },
+      "width": 1536,
+      "height": 1024,
+      "role_reassigned": false,
+      "inspection": {
+        "status": "accepted",
+        "notes": "Mature standing maize with straw-yellow leaves, dry tassel, attached ear with golden kernels and dry husks; white background and no text."
+      },
+      "bytes": 1390662,
+      "sha256": "e9cbc8d15f6c19325a5d8fbadc0a7be1362fab73ec01237ed9498f2cb6c5d5f6",
+      "source_file": "exec-a5cedb86-f9c2-4ac7-baaf-88375314e3d6.png",
+      "file": "maize-mature.png"
+    }
+  ]
+}
