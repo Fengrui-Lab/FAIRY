@@ -831,3 +831,18 @@ Full run: new version only (`hybrid_lean_plan_budget_medium`), 19 L3-mini, 3 run
 Result (2026-11-05): 57 runs, 56 finished; average grain loss 7.4% (LLM alone 6.4%, old hybrid 7.3%), so flat; $1.76 per 19 runs (LLM alone $1.19, old hybrid $2.37); 3.9 min per run; Jev decides 67%. One failure is new and caused by the plan note: Jev followed a stale "wait" plan 166 times for almost two years (not fixed). Details: `docs/jev/better_hybrid.md`.
 
 Spent: about $8 (tests $2.30, full run $5.30, interrupted run about $0.10).
+
+## Step 26 – A2A with the new hybrid inside each expert (2026-11-06, branch `jev-a2a-hybrid`, code `c065b9b`)
+
+Same setup as Step 24, but each expert runs the new hybrid (lean memory, plan note, budget note, reasoning "medium"). When Jev is unsure or stuck, a local gpt-6-luna decides inside the expert and writes its next steps for Jev; the job does not go back to the manager. Flag `--a2a-expert-hybrid true`, off by default; launcher setting `a2a_llm_manager_hybrid_experts`. One local LLM per expert; memory and plan last one job. 134 tests: 133 pass, 1 fails because `rg` is not installed here.
+
+- 3-scenario test: 3 of 3 finished, 0.14%, 2.07%, 2.78%, $0.36 (manager $0.21, local LLM $0.03, Jev $0.12).
+- 19 L3-mini, 1 run each, all at once: 19 of 19 finished, average grain loss 9.6%, median 7.1% (A2A Jev experts: 16.3%, 13.3%; LLM baseline: 6.4%, 7.5%; new hybrid: 7.4%, 4.6%). No run used all 300 actions.
+- Total $2.03: manager $1.26, local LLM $0.12, Jev $0.65. 167 actions and 6.5 min per run.
+- 1,745 jobs (2,670 with Jev experts): 1.8% no action, 62.9% one action, 35.2% two or more. None went back to the manager as unsure or stuck.
+- Local LLM: 451 calls, 331 farm actions, 120 ended the job; 22.9% of jobs had a take-over. Farm actions: Jev 80.6%, local LLM 10.4%, manager 9.0%.
+- Lower grain loss than A2A with Jev experts on 9 of 19 scenarios; three scenarios make up 98% of the average gap.
+- Replay matched the live stored grain on all 19. No API call failed.
+- Details and tables: `review.md`, section 19. Runs: `Synkrasis/jev_a2a_runs/hybrid_test`, `hybrid_full`.
+
+Spent: about $2.39.

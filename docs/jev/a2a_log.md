@@ -72,3 +72,5 @@ Each expert runs the new hybrid (`hybrid_lean_plan_budget_medium`). Setting `a2a
 | If a local LLM call fails, Jev's own choice stands | Same as the hybrid. |
 | Manager note unchanged | Asked to keep everything else. It still names `unsure` and `stuck`, which will not appear. |
 | Max output tokens 8192, as the setting already sets for the manager | The hybrid setting used the 2048 default. It is a ceiling. |
+
+Results of the A2A hybrid: `review.md` section 19, `PROGRESS.md` Step 26. 19 of 19 finished, 9.6% average grain loss, $2.03.

@@ -758,3 +758,116 @@ Drought recovery, run 2: nothing harvested, 100% loss, 300 actions, simulated da
 Without this run the new hybrid's average would be about 5.7%; that is an observation, not a result, since the run is part of what was tested. 17 of 57 runs had 6 or more Jev waits in a row, with no clear extra grain loss. **Not fixed:** the numbers above are for the code as run. Proposed fix: a plan expires, and a few waits in a row go back to the LLM.
 
 Spent: about $8. All experiments so far: about $32 (status report total of $24 plus this).
+
+## 19. A2A with the new hybrid inside each expert (branch `jev-a2a-hybrid`, 2026-11-06)
+
+### 19.1 What was done
+
+Same setup as section 17, with one change: each expert runs the new hybrid of section 18 instead of Jev alone.
+
+- gpt-6-luna is the manager. The 8 field apps sit behind `<App>__expert_agent(task)`, and the manager keeps the clock tools and the message to the user. The manager's prompt note, the 10-action job limit, the 0.4 threshold, the done check, the ridge-range rule and the "no done before the first action" rule are unchanged.
+- Inside an expert, Jev picks actions from the menus. When Jev is unsure (confidence below 0.4) or stuck (a repeat that changed nothing), a local gpt-6-luna takes that decision and writes its next steps in one line. Jev sees that line and follows it until the next hand-off. The job does not go back to the manager.
+- The local LLM uses the four options of the new hybrid together: lean memory, plan note, budget note, reasoning "medium".
+
+Changes needed to fit the hybrid inside an expert:
+
+- One local LLM per expert. Its memory and plan last one job, so no plan carries into a later job.
+- The local LLM sees the farm system prompt, a short note, the job, the farm snapshot and this job's actions, and has only this app's tools. It does not see the season task or the manager's conversation.
+- The expert has no clock, so Jev's plan instruction says to pick "done" if what is left of the plan is waiting or needs another app.
+- The budget counts the run's 300 actions, not the job's 10.
+- If the local LLM ends a job with text, the reply to the manager carries it as `expert_note`.
+- If a local LLM call fails, Jev's own choice stands (no call failed in these runs).
+- The manager's note still names the statuses `unsure` and `stuck`, which can no longer occur.
+
+Settings: `--a2a-expert-hybrid true`, off by default, added to the flags of section 17. In `scripts/jev_run_l3mini.py`: `a2a_llm_manager_hybrid_experts`. Code: `fairy/agents/jev/a2a_expert.py`, commit `c065b9b`. 300 actions, 60 min, seed 0, 1 run per scenario, the same 19 L3-mini scenarios and task text. The 19 ran in parallel, all at once. Scoring as in section 17. 134 tests: 133 pass; 1 fails because `rg` is not installed here. Decisions: `docs/jev/a2a_log.md`.
+
+### 19.2 Results (19 L3-mini, 1 run each)
+
+Each cell: season finished, grain loss, cost. New hybrid: seasons finished of 3, mean grain loss (cost per scenario is not in section 18). All columns except the last are repeated from sections 13-18.
+
+| Scenario | LLM baseline (13.1) | Hybrid (13) | Full history (14) | REFLEX-style (15) | Jev tool (16.2) | Jev tool + note (16.4) | New hybrid, mean of 3 (18) | A2A, Jev experts (17) | **A2A, hybrid experts** |
+|---|---|---|---|---|---|---|---|---|---|
+| organic_residue_weed_establishment | yes, 13.65%, $0.17 | yes, -0.27%, $0.18 | **no** (0/64), 100.00%, $0.17 | yes, -0.59%, $0.23 | yes, 19.05%, $0.11 | yes, 14.26%, $0.11 | 3 of 3, 15.3% | yes, 21.26%, $0.19 | yes, 27.05%, $0.23 |
+| organic_patch_weed_mechanical_capacity | yes, 8.36%, $0.10 | yes, 4.18%, $0.10 | **no** (0/64), 100.00%, $0.07 | yes, 8.40%, $0.47 | yes, 8.23%, $0.06 | yes, 8.32%, $0.05 | 3 of 3, 8.9% | yes, 13.32%, $0.12 | yes, 15.02%, $0.15 |
+| micronutrient_deficiency_flowering_patch | yes, 8.36%, $0.06 | yes, 8.61%, $0.09 | **no** (0/64), 100.00%, $0.17 | **no** (0/64), 100.00%, $0.36 | yes, 15.38%, $0.04 | yes, 14.06%, $0.04 | 3 of 3, 9.0% | yes, 18.13%, $0.07 | yes, 3.64%, $0.04 |
+| local_soil_constraint_nutrition_patch | yes, -9.70%, $0.04 | yes, -9.11%, $0.17 | **no** (0/64), 100.00%, $0.11 | **no** (0/64), 100.00%, $0.43 | yes, -11.76%, $0.07 | yes, -10.31%, $0.10 | 3 of 3, -8.1% | yes, -11.49%, $0.11 | yes, 6.86%, $0.10 |
+| heinong84_edge_low_fertility | yes, 5.06%, $0.07 | yes, 4.66%, $0.19 | **no** (0/64), 100.00%, $0.15 | **no** (0/64), 100.00%, $0.39 | yes, 17.12%, $0.09 | yes, 6.94%, $0.06 | 3 of 3, 8.2% | yes, 6.40%, $0.17 | yes, 13.06%, $0.20 |
+| cloudy_wet_low_radiation_biomass | yes, 13.80%, $0.02 | yes, 0.86%, $0.05 | **no** (0/64), 100.00%, $0.15 | yes, 0.20%, $0.08 | yes, 4.63%, $0.04 | yes, 4.63%, $0.02 | 3 of 3, 1.6% | yes, 19.11%, $0.05 | yes, 15.23%, $0.05 |
+| poordrainage_wetjune_disease_trafficability | yes, 11.30%, $0.03 | yes, 7.37%, $0.11 | **no** (0/64), 100.00%, $0.21 | **no** (0/64), 100.00%, $0.36 | yes, 7.98%, $0.03 | yes, 10.44%, $0.03 | 3 of 3, 8.1% | yes, 4.56%, $0.12 | yes, 24.44%, $0.13 |
+| staggered_wetjune_canopy_disease | yes, 3.46%, $0.08 | yes, 9.53%, $0.10 | **no** (0/64), 100.00%, $0.08 | **no** (0/64), 100.00%, $0.51 | yes, 9.61%, $0.04 | yes, 15.63%, $0.06 | 3 of 3, 14.0% | yes, 52.59%, $0.15 | yes, 9.37%, $0.08 |
+| soy_after_soy_wetjune_disease | yes, 13.19%, $0.06 | yes, 9.04%, $0.06 | **no** (0/64), 100.00%, $0.17 | yes, 2.27%, $0.32 | yes, 7.84%, $0.04 | yes, 17.78%, $0.05 | 3 of 3, 9.8% | yes, 16.12%, $0.17 | yes, 7.07%, $0.11 |
+| dryr5r6_hn58_std_waterlimit | yes, 1.78%, $0.05 | yes, 5.23%, $0.08 | **no** (0/64), 100.00%, $0.09 | yes, 4.12%, $0.18 | yes, 8.20%, $0.05 | yes, 15.55%, $0.05 | 3 of 3, 4.7% | yes, 6.40%, $0.18 | yes, 6.40%, $0.08 |
+| drought_recovery_false_disease_signal | yes, 3.10%, $0.05 | yes, 3.43%, $0.30 | **no** (0/64), 100.00%, $0.13 | **no** (0/64), 100.00%, $0.54 | yes, 14.38%, $0.03 | yes, 9.71%, $0.03 | 2 of 3, 35.1% | yes, 0.28%, $0.18 | yes, 4.67%, $0.10 |
+| heinong58_resistant_biotic_water_budget_priority | yes, 8.41%, $0.05 | yes, 11.53%, $0.10 | **no** (0/64), 100.00%, $0.19 | **no** (0/64), 100.00%, $0.53 | yes, 13.86%, $0.04 | yes, 7.88%, $0.04 | 3 of 3, 5.2% | yes, 29.62%, $0.10 | yes, 13.15%, $0.12 |
+| hn60_high_fastdrain_dryr5r6 | yes, 0.54%, $0.05 | yes, 5.65%, $0.04 | **no** (0/64), 100.00%, $0.15 | yes, 5.66%, $0.09 | yes, 5.70%, $0.08 | yes, 7.65%, $0.05 | 3 of 3, 1.7% | yes, 4.50%, $0.15 | yes, 7.46%, $0.05 |
+| dryr5r6_insect_threshold_waterstress | yes, 7.49%, $0.05 | yes, 1.22%, $0.09 | **no** (0/64), 100.00%, $0.13 | **no** (0/64), 100.00%, $0.37 | yes, 7.10%, $0.04 | yes, 5.97%, $0.03 | 3 of 3, 3.3% | yes, 1.31%, $0.09 | yes, 6.19%, $0.06 |
+| dryer_capacity_batch_harvest_storage | yes, 0.10%, $0.05 | yes, 6.09%, $0.15 | **no** (0/64), 100.00%, $0.05 | **no** (36/64), 51.75%, $0.47 | yes, 31.95%, $0.09 | yes, 15.24%, $0.08 | 3 of 3, 5.5% | yes, 25.30%, $0.23 | yes, 0.22%, $0.15 |
+| grain_moisture_sensor_failure_harvest | yes, 5.76%, $0.05 | yes, 0.00%, $0.05 | **no** (0/64), 100.00%, $0.06 | yes, 0.14%, $0.08 | yes, 0.14%, $0.05 | yes, 11.26%, $0.17 | 3 of 3, 13.5% | yes, 11.98%, $0.12 | yes, 0.14%, $0.16 |
+| laterain_shattering_drying_tradeoff | yes, 14.39%, $0.05 | yes, 0.13%, $0.04 | **no** (0/64), 100.00%, $0.09 | **no** (59/64), 16.32%, $0.38 | yes, 16.23%, $0.07 | yes, 9.53%, $0.04 | 3 of 3, 1.2% | yes, 8.86%, $0.11 | yes, 16.23%, $0.05 |
+| cool_august_lategrain_laterain | yes, 3.67%, $0.07 | yes, 8.35%, $0.04 | **no** (0/64), 100.00%, $0.05 | yes, 0.27%, $0.12 | yes, 1.92%, $0.04 | yes, 0.05%, $0.03 | 3 of 3, 6.5% | yes, 18.85%, $0.08 | yes, 0.05%, $0.09 |
+| compacted_headland_stand_recovery | yes, 8.70%, $0.08 | **no** (24/64), 61.53%, $0.45 | **no** (0/64), 100.00%, $0.14 | **no** (0/64), 100.00%, $0.43 | yes, 4.11%, $0.10 | yes, 3.02%, $0.16 | 3 of 3, -2.6% | **no** (2026-09-11, 24/64), 62.61%, $0.30 | yes, 5.25%, $0.09 |
+
+| | LLM baseline (13.1) | Hybrid (13) | Full history (14) | REFLEX-style (15) | Jev tool (16.2) | Jev tool + note (16.4) | New hybrid (18) | A2A, Jev experts (17) | **A2A, hybrid experts** |
+|---|---|---|---|---|---|---|---|---|---|
+| Runs | 19 | 19 | 19 | 19 | 19 | 19 | 57 | 19 | 19 |
+| Seasons finished | 19 of 19 | 18 of 19 | 0 of 19 | 8 of 19 | 19 of 19 | 19 of 19 | 56 of 57 | 18 of 19 | 19 of 19 |
+| Used up all 300 actions | 0 | 1 | 0 | 11 | 0 | 0 | 1 | 1 | 0 |
+| Average grain loss | 6.4% | 7.3% | 100.0% | 52.0% | 9.6% | 8.8% | 7.4% | 16.3% | 9.6% |
+| Median grain loss | 7.5% | 5.2% | 100.0% | 51.8% | 8.2% | 9.5% | 4.6% | 13.3% | 7.1% |
+| Total cost, per 19 runs | $1.19 | $2.37 | $2.36 | $6.36 | $1.11 | $1.20 | $1.76 | $2.69 | $2.03 |
+| Average actions per run | 137 | 143 | 77 | 248 | 130 | 134 | 159 | 183 | 167 |
+| Average time per run | 7.1 min | 3.4 min | 2.0 min | 4.7 min | 5.4 min | 5.8 min | 3.9 min | 8.4 min | 6.5 min |
+
+Sections 13-16 ran one at a time; the new hybrid ran 6 to 12 at once; both A2A settings ran 19 at once, so time is not a clean comparison. Full history: every run ended early with an error (section 14). A2A actions are farm actions; delegation calls are not counted.
+
+| Grain loss, A2A hybrid experts minus other (95% interval, resampling scenarios) | Difference, points | A2A hybrid lower on |
+|---|---|---|
+| LLM baseline (13.1), 1 run each | +3.2 (+0.3 to +6.2) | 6 of 19 |
+| Hybrid (13), 1 run each | +2.3 (-5.7 to +8.9) | 6 of 19 |
+| New hybrid (18), mean of 3 | +2.1 (-3.1 to +7.0) | 7 of 19 |
+| A2A, Jev experts (17), 1 run each | -6.7 (-15.9 to +1.2) | 9 of 19 |
+
+| | A2A, Jev experts (17) | **A2A, hybrid experts** |
+|---|---|---|
+| Manager LLM cost | $1.94 | $1.26 |
+| Local LLM cost | – | $0.12 |
+| Jev cost | $0.75 | $0.65 |
+| Jobs | 2,670 | 1,745 |
+| Jobs per run | 141 | 92 |
+| Jobs with no action | 311 (11.6%) | 32 (1.8%) |
+| Jobs with 1 action | 1,889 (70.7%) | 1,098 (62.9%) |
+| Jobs with 2 or more actions | 470 (17.6%) | 615 (35.2%) |
+| Jobs back to the manager as unsure or stuck | 521 (19.5%) | 0 |
+| Farm actions | 3,480 | 3,178 |
+| Farm actions by Jev | 3,128 (89.9%) | 2,562 (80.6%) |
+| Farm actions by the local LLM | – | 331 (10.4%) |
+| Farm actions by the manager (clock, message to the user) | 352 (10.1%) | 285 (9.0%) |
+
+Local LLM: 451 calls in the 19 runs (24 per run): 433 because Jev was unsure, 18 because Jev was stuck. 331 were farm actions, each with a plan line (331 plans written); 120 ended the job. 22.9% of jobs (399 of 1,745) had at least one take-over. 53% of its input was cached.
+
+Replay matched the live stored grain on all 19 runs, with no replay errors. No API call failed.
+
+### 19.3 Test run before the 19 (3 scenarios, 1 run each)
+
+| Scenario | Test run | Manager LLM | Local LLM | Jev | Local LLM calls | Farm actions | Time | Same scenario, 19-run set |
+|---|---|---|---|---|---|---|---|---|
+| grain_moisture_sensor_failure_harvest | yes, 0.14%, $0.07 | $0.038 | $0.005 | $0.028 | 22 | 121 | 5.3 min | yes, 0.14%, $0.16 |
+| dryer_capacity_batch_harvest_storage | yes, 2.07%, $0.16 | $0.102 | $0.012 | $0.050 | 36 | 233 | 10.2 min | yes, 0.22%, $0.15 |
+| compacted_headland_stand_recovery | yes, 2.78%, $0.13 | $0.075 | $0.014 | $0.041 | 51 | 218 | 8.6 min | yes, 5.25%, $0.09 |
+
+Test total: 3 of 3 finished, average grain loss 1.7%, $0.36.
+
+### 19.4 Findings
+
+1. 19 of 19 seasons finished, and no run used all 300 actions. The most was 294 farm actions.
+2. Average grain loss 9.6%, against 16.3% for A2A with Jev experts, 6.4% for the LLM baseline and 7.4% for the new hybrid. The difference from the LLM baseline (+3.2 points) is the only interval that excludes zero. The difference from A2A with Jev experts (-6.7 points) has an interval that includes zero.
+3. Against A2A with Jev experts, hybrid experts were lower on 9 of 19 scenarios. Three scenarios make up 98% of the average gap: compacted_headland_stand_recovery (62.6% to 5.2%), staggered_wetjune_canopy_disease (52.6% to 9.4%), dryer_capacity_batch_harvest_storage (25.3% to 0.2%). On the other 16, hybrid experts are 0.2 points lower on average. The first of these gave -1.64% with Jev experts in the section 17 test, so that one gap is partly single-run noise.
+4. Highest grain loss: organic_residue_weed_establishment 27.1%, poordrainage_wetjune_disease_trafficability 24.4%, laterain_shattering_drying_tradeoff 16.2%, cloudy_wet_low_radiation_biomass 15.2%.
+5. Total cost $2.03, down from $2.69 with Jev experts. Manager $1.94 to $1.26, Jev $0.75 to $0.65, local LLM $0.12 added. Still above the LLM baseline ($1.19) and the new hybrid ($1.76).
+6. Jobs per run fell from 141 to 92, and jobs with 2 or more actions rose from 17.6% to 35.2%.
+7. The local LLM took 10.4% of farm actions and Jev 80.6%.
+8. The 3-scenario test averaged 1.7%; the 19 averaged 9.6%.
+
+One run per scenario. Single runs vary a lot, and the settings compared were not run together.
+
+Spent: about $2.39 (test $0.36, 19 runs $2.03).
