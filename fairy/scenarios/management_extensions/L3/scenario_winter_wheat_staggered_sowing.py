@@ -1,4 +1,5 @@
 """Winter wheat with two lease handover dates and independent block sowing."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from dataclasses import replace
 from datetime import date
@@ -134,7 +135,7 @@ class ScenarioWinterWheatStaggeredSowing(ScenarioWinterWheatFullSeason):
                 )
 
             def wait(day, seconds):
-                step(self.system.advance_time(seconds=seconds), f"Advance to {day}.")
+                step(self.system.advance_time(**oracle_time_arguments(seconds)), f"Advance to {day}.")
 
             def observe():
                 step(

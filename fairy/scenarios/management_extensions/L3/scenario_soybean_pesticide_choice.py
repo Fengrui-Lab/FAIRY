@@ -693,9 +693,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=345600.0),
+                apps["SystemApp"].advance_time(days=4),
                 "step0035",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 345600.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 4}",
             )
             previous = capture_step(
                 previous,
@@ -877,9 +877,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0061",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1049,9 +1049,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0085",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1167,9 +1167,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=259200.0),
+                apps["SystemApp"].advance_time(days=3),
                 "step0100",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 259200.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 3}",
             )
             previous = capture_step(
                 previous,
@@ -1245,9 +1245,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=604800.0),
+                apps["SystemApp"].advance_time(days=7),
                 "step0113",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 604800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 7}",
             )
             previous = capture_step(
                 previous,
@@ -1275,9 +1275,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=432000.0),
+                apps["SystemApp"].advance_time(days=5),
                 "step0118",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 432000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 5}",
             )
             previous = capture_step(
                 previous,
@@ -1353,9 +1353,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=604800.0),
+                apps["SystemApp"].advance_time(days=7),
                 "step0131",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 604800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 7}",
             )
             previous = capture_step(
                 previous,
@@ -1383,9 +1383,9 @@ class ScenarioSoybeanPesticideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=1123200.0),
+                apps["SystemApp"].advance_time(days=13),
                 "step0136",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 1123200.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 13}",
             )
             previous = capture_step(
                 previous,

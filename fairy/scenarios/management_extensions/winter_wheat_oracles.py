@@ -1,4 +1,5 @@
 """Offline execution/search for block-managed wheat; scenes contain literal policies."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -97,7 +98,7 @@ def run_candidate(
             ).replace(hour=7)
             delta = dt.timestamp() - scene.farm_environment.time_manager.time()
             if delta > 0:
-                call("system", "advance_time", seconds=delta)
+                call("system", "advance_time", **oracle_time_arguments(delta))
 
         def observe():
             call("sensor", "read_root_zone_sensors")

@@ -1,0 +1,3862 @@
+{
+  "schema": "fairy.sugarbeet.oracle.v1",
+  "scenario_id": "scenario_l4_wheat_sugarbeet_rotation",
+  "input_fingerprint": "30cc95a4848d204075bc1938e1c25324c7f1c3c84e71d012c8022680dc4fa4f0",
+  "fresh_replay_verified": true,
+  "search_scope": "best_in_declared_finite_grid",
+  "global_optimum_proven": false,
+  "objective": "rotation_yield",
+  "selected": {
+    "candidate_id": "117d58fdad6b6e18",
+    "policy": {
+      "beet_n_kg_ha": 180.0,
+      "wheat_n_kg_ha": 210.0,
+      "sm_trigger": 0.24,
+      "irrigation_mm": 30.0,
+      "beet_sowing_offset_days": 0,
+      "beet_harvest_offset_days": 21,
+      "review_interval_days": 3
+    },
+    "input_fingerprint": "30cc95a4848d204075bc1938e1c25324c7f1c3c84e71d012c8022680dc4fa4f0",
+    "feasible": true,
+    "execution_status": "completed",
+    "currency": "USD",
+    "price_book_id": "beet_synthetic_economic_assumptions_v1",
+    "cny_per_usd": null,
+    "prices": {
+      "crop_per_kg": {
+        "winter_wheat": 0.3,
+        "sugarbeet": 0.0
+      },
+      "seed_per_unit": {
+        "WINTER_WHEAT_104": 2.5e-05,
+        "SUGARBEET_601": 0.002
+      },
+      "fertilizer_per_kg": 0.4,
+      "fuel_per_liter": 1.1,
+      "water_per_m3": 0.08,
+      "drying_per_kg": 0.015,
+      "currency": "USD",
+      "price_book_id": "beet_synthetic_economic_assumptions_v1",
+      "cny_per_usd": null
+    },
+    "stored_kg_by_crop": {
+      "winter_wheat": 8046.72,
+      "sugarbeet": 0.0
+    },
+    "consumed_seeds": {
+      "WINTER_WHEAT_104": 4000000,
+      "SUGARBEET_601": 100000
+    },
+    "fertilizer_product_kg": 847.8260869565216,
+    "fuel_liters": 196.59972862957994,
+    "water_m3": 5100.0,
+    "shared_water_capacity_m3": 5400.0,
+    "shared_water_remaining_m3": 300.0,
+    "drying_throughput_kg": 8046.72,
+    "cost_components": {
+      "seed": 300.0,
+      "fertilizer": 339.1304347826087,
+      "fuel": 216.25970149253794,
+      "water": 408.0,
+      "drying": 120.7008,
+      "root_transport": 188.63892753787343
+    },
+    "production_cost": 1572.72986381302,
+    "stored_grain_value": 2414.016,
+    "net_operating_margin": 3010.6338028725254,
+    "delivered_root_value": 2169.3476666855454,
+    "delivered_root_net_kg": 43386.953333710895,
+    "native_root_dry_kg": 9134.09543867598,
+    "operating_budget_usd": 3500.0,
+    "economic_status": "assumed_prices_not_a_real_farm_profit_estimate",
+    "root_yield": 43386.953333710895,
+    "wheat_yield": 8046.72,
+    "dry_yield_by_crop": {
+      "winter_wheat": 7411.395797936216,
+      "sugarbeet": 9134.09543867598
+    },
+    "root_yield_kg_ha": 43386.953333710895,
+    "fresh_root_kg_per_mu": 2892.4635555807263,
+    "pure_n_applied_kg": 390.0,
+    "field_validated": false,
+    "global_optimum_proven": false,
+    "objective": "rotation_yield",
+    "operational_success": true,
+    "quality_model": "fixed_external_assumption",
+    "oracle_scope": "unavailable_for_current_configuration",
+    "validation_message": "All cycles conserved and products settled",
+    "undelivered_root_kg": 0.0,
+    "delivery_weighing_tolerance_kg_per_batch": 0.01,
+    "root_yield_by_block_kg": {
+      "0": 2711.684583356931,
+      "1": 2711.684583356931,
+      "2": 2711.684583356931,
+      "3": 2711.684583356931,
+      "4": 2711.684583356931,
+      "5": 2711.684583356931,
+      "6": 2711.684583356931,
+      "7": 2711.684583356931,
+      "8": 2711.684583356931,
+      "9": 2711.684583356931,
+      "10": 2711.684583356931,
+      "11": 2711.684583356931,
+      "12": 2711.684583356931,
+      "13": 2711.684583356931,
+      "14": 2711.684583356931,
+      "15": 2711.684583356931
+    },
+    "management_performance": {
+      "status": "reference_unavailable",
+      "objective_score": null
+    }
+  },
+  "replay_metrics": {
+    "currency": "USD",
+    "price_book_id": "beet_synthetic_economic_assumptions_v1",
+    "cny_per_usd": null,
+    "prices": {
+      "crop_per_kg": {
+        "winter_wheat": 0.3,
+        "sugarbeet": 0.0
+      },
+      "seed_per_unit": {
+        "WINTER_WHEAT_104": 2.5e-05,
+        "SUGARBEET_601": 0.002
+      },
+      "fertilizer_per_kg": 0.4,
+      "fuel_per_liter": 1.1,
+      "water_per_m3": 0.08,
+      "drying_per_kg": 0.015,
+      "currency": "USD",
+      "price_book_id": "beet_synthetic_economic_assumptions_v1",
+      "cny_per_usd": null
+    },
+    "stored_kg_by_crop": {
+      "winter_wheat": 8046.72,
+      "sugarbeet": 0.0
+    },
+    "consumed_seeds": {
+      "WINTER_WHEAT_104": 4000000,
+      "SUGARBEET_601": 100000
+    },
+    "fertilizer_product_kg": 847.8260869565216,
+    "fuel_liters": 196.59972862957994,
+    "water_m3": 5100.0,
+    "shared_water_capacity_m3": 5400.0,
+    "shared_water_remaining_m3": 300.0,
+    "drying_throughput_kg": 8046.72,
+    "cost_components": {
+      "seed": 300.0,
+      "fertilizer": 339.1304347826087,
+      "fuel": 216.25970149253794,
+      "water": 408.0,
+      "drying": 120.7008,
+      "root_transport": 188.63892753787343
+    },
+    "production_cost": 1572.72986381302,
+    "stored_grain_value": 2414.016,
+    "net_operating_margin": 3010.6338028725254,
+    "delivered_root_value": 2169.3476666855454,
+    "delivered_root_net_kg": 43386.953333710895,
+    "native_root_dry_kg": 9134.09543867598,
+    "operating_budget_usd": 3500.0,
+    "economic_status": "assumed_prices_not_a_real_farm_profit_estimate",
+    "root_yield": 43386.953333710895,
+    "undelivered_root_kg": 0.0,
+    "delivery_weighing_tolerance_kg_per_batch": 0.01,
+    "wheat_yield": 8046.72,
+    "dry_yield_by_crop": {
+      "winter_wheat": 7411.395797936216,
+      "sugarbeet": 9134.09543867598
+    },
+    "root_yield_kg_ha": 43386.953333710895,
+    "fresh_root_kg_per_mu": 2892.4635555807263,
+    "pure_n_applied_kg": 390.0,
+    "field_validated": false,
+    "global_optimum_proven": false,
+    "objective": "rotation_yield",
+    "input_fingerprint": "30cc95a4848d204075bc1938e1c25324c7f1c3c84e71d012c8022680dc4fa4f0",
+    "operational_success": true,
+    "quality_model": "fixed_external_assumption",
+    "root_yield_by_block_kg": {
+      "0": 2711.684583356931,
+      "1": 2711.684583356931,
+      "2": 2711.684583356931,
+      "3": 2711.684583356931,
+      "4": 2711.684583356931,
+      "5": 2711.684583356931,
+      "6": 2711.684583356931,
+      "7": 2711.684583356931,
+      "8": 2711.684583356931,
+      "9": 2711.684583356931,
+      "10": 2711.684583356931,
+      "11": 2711.684583356931,
+      "12": 2711.684583356931,
+      "13": 2711.684583356931,
+      "14": 2711.684583356931,
+      "15": 2711.684583356931
+    },
+    "oracle_scope": "unavailable_for_current_configuration",
+    "management_performance": {
+      "status": "reference_unavailable",
+      "objective_score": null
+    }
+  },
+  "workflow": [
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 4
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "grader"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "prepare_field",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "detach_implement",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "seeder"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 0,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 1,
+        "end_block": 1,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 2,
+        "end_block": 2,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 3,
+        "end_block": 3,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 4,
+        "end_block": 4,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 5,
+        "end_block": 5,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 6,
+        "end_block": 6,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 7,
+        "end_block": 7,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 8,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 9,
+        "end_block": 9,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 10,
+        "end_block": 10,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 11,
+        "end_block": 11,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 12,
+        "end_block": 12,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 13,
+        "end_block": 13,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 14,
+        "end_block": 14,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "WINTER_WHEAT_104",
+        "count": 250000
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 15,
+        "end_block": 15,
+        "depth_cm": 3.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 249304.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 182.6086956521739
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 11.41304347826087
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 11.41304347826087
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 136.95652173913044
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 8.559782608695652
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 8.559782608695652
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 136.95652173913044
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 8.559782608695652
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 8.559782608695652
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "detach_implement",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "harvester"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "refuel",
+      "arguments": {
+        "liters": 80.3595658073272
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:0"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:0",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:0"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 1,
+        "end_block": 1
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:1"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:1",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:1"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 2,
+        "end_block": 2
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:2"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:2",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:2"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 3,
+        "end_block": 3
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:3"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:3",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:3"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 4,
+        "end_block": 4
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:4"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:4",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:4"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 5,
+        "end_block": 5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:5"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:5",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:5"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 6,
+        "end_block": 6
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:6"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:6",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:6"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 7,
+        "end_block": 7
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:7"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:7",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:7"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 8
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:8"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:8",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:8"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 9,
+        "end_block": 9
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:9"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:9",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:9"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 10,
+        "end_block": 10
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:10"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:10",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:10"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 11,
+        "end_block": 11
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:11"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:11",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:11"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 12,
+        "end_block": 12
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:12"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:12",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:12"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 13,
+        "end_block": 13
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:13"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:13",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:13"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 14,
+        "end_block": 14
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:14"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:14",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:14"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_blocks",
+      "arguments": {
+        "start_block": 15,
+        "end_block": 15
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "unload_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:15"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "dry_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:15",
+        "target_moisture_pct": 12.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Warehouse",
+      "tool": "store_grain",
+      "arguments": {
+        "batch_id": "wheat_2020:grain:15"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "return_supplies",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 23402880.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "ArableField",
+      "tool": "begin_next_cycle",
+      "arguments": {},
+      "reason": "Same field: preserve native water/N and shared stores",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 12
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "detach_implement",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "grader"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "prepare_field",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "detach_implement",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "seeder"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 0,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 1,
+        "end_block": 1,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 2,
+        "end_block": 2,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 3,
+        "end_block": 3,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 4,
+        "end_block": 4,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 5,
+        "end_block": 5,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 6,
+        "end_block": 6,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 7,
+        "end_block": 7,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 8,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 9,
+        "end_block": 9,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 10,
+        "end_block": 10,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 11,
+        "end_block": 11,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 12,
+        "end_block": 12,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 13,
+        "end_block": 13,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 14,
+        "end_block": 14,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_seeds",
+      "arguments": {
+        "seed_type": "SUGARBEET_601",
+        "count": 6250
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "sow",
+      "arguments": {
+        "start_block": 15,
+        "end_block": 15,
+        "depth_cm": 2.5
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 227404.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 156.52173913043478
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 9.782608695652174
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 9.782608695652174
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 117.39130434782608
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 7.33695652173913
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "refuel",
+      "arguments": {
+        "liters": 84.09090909090929
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 7.33695652173913
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "load_fertilizer",
+      "arguments": {
+        "kg": 117.39130434782608
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 7,
+        "kg_per_block": 7.33695652173913
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "fertilize",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 15,
+        "kg_per_block": 7.33695652173913
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 257580.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Irrigation",
+      "tool": "irrigate",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 15,
+        "depth_mm": 30.0
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 237300.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 3
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "detach_implement",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "attach_implement",
+      "arguments": {
+        "implement": "beet_harvester"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 0,
+        "end_block": 0,
+        "operation_id": "lift:beet_2021:0"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:0",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:1"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 1,
+        "end_block": 1,
+        "operation_id": "lift:beet_2021:1"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:1",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:2"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 2,
+        "end_block": 2,
+        "operation_id": "lift:beet_2021:2"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:2",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:3"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 3,
+        "end_block": 3,
+        "operation_id": "lift:beet_2021:3"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:3",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:4"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 4,
+        "end_block": 4,
+        "operation_id": "lift:beet_2021:4"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:4",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:5"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 49125.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 5,
+        "end_block": 5,
+        "operation_id": "lift:beet_2021:5"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:5",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:6"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 6,
+        "end_block": 6,
+        "operation_id": "lift:beet_2021:6"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:6",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:7"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 7,
+        "end_block": 7,
+        "operation_id": "lift:beet_2021:7"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:7",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:8"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 8,
+        "end_block": 8,
+        "operation_id": "lift:beet_2021:8"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:8",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:9"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 9,
+        "end_block": 9,
+        "operation_id": "lift:beet_2021:9"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:9",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:10"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 49125.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "days": 1
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 10,
+        "end_block": 10,
+        "operation_id": "lift:beet_2021:10"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:10",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:11"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 11,
+        "end_block": 11,
+        "operation_id": "lift:beet_2021:11"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:11",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:12"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 12,
+        "end_block": 12,
+        "operation_id": "lift:beet_2021:12"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:12",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:13"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 13,
+        "end_block": 13,
+        "operation_id": "lift:beet_2021:13"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:13",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:14"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 14,
+        "end_block": 14,
+        "operation_id": "lift:beet_2021:14"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:14",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:15"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "SystemApp",
+      "tool": "advance_time",
+      "arguments": {
+        "seconds": 49125.0
+      },
+      "reason": "Advance native crop AND fallow soil through elapsed time",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "harvest_roots",
+      "arguments": {
+        "start_block": 15,
+        "end_block": 15,
+        "operation_id": "lift:beet_2021:15"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "RootDelivery",
+      "tool": "deliver_roots",
+      "arguments": {
+        "batch_id": "beet_2021:block:15",
+        "net_kg": 2711.684583356931,
+        "operation_id": "trip:beet_2021:16"
+      },
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    },
+    {
+      "app": "Tractor",
+      "tool": "return_supplies",
+      "arguments": {},
+      "reason": "Apply declared policy using public observations",
+      "expected_error": false
+    }
+  ],
+  "previous_input_fingerprint": "8493629116a72e794c97cd0b621c9b1e888a0fc70cb1cff9e6dab5995aaa1905",
+  "revalidation": {
+    "previous_input_fingerprint": "d03b139e0ce528cea74c6a28aef2e97ceff54327f08d9a9da062c36fd267dc46",
+    "reason": "Separate normal task and expert briefings; remove benchmark-grading text and add conditional agronomic decision guidance. Crop, soil, resource, economic and quality rules and frozen management calls unchanged.",
+    "fresh_public_tool_replay": true,
+    "finite_grid_rerun": false
+  },
+  "time_argument_revision": {
+    "whole_day_calls": "days=N",
+    "previous_input_fingerprint": "4ede20bceb028c784ce7ef5680d570670dd5efda8a7f871873fea7b7a80aaabc",
+    "duration_preserved": true,
+    "parameters_and_policy_unchanged": true
+  }
+}

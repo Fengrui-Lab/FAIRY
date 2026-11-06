@@ -1,4 +1,5 @@
 """Allocate a shared irrigation quota among winter wheat blocks with different soils."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from copy import copy, deepcopy
 import json
@@ -296,7 +297,7 @@ class ScenarioWinterWheatSoilWaterPriority(ScenarioWinterWheatFullSeason):
 
             def wait(seconds):
                 step(
-                    self.system.advance_time(seconds=seconds),
+                    self.system.advance_time(**oracle_time_arguments(seconds)),
                     "Advance to the next field check.",
                 )
 

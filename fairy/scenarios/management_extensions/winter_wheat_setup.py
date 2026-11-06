@@ -73,7 +73,7 @@ def initialize_wheat_farm(
     scene.farm_environment = FarmEnvironment(
         [
             FarmContext(
-                "wheat", scene.farm, scene.weather, scene.sensor, scene.irrigation
+                scene.farm.farm_id, scene.farm, scene.weather, scene.sensor, scene.irrigation
             )
         ],
         scene.weather,

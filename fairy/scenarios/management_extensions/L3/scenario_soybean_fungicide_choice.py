@@ -695,9 +695,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=345600.0),
+                apps["SystemApp"].advance_time(days=4),
                 "step0035",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 345600.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 4}",
             )
             previous = capture_step(
                 previous,
@@ -867,9 +867,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=172800.0),
+                apps["SystemApp"].advance_time(days=2),
                 "step0059",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 172800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 2}",
             )
             previous = capture_step(
                 previous,
@@ -1159,9 +1159,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=345600.0),
+                apps["SystemApp"].advance_time(days=4),
                 "step0103",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 345600.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 4}",
             )
             previous = capture_step(
                 previous,
@@ -1343,9 +1343,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=604800.0),
+                apps["SystemApp"].advance_time(days=7),
                 "step0129",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 604800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 7}",
             )
             previous = capture_step(
                 previous,
@@ -1373,9 +1373,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=432000.0),
+                apps["SystemApp"].advance_time(days=5),
                 "step0134",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 432000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 5}",
             )
             previous = capture_step(
                 previous,
@@ -1451,9 +1451,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=604800.0),
+                apps["SystemApp"].advance_time(days=7),
                 "step0147",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 604800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 7}",
             )
             previous = capture_step(
                 previous,
@@ -1481,9 +1481,9 @@ class ScenarioSoybeanFungicideChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=1123200.0),
+                apps["SystemApp"].advance_time(days=13),
                 "step0152",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 1123200.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 13}",
             )
             previous = capture_step(
                 previous,

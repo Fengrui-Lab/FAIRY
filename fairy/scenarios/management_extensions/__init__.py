@@ -32,4 +32,12 @@ SCENARIO_MODULES = (
     "L3.scenario_winter_wheat_staggered_sowing",
     "L3.scenario_winter_wheat_drying_window",
     "L3.scenario_winter_wheat_delivery_contract",
+    "L3.scenario_sugarbeet_full_season",
+    "L3.scenario_sugarbeet_water_limit",
+    "L3.scenario_sugarbeet_nitrogen_limit",
+    "L3.scenario_sugarbeet_high_water_price",
+    "L4.scenario_wheat_sugarbeet_rotation",
+    "L3.scenario_sugarbeet_seedling_rescue",
+    "L3.scenario_sugarbeet_soil_water_priority",
+    "L4.scenario_wheat_sugarbeet_shared_resources",
 )

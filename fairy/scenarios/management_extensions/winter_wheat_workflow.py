@@ -1,4 +1,5 @@
 """Execute wheat Oracle trials and capture their frozen public tool calls."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from datetime import date, datetime, time, timedelta
 
@@ -58,7 +59,7 @@ class WheatOracleTrial:
         if self.scene.farm.simulation_date(now) > day:
             raise ValueError(f"Cannot schedule {day}: the farm clock already passed it")
         if target.timestamp() > now:
-            self.call("system", "advance_time", seconds=target.timestamp() - now)
+            self.call("system", "advance_time", **oracle_time_arguments(target.timestamp() - now))
 
     def observe(self):
         self.call("weather", "get_current_weather")

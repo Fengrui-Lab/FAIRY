@@ -1626,7 +1626,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 950400.0
+        "days": 11
       },
       "advance time"
     ],
@@ -1678,7 +1678,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 864000.0
+        "days": 10
       },
       "advance time"
     ],
@@ -1740,7 +1740,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 432000.0
+        "days": 5
       },
       "advance time"
     ],
@@ -1792,7 +1792,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 1728000.0
+        "days": 20
       },
       "advance time"
     ],
@@ -1800,7 +1800,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1808,7 +1808,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1816,7 +1816,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1824,7 +1824,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1832,7 +1832,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1840,7 +1840,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1848,7 +1848,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1856,7 +1856,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1864,7 +1864,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],

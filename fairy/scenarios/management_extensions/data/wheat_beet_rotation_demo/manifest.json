@@ -1,0 +1,124 @@
+{
+  "schema": "fairy.sugarbeet.rotation.inputs.v1",
+  "start": "2019-10-01",
+  "deadline": "2021-11-05",
+  "timezone": "Asia/Shanghai",
+  "cycles": [
+    {
+      "cycle_id": "wheat_2020",
+      "crop": "winter_wheat",
+      "cultivar": "Winter_wheat_104",
+      "prepare_open": "2019-10-01",
+      "sowing_open": "2019-10-05",
+      "sowing_close": "2019-10-25",
+      "harvest_open": "2020-06-01",
+      "harvest_close": "2020-07-31",
+      "nitrogen_close": "2020-05-01",
+      "maximum_n_kg_ha": 240.0,
+      "sowing_depth_cm": 3.0,
+      "seed_count_ha": 4000000,
+      "irrigation_withholding_days": 0,
+      "minimum_dry_yield_kg_ha": 2000.0
+    },
+    {
+      "cycle_id": "beet_2021",
+      "crop": "sugarbeet",
+      "cultivar": "Sugarbeet_601",
+      "prepare_open": "2021-03-20",
+      "sowing_open": "2021-04-01",
+      "sowing_close": "2021-04-20",
+      "harvest_open": "2021-09-25",
+      "harvest_close": "2021-10-31",
+      "nitrogen_close": "2021-07-15",
+      "maximum_n_kg_ha": 180.0,
+      "sowing_depth_cm": 2.5,
+      "seed_count_ha": 100000,
+      "irrigation_withholding_days": 20,
+      "minimum_dry_yield_kg_ha": 1000.0
+    }
+  ],
+  "crops": {
+    "wheat_2020": {
+      "path": "wheat.yaml",
+      "sha256": "b75108b7f075cee6e417a329caabe5850366edc0f9d15edf8bc64c2dcb13ff85",
+      "parameter_overrides": {},
+      "url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/wheat.yaml",
+      "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5"
+    },
+    "beet_2021": {
+      "path": "sugarbeet.yaml",
+      "sha256": "99fb4216bbc7ce62f66523d49f30c0d1367d24a5f259b95cf8a879b3d9e66eb1",
+      "parameter_overrides": {},
+      "url": "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/sugarbeet.yaml",
+      "upstream_commit": "1ca91d7dbb5aaf6b41462162de03a8254812d3a5"
+    }
+  },
+  "site": {
+    "latitude": 38.05,
+    "longitude": 114.5,
+    "elevation_m": 80.0,
+    "identity": "Shijiazhuang-area NASA POWER grid"
+  },
+  "site_agronomy_status": "unverified_transfer_experiment_not_a_local_production_recommendation",
+  "parameter_status": "uncalibrated_reference",
+  "residue_policy": "no_unmodelled_residue_n_credit",
+  "weather": {
+    "path": "weather.csv",
+    "sha256": "c91daa522d3c8fdb82bdfb486c5cb90e573857091c5d6fe3898c3ac671791d9e"
+  },
+  "source_weather": [
+    {
+      "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CT2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN%2CWS2M%2CRH2M&community=AG&longitude=114.5&latitude=38.05&start=20191001&end=20200716&format=JSON&time-standard=LST",
+      "sha256": "a0d627673222158d09dd5c51109b563fff1a1d39065f6c5c7f11ca35b4e8e9ac"
+    },
+    {
+      "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CT2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN%2CWS2M%2CRH2M&community=AG&longitude=114.5&latitude=38.05&start=20200716&end=20200831&format=JSON&time-standard=LST",
+      "sha256": "d191c6a5cbf09d9d19c4581046682d52b8bcda3e161880f4899a966f7f259a3c"
+    },
+    {
+      "url": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M_MIN%2CT2M_MAX%2CT2M%2CPRECTOTCORR%2CALLSKY_SFC_SW_DWN%2CWS2M%2CRH2M&community=AG&latitude=38.05&longitude=114.5&start=20200901&end=20211106&format=JSON&time-standard=LST",
+      "sha256": "521ee2e46587f8cb178b0d8cd3e224852a789113a655326323816f8348d1c09e",
+      "product": "NASA POWER daily grid",
+      "time_standard": "LST"
+    }
+  ],
+  "native_soil_parameters": {
+    "SMW": 0.12,
+    "SMFCF": 0.3,
+    "SM0": 0.45,
+    "CRAIRC": 0.06,
+    "SOPE": 10.0,
+    "KSUB": 1.0,
+    "K0": 10.0,
+    "RDMSOL": 120.0
+  },
+  "native_site_parameters": {
+    "WAV": 20.0,
+    "NAVAILI": 40.0,
+    "CO2": 410.0,
+    "NSOILBASE": 40.0,
+    "NSOILBASE_FR": 0.01,
+    "SMLIM": 0.3,
+    "NOTINF": 0.0,
+    "SSI": 0.0,
+    "SSMAX": 0.0,
+    "IFUNRN": 0
+  },
+  "management": {
+    "irrigation_efficiency": 0.85,
+    "nitrogen_recovery_fraction": 0.7
+  },
+  "assumptions": [
+    "Soil, N stock, rates, density and dates are engineering assumptions, not measured data",
+    "Minimum yield floors are task acceptance thresholds, not calibrated targets",
+    "European official cultivars have not been calibrated for this site",
+    "POWER daily LST is not a local civil-time station measurement",
+    "Historical forecast is an explicit perfect-information reference",
+    "No frost survival, bolting, pest, salinity, P/K or residue organic N process is claimed"
+  ],
+  "source_urls": [
+    "https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/sugarbeet.yaml",
+    "https://www.agri.cn/zx/nyyw/202408/t20240827_8665579.htm",
+    "https://nmj.tongliao.gov.cn/xwzx/jftx/202604/t20260403_1041668.html"
+  ]
+}

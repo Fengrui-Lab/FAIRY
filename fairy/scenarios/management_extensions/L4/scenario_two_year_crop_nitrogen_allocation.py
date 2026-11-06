@@ -665,9 +665,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=432000.0),
+                apps["SystemApp"].advance_time(days=5),
                 "step0023",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 432000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 5}",
             )
             previous = capture_step(
                 previous,
@@ -713,9 +713,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=2592000.0),
+                apps["SystemApp"].advance_time(days=30),
                 "step0031",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 2592000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 30}",
             )
             previous = capture_step(
                 previous,
@@ -737,9 +737,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=864000.0),
+                apps["SystemApp"].advance_time(days=10),
                 "step0035",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 864000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 10}",
             )
             previous = capture_step(
                 previous,
@@ -821,9 +821,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0049",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -839,9 +839,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0052",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -857,9 +857,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0055",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -875,9 +875,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0058",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1129,9 +1129,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=432000.0),
+                apps["SystemApp"].advance_time(days=5),
                 "step0099",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 432000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 5}",
             )
             previous = capture_step(
                 previous,
@@ -1153,9 +1153,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=864000.0),
+                apps["SystemApp"].advance_time(days=10),
                 "step0103",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 864000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 10}",
             )
             previous = capture_step(
                 previous,
@@ -1171,9 +1171,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=2592000.0),
+                apps["SystemApp"].advance_time(days=30),
                 "step0106",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 2592000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 30}",
             )
             previous = capture_step(
                 previous,
@@ -1285,9 +1285,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0125",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1303,9 +1303,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0128",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1321,9 +1321,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0131",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1339,9 +1339,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0134",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1357,9 +1357,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0137",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1375,9 +1375,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0140",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1393,9 +1393,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0143",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1411,9 +1411,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0146",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1429,9 +1429,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0149",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1447,9 +1447,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0152",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1465,9 +1465,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0155",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1483,9 +1483,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0158",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1501,9 +1501,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0161",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1519,9 +1519,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0164",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1537,9 +1537,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0167",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1555,9 +1555,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0170",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1573,9 +1573,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0173",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1591,9 +1591,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0176",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1609,9 +1609,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0179",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1627,9 +1627,9 @@ class ScenarioTwoYearCropNitrogenAllocation(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0182",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,

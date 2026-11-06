@@ -190,7 +190,7 @@ class ScenarioWinterWheatIrrigationTurn(ScenarioWinterWheatWaterLimit):
             )
             step(self.sensor.read_canopy_sensors(), "Recheck the crop.")
             step(
-                self.system.advance_time(seconds=3283200),
+                self.system.advance_time(days=38),
                 "Wait for mature blocks and harvest weather.",
             )
             step(

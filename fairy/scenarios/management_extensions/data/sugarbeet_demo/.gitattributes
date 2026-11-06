@@ -1,0 +1,4 @@
+# Input bytes are pinned by manifest.json SHA-256 digests.
+* -text
+weather.csv whitespace=cr-at-eol
+*.yaml whitespace=-trailing-space

@@ -1261,7 +1261,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 172800.0
+        "days": 2
       },
       "advance time"
     ],
@@ -1284,7 +1284,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1307,7 +1307,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1330,7 +1330,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1416,7 +1416,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1439,7 +1439,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1462,7 +1462,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1485,7 +1485,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1508,7 +1508,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1531,7 +1531,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1554,7 +1554,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1577,7 +1577,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 259200.0
+        "days": 3
       },
       "advance time"
     ],
@@ -1694,7 +1694,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1702,7 +1702,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1710,7 +1710,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1718,7 +1718,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1726,7 +1726,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1734,7 +1734,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],
@@ -1742,7 +1742,7 @@
       "system",
       "advance_time",
       {
-        "seconds": 86400.0
+        "days": 1
       },
       "advance time"
     ],

@@ -1,4 +1,5 @@
 """Agronomic public-tool policies; no scene registry, scoring or file publishing."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
@@ -31,7 +32,7 @@ def manage_joint_fields(scene, engine, call, *, fields, irrigation_shift_days=0)
         if delta < 0:
             raise RuntimeError(f"Passed candidate management date {day}")
         if delta:
-            call(scene.system, "advance_time", seconds=delta)
+            call(scene.system, "advance_time", **oracle_time_arguments(delta))
 
     def observe(farm):
         call(scene.weather, "get_current_weather")
@@ -209,7 +210,7 @@ def manage_annual_maize(scene, engine, call, *, seasons):
     def until(day):
         target = datetime.combine(day, time(7), farm.simulation_timezone).timestamp()
         if target > engine.time_manager.time():
-            call(system, "advance_time", seconds=target - engine.time_manager.time())
+            call(system, "advance_time", **oracle_time_arguments(target - engine.time_manager.time()))
 
     for index, (season, allocation) in enumerate(zip(scene.seasons, seasons)):
         year, sow = season.year, season.sowing_date
@@ -327,7 +328,7 @@ def manage_rotating_crops(
     def until(day):
         target = datetime.combine(day, time(7), farm.simulation_timezone).timestamp()
         if target > engine.time_manager.time():
-            call(system, "advance_time", seconds=target - engine.time_manager.time())
+            call(system, "advance_time", **oracle_time_arguments(target - engine.time_manager.time()))
 
     for index, (season, allocation) in enumerate(zip(scene.seasons, allocations)):
         crop = allocation["crop_id"]
@@ -551,7 +552,7 @@ def manage_soybean_pest_choice(scene, engine, call, *, treatments, water_mm=180.
             call(
                 scene.system,
                 "advance_time",
-                seconds=target - engine.time_manager.time(),
+                **oracle_time_arguments(target - engine.time_manager.time()),
             )
 
     def observe():

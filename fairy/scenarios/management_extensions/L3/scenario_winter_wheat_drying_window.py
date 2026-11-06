@@ -1,4 +1,5 @@
 """Winter wheat harvest scheduling with a daily dryer limit and delivery cutoff."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from datetime import datetime
 from functools import partial
@@ -136,7 +137,7 @@ class ScenarioWinterWheatDryingWindow(ScenarioWinterWheatFullSeason):
                 )
 
             def wait(day, seconds):
-                step(self.system.advance_time(seconds=seconds), f"Advance to {day}.")
+                step(self.system.advance_time(**oracle_time_arguments(seconds)), f"Advance to {day}.")
 
             def observe():
                 step(

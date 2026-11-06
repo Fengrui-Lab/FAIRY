@@ -340,13 +340,13 @@ class ScenarioWinterWheatBlockScouting(ScenarioWinterWheatFullSeason):
 
             # 2020-06-21
             step(
-                self.system.advance_time(seconds=86400.0),
+                self.system.advance_time(days=1),
                 "Advance the farm calendar to 2020-06-21.",
             )
 
             # 2020-06-22
             step(
-                self.system.advance_time(seconds=86400.0),
+                self.system.advance_time(days=1),
                 "Advance the farm calendar to 2020-06-22.",
             )
             step(

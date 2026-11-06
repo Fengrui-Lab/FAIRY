@@ -566,9 +566,9 @@ class ScenarioSoybeanHighWaterPrice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=2160000.0),
+                apps["SystemApp"].advance_time(days=25),
                 "step0026",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 2160000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 25}",
             )
             previous = capture_step(
                 previous,

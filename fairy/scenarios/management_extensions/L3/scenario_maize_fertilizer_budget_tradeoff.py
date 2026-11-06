@@ -578,9 +578,9 @@ class ScenarioMaizeFertilizerBudgetTradeoff(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=3628800.0),
+                apps["SystemApp"].advance_time(days=42),
                 "step0028",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 3628800.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 42}",
             )
             previous = capture_step(
                 previous,

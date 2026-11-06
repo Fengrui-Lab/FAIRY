@@ -83,7 +83,8 @@ class OperatingAccounts(App):
             - tractor._fuel_tank_l
         )
         water = water_used_m3(self.farms)
-        yields = {farm.crop_id: 0.0 for farm in self.farms}
+        yields = {crop: 0.0 for farm in self.farms
+                  for crop in getattr(farm, "accounting_crop_ids", (farm.crop_id,))}
         for batch in warehouse.grain_batches.values():
             if batch.status == "stored":
                 yields[batch.crop_id] += batch.quantity_kg

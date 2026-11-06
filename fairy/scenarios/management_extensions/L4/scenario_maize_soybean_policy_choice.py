@@ -685,9 +685,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0004",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -703,9 +703,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0007",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -721,9 +721,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0010",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -739,9 +739,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0013",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -841,9 +841,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=3542400.0),
+                apps["SystemApp"].advance_time(days=41),
                 "step0030",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 3542400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 41}",
             )
             previous = capture_step(
                 previous,
@@ -1016,9 +1016,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=432000.0),
+                apps["SystemApp"].advance_time(days=5),
                 "step0055",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 432000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 5}",
             )
             previous = capture_step(
                 previous,
@@ -1040,9 +1040,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=864000.0),
+                apps["SystemApp"].advance_time(days=10),
                 "step0059",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 864000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 10}",
             )
             previous = capture_step(
                 previous,
@@ -1058,9 +1058,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=2592000.0),
+                apps["SystemApp"].advance_time(days=30),
                 "step0062",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 2592000.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 30}",
             )
             previous = capture_step(
                 previous,
@@ -1148,9 +1148,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=1641600.0),
+                apps["SystemApp"].advance_time(days=19),
                 "step0077",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 1641600.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 19}",
             )
             previous = capture_step(
                 previous,
@@ -1166,9 +1166,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0080",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1184,9 +1184,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0083",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1202,9 +1202,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0086",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1220,9 +1220,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0089",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1238,9 +1238,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0092",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1256,9 +1256,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0095",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1274,9 +1274,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0098",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,
@@ -1292,9 +1292,9 @@ class ScenarioMaizeSoybeanPolicyChoice(Scenario):
             )
             previous = capture_step(
                 previous,
-                apps["SystemApp"].advance_time(seconds=86400.0),
+                apps["SystemApp"].advance_time(days=1),
                 "step0101",
-                "执行公开工具 SystemApp__advance_time；参数 {'seconds': 86400.0}",
+                "执行公开工具 SystemApp__advance_time；参数 {'days': 1}",
             )
             previous = capture_step(
                 previous,

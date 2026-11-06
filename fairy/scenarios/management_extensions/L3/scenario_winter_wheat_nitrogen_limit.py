@@ -427,7 +427,7 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=5270400.0),
+                self.system.advance_time(days=61),
                 "wheat_051",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
@@ -451,7 +451,7 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=3715200.0),
+                self.system.advance_time(days=43),
                 "wheat_055",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
@@ -521,7 +521,7 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=2764800.0),
+                self.system.advance_time(days=32),
                 "wheat_066",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
@@ -685,7 +685,7 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=432000.0),
+                self.system.advance_time(days=5),
                 "wheat_092",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
@@ -739,7 +739,7 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=1641600.0),
+                self.system.advance_time(days=19),
                 "wheat_101",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
@@ -763,13 +763,13 @@ class ScenarioWinterWheatNitrogenLimit(Scenario):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=86400.0),
+                self.system.advance_time(days=1),
                 "wheat_105",
                 "Settle each intervening native day on the existing shared farm clock.",
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=86400.0),
+                self.system.advance_time(days=1),
                 "wheat_106",
                 "Settle each intervening native day on the existing shared farm clock.",
             )

@@ -1506,11 +1506,14 @@ class FarmWorldApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def commit_daily_physics(self) -> dict[str, Any]:
-        """Wait one day and update the field conditions.
+        """
+        Force a full daily physics tick at the current simulation time.
 
-        This advances time by 24 hours; it is not a refresh at the current time.
-        Use SystemApp.advance_time for a different duration. If daily field
-        updates are inactive, this call reports no action.
+        Use this when you've taken several actions and want to advance the
+        world by exactly one day so their delayed effects (canopy growth,
+        biotic pressure decay, soil dry-down) become visible. Most agents
+        should prefer ``SystemApp.advance_time(days=N)`` to advance multiple
+        days; this is the single-day version with explicit "commit" semantics.
         """
         if not self.physics_active:
             return {"status": "noop", "reason": "physics_inactive"}

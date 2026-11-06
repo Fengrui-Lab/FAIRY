@@ -1,0 +1,790 @@
+{
+  "schema": "fairy.management-scenario-groups.v2",
+  "scope": "34 recommended and 5 reserve scenarios; all 39 remain registered",
+  "classification_kind": "recommended_analysis_groups_not_runtime_levels",
+  "primary_groups_are_disjoint": true,
+  "registered_total": 39,
+  "recommended_total": 34,
+  "reserve_total": 5,
+  "default_selection": "recommended_scenario_ids",
+  "selection_rule": "Exclude existing pending_redesign and pending_decision markers from the default recommended list.",
+  "level_counts": {
+    "L3": 26,
+    "L4": 8
+  },
+  "registered_level_counts": {
+    "L3": 31,
+    "L4": 8
+  },
+  "objective_counts": {
+    "net_operating_return": 22,
+    "delivered_root_yield": 5,
+    "yield_constrained_cost": 4,
+    "stored_grain_yield": 1,
+    "lexicographic_rotation_yield": 2
+  },
+  "recommended_scenario_ids": [
+    "scenario_l3_winter_wheat_full_season",
+    "scenario_l3_winter_wheat_water_limit",
+    "scenario_l3_winter_wheat_nitrogen_limit",
+    "scenario_l3_winter_wheat_block_scouting",
+    "scenario_l3_winter_wheat_weak_growth_diagnosis",
+    "scenario_l3_winter_wheat_stripe_rust",
+    "scenario_l3_winter_wheat_late_maturing",
+    "scenario_l3_winter_wheat_two_varieties",
+    "scenario_l3_winter_wheat_local_drainage",
+    "scenario_l3_winter_wheat_soil_water_priority",
+    "scenario_l3_sugarbeet_full_season",
+    "scenario_l3_sugarbeet_water_limit",
+    "scenario_l3_sugarbeet_nitrogen_limit",
+    "scenario_l3_sugarbeet_high_water_price",
+    "scenario_l3_sugarbeet_seedling_rescue",
+    "scenario_l3_sugarbeet_soil_water_priority",
+    "scenario_multiobjective_seed_discount",
+    "scenario_multiobjective_seed_total_cost",
+    "scenario_multiseason_scn_switch_to_maize",
+    "scenario_multiseason_scn_continue_maize",
+    "scenario_l3_soybean_high_water_price",
+    "scenario_l3_soybean_pesticide_choice",
+    "scenario_l3_maize_fertilizer_budget_tradeoff",
+    "scenario_l3_soybean_fungicide_choice",
+    "scenario_l3_soybean_variety_high_water_price",
+    "scenario_l3_joint_maize_soybean_operating_margin",
+    "scenario_l4_two_year_maize_soil_carryover",
+    "scenario_l4_wheat_sugarbeet_rotation",
+    "scenario_l4_wheat_sugarbeet_shared_resources",
+    "scenario_l4_maize_fertilizer_procurement",
+    "scenario_l4_soybean_predecessor_maize_nutrition",
+    "scenario_l4_maize_soybean_policy_choice",
+    "scenario_l4_two_year_crop_nitrogen_allocation",
+    "scenario_l4_two_year_soybean_cyst_rotation"
+  ],
+  "reserve_scenario_ids": [
+    "scenario_l3_winter_wheat_high_water_price",
+    "scenario_l3_winter_wheat_irrigation_turn",
+    "scenario_l3_winter_wheat_staggered_sowing",
+    "scenario_l3_winter_wheat_drying_window",
+    "scenario_l3_winter_wheat_delivery_contract"
+  ],
+  "groups": [
+    {
+      "key": "l3_winter_wheat",
+      "label": "L3 小麦管理",
+      "requested_label_alias": "L3小麦",
+      "assignment_rule": "推荐清单保留 10 场冬小麦管理；4 场待重做和高水价待定场景另列备选。",
+      "scenarios": [
+        {
+          "id": "scenario_l3_winter_wheat_full_season",
+          "title": "普通全季",
+          "source": "L3/scenario_winter_wheat_full_season.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_water_limit",
+          "title": "限水",
+          "source": "L3/scenario_winter_wheat_water_limit.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_nitrogen_limit",
+          "title": "限氮",
+          "source": "L3/scenario_winter_wheat_nitrogen_limit.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_block_scouting",
+          "title": "分块巡查",
+          "source": "L3/scenario_winter_wheat_block_scouting.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_weak_growth_diagnosis",
+          "title": "弱苗诊断",
+          "source": "L3/scenario_winter_wheat_weak_growth_diagnosis.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_stripe_rust",
+          "title": "条锈病管理",
+          "source": "L3/scenario_winter_wheat_stripe_rust.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_late_maturing",
+          "title": "晚熟品种",
+          "source": "L3/scenario_winter_wheat_late_maturing.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_two_varieties",
+          "title": "两个小麦品种分块管理",
+          "source": "L3/scenario_winter_wheat_two_varieties.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "两个品种仍属于同一种作物。"
+        },
+        {
+          "id": "scenario_l3_winter_wheat_local_drainage",
+          "title": "局部排水",
+          "source": "L3/scenario_winter_wheat_local_drainage.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_winter_wheat_soil_water_priority",
+          "title": "分区配水",
+          "source": "L3/scenario_winter_wheat_soil_water_priority.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "winter_wheat"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        }
+      ],
+      "count": 10,
+      "registered_count": 15,
+      "reserve_count": 5
+    },
+    {
+      "key": "l3_sugarbeet",
+      "label": "L3 甜菜管理",
+      "requested_label_alias": "L3甜菜",
+      "assignment_rule": "单季甜菜按作物族归类；高水价场景的主目标为净运营收益，其余五场为验收净鲜根产量。",
+      "scenarios": [
+        {
+          "id": "scenario_l3_sugarbeet_full_season",
+          "title": "普通全季",
+          "source": "L3/scenario_sugarbeet_full_season.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "delivered_root_yield",
+          "objective_metric": "root_yield",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_sugarbeet_water_limit",
+          "title": "限水",
+          "source": "L3/scenario_sugarbeet_water_limit.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "delivered_root_yield",
+          "objective_metric": "root_yield",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_sugarbeet_nitrogen_limit",
+          "title": "限氮",
+          "source": "L3/scenario_sugarbeet_nitrogen_limit.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "delivered_root_yield",
+          "objective_metric": "root_yield",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_sugarbeet_high_water_price",
+          "title": "高水价经营",
+          "source": "L3/scenario_sugarbeet_high_water_price.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_sugarbeet_seedling_rescue",
+          "title": "苗期缺水救援",
+          "source": "L3/scenario_sugarbeet_seedling_rescue.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "delivered_root_yield",
+          "objective_metric": "root_yield",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_sugarbeet_soil_water_priority",
+          "title": "分区配水",
+          "source": "L3/scenario_sugarbeet_soil_water_priority.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "sugarbeet"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "delivered_root_yield",
+          "objective_metric": "root_yield",
+          "review_status": "not_flagged",
+          "note": ""
+        }
+      ],
+      "count": 6,
+      "registered_count": 6,
+      "reserve_count": 0
+    },
+    {
+      "key": "l3_operating_decisions",
+      "label": "L3 单季经营决策（玉米／大豆）",
+      "requested_label_alias": "L3多目标（运营／利润）",
+      "assignment_rule": "承接除小麦、甜菜作物族以外的单季经营权衡；区分净收益最大化与产量约束下的成本最小化。",
+      "scenarios": [
+        {
+          "id": "scenario_multiobjective_seed_discount",
+          "title": "大豆种子折扣采购",
+          "source": "scenario_multiobjective_seed_discount.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "soybean"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "yield_constrained_cost",
+          "objective_metric": "yield_constraint_and_minimum_operating_cost",
+          "review_status": "not_flagged",
+          "note": "达到参考产量门槛后控制运营成本，包含采购最优性校验。"
+        },
+        {
+          "id": "scenario_multiobjective_seed_total_cost",
+          "title": "玉米种子到货总价",
+          "source": "scenario_multiobjective_seed_total_cost.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "maize"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "yield_constrained_cost",
+          "objective_metric": "yield_constraint_and_minimum_operating_cost",
+          "review_status": "not_flagged",
+          "note": "达到参考产量门槛后控制运营成本，包含到货总价校验。"
+        },
+        {
+          "id": "scenario_multiseason_scn_switch_to_maize",
+          "title": "SCN 历史下的本季作物选择（一）",
+          "source": "scenario_multiseason_scn_switch_to_maize.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "single_season_crop_choice_with_history",
+          "objective_family": "yield_constrained_cost",
+          "objective_metric": "yield_constraint_and_minimum_operating_cost",
+          "review_status": "not_flagged",
+          "note": "前季为给定历史；实际只推进本季，不属于连续两季 L4。"
+        },
+        {
+          "id": "scenario_multiseason_scn_continue_maize",
+          "title": "SCN 历史下的本季作物选择（二）",
+          "source": "scenario_multiseason_scn_continue_maize.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "single_season_crop_choice_with_history",
+          "objective_family": "yield_constrained_cost",
+          "objective_metric": "yield_constraint_and_minimum_operating_cost",
+          "review_status": "not_flagged",
+          "note": "前季为给定历史；实际只推进本季，不属于连续两季 L4。"
+        },
+        {
+          "id": "scenario_l3_soybean_high_water_price",
+          "title": "大豆高水价",
+          "source": "L3/scenario_soybean_high_water_price.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "soybean"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_soybean_pesticide_choice",
+          "title": "大豆杀虫剂选择",
+          "source": "L3/scenario_soybean_pesticide_choice.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "soybean"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_maize_fertilizer_budget_tradeoff",
+          "title": "玉米肥料预算权衡",
+          "source": "L3/scenario_maize_fertilizer_budget_tradeoff.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "maize"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_soybean_fungicide_choice",
+          "title": "大豆杀菌剂选择",
+          "source": "L3/scenario_soybean_fungicide_choice.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "soybean"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": ""
+        },
+        {
+          "id": "scenario_l3_soybean_variety_high_water_price",
+          "title": "大豆品种选择与高水价",
+          "source": "L3/scenario_soybean_variety_high_water_price.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "soybean"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "多个大豆品种不算多个作物。"
+        },
+        {
+          "id": "scenario_l3_joint_maize_soybean_operating_margin",
+          "title": "玉米与大豆双地块联合经营",
+          "source": "L3/scenario_joint_maize_soybean_operating_margin.py",
+          "level": "L3",
+          "simulated_crop_seasons": 1,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "parallel_multi_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "两种作物在同一季的不同地块同时经营；当前注册级别为 L3。"
+        }
+      ],
+      "count": 10,
+      "registered_count": 10,
+      "reserve_count": 0
+    },
+    {
+      "key": "l4_multi_season_multi_crop",
+      "label": "L4 多季／多作物管理",
+      "requested_label_alias": "L4多季节／多物种",
+      "assignment_rule": "以产量为主的跨季管理：两年玉米单作 1 场，小麦—甜菜轮作 2 场；多季与多作物合并列为一类。",
+      "scenarios": [
+        {
+          "id": "scenario_l4_two_year_maize_soil_carryover",
+          "title": "两年玉米与土壤延续",
+          "source": "L4/scenario_two_year_maize_soil_carryover.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "maize"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "stored_grain_yield",
+          "objective_metric": "total_stored_grain_kg",
+          "review_status": "not_flagged",
+          "note": "成本和收益有记录，但不是该场景的主优化目标。"
+        },
+        {
+          "id": "scenario_l4_wheat_sugarbeet_rotation",
+          "title": "同地小麦—甜菜轮作",
+          "source": "L4/scenario_wheat_sugarbeet_rotation.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "winter_wheat",
+            "sugarbeet"
+          ],
+          "crop_structure": "fixed_multi_crop_rotation",
+          "objective_family": "lexicographic_rotation_yield",
+          "objective_metric": "rotation_yield",
+          "review_status": "not_flagged",
+          "note": "多个目标按顺序比较；不是直接把不同作物公斤数相加。"
+        },
+        {
+          "id": "scenario_l4_wheat_sugarbeet_shared_resources",
+          "title": "小麦—甜菜跨季共享水氮",
+          "source": "L4/scenario_wheat_sugarbeet_shared_resources.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "winter_wheat",
+            "sugarbeet"
+          ],
+          "crop_structure": "fixed_multi_crop_rotation",
+          "objective_family": "lexicographic_rotation_yield",
+          "objective_metric": "rotation_yield",
+          "review_status": "not_flagged",
+          "note": "共享有限水氮，小麦须达到公开产量下限。"
+        }
+      ],
+      "count": 3,
+      "registered_count": 3,
+      "reserve_count": 0
+    },
+    {
+      "key": "l4_operating_decisions",
+      "label": "L4 跨季经营决策",
+      "requested_label_alias": "L4多目标（运营／利润）",
+      "assignment_rule": "实际连续经营两个作物季，以两季净运营收益为主目标；多作物选择作为交叉标签。",
+      "scenarios": [
+        {
+          "id": "scenario_l4_maize_fertilizer_procurement",
+          "title": "玉米跨年肥料采购",
+          "source": "L4/scenario_maize_fertilizer_procurement.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "maize"
+          ],
+          "crop_structure": "single_crop",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "单作物两季；重点为合同、采购现金与库存。"
+        },
+        {
+          "id": "scenario_l4_soybean_predecessor_maize_nutrition",
+          "title": "大豆前茬与后茬作物选择",
+          "source": "L4/scenario_soybean_predecessor_maize_nutrition.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "soybean",
+            "maize"
+          ],
+          "crop_structure": "sequential_crop_choice",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "首季固定大豆，次季可选择玉米或大豆。"
+        },
+        {
+          "id": "scenario_l4_maize_soybean_policy_choice",
+          "title": "玉米／大豆种植与补贴政策",
+          "source": "L4/scenario_maize_soybean_policy_choice.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "sequential_crop_choice",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "接管首季在田玉米，次季选作物；收益包含实际到账补贴。"
+        },
+        {
+          "id": "scenario_l4_two_year_crop_nitrogen_allocation",
+          "title": "两季作物与氮资源配置",
+          "source": "L4/scenario_two_year_crop_nitrogen_allocation.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "sequential_crop_choice",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "每季均可选作物，不强制两季种不同作物。"
+        },
+        {
+          "id": "scenario_l4_two_year_soybean_cyst_rotation",
+          "title": "两季 SCN 种群与轮作经营",
+          "source": "L4/scenario_two_year_soybean_cyst_rotation.py",
+          "level": "L4",
+          "simulated_crop_seasons": 2,
+          "crops": [
+            "maize",
+            "soybean"
+          ],
+          "crop_structure": "sequential_crop_choice",
+          "objective_family": "net_operating_return",
+          "objective_metric": "net_operating_margin",
+          "review_status": "not_flagged",
+          "note": "实际模拟两季种群与土壤状态，区别于仅给定前茬历史的旧场景。"
+        }
+      ],
+      "count": 5,
+      "registered_count": 5,
+      "reserve_count": 0
+    }
+  ],
+  "reserve_scenarios": [
+    {
+      "id": "scenario_l3_winter_wheat_high_water_price",
+      "title": "高水价",
+      "source": "L3/scenario_winter_wheat_high_water_price.py",
+      "level": "L3",
+      "simulated_crop_seasons": 1,
+      "crops": [
+        "winter_wheat"
+      ],
+      "crop_structure": "single_crop",
+      "objective_family": "net_operating_return",
+      "objective_metric": "net_operating_margin",
+      "review_status": "pending_decision",
+      "note": ""
+    },
+    {
+      "id": "scenario_l3_winter_wheat_irrigation_turn",
+      "title": "灌溉轮次",
+      "source": "L3/scenario_winter_wheat_irrigation_turn.py",
+      "level": "L3",
+      "simulated_crop_seasons": 1,
+      "crops": [
+        "winter_wheat"
+      ],
+      "crop_structure": "single_crop",
+      "objective_family": "net_operating_return",
+      "objective_metric": "net_operating_margin",
+      "review_status": "pending_redesign",
+      "note": ""
+    },
+    {
+      "id": "scenario_l3_winter_wheat_staggered_sowing",
+      "title": "错期播种",
+      "source": "L3/scenario_winter_wheat_staggered_sowing.py",
+      "level": "L3",
+      "simulated_crop_seasons": 1,
+      "crops": [
+        "winter_wheat"
+      ],
+      "crop_structure": "single_crop",
+      "objective_family": "net_operating_return",
+      "objective_metric": "net_operating_margin",
+      "review_status": "pending_redesign",
+      "note": ""
+    },
+    {
+      "id": "scenario_l3_winter_wheat_drying_window",
+      "title": "干燥窗口",
+      "source": "L3/scenario_winter_wheat_drying_window.py",
+      "level": "L3",
+      "simulated_crop_seasons": 1,
+      "crops": [
+        "winter_wheat"
+      ],
+      "crop_structure": "single_crop",
+      "objective_family": "net_operating_return",
+      "objective_metric": "net_operating_margin",
+      "review_status": "pending_redesign",
+      "note": ""
+    },
+    {
+      "id": "scenario_l3_winter_wheat_delivery_contract",
+      "title": "交付合同",
+      "source": "L3/scenario_winter_wheat_delivery_contract.py",
+      "level": "L3",
+      "simulated_crop_seasons": 1,
+      "crops": [
+        "winter_wheat"
+      ],
+      "crop_structure": "single_crop",
+      "objective_family": "yield_constrained_cost",
+      "objective_metric": "production_cost",
+      "review_status": "pending_redesign",
+      "note": ""
+    }
+  ],
+  "overlapping_views": {
+    "l4_all_multi_season": [
+      "scenario_l4_two_year_maize_soil_carryover",
+      "scenario_l4_wheat_sugarbeet_rotation",
+      "scenario_l4_wheat_sugarbeet_shared_resources",
+      "scenario_l4_maize_fertilizer_procurement",
+      "scenario_l4_soybean_predecessor_maize_nutrition",
+      "scenario_l4_maize_soybean_policy_choice",
+      "scenario_l4_two_year_crop_nitrogen_allocation",
+      "scenario_l4_two_year_soybean_cyst_rotation"
+    ],
+    "l4_fixed_multi_crop_rotation": [
+      "scenario_l4_wheat_sugarbeet_rotation",
+      "scenario_l4_wheat_sugarbeet_shared_resources"
+    ],
+    "l4_crop_choice": [
+      "scenario_l4_soybean_predecessor_maize_nutrition",
+      "scenario_l4_maize_soybean_policy_choice",
+      "scenario_l4_two_year_crop_nitrogen_allocation",
+      "scenario_l4_two_year_soybean_cyst_rotation"
+    ],
+    "l3_parallel_multi_crop": [
+      "scenario_l3_joint_maize_soybean_operating_margin"
+    ],
+    "l3_primary_net_operating_return": [
+      "scenario_l3_winter_wheat_full_season",
+      "scenario_l3_winter_wheat_water_limit",
+      "scenario_l3_winter_wheat_nitrogen_limit",
+      "scenario_l3_winter_wheat_block_scouting",
+      "scenario_l3_winter_wheat_weak_growth_diagnosis",
+      "scenario_l3_winter_wheat_stripe_rust",
+      "scenario_l3_winter_wheat_late_maturing",
+      "scenario_l3_winter_wheat_two_varieties",
+      "scenario_l3_winter_wheat_local_drainage",
+      "scenario_l3_winter_wheat_soil_water_priority",
+      "scenario_l3_sugarbeet_high_water_price",
+      "scenario_l3_soybean_high_water_price",
+      "scenario_l3_soybean_pesticide_choice",
+      "scenario_l3_maize_fertilizer_budget_tradeoff",
+      "scenario_l3_soybean_fungicide_choice",
+      "scenario_l3_soybean_variety_high_water_price",
+      "scenario_l3_joint_maize_soybean_operating_margin"
+    ],
+    "l4_primary_net_operating_return": [
+      "scenario_l4_maize_fertilizer_procurement",
+      "scenario_l4_soybean_predecessor_maize_nutrition",
+      "scenario_l4_maize_soybean_policy_choice",
+      "scenario_l4_two_year_crop_nitrogen_allocation",
+      "scenario_l4_two_year_soybean_cyst_rotation"
+    ],
+    "yield_constrained_cost": [
+      "scenario_multiobjective_seed_discount",
+      "scenario_multiobjective_seed_total_cost",
+      "scenario_multiseason_scn_switch_to_maize",
+      "scenario_multiseason_scn_continue_maize"
+    ]
+  },
+  "reserve_views": {
+    "pending_redesign": [
+      "scenario_l3_winter_wheat_irrigation_turn",
+      "scenario_l3_winter_wheat_staggered_sowing",
+      "scenario_l3_winter_wheat_drying_window",
+      "scenario_l3_winter_wheat_delivery_contract"
+    ],
+    "pending_decision": [
+      "scenario_l3_winter_wheat_high_water_price"
+    ]
+  }
+}

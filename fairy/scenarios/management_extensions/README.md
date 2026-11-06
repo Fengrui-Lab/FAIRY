@@ -1,6 +1,79 @@
 # 管理扩展场景：阅读入口
 
-当前共31个场景，包含16个玉米／大豆管理场景和15个冬小麦场景。冬小麦的分块农场、现有工具复用及运行方法见 [WINTER_WHEAT.md](WINTER_WHEAT.md)；新增内容仍按L3、App、引擎和评估分别放在本目录。
+论文方法与统计口径见 [management-extensions-methods.md](../../../docs/management-extensions-methods.md)：包含与既有汇总表一致的指标、成本与收入公式、逐项价格证据，以及小麦／甜菜官方参考参数和未完成本地校准的边界。当前 DeepSeek 推荐 34 场表见 [summary.md](../../../validation_runs/deepseek_thinking_recommended34_20261106/summary.md)。
+
+当前共39个场景，包含16个玉米／大豆管理场景、15个冬小麦场景和8个甜菜管理场景。冬小麦的分块农场及运行方法见 [WINTER_WHEAT.md](WINTER_WHEAT.md)。
+
+按层级、作物结构和经营目标整理的清单见 [SCENARIO_GROUPS.md](SCENARIO_GROUPS.md)，批次筛选可读取 [SCENARIO_GROUPS.json](SCENARIO_GROUPS.json)。默认推荐34场、分成五个互斥主类，另列5个小麦备选（4场待重做、1场待定）；L4多季与多作物管理合并一类。默认运行读取 `recommended_scenario_ids`，注册表保留全部39场供历史回放。
+
+## 甜菜与小麦轮作
+
+| 场景 ID | 任务与优化目标 |
+| --- | --- |
+| `scenario_l3_sugarbeet_full_season` | 完成春播、管理、起收和交售，最大化验收净鲜根重量 |
+| `scenario_l3_sugarbeet_water_limit` | 在共享灌溉额度内最大化验收净鲜根重量 |
+| `scenario_l3_sugarbeet_nitrogen_limit` | 在尿素库存限制内最大化验收净鲜根重量 |
+| `scenario_l3_sugarbeet_high_water_price` | 按较高灌溉单价最大化净经营收益 |
+| `scenario_l4_wheat_sugarbeet_rotation` | 同地冬小麦、休耕、次年春播甜菜。两季达到产量下限后，按验收鲜根、小麦入库量、净经营收益依次排序 |
+| `scenario_l3_sugarbeet_seedling_rescue` | 接管已播种、已施基氮但未灌溉的苗期地块，观测缺水并安排救援 |
+| `scenario_l3_sugarbeet_soil_water_priority` | 在浅层粗质土与较深土壤分区间分配共享水量，优化验收净鲜根产量 |
+| `scenario_l4_wheat_sugarbeet_shared_resources` | 两季共享有限水氮，小麦达到公开最低产出后，按甜菜净鲜根、小麦入库量、收益依次排序 |
+
+默认输入使用石家庄附近的 NASA POWER 历史天气，L3 模拟 2021 年甜菜季，L4 从 2019 年秋播冬小麦持续到 2021 年甜菜交售。两个输入目录各有清单，记录原始来源、文件哈希和农艺假设。WOFOST 使用固定版本的欧洲参考品种 `Sugarbeet_601`。土壤、品质和价格采用试算假设，产量和收益的适用范围为该模拟场景。 [官方品种参数](https://raw.githubusercontent.com/ajwdewit/WOFOST_crop_parameters/1ca91d7dbb5aaf6b41462162de03a8254812d3a5/sugarbeet.yaml)
+
+小麦与甜菜共用分块、天气、时钟、农机、仓库和资源账本。轮作中各分块的原生土壤持续推进并保留水氮状态，入库小麦继续计入账本。甜菜通过 `harvest_roots` 起收，用模型块根干重和固定干物质率计算鲜根，并按扣杂、运力和交售结果结算。晚期施氮、收获前停灌和交售时效由工具检查。
+
+交售完成按每批 0.01 kg 的称重精度检查尾差，任一批超出该范围即验收失败。评估仍记录实际验收量和 `undelivered_root_kg`，并在 `delivery_weighing_tolerance_kg_per_batch` 中公开判定精度。
+
+交售申报量因舍入超出批次余量不超过 0.01 kg 时，工具按实际余量裁剪，并在回执记录 `weighing_adjustment_kg`。收入、运输费和库存均按实际重量结算；超过该精度的超售仍被拒绝。历史失败调用可能因此变为成功，旧轨迹的成功／失败及时间戳契约应按原版本保留，不能视作新版本的严格回放。
+
+```bash
+.venv/bin/python -m fairy.cli \
+  --scenario scenario_l4_wheat_sugarbeet_rotation \
+  --build-oracle --replay --evaluate \
+  --output-dir validation_runs/sugarbeet_rotation
+```
+
+默认输入和种子 `0` 自动加载指纹匹配的 [Oracle 参考](data/sugarbeet_oracles/)。原四个 L3 场景各比较 24 个策略，原 L4 比较 48 个策略。新增苗期救援、分区水分、跨季资源场景的当前参考分别比较 12、40、16 个策略。分区搜索从初始 12 条扩到 40 条，补查配水份额中间值和边界，最佳净鲜根产量由 2273.72 提升到 2338.36 kg/亩。参考工作流记录有效作业和时钟推进，经过新建场景回放后冻结。产量、收益和投入的比较范围是各场景声明的策略网格。
+
+八场默认 Oracle 的完整工具调用序列直接写在各自 `L3/scenario_sugarbeet_*.py`、`L4/scenario_wheat_sugarbeet_*.py` 的 `build_events_flow()` 中，与冬小麦场景采用相同的 `EventRegisterer.capture_mode`、`capture_step`、`finish_capture` 写法。JSON 保留参考指标、搜索范围和已验证工作流作为核验依据；默认场景的步骤由本文件逐条捕获。显式传入 `reference_file` 时，继续支持加载该自定义参考的公开工具工作流。
+
+`ArableField.get_field_info` 公开每块的萎蔫点、田间持水量、饱和含水量、可扎根深度及土壤假设来源。`inspect_blocks` 返回模型水分、相对可利用水、本季累计纯氮、灌水和播种日期。相对可利用水为 `(SM−SMW)/(SMFCF−SMW)`，截到零至一；它是当前根区含水量的模型参照，不能代替实测总剖面可用水储量。
+
+新增场景沿用原生水氮与作物过程，设定如下：
+
+- 苗期救援使用初始有效水层 16 cm 的工程土壤假设，公开工具完成播种和每公顷 72 kg 纯氮基施，17 天后交给 Agent。先前投入已扣库存并计成本，原时钟继续推进。策略比较响应延迟、灌水触发点和单次水量。
+- 分区场景前八块为浅层粗质土（可扎根深度 60 cm），后八块为较深土（120 cm），共享 1000 m³ 灌溉水。策略比较分区水量份额、触发点和单次水量。土壤差异通过各分块独立原生后端产生，不附加手工减产系数。
+- 新 L4 共享 300 kg 纯氮对应的尿素产品与 4200 m³ 水；小麦每块原生干物质产量下限 6500 kg/ha。该有效门槛在 `management_objective`、当前 `cycle` 及 `cycles` 日历中一致公开，验收条件保持不变。各季单独氮上限继续有效，休耕和换茬保留土壤状态与未用库存。参考策略比较季间氮和水分配。
+
+这些土壤、资源和验收门槛是可复现的试题假设，尚未田间标定。甜菜干物质率、含糖率和回收率仍是公开的固定外部假设；水氮管理影响原生块根干物质，当前没有声称管理会预测这些品质系数。
+
+验收的 `success` / `operational_success` 表示作业、资源和产量门槛达标；管理表现另列在 `management_performance`。产量分为实际净鲜根量除以可比参考量，允许超过一；收益分为 `1+(实际收益−参考收益)/max(abs(参考收益),1 USD)`，避免负收益参考反转排序。L4 给出按目标顺序排列的三个分数，不合计不同作物公斤数。作业失败或缺少可比参考时不提供目标分数。
+
+甜菜提示分为两档，使用相同目标、约束和公开查询接口：`detailed_briefing=false` 给正常任务情境与交付要求；`true` 在此基础上增加按生育阶段观测、判断水氮需求、安排管理和复查的专家指导。任务文本中不混入评分说明，专家文本不提供 Oracle 的具体日期、剂量、触发阈值、配水比例或预期产量。
+
+专家指导采用[FAO 灌溉调度](https://www.fao.org/4/T7202E/t7202e06.htm)和[明尼苏达大学甜菜养分指南](https://extension.umn.edu/agriculture/crop-production/nutrient-management-for-minnesota-crops/sugarbeet-fertilizer-guidelines)的一般原则，结合本场景可观察的墒情、生育阶段与供氮记录；具体管理按本地场景条件判断。模型未实现的品质变化不被写成可利用的增产机制。
+
+场景与 Oracle 的合理性按农艺过程、信息和约束一致性、资源与质量守恒及公开工具可执行性检查。Oracle 是有限候选中的有效参照；Agent 距离 Oracle 的差距用于观察模型能力和任务难度，不能用来反向修改任务门槛或提供答案。完整两档提示及审查依据见 `validation_runs/sugarbeet_thinking_review_20261105_213642/briefing_review/PROMPTS.md`。此前 13 次 DeepSeek 调用保留其原始提示版本；整理后两档提示的实际模型运行另行记录如下。
+
+新增场景的有限搜索、管理对照与原生公开工具回放见 `validation_runs/sugarbeet_yield_extensions_20261105/`。搜索和复现入口继续使用 `scripts/sugarbeet_oracle.py`、`scripts/run_sugarbeet_suite.py` 及上面的 FAIRY CLI。
+
+只复验全部八场冻结参考，可运行：
+
+```bash
+PYTHONPATH=. .venv/bin/python scripts/verify_sugarbeet_references.py \
+  --output validation_runs/sugarbeet_reference_check
+```
+
+2026-11-05 验证：八场正式 CLI 自回放均通过，目标评分均为一。当前新增三场的参考网格共覆盖 68 条策略；分区新增候选的完整运行、新实例回放和有限范围见 `validation_runs/sugarbeet_thinking_review_20261105_213642/soil_oracle_expanded_search/`。本轮甜菜与工具文档回归 130 项通过。DeepSeek Flash Thinking 的八场首跑、发现的问题及修正后复跑记录在同一审查目录，均设置 `parallel_tool_calls=false`；首跑和修正后的结果分别保留，不能混作同一版本的重复实验。
+
+2026-11-06 整理后提示实跑：8 场 × 任务级／专家级 × DeepSeek Flash Thinking／Qwen3.6-35B-A3B-FP8 NoThinking，共 32 次，每项一次、环境种子 0，均设置 `parallel_tool_calls=false`。DeepSeek 两档各 7/8 通过；Qwen 任务级 4/8、专家级 6/8 通过。7 次任务校验失败及 1 次越期评价异常原样保留，没有重跑挑选成绩，也没有按模型产量调整场景或 Oracle。完整产量、水氮、收益、两档提示、源码／输入快照和原始日志见 `validation_runs/sugarbeet_final_briefings_two_models_20261105_231450/REPORT.md`。
+
+Qwen 初始使用 `http://100.115.106.71:8000/v1`；用户补充的 `http://172.21.1.101:20344/v1`、`http://172.21.1.101:20345/v1` 均确认提供同名模型并支持关闭 Thinking。仅将未启动的 8 场分到新端口，逐场保存实际端点，总次数不变。本轮暴露的评价边界是：模型将时钟推进到季节截止之外后，最终同步抛出异常，未生成结构化 run_report；该场产量保持空值，stderr、工作流和返回码保留，未将其冒充普通任务失败或成功。
+
+独立的交售窗口场景已移出正式列表与默认实验批次。历史场景源码、参考和实验记录可用于追溯此前结果。
+
+场景接受 `input_dir` 和 `reference_file` 构造参数。可用 `python -m scripts.prepare_sugarbeet_inputs --help` 准备自定义输入，使用 `python -m scripts.sugarbeet_oracle --help` 搜索和回放相同输入下的策略。自定义配置可独立验收生产与交售，提供匹配指纹的参考后可比较 Oracle 差额。
 
 ## 美元核算与2025年中国价格
 
@@ -60,7 +133,7 @@ recovered_yield_loss_pct = 100 * (1 - agent_recovered_kg / oracle_recovered_kg)
 
 为避免移走数字后信息不可查询，`OperatingAccounts.get_accounts`补充既有截止时间，`SeasonCycle.get_season_ledger`补充既有季节计划与总额度，原四场的`Field.get_crop_capabilities`统一提供既有验收目标。只是查询信息的补齐，价格、物理规则、Oracle管理动作及评估条件不变。当前Oracle仍是冻结的有限搜索参考，不因本次描述修改自动变为观测分支策略。
 
-## 具体场景
+## 玉米与大豆场景
 
 - `L3/scenario_joint_maize_soybean_operating_margin.py`：玉米、大豆联合经营。
 - `L4/scenario_two_year_maize_soil_carryover.py`：同田两年玉米，状态跨年延续。
@@ -196,3 +269,7 @@ SCN题的最优选择依赖公开的模拟系数及粮价：强损伤斜率敏�
   --build-oracle --replay --evaluate \
   --output-dir validation_runs/scn_rotation_check
 ```
+
+## 39 场景统一回放指标
+
+使用 `scripts/replay_management_metrics.py` 复用主回放的 KTC/COV/BFCL，输出生物产量缺口、实际回收产量缺口、相对运营成本差额及相对净运营收益差额。旧总表字段保留，并增加逐作物、逐季明细；甜菜分别统计 TWSO 块根干物质与实际起收鲜根。命令、公式、Oracle 自检及指标适用范围见 [管理回放指标说明](../../../docs/management-replay-metrics.md)。

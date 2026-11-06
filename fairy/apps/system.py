@@ -90,16 +90,22 @@ class SystemApp(App):
         hours: int = 0,
         days: int = 0,
     ) -> dict:
-        """Wait for the specified duration while field conditions and pending activities progress.
+        """
+        Advance the simulation clock by a specified amount of time.
 
-        Use this when no immediate work is needed or an activity needs time to
-        complete. Check current conditions and operation status afterward.
+        This is the canonical "fast-forward" tool. Use it when waiting for
+        biological or physical processes (crop growth, soil drying, treatment
+        residual decay, post-harvest drying) to play out. After the time
+        advances, any subsequent state read will reflect the evolved world.
 
         Args:
-            seconds: Finite non-negative seconds to advance, including fractional seconds.
+            seconds: Seconds to advance.
             minutes: Minutes to advance.
-            hours: Hours to advance.
-            days: Days to advance.
+            hours:   Hours to advance.
+            days:    Days to advance.
+
+        Returns:
+            A dict containing the new current time.
         """
         total_seconds = (
             float(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400

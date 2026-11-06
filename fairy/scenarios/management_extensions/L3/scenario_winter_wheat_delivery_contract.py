@@ -1,4 +1,5 @@
 """Fulfill a fixed winter wheat delivery at the lowest actual operating cost."""
+from fairy.scenarios.management_extensions.oracle_time import oracle_time_arguments
 
 from typing import ClassVar
 
@@ -154,7 +155,7 @@ class ScenarioWinterWheatDeliveryContract(ScenarioWinterWheatFullSeason):
                 )
 
             def advance(seconds, stage):
-                step(self.system.advance_time(seconds=seconds), stage)
+                step(self.system.advance_time(**oracle_time_arguments(seconds)), stage)
                 observe()
 
             def apply_nitrogen(pure_n_kg_ha):

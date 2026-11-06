@@ -357,7 +357,11 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
         assert ledger["fertilizer_budget_kg"] == scene.cycle.fertilizer_budget_kg
         assert ledger["water_budget_mm"] == scene.cycle.water_budget_mm
         assert len(ledger["seasons"]) == len(scene.cycle.seasons)
-    if hasattr(scene, "rotation") and not scene.rotation:
+    is_beet = "RootDelivery__get_delivery_info" in tools
+    if is_beet:
+        root_prices = tools["RootDelivery__get_delivery_info"]()["contract"]
+        assert root_prices["root_price_usd_kg"] == scene.root_contract.root_price_usd_kg
+    elif hasattr(scene, "rotation") and not scene.rotation:
         objective = tools["Field__get_crop_capabilities"]()["management_objective"]
         assert objective["minimum_stored_grain_kg"] == pytest.approx(
             0.99 * scene.best_tested_yield_kg
@@ -386,15 +390,22 @@ def test_task_uses_queryable_prices_in_both_briefing_modes(module_name, detailed
         ]
     elif "WheatField__get_field_info" in tools:
         geometry = [(scene.resources.area_ha * 10000,)]
+    elif is_beet:
+        geometry = [(scene.resources.area_ha,)]
     else:
         geometry = [(scene.farm.field_area_m2, scene.farm.ridge_width_m)]
     allowed = {round(number, 6) for pair in geometry for number in pair}
-    exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", task)}
+    quantity_text = task.replace("L4", "") if is_beet else task
+    exposed = {float(n) for n in re.findall(r"\d+(?:\.\d+)?", quantity_text)}
     if detailed and "WheatField__get_field_info" in tools:
         assert allowed <= exposed
     else:
         assert exposed == allowed
-    if "WheatField__get_field_info" in tools:
+    if is_beet:
+        assert ("read_root_zone_sensors" in task) is detailed
+        assert ("read_canopy_sensors" in task) is detailed
+        assert "RootDelivery.get_delivery_info" in task
+    elif "WheatField__get_field_info" in tools:
         assert ("根区" in task) is detailed
     elif detailed:
         assert "read_soil_sensors" in task and "read_canopy_sensors" in task

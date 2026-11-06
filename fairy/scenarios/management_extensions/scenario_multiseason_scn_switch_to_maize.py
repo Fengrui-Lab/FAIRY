@@ -494,7 +494,7 @@ class ScenarioScnSwitch(FullSeasonExtension):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=777600.0),
+                self.system.advance_time(days=9),
                 "wait_nutrition",
                 "等待至2019-06-10当地07:00；扣除先前工具真实耗时。",
             )
@@ -856,7 +856,7 @@ class ScenarioScnSwitch(FullSeasonExtension):
             )
             previous = capture_step(
                 previous,
-                self.system.advance_time(seconds=2678400.0),
+                self.system.advance_time(days=31),
                 "wait_harvest",
                 "等待至2019-09-20当地07:00；扣除先前工具真实耗时。",
             )
