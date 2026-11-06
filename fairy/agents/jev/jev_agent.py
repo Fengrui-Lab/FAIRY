@@ -168,6 +168,7 @@ def _readable_seconds(seconds: int) -> str:
 
 class JevAgent(Agent):
     tool_instructions = TOOL_INSTRUCTIONS
+    plan_instructions = PLAN_INSTRUCTIONS
 
     def __init__(
         self,
@@ -436,7 +437,7 @@ class JevAgent(Agent):
         tool_question = {
             "type": "choice",
             "instructions": (
-                (self.tool_instructions + (PLAN_INSTRUCTIONS if self.plan_note else ""))
+                (self.tool_instructions + (self.plan_instructions if self.plan_note else ""))
                 if self.state_mode == "snapshot"
                 else PART1_TOOL_INSTRUCTIONS
             ),

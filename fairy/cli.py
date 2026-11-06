@@ -167,6 +167,8 @@ def main() -> None:
     parser.add_argument("--a2a-max-tool-calls", type=int, default=None, help="Maximum tool calls per A2A expert agent; defaults to --max-tool-calls")
     parser.add_argument("--a2a-shared-trace", type=_str_to_bool, default=False, help="A2A: record the experts' real tool calls in the main workflow, so the run can be scored (always on with Jev experts)")
     parser.add_argument("--a2a-min-confidence", type=float, default=0.4, help="Jev experts (--a2a-provider typesafe): hand the job back to the main agent below this confidence")
+    parser.add_argument("--a2a-expert-hybrid", type=_str_to_bool, default=False, help="Jev experts: run the new hybrid inside each expert (lean memory, plan note, budget note, reasoning medium); a local LLM takes over when Jev is unsure or stuck, instead of the job going back to the main agent")
+    parser.add_argument("--a2a-expert-llm-model", default="gpt-6-luna", help="--a2a-expert-hybrid: the local LLM (provider openai)")
     parser.add_argument("--fallback-provider", default=None, help="farm_jev: LLM provider that decides when Jev is unsure")
     parser.add_argument("--fallback-model", default=None, help="farm_jev: LLM model that decides when Jev is unsure")
     parser.add_argument("--fallback-confidence", type=float, default=0.6, help="farm_jev: hand the decision to the LLM below this Jev confidence")
@@ -313,6 +315,8 @@ def main() -> None:
             app_endpoint = args.a2a_endpoint or args.endpoint
 
             jev_experts = app_provider == "typesafe"
+            if args.a2a_expert_hybrid and not jev_experts:
+                parser.error("--a2a-expert-hybrid needs Jev experts (--a2a-provider typesafe)")
             shared_trace = jev_experts or args.a2a_shared_trace
 
             def _build_app_llm():
@@ -333,12 +337,39 @@ def main() -> None:
                 )
 
             if jev_experts:
-                from fairy.agents.jev.a2a_expert import JevAppAgentBuilder
+                from fairy.agents.jev.a2a_expert import LOCAL_LLM_NOTE, JevAppAgentBuilder
+
+                def _build_local_llm():
+                    return BaseLLM.llm_builder(
+                        {
+                            "provider": "openai",
+                            "model": args.a2a_expert_llm_model,
+                            "temperature": args.temperature,
+                            "max_output_tokens": args.max_output_tokens,
+                            "parallel_tool_calls": False,
+                            "reasoning_effort": "medium",
+                        }
+                    )
 
                 app_agent_builder = JevAppAgentBuilder(
                     list(scenario.apps or []),
                     scenario_task=str(scenario_kwargs.get("agent_task_override") or ""),
                     min_confidence=args.a2a_min_confidence,
+                    **(
+                        {
+                            "local_llm_factory": _build_local_llm,
+                            "system_message": (
+                                get_farm_world_system_prompt(
+                                    args.system_prompt_mode, parallel_tool_calls=False
+                                ).rstrip()
+                                + "\n\n"
+                                + LOCAL_LLM_NOTE
+                            ),
+                            "run_max_tool_calls": args.max_tool_calls,
+                        }
+                        if args.a2a_expert_hybrid
+                        else {}
+                    ),
                 )
             else:
                 app_agent_builder = AppAgentBuilder()
@@ -365,6 +396,7 @@ def main() -> None:
                 "provider": app_provider,
                 "endpoint": app_endpoint,
                 "expert_kind": "jev" if jev_experts else "llm",
+                "expert_hybrid": args.a2a_expert_hybrid,
                 "shared_trace": shared_trace,
             }
         fallback_llm = None

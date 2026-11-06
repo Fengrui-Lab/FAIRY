@@ -18,18 +18,23 @@ from fairy.controllers.app_agent import (
 from fairy.controllers.engine import Engine
 from fairy.scenarios.baseline_farm_world.scenario_field_prep import ScenarioFarmWorldFieldPrep
 
-from tests.test_jev_agent import _ScriptedJev
+from tests.test_jev_agent import _ScriptedJev, _ScriptedLLM
 
 
-def _setup(script, max_tool_calls=8):
+def _setup(script, max_tool_calls=8, replies=None):
     scenario = ScenarioFarmWorldFieldPrep()
     scenario.setup()
     jev = _ScriptedJev(script)
     apps = list(scenario.apps)
+    local = _ScriptedLLM(replies) if replies is not None else None
+    hybrid = (
+        {"local_llm_factory": lambda: local, "system_message": "rules", "run_max_tool_calls": 300}
+        if local else {}
+    )
     result = apply_a2a_to_apps(
         apps,
         llm_factory=lambda: jev,
-        app_agent_builder=JevAppAgentBuilder(apps, scenario_task="load 321 kg"),
+        app_agent_builder=JevAppAgentBuilder(apps, scenario_task="load 321 kg", **hybrid),
         app_agent_config_builder=AppAgentConfigBuilder(),
         app_prop=1.0,
         seed=0,

@@ -55,3 +55,20 @@ Jobs: 2,670 in total. 70.7% one action, 11.6% none, 17.6% two or more. 2,149 fin
 Failure: `compacted_headland_stand_recovery` used all 300 actions with 24 of 64 ridges harvested (62.6%). The same scenario gave -1.6% and finished in the 3-scenario test, so single runs are very noisy.
 
 Replay matched the live grain on all 19 runs, with no replay errors. The existing A2A was run on 3 scenarios only (0/3 finished; 57-100% loss), not on all 19.
+
+## A2A hybrid: decisions (branch `jev-a2a-hybrid`)
+
+Each expert runs the new hybrid (`hybrid_lean_plan_budget_medium`). Setting `a2a_llm_manager_hybrid_experts`; flag `--a2a-expert-hybrid true`, off by default. The manager, its note, the apps, the 10-action job cap, the 0.4 threshold, the done check and the limits are as in `a2a_llm_manager_jev_experts`.
+
+| Decision | Why |
+|---|---|
+| Hand-offs stay in the expert: the local gpt-6-luna decides, writes `next_steps`, and Jev follows them | As asked. Statuses `unsure` and `stuck` no longer occur. |
+| Lean memory, plan note, budget note and reasoning "medium" are switched on together by one flag | They are one setting in the hybrid. The hybrid's own flags are refused outside `farm_jev`. |
+| One local LLM per expert; its memory and plan last one job | The expert sees one job at a time and the season task is not in its input. Jobs are at most 10 actions. A plan from an old job cannot carry over. Cost: requests start cold, so lean memory saves little here. |
+| The local LLM sees the farm system prompt, a short note, the job, the snapshot and this job's actions; only this app's tools | Same information limits as the Jev expert. |
+| Plan text for Jev says "done" when the rest of the plan is waiting or another app | The expert has no clock. The hybrid's "advance time" line does not apply. |
+| Budget counts the run's 300 actions, not the job's 10 | The hybrid's budget reads the limit passed to `run`, which is the job's here. |
+| If the local LLM ends the job with text, the reply carries it as `expert_note` | The manager otherwise cannot learn why. New field in the code-written reply. |
+| If a local LLM call fails, Jev's own choice stands | Same as the hybrid. |
+| Manager note unchanged | Asked to keep everything else. It still names `unsure` and `stuck`, which will not appear. |
+| Max output tokens 8192, as the setting already sets for the manager | The hybrid setting used the 2048 default. It is a ceiling. |

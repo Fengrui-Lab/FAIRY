@@ -4,6 +4,7 @@ Reads every *.run_report.json under --root, and grain loss from scoring
 summary_v2.csv when --scoring is given (rebatch_fos_from_traces.py output).
 
 Prices: gpt-6-luna $0.10 / M input, $0.01 / M cached, $0.50 / M output; Jev $0.042 / M input.
+In hybrid experts the experts' cost is split into Jev and the local LLM by each call's source.
 
 Usage: python scripts/jev_a2a_summary.py --root <runs dir> [--scoring <summary_v2.csv>] [--csv out.csv]
 """
@@ -32,11 +33,20 @@ def row_for(path: Path, scores: dict) -> dict:
     jobs = [j for t in traces for j in t.get("jobs", [])]
     statuses = collections.Counter(j.get("status") or ("limit" if j.get("limit") else "?") for j in jobs)
     expert_tokens = (a2a.get("expert_metrics") or {}).get("token_usage") or {}
+    metrics_all = [m for t in traces for m in t.get("runtime_metrics", [])]
+    local = {
+        key: sum(
+            int((m.get("tokens") or {}).get(key) or 0)
+            for m in metrics_all if m.get("source") == "llm_fallback"
+        )
+        for key in ("prompt_tokens", "cached_tokens", "completion_tokens")
+    }
     main_tokens = metrics.get("token_usage") or {}
     kind = a2a.get("expert_kind")
     main_cost = llm_cost(main_tokens)
     if kind == "jev":
-        expert_cost = int(expert_tokens.get("prompt_tokens") or 0) * 0.042 / 1e6
+        jev_input = int(expert_tokens.get("prompt_tokens") or 0) - local["prompt_tokens"]
+        expert_cost = jev_input * 0.042 / 1e6 + llm_cost(local)
     else:
         expert_cost = llm_cost(expert_tokens)
     score = scores.get(path.parent.name, {})
@@ -51,6 +61,8 @@ def row_for(path: Path, scores: dict) -> dict:
         "expert_actions": actions or sum(j.get("actions", 0) for j in jobs),
         "job_status": dict(statuses),
         "jev_requests": sum(j.get("jev_requests") or 0 for j in jobs),
+        "local_llm_calls": sum(1 for m in metrics_all if m.get("source") == "llm_fallback"),
+        "cost_local_llm": round(llm_cost(local), 3),
         "cost_main": round(main_cost, 3),
         "cost_experts": round(expert_cost, 3),
         "cost_total": round(main_cost + expert_cost, 3),

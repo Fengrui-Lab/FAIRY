@@ -18,6 +18,7 @@ Settings (folder names as in the shared run package):
     ablation_llm_with_jev_tool           gpt-6-luna, ReAct, done check, optional ask_jev tool
     ablation_llm_with_jev_tool_and_note  same with a note about Jev in the system prompt
     a2a_llm_manager_jev_experts          gpt-6-luna runs the farm through one Jev expert per app
+    a2a_llm_manager_hybrid_experts       same with the new hybrid inside each expert (local gpt-6-luna)
     a2a_llm_manager_llm_experts          FAIRY's existing A2A (gpt-6-luna experts), scoreable trace
 
 Needs OPENAI_API_KEY and TYPESAFE_API_KEY. Score afterwards with
@@ -72,6 +73,10 @@ SETTINGS = {
     "a2a_llm_manager_jev_experts": [
         *LLM, *A2A, "--a2a-provider", "typesafe", "--a2a-model", "jev-latest",
         "--a2a-max-tool-calls", "10",
+    ],
+    "a2a_llm_manager_hybrid_experts": [
+        *LLM, *A2A, "--a2a-provider", "typesafe", "--a2a-model", "jev-latest",
+        "--a2a-max-tool-calls", "10", "--a2a-expert-hybrid", "true",
     ],
     "a2a_llm_manager_llm_experts": [
         *LLM, *A2A, "--a2a-policy", "typed_experts", "--a2a-shared-trace", "true",
