@@ -1,4 +1,10 @@
 // Keep the original scene entirely on its existing code and data path.
+import {syncKnowledgeGuidance} from './knowledge-guidance.js';
+
+const guidanceStyles = document.createElement('link');
+guidanceStyles.rel = 'stylesheet'; guidanceStyles.href = 'knowledge-guidance.css';
+document.head.append(guidanceStyles);
+
 const isHit = new URL(location.href).searchParams.get('scenario') === 'hit';
 const scenarios = [
   ['season', 'Soybean & maize · Disease and water'],
@@ -21,7 +27,11 @@ document.addEventListener('change', event => {
   if (event.target.value === 'hit') url.searchParams.set('scenario', 'hit');
   location.assign(url.href);
 });
-const observer = new MutationObserver(syncSelector);
+function syncSharedUI() {
+  syncSelector();
+  syncKnowledgeGuidance();
+}
+const observer = new MutationObserver(syncSharedUI);
 observer.observe(document.getElementById('app'), {childList: true, subtree: true});
 window.addEventListener('pagehide', () => observer.disconnect(), {once: true});
 try {
@@ -31,7 +41,7 @@ try {
     }
     await import('./scenarios/hit/app.js');
   } else await import('./app.js');
-  syncSelector();
+  syncSharedUI();
 } catch (error) {
   const host = document.getElementById('app');
   host.replaceChildren();

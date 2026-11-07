@@ -26,7 +26,21 @@ RECORDING
   73 runtime tools, 72 exposed to an Agent, 42 executed in this recording.
   All numeric values remain the original recorded simulation results.
   Maize uses reference soybean parameters, not a field-calibrated maize model.
-  The UI reads static files and does not communicate with a live backend.
+  Scenario playback reads static files and does not call a live agent backend.
+  Knowledge·Guidance uses the local UI server to read and save guidance text.
+
+KNOWLEDGE·GUIDANCE
+  The shared button above Farm plots / Agent tools is available in both scenes.
+  Adding Extra Guidance shows a text editor and formatted JSON preview. Save
+  appends expert_guidance_000, expert_guidance_001, and so on to the shared
+  Knowledge_Guidance/expert_guidance.json file relative to gui_demo.
+  Check Local Knowledge lists the saved entries in numerical order.
+  These entries persist after refreshing, switching scenes or restarting the
+  server. Saving here stores guidance; it does not invoke or alter an agent run.
+  Use serve.py (or the existing start-demo launchers) for file saving. Restart
+  an already-running server after updating its Python code, then refresh the
+  browser. A generic static server can display the scenes but cannot save
+  guidance through this interface.
 
 IMAGES AND EVIDENCE
   Bundled: 15 AI-generated demo illustrations — 3 NDVI-style images,
