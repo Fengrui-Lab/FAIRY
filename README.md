@@ -1250,6 +1250,7 @@ Parameters:
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; forwarded to the provider and recorded in each run report. |
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
+| `--tool-relations` | `on` / `off` | `on` | Passed to `fairy-run` for main and A2A agent tool schemas; recorded in `run_report.json` and `results.csv`. JSON config key: `tool_relations`. `off` omits only explicit Relation sections. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
 | `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`. |

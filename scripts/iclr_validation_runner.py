@@ -93,6 +93,7 @@ RUNNER_DEFAULTS = {
     "wait_for_user_input_timeout": 5.0,
     "parallel_tool_calls": True,
     "system_prompt_mode": "fairy",
+    "tool_relations": "on",
     "scenario_kwargs": None,
     "init_kwargs": None,
     "detail": None,
@@ -136,6 +137,7 @@ def _build_cell_command(
     a2a_model: str | None = None,
     a2a_provider: str | None = None,
     a2a_endpoint: str | None = None,
+    tool_relations: str = "on",
 ) -> list[str]:
     cmd = [
         PYTHON_BIN,
@@ -162,6 +164,8 @@ def _build_cell_command(
         "true" if parallel_tool_calls else "false",
         "--system-prompt-mode",
         system_prompt_mode,
+        "--tool-relations",
+        tool_relations,
     ]
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
@@ -746,6 +750,12 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--tool-relations",
+        choices=("on", "off"),
+        default=defaults.get("tool_relations"),
+        help="Include Relation sections in main and A2A agent tool schemas (default: on).",
+    )
+    parser.add_argument(
         "--scenario-kwargs",
         default=defaults.get("scenario_kwargs"),
         help=(
@@ -813,6 +823,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--max-output-tokens must be a positive integer")
     if args.system_prompt_mode not in {"fairy", "are"}:
         parser.error("--system-prompt-mode must be one of: fairy, are")
+    if args.tool_relations not in ("on", "off"):
+        parser.error("--tool-relations must be one of: on, off")
     return args
 
 
@@ -842,6 +854,7 @@ def run_cell(
     a2a_endpoint: str | None,
     timeout_grace_s: int = 60,
     progress_interval_s: float = 60.0,
+    tool_relations: str = "on",
 ) -> dict:
     """Run one cell as a subprocess; capture output and parse FOS / workflow."""
     cell_dir = output_root / f"{cell.family}__{cell.scenario}__r{cell.repeat}"
@@ -869,6 +882,7 @@ def run_cell(
             "level": _classify_level(cell.scenario),
             "a2a_enabled": a2a_enabled,
             "system_prompt_mode": system_prompt_mode,
+            "tool_relations": tool_relations,
             "max_output_tokens": max_output_tokens,
             "detail_enabled": detail_enabled,
             "wall_s": 0.0,
@@ -898,6 +912,7 @@ def run_cell(
         wait_for_user_input_timeout=wait_for_user_input_timeout,
         parallel_tool_calls=parallel_tool_calls,
         system_prompt_mode=system_prompt_mode,
+        tool_relations=tool_relations,
         a2a_enabled=a2a_enabled,
         a2a_app_prop=a2a_app_prop,
         a2a_policy=a2a_policy,
@@ -1022,6 +1037,7 @@ def run_cell(
         "a2a_app_agent": a2a_app_agent if a2a_enabled else "",
         "parallel_tool_calls": parallel_tool_calls,
         "system_prompt_mode": system_prompt_mode,
+        "tool_relations": tool_relations,
         "max_output_tokens": max_output_tokens,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
@@ -1083,6 +1099,7 @@ def main() -> int:
         f"provider={args.provider}, model={args.model}, family={model_family}, "
         f"a2a={bool(args.a2a)}, detail={detail_enabled}, "
         f"system_prompt_mode={args.system_prompt_mode}, "
+        f"tool_relations={args.tool_relations}, "
         f"max_output_tokens={args.max_output_tokens}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
     )
@@ -1123,6 +1140,7 @@ def main() -> int:
                 args.a2a_endpoint,
                 args.cell_timeout_grace_s,
                 args.progress_interval_s,
+                tool_relations=args.tool_relations,
             ): cell
             for cell in cells
         }
@@ -1142,6 +1160,7 @@ def main() -> int:
                     "model": args.model,
                     "a2a_enabled": bool(args.a2a),
                     "system_prompt_mode": args.system_prompt_mode,
+                    "tool_relations": args.tool_relations,
                     "detail_enabled": detail_enabled,
                     "wall_s": None,
                     "return_code": -2,

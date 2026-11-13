@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from contextlib import ExitStack, redirect_stderr, redirect_stdout
 from io import StringIO
+import json
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -14,6 +15,7 @@ from fairy.apps.app import App
 from fairy.controllers.app_agent import AppAgent
 from fairy.scenarios.workflow import Workflow
 from fairy.tool_utils import app_tool
+from scripts import iclr_validation_runner as runner
 
 
 class RelationExampleApp(App):
@@ -119,6 +121,52 @@ class ToolRelationsCLITests(unittest.TestCase):
             cli.main()
         self.assertEqual(error.exception.code, 2)
         lookup.assert_not_called()
+
+
+class ToolRelationsRunnerTests(unittest.TestCase):
+    def test_runner_modes_reach_child_schema_and_results(self) -> None:
+        cases = (
+            ([], {}, "on"),
+            (["--tool-relations", "off"], {}, "off"),
+            (["--config", "config.json"], {"tool_relations": "off"}, "off"),
+            (["--config", "config.json", "--tool-relations", "on"],
+             {"tool_relations": "off"}, "on"),
+        )
+        for flags, config, expected in cases:
+            with self.subTest(flags=flags), ExitStack() as stack:
+                argv = ["runner", "--phase", "test", "--output-root", "/tmp/fairy-test",
+                        "--families", "farm_baseline_react", "--scenarios", "schema-test",
+                        "--provider", "vllm", *flags]
+                stack.enter_context(patch("sys.argv", argv))
+                stack.enter_context(redirect_stdout(StringIO()))
+                stack.enter_context(patch.object(Path, "mkdir"))
+                stack.enter_context(patch.object(Path, "exists", return_value=False))
+                stack.enter_context(patch.object(Path, "read_text", return_value=json.dumps(config)))
+                stack.enter_context(patch.object(Path, "open", side_effect=lambda *a, **k: StringIO()))
+                process = stack.enter_context(patch.object(runner.subprocess, "Popen"))
+                stack.enter_context(patch.object(runner, "_wait_for_cell_process", return_value=(0, False, False)))
+                csv_write = stack.enter_context(patch.object(runner, "_write_results_csv"))
+                self.assertEqual(runner.main(), 0)
+                command = process.call_args.args[0]
+                self.assertEqual(command[command.index("--tool-relations") + 1], expected)
+                self.assertEqual(csv_write.call_args.args[1][0]["tool_relations"], expected)
+            # Feed the actual generated child arguments into real CLI/schema
+            # construction, with scenario execution and artifact I/O mocked.
+            agent, _, report = ToolRelationsCLITests()._run_cli(command[3:])
+            self.assertEqual(agent.include_tool_relations, expected == "on")
+            self.assertEqual(report["tool_relations"], expected)
+
+    def test_invalid_config_mode_fails_before_launch(self) -> None:
+        for value in ("invalid", None, False, []):
+            with self.subTest(value=value), \
+                    patch.object(Path, "read_text", return_value=json.dumps({"tool_relations": value})), \
+                    patch.object(runner.subprocess, "Popen") as launch, \
+                    redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
+                runner._parse_args(["--config", "config.json", "--phase", "test",
+                                    "--output-root", "/tmp/fairy-test", "--families", "test",
+                                    "--scenarios", "schema-test"])
+            self.assertEqual(error.exception.code, 2)
+            launch.assert_not_called()
 
 
 class ToolSchemaLifecycleTests(unittest.TestCase):
