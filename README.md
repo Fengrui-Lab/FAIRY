@@ -614,6 +614,7 @@ Parameters:
 |---|---|---|---|
 | `--agent` | flag | false | Run a real function-calling agent. |
 | `--controller` | controller id | `farm_baseline_react` | Controller family. Use `--list-controllers` to inspect. |
+| `--tool-relations` | `on` / `off` | `on` | Include explicit Relation sections in main and A2A agent tool schemas. Recorded as `tool_relations` in the run report. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Select the FARM controller prompt. `are` keeps native function calling and ports all compatible legacy ARE reasoning, one-tool, observation, error-recovery, tool-economy, and tool-output-use rules. |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client type. |
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
@@ -625,6 +626,31 @@ Parameters:
 | `--timeout-seconds` | float | `1200.0` | Maximum main-agent wall time. If reached, `stopped_reason=timeout`. |
 | `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Put `detailed_briefing` / detail-context mode here. |
 | `--init-kwargs` | JSON object string | `{}` | Arguments passed to `scenario.setup(**init_kwargs)`. Most FARM scenarios do not need this; keep `{}` unless a scenario's `setup()` explicitly requires extra initialization arguments. |
+
+App tool documentation uses three sections. Opening prose, or an explicit
+`Description:` section, describes the capability and normal return value.
+`Relation:` contains general suggestions before/after calling the tool
+(`Relations:` is also accepted). `Args:` describes individual parameters:
+
+```text
+Description:
+    Read the requested ridge range and return its operational states.
+
+Relation:
+    Consult the returned states before choosing the next operation.
+
+Args:
+    start: First ridge ID, inclusive.
+    end: Last ridge ID, inclusive; must be >= start.
+```
+
+Keep headings at the same indentation level and indent their contents; indent
+subheadings within Relation as well. Args may be omitted for tools without
+inputs. Description and enabled Relation text go into `function.description`;
+each argument description goes into its parameter property. Schemas are built
+once per Agent instance. `--tool-relations off` removes only explicitly marked
+Relation sections, including in A2A experts. Existing prose and legacy sections
+such as `Returns:` remain in Description during documentation migration.
 
 Difference between `--scenario-kwargs` and `--init-kwargs`:
 

@@ -127,6 +127,12 @@ def main() -> None:
     parser.add_argument("--agent", action="store_true", help="Run a real function-calling agent")
     parser.add_argument("--controller", default="farm_baseline_react", help="Controller family for --agent")
     parser.add_argument(
+        "--tool-relations",
+        choices=("on", "off"),
+        default="on",
+        help="Include Relation sections in main and A2A agent tool schemas (default: on)",
+    )
+    parser.add_argument(
         "--system-prompt-mode",
         choices=FARM_SYSTEM_PROMPT_MODES,
         default="fairy",
@@ -305,7 +311,9 @@ def main() -> None:
             a2a_result = apply_a2a_to_apps(
                 list(scenario.apps or []),
                 llm_factory=_build_app_llm,
-                app_agent_builder=AppAgentBuilder(),
+                app_agent_builder=AppAgentBuilder(
+                    include_tool_relations=args.tool_relations == "on"
+                ),
                 app_agent_config_builder=AppAgentConfigBuilder(),
                 app_prop=args.a2a_app_prop,
                 policy=args.a2a_policy,
@@ -328,6 +336,7 @@ def main() -> None:
             args.controller,
             llm=llm,
             toolsets=scenario.apps,
+            include_tool_relations=args.tool_relations == "on",
             system_message=get_farm_world_system_prompt(
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,
@@ -404,6 +413,7 @@ def main() -> None:
             model=args.model,
             temperature=args.temperature,
             system_prompt_mode=args.system_prompt_mode,
+            tool_relations=args.tool_relations,
             run_type="agent",
             stopped_reason=stopped_reason,
             wall_time_seconds=wall_time_seconds,

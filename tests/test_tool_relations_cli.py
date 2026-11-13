@@ -1,0 +1,141 @@
+from __future__ import annotations
+
+from contextlib import ExitStack, redirect_stderr, redirect_stdout
+from io import StringIO
+from pathlib import Path
+from types import SimpleNamespace
+import unittest
+from unittest.mock import Mock, patch
+
+from fairy import cli
+from fairy.agents.agent.agent import Agent
+from fairy.agents.agent.toolset_builder import build_toolset
+from fairy.apps.app import App
+from fairy.controllers.app_agent import AppAgent
+from fairy.scenarios.workflow import Workflow
+from fairy.tool_utils import app_tool
+
+
+class RelationExampleApp(App):
+    @app_tool()
+    def read_value(self, count: int = 1) -> dict:
+        """Return the requested number of example values.
+
+        Relation:
+            Read example values before preparing an example report.
+
+        Args:
+            count: Number of values to return.
+        """
+        return {"count": count}
+
+
+class FakeLLM:
+    provider = "test"
+    model = "test-model"
+
+    def __init__(self) -> None:
+        self.received_tools = []
+
+    def chat_completion(self, messages, tools=None):
+        self.received_tools.append(tools)
+        return SimpleNamespace(
+            choices=[SimpleNamespace(
+                message=SimpleNamespace(content="Done.", tool_calls=[]),
+                finish_reason="stop",
+            )],
+            usage=None,
+        )
+
+
+class ToolRelationsCLITests(unittest.TestCase):
+    def _run_cli(self, flags: list[str], *, a2a: bool = False):
+        app = RelationExampleApp()
+        scenario = SimpleNamespace(apps=[app], setup=Mock(), seed=0)
+        argv = ["fairy", "--agent", "--scenario", "schema-test", *flags]
+        if a2a:
+            argv.extend(["--a2a", "true", "--a2a-app-prop", "1"])
+
+        # Exercise argument parsing and real controller/A2A construction without
+        # running a scenario, contacting an LLM, or creating/removing artifacts.
+        with ExitStack() as stack:
+            stack.enter_context(patch("sys.argv", argv))
+            stack.enter_context(redirect_stdout(StringIO()))
+            stack.enter_context(patch.object(cli, "get_scenario_class", return_value=lambda **_: scenario))
+            stack.enter_context(patch.object(cli.BaseLLM, "llm_builder", side_effect=lambda _: FakeLLM()))
+            stack.enter_context(patch.object(Path, "mkdir"))
+            stack.enter_context(patch.object(Path, "exists", return_value=False))
+            stack.enter_context(patch.object(cli, "_cleanup_legacy_artifacts"))
+            stack.enter_context(patch.object(cli, "_cleanup_repo_side_exports"))
+            stack.enter_context(patch.object(Workflow, "save_workflow"))
+            stack.enter_context(patch.object(cli, "write_jsonl"))
+            write_json = stack.enter_context(patch.object(cli, "write_json"))
+            engine = stack.enter_context(patch.object(cli, "Engine"))
+            engine.return_value.run_scenario_agent.return_value = Workflow()
+            engine.return_value.evaluation_report.return_value = {}
+            engine.return_value.outcome_summary.return_value = {}
+            cli.main()
+            agent = engine.call_args.kwargs["agent"]
+            report = write_json.call_args.args[1]
+        return agent, scenario, report
+
+    def test_cli_default_on_and_explicit_modes_reach_generated_schemas(self) -> None:
+        for flags, expected in (([], True), (["--tool-relations", "on"], True),
+                                (["--tool-relations", "off"], False)):
+            with self.subTest(flags=flags):
+                agent, _, report = self._run_cli(flags)
+                function = agent.tool_schemas[0]["function"]
+                self.assertEqual(agent.include_tool_relations, expected)
+                self.assertEqual("Read example values before" in function["description"], expected)
+                self.assertIn("Return the requested number", function["description"])
+                self.assertEqual(
+                    function["parameters"]["properties"]["count"],
+                    {"type": "integer", "description": "Number of values to return."},
+                )
+                self.assertEqual(function["parameters"]["required"], [])
+                self.assertEqual(report["tool_relations"], "on" if expected else "off")
+
+    def test_cli_mode_reaches_real_a2a_expert_schema(self) -> None:
+        for mode in ("on", "off"):
+            with self.subTest(mode=mode):
+                agent, scenario, report = self._run_cli(["--tool-relations", mode], a2a=True)
+                wrapper = scenario.apps[0]
+                self.assertIsInstance(wrapper, AppAgent)
+                self.assertEqual(agent.include_tool_relations, mode == "on")
+                expert = wrapper.app_agent
+                self.assertEqual(expert.include_tool_relations, mode == "on")
+                function = next(
+                    schema["function"] for schema in expert.tool_schemas
+                    if schema["function"]["name"].endswith("__read_value")
+                )
+                self.assertEqual("Read example values before" in function["description"], mode == "on")
+                self.assertTrue(report["a2a"]["enabled"])
+                self.assertEqual(report["tool_relations"], mode)
+
+    def test_invalid_cli_mode_fails_before_scenario_lookup(self) -> None:
+        with patch("sys.argv", ["fairy", "--tool-relations", "unknown"]), \
+                patch.object(cli, "get_scenario_class") as lookup, \
+                redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
+            cli.main()
+        self.assertEqual(error.exception.code, 2)
+        lookup.assert_not_called()
+
+
+class ToolSchemaLifecycleTests(unittest.TestCase):
+    def test_schema_is_built_once_and_reused_across_llm_calls(self) -> None:
+        llm = FakeLLM()
+        app = RelationExampleApp()
+        with patch("fairy.agents.agent.agent.build_toolset", wraps=build_toolset) as build:
+            agent = Agent("example", llm, toolsets=[app], include_tool_relations=False)
+            schemas = agent.tool_schemas
+            agent.set_time_manager(app.time_manager)
+            with redirect_stdout(StringIO()):
+                self.assertEqual(agent.run("First task"), "Done.")
+                self.assertEqual(agent.run("Second task"), "Done.")
+            build.assert_called_once()
+            self.assertEqual(len(llm.received_tools), 2)
+            self.assertTrue(all(received is schemas for received in llm.received_tools))
+
+
+if __name__ == "__main__":
+    unittest.main()

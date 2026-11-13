@@ -614,6 +614,7 @@ fairy-run \
 |---|---|---|---|
 | `--agent` | flag | false | 运行真实 function-calling agent。 |
 | `--controller` | controller id | `farm_baseline_react` | 控制器家族。用 `--list-controllers` 查看。 |
+| `--tool-relations` | `on` / `off` | `on` | 是否将独立 Relation 段落载入主 Agent 和 A2A 子 Agent 的工具 schema；运行报告记录为 `tool_relations`。 |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | 选择 FARM controller prompt。`are` 保留 native function calling，并迁移所有与 FAIRY 不冲突的旧 ARE 推理、单工具调用、观察、错误恢复、工具经济性和工具输出利用规则。 |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client 类型。 |
 | `--model` | string | `deepseek-chat` | provider 下的模型名。 |
@@ -625,6 +626,27 @@ fairy-run \
 | `--timeout-seconds` | float | `1200.0` | 主 agent 最大 wall time。到达后 `stopped_reason=timeout`。 |
 | `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。`detailed_briefing` / detail-context 模式就放这里。 |
 | `--init-kwargs` | JSON object string | `{}` | 调用 `scenario.setup(**init_kwargs)` 时传入的参数。普通 FARM 场景一般不用；只有某个场景的 `setup()` 明确需要额外初始化参数时才用。 |
+
+App 工具文档分为三部分：开头正文或显式 `Description:` 描述工具能力及正常返回值；
+`Relation:` 描述调用前后的一般性建议（兼容 `Relations:`）；`Args:` 逐项描述参数。例如：
+
+```text
+Description:
+    Read the requested ridge range and return its operational states.
+
+Relation:
+    Consult the returned states before choosing the next operation.
+
+Args:
+    start: First ridge ID, inclusive.
+    end: Last ridge ID, inclusive; must be >= start.
+```
+
+各段标题保持同级，正文缩进；Relation 内的子标题也需缩进。无输入工具可省略 Args。
+Description 和开启时的 Relation 进入 `function.description`，参数说明进入对应参数的
+`description`。每个 Agent 实例只在初始化时构建一次 schema。
+`--tool-relations off` 仅移除独立标记的 Relation 段落，对 A2A 专家同样生效。
+文档迁移期间，旧正文及 `Returns:` 等旧段落继续保留在 Description 中。
 
 `--scenario-kwargs` 和 `--init-kwargs` 的区别：
 

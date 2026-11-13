@@ -53,6 +53,7 @@ class Agent(BaseAgent):
         messages=None,
         toolsets=None,
         hidden_tool_names: set[str] | frozenset[str] | None = None,
+        include_tool_relations: bool = True,
     ):
         """
         Agent extends BaseAgent with function-calling logic.
@@ -68,9 +69,13 @@ class Agent(BaseAgent):
         self.tools = None
         self.tool_schemas = None
         self.tools_map = None
+        self.include_tool_relations = include_tool_relations
         if toolsets is not None:
-            self.tools, self.tool_schemas, self.tools_map = \
-                build_toolset(toolsets, excluded_tool_names=hidden_tool_names)
+            self.tools, self.tool_schemas, self.tools_map = build_toolset(
+                toolsets,
+                excluded_tool_names=hidden_tool_names,
+                include_tool_relations=include_tool_relations,
+            )
         self.tool_call_count = 0
         self.llm_turn_count = 0
         self.stop_reason: str | None = None

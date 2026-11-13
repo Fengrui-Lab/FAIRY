@@ -54,6 +54,7 @@ class ResearchARESimulationAgent(Agent):
         system_message: str = DEFAULT_FARM_SYSTEM_MESSAGE,
         messages: Any = None,
         toolsets: list[Any] | None = None,
+        include_tool_relations: bool = True,
     ) -> None:
         super().__init__(
             name=name,
@@ -62,6 +63,7 @@ class ResearchARESimulationAgent(Agent):
             messages=messages,
             toolsets=toolsets,
             hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
+            include_tool_relations=include_tool_relations,
         )
         self.controller_profile = controller_profile
         self.reflection_memory: list[str] = []
@@ -285,6 +287,7 @@ class AgentBuilder:
         llm: Any,
         toolsets: list[Any] | None = None,
         system_message: str | None = None,
+        include_tool_relations: bool = True,
     ) -> ResearchARESimulationAgent:
         if agent_config.research_profile is None:
             built_config = ControllerConfigBuilder(
@@ -302,10 +305,14 @@ class AgentBuilder:
             or agent_config.base_agent_config.system_prompt
             or DEFAULT_FARM_SYSTEM_MESSAGE,
             toolsets=toolsets,
+            include_tool_relations=include_tool_relations,
         )
 
 
 class AppAgentBuilder:
+    def __init__(self, *, include_tool_relations: bool = True) -> None:
+        self.include_tool_relations = include_tool_relations
+
     def list_agents(self) -> list[str]:
         return AppAgentConfigBuilder().list_agents()
 
@@ -320,6 +327,7 @@ class AppAgentBuilder:
             llm=llm,
             system_message=app_agent_config.system_prompt,
             toolsets=[app, FinalAnswerApp()],
+            include_tool_relations=self.include_tool_relations,
         )
 
 
@@ -328,6 +336,7 @@ def build_controller_agent(
     llm: Any,
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
+    include_tool_relations: bool = True,
 ) -> ResearchARESimulationAgent:
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
@@ -337,4 +346,5 @@ def build_controller_agent(
         llm=llm,
         toolsets=toolsets,
         system_message=system_message,
+        include_tool_relations=include_tool_relations,
     )

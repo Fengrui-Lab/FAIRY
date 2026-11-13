@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 from typing import Any, Callable
 
-from fairy.tool_utils import agent_tool
+from fairy.tool_utils import AppTool, agent_tool
 
 
 def agent_toolset(obj: Any) -> list[Callable[..., Any]]:
@@ -19,7 +19,9 @@ def agent_toolset(obj: Any) -> list[Callable[..., Any]]:
     return tools
 
 
-def build_tool_schema(tool: Any) -> dict[str, Any]:
+def build_tool_schema(tool: Any, *, include_tool_relations: bool = True) -> dict[str, Any]:
+    if isinstance(tool, AppTool):
+        return tool.to_open_ai(include_tool_relations=include_tool_relations)
     if hasattr(tool, "to_open_ai"):
         return tool.to_open_ai()
     sig = inspect.signature(tool)
@@ -49,6 +51,7 @@ def build_toolset(
     toolsets: list[Any],
     *,
     excluded_tool_names: set[str] | frozenset[str] | None = None,
+    include_tool_relations: bool = True,
 ):
     assert isinstance(toolsets, list)
     excluded_tool_names = excluded_tool_names or set()
@@ -57,7 +60,7 @@ def build_toolset(
     tool_schemas: list[dict[str, Any]] = []
     for toolset in toolsets:
         for tool in agent_toolset(toolset):
-            schema = build_tool_schema(tool)
+            schema = build_tool_schema(tool, include_tool_relations=include_tool_relations)
             name = schema["function"]["name"]
             if name in excluded_tool_names:
                 continue

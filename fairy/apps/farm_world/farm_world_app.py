@@ -332,7 +332,7 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_ridge_range_state(self, start: int, end: int) -> dict[str, Any]:
         """
-        Return the full state of ridges from start to end (inclusive).
+        Return the operational state of ridges from start to end (inclusive).
 
         Includes planting status, seed type, growth stage, days since planting,
         grain moisture, yield-potential proxy, and days since pesticide application.
@@ -356,7 +356,11 @@ class FarmWorldApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
-        """Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information."""
+        """
+
+        Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information.
+        
+        """
         return {
             **self._inventory.to_dict(),
             "management_regime": self._management_regime.to_dict(),

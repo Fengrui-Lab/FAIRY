@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from fairy.apps.app import App
-from fairy.tool_utils import OperationType, app_tool
+from fairy.tool_utils import OperationType, app_tool, data_tool
 from fairy.types import event_registered
 from fairy.utils.type_utils import type_check
 
@@ -33,10 +33,11 @@ class SystemApp(App):
 
     @type_check
     @app_tool()
+    @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_current_time(self) -> dict:
         """
-        Get the current time, date, and weekday.
+        Get the current simulation time, date, and weekday in UTC.
 
         Returns a dictionary with the keys "current_timestamp" (epoch
         timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
@@ -58,7 +59,7 @@ class SystemApp(App):
 
     @type_check
     @app_tool()
-    @event_registered(operation_type=OperationType.READ)
+    @event_registered(operation_type=OperationType.WRITE)
     def advance_time(
         self,
         seconds: int = 0,
@@ -117,7 +118,7 @@ class SystemApp(App):
         }
 
     @app_tool()
-    @event_registered(operation_type=OperationType.READ)
+    @event_registered(operation_type=OperationType.WRITE)
     def wait_for_notification(self, timeout: int = 0) -> None:
         """
         Wait until the next notification or user message is received.
