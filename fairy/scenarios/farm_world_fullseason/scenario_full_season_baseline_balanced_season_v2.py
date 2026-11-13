@@ -78,7 +78,14 @@ class DailyStateTraceApp(App):
         label: str,
         include_ridge_details: bool = True,
     ) -> dict[str, Any]:
-        """Return one daily snapshot of weather, field summary, and engine state."""
+        """
+        Description:
+            Return one daily snapshot of weather, field summary, and engine state.
+
+        Args:
+            label: Your label for this snapshot; it does not select a date or saved record.
+            include_ridge_details: Include individual ridge states as well as the field summary; default True.
+        """
         advance_result = self._farm_world_app.advance_physics_time()
         weather = self._weather_app.get_current_weather_snapshot()
         now = datetime.fromtimestamp(

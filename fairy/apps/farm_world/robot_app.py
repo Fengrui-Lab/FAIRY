@@ -115,13 +115,15 @@ class RobotApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_ridge(self, ridge_id: int) -> dict[str, Any]:
         """
-        Send this robot dog to walk the full length of a ridge and back, reporting
-        pest and disease presence at ground level.
+        Description:
+            Send this robot dog to walk the full length of a ridge and back, reporting
+            pest and disease presence at ground level.
 
-        Use this to ground-truth anomalies flagged by drone surveys.
+        Relation:
+            Use this to ground-truth anomalies flagged by drone surveys.
 
         Args:
-            ridge_id:  Ridge to inspect (0-63).
+            ridge_id: Zero-based ID of an existing ridge.
         """
         self._sync_charge_state()
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
@@ -177,16 +179,20 @@ class RobotApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_pests(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Walk a contiguous ridge range, returning ground-level pest detections.
+        Description:
+            Walk a contiguous ridge range, returning ground-level pest detections.
 
-        Routes through the ObservationModel — results are noisy and may include
-        false positives/negatives. Coverage is capped (typically the first
-        few ridges in the range due to robot speed and battery). Use after
-        an aerial drone survey flagged an anomaly to confirm cause.
+            Routes through the ObservationModel — results are noisy and may include
+            false positives/negatives. Coverage is capped (typically the first
+            few ridges in the range due to robot speed and battery).
+
+        Relation:
+            Use after
+            an aerial drone survey flagged an anomaly to confirm cause.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
-            end_ridge:   Last ridge (inclusive, >= start_ridge).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; >= start_ridge. Requests may exceed 8 ridges, but only the first 8 can be visited (fewer with lower battery).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="pest")
 
@@ -195,16 +201,20 @@ class RobotApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_crop_health(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Walk a contiguous ridge range, returning ground-level pest + disease detections
-        plus visible canopy health diagnostics.
+        Description:
+            Walk a contiguous ridge range, returning ground-level pest + disease detections
+            plus visible canopy health diagnostics.
 
-        Use this when you need to discriminate among nutrient stress, drought
-        stress, and biotic causes of low NDVI. The robot can return both pest
-        and disease confidence scores per ridge in one pass.
+             The robot can return both pest
+            and disease confidence scores per ridge in one pass.
+
+        Relation:
+            Use this when you need to discriminate among nutrient stress, drought
+            stress, and biotic causes of low NDVI.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
-            end_ridge:   Last ridge (inclusive, >= start_ridge).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; >= start_ridge. Requests may exceed 8 ridges, but only the first 8 can be visited (fewer with lower battery).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="crop_health")
 
@@ -213,15 +223,17 @@ class RobotApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def inspect_emergence(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Walk a contiguous ridge range, returning per-ridge emergence stand
-        estimates (fraction of expected plants visible).
+        Description:
+            Walk a contiguous ridge range, returning per-ridge emergence stand
+            estimates (fraction of expected plants visible).
 
-        Used in the early-season emergence-check loop. Stand fraction below
-        0.7 typically indicates a replant decision.
+            Used in the early-season emergence-check loop. Stand fraction below
+            0.7 typically indicates a replant decision.
 
         Args:
-            start_ridge: First ridge of the range (0-63).
-            end_ridge:   Last ridge (inclusive, >= start_ridge).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; >= start_ridge. Requests may exceed 8
+                ridges, but only the first 8 can be visited (fewer with low battery).
         """
         return self._inspect_range(start_ridge, end_ridge, modality="emergence")
 
@@ -230,7 +242,10 @@ class RobotApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def check_status(self) -> dict[str, Any]:
-        """Return battery level, charging state, and robot configuration."""
+        """
+        Description:
+            Return battery level, charging state, and robot configuration.
+        """
         self._sync_charge_state()
         return {
             "robot": self.name,
@@ -245,10 +260,11 @@ class RobotApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def charge(self) -> dict[str, Any]:
         """
-        Send this robot dog back to its charging station.
+        Description:
+            Send this robot dog back to its charging station.
 
-        Charging completes asynchronously after about 60 minutes of
-        environment time. The battery level increases gradually while charging.
+            Charging completes asynchronously after about 60 minutes of
+            environment time. The battery level increases gradually while charging.
         """
         self._sync_charge_state()
         if self._charging:

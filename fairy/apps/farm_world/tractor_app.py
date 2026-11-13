@@ -206,10 +206,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def attach_implement(self, implement: str) -> dict[str, Any]:
         """
-        Mount an implement onto the tractor.
+        Description:
+            Mount an implement onto the tractor.
 
         Args:
-            implement: Name of the implement to attach.
+            implement: grader (levelling), furrower (furrowing), harvester (harvesting), sprayer (spraying), or cultivator (cultivation and weeding).
         """
         if implement not in _ATTACH_WIDTH_M:
             return {"error": f"Unknown implement '{implement}'"}
@@ -227,7 +228,8 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def detach_implement(self) -> dict[str, Any]:
         """
-        Remove the currently mounted implement from the tractor.
+        Description:
+            Remove the currently mounted implement from the tractor.
         """
         if self._attached_implement is None:
             return {"error": "No implement is currently attached"}
@@ -241,10 +243,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def refuel(self, liters: float) -> dict[str, Any]:
         """
-        Transfer fuel from the farm warehouse to the tractor fuel tank.
+        Description:
+            Transfer fuel from the farm warehouse to the tractor fuel tank.
 
         Args:
-            liters: Amount to transfer .
+            liters: Requested fuel amount in litres; must be positive.
         """
         liters = float(liters)
         if liters <= 0:
@@ -264,10 +267,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def refill_pesticide_tank(self, liters: float) -> dict[str, Any]:
         """
-        Transfer pesticide from the farm warehouse to the tractor spray tank.
+        Description:
+            Transfer pesticide from the farm warehouse to the tractor spray tank.
 
         Args:
-            liters: Amount to transfer
+            liters: Requested pesticide amount in litres; must be positive.
         """
         liters = float(liters)
         if liters <= 0:
@@ -287,9 +291,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def load_fertilizer(self, kg: float) -> dict[str, Any]:
         """
-        Transfer fertilizer from the farm warehouse to the tractor spreader.
+        Description:
+            Transfer fertilizer from the farm warehouse to the tractor spreader.
+
         Args:
-            kg: Amount to transfer.
+            kg: Requested fertilizer amount in kilograms; must be positive.
         """
         kg = float(kg)
         if kg <= 0:
@@ -314,14 +320,13 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def load_seeds(self, seed_type: str, count: int) -> dict[str, Any]:
         """
-        Transfer seeds from the farm warehouse to the tractor seed hopper.
-        Hopper holds up to 300000 plants per seed type; excess is rejected.
+        Description:
+            Transfer seeds from the farm warehouse to the tractor seed hopper.
+            Hopper holds up to 300000 plants per seed type; excess is rejected.
 
         Args:
-            seed_type: One of STANDARD, EARLY_COLD, HIGH_DENSITY,
-                    STRESS_TOLERANT, HEIHE43, HEIHE50, HEINONG60,
-                    HEINONG84, HEIKE71.
-            count:     Number of plants to load (must be positive).
+            seed_type: STANDARD (standard), EARLY_COLD (early, cold-tolerant), HIGH_DENSITY (dense planting), STRESS_TOLERANT (stress-tolerant), or a named cultivar: HEIHE43, HEIHE50, HEINONG58, HEINONG60, HEINONG84, HEIKE71.
+            count: Requested number of seeds; must be positive.
         """
         if seed_type not in {m.value for m in SeedType}:
             return {"error": f"Unknown seed_type '{seed_type}'"}
@@ -356,7 +361,8 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_status(self) -> dict[str, Any]:
         """
-        Return tractor resource levels, implement status, and available implements.
+        Description:
+            Return tractor resource levels, implement status, and available implements.
         """
         return {
             "fuel_tank_l": round(self._fuel_tank_l, 1),
@@ -375,7 +381,8 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def level(self) -> dict[str, Any]:
         """
-        Level and till the full field surface using the attached implement.
+        Description:
+            Level and till the full field surface using the attached implement.
         """
         if self._attached_implement is None:
             return {"error": "No implement attached."}
@@ -418,7 +425,8 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def base_fertilize(self) -> dict[str, Any]:
         """
-        Apply base fertilizer across the full field using the tractor spreader.
+        Description:
+            Apply base fertilizer across the full field using the tractor spreader.
         """
 
         if self._fertilizer_spreader_kg < _BASE_FERTILIZE_KG:
@@ -470,10 +478,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def form_ridges(self, ridge_width_m: float) -> dict[str, Any]:
         """
-        Form ridge rows across the full field using a tractor-mounted ridge former.
+        Description:
+            Form ridge rows across the full field using a tractor-mounted ridge former.
 
         Args:
-            ridge_width_m: Width of each ridge in metres.
+            ridge_width_m: Operating ridge width in metres; must be positive.
         """
         if self._fuel_tank_l < _FUEL_PER_PREP_OP:
             return {
@@ -538,13 +547,14 @@ class TractorApp(App):
         self, start_ridge: int, end_ridge: int, kg_per_ridge: float
     ) -> dict[str, Any]:
         """
-        Apply fertilizer across a contiguous block of ridges using the tractor spreader
-        (up to 10 ridges per pass).
+        Description:
+            Apply fertilizer across a contiguous block of ridges using the tractor spreader
+            (up to 10 ridges per pass).
 
         Args:
-            start_ridge:   First ridge to fertilize.
-            end_ridge:     Last ridge to fertilize (max 10-ridge span).
-            kg_per_ridge:  Fertilizer amount per ridge in kilograms (must be positive).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
+            kg_per_ridge: Fertilizer mass per ridge in kilograms; must be positive.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -626,25 +636,26 @@ class TractorApp(App):
         seed_spacing_cm: float,
     ) -> dict[str, Any]:
         """
-        Sow seeds across a contiguous block of ridges (up to 4 per pass).
+        Description:
+            Sow seeds across a contiguous block of ridges (up to 4 per pass).
 
-        Seed types:
-          STANDARD
-          EARLY_COLD
-          HIGH_DENSITY
-          STRESS_TOLERANT
-          HEIHE43
-          HEIHE50
-          HEINONG60
-          HEINONG84
-          HEIKE71
+            Seed types:
+              STANDARD
+              EARLY_COLD
+              HIGH_DENSITY
+              STRESS_TOLERANT
+              HEIHE43
+              HEIHE50
+              HEINONG60
+              HEINONG84
+              HEIKE71
 
         Args:
-            start_ridge: First ridge to plant (0-63).
-            end_ridge:   Last ridge to plant (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth in centimetres.
-            seed_spacing_cm:
-                In-row seed spacing in centimetres.
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 4
+                ridges.
+            depth_cm: Sowing depth in centimetres, 3-5 inclusive.
+            seed_spacing_cm: In-row seed spacing in centimetres; must be positive.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
         if err:
@@ -766,12 +777,13 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def apply_pesticide(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Apply insecticide pesticide across a contiguous block of ridges using the tractor
-        spray boom (up to 10 ridges per pass).
+        Description:
+            Apply insecticide pesticide across a contiguous block of ridges using the tractor
+            spray boom (up to 10 ridges per pass).
 
         Args:
-            start_ridge: First ridge to spray (0-63).
-            end_ridge:   Last ridge to spray (0-63, max 10-ridge span).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -843,11 +855,11 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def load_pesticide(self, liters: float) -> dict[str, Any]:
         """
-        Round-3 / round-4 alias for ``refill_pesticide_tank``.
+        Description:
+            Round-3 / round-4 alias for ``refill_pesticide_tank``.
 
         Args:
-            liters: Amount of pesticide (insecticide) to transfer from
-                    warehouse to the tractor's onboard pesticide tank.
+            liters: Requested pesticide amount in litres; must be positive.
         """
         liters = float(liters)
         if liters <= 0:
@@ -872,19 +884,20 @@ class TractorApp(App):
         liters_per_ridge: float = PESTICIDE_L_PER_RIDGE,
     ) -> dict[str, Any]:
         """
-        Apply (insecticide) pesticide across a contiguous block of ridges using
-        the tractor spray boom (up to 10 ridges per pass).
+        Description:
+            Apply (insecticide) pesticide across a contiguous block of ridges using
+            the tractor spray boom (up to 10 ridges per pass).
 
-        Routes through ``BioticPressureEngine.apply_treatment(INSECTICIDE)``
-        and opens the management residual window. Spray weather constraints
-        apply (no rain, wind below the spray limit). Round-3 alias for ``apply_pesticide``
-        with configurable per-ridge dose; default matches the legacy
-        hardcoded 8.0 L/ridge so existing scenarios stay calibrated.
+            Routes through ``BioticPressureEngine.apply_treatment(INSECTICIDE)``
+            and opens the management residual window. Spray weather constraints
+            apply (no rain, wind below the spray limit). Round-3 alias for ``apply_pesticide``
+            with configurable per-ridge dose; default matches the legacy
+            hardcoded 8.0 L/ridge so existing scenarios stay calibrated.
 
         Args:
-            start_ridge:      First ridge (0-63).
-            end_ridge:        Last ridge (max 10-ridge span).
-            liters_per_ridge: Insecticide application rate (>0).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
+            liters_per_ridge: Insecticide volume per ridge in litres; must be positive. Default 8.0.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -954,14 +967,15 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def load_fungicide(self, liters: float) -> dict[str, Any]:
         """
-        Transfer fungicide from the farm warehouse to the tractor's fungicide tank.
+        Description:
+            Transfer fungicide from the farm warehouse to the tractor's fungicide tank.
 
-        Fungicide is a separate chemical class from insecticide; the agent must
-        load fungicide explicitly before calling apply_fungicide. The warehouse
-        pesticide pool is shared (`pesticide_liters`).
+            Fungicide is a separate chemical class from insecticide; the agent must
+            load fungicide explicitly before calling apply_fungicide. The warehouse
+            pesticide pool is shared (`pesticide_liters`).
 
         Args:
-            liters: Amount to transfer.
+            liters: Requested fungicide volume in litres; must be positive.
         """
         liters = float(liters)
         if liters <= 0:
@@ -983,17 +997,18 @@ class TractorApp(App):
         self, start_ridge: int, end_ridge: int, liters_per_ridge: float
     ) -> dict[str, Any]:
         """
-        Apply fungicide across a contiguous block of ridges using the tractor
-        spray boom (up to 10 ridges per pass).
+        Description:
+            Apply fungicide across a contiguous block of ridges using the tractor
+            spray boom (up to 10 ridges per pass).
 
-        Routes through `BioticPressureEngine.apply_treatment(FUNGICIDE)` and
-        opens a management-residual window for disease pressure. Spray weather
-        constraints apply (no rain, wind below the spray limit).
+            Routes through `BioticPressureEngine.apply_treatment(FUNGICIDE)` and
+            opens a management-residual window for disease pressure. Spray weather
+            constraints apply (no rain, wind below the spray limit).
 
         Args:
-            start_ridge:      First ridge to spray (0-63).
-            end_ridge:        Last ridge to spray (0-63, max 10-ridge span).
-            liters_per_ridge: Fungicide application rate (>0).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
+            liters_per_ridge: Fungicide volume per ridge in litres; must be positive.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -1064,17 +1079,18 @@ class TractorApp(App):
         self, start_ridge: int, end_ridge: int, liters_per_ridge: float
     ) -> dict[str, Any]:
         """
-        Apply chemical weed control across a contiguous block of ridges.
+        Description:
+            Apply chemical weed control across a contiguous block of ridges.
 
-        This is the herbicide path: it requires sprayable weather, trafficable
-        soil, tank chemical, fuel, and management-regime permission. It queues a
-        HERBICIDE treatment, so weed pressure receives both same-day knockdown
-        and the chemical residual window.
+            This is the herbicide path: it requires sprayable weather, trafficable
+            soil, tank chemical, fuel, and management-regime permission. It queues a
+            HERBICIDE treatment, so weed pressure receives both same-day knockdown
+            and the chemical residual window.
 
         Args:
-            start_ridge:      First ridge to treat (0-63).
-            end_ridge:        Last ridge to treat (0-63, max 10-ridge span).
-            liters_per_ridge: Herbicide application rate (>0).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
+            liters_per_ridge: Herbicide volume per ridge in litres; must be positive.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -1142,16 +1158,17 @@ class TractorApp(App):
         self, start_ridge: int, end_ridge: int
     ) -> dict[str, Any]:
         """
-        Cultivate a contiguous ridge block for mechanical weed control.
+        Description:
+            Cultivate a contiguous ridge block for mechanical weed control.
 
-        This is the non-chemical weed-control path for organic/low-chemical
-        scenarios. It requires trafficable soil, fuel, and machine-pass budget.
-        It queues a MECHANICAL_WEED treatment: strong same-day weed knockdown,
-        no herbicide residual, and no pesticide application count.
+            This is the non-chemical weed-control path for organic/low-chemical
+            scenarios. It requires trafficable soil, fuel, and machine-pass budget.
+            It queues a MECHANICAL_WEED treatment: strong same-day weed knockdown,
+            no herbicide residual, and no pesticide application count.
 
         Args:
-            start_ridge: First ridge to cultivate (0-63).
-            end_ridge:   Last ridge to cultivate (0-63, max 10-ridge span).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -1211,22 +1228,25 @@ class TractorApp(App):
         full_replant: bool = False,
     ) -> dict[str, Any]:
         """
-        Replant a block of failed/poorly-emerged ridges.
+        Description:
+            Replant a block of failed/poorly-emerged ridges.
 
-        For ridges that have not emerged yet, this behaves like a fresh
-        planting pass. For ridges that already have an established crop, the
-        operation represents gap-filling within the row: it improves
-        ``stand_fraction`` without resetting the whole ridge's phenology.
-        Set ``full_replant=True`` only when inspection shows the ridge stand
-        failed badly enough that the farm decision is to re-sow the ridge and
-        accept a later maturity window.
+            For ridges that have not emerged yet, this behaves like a fresh
+            planting pass. For ridges that already have an established crop, the
+            operation represents gap-filling within the row: it improves
+            ``stand_fraction`` without resetting the whole ridge's phenology.
+
+        Relation:
+            Set ``full_replant=True`` only when inspection shows the ridge stand
+            failed badly enough that the farm decision is to re-sow the ridge and
+            accept a later maturity window.
 
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 4-ridge span).
-            depth_cm:    Sowing depth (3-5 cm).
-            spacing_cm:  In-row seed spacing (>0).
-            full_replant: Whether this pass resets the ridge phenology.
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 4 ridges.
+            depth_cm: Sowing depth in centimetres, 3-5 inclusive.
+            spacing_cm: In-row seed spacing in centimetres; must be positive.
+            full_replant: True requests a fresh crop start. False fills gaps in emerged crops; unemerged crops may still restart. Default False.
         """
         seed_spacing_cm = float(spacing_cm)
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
@@ -1405,16 +1425,17 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def incorporate_residue(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Tillage pass that incorporates harvested-crop residue back into the soil.
+        Description:
+            Tillage pass that incorporates harvested-crop residue back into the soil.
 
-        Post-harvest agronomic step: returning organic matter to the soil
-        rather than burning it. Logged action only — the reduced physics
-        engine doesn't model soil organic carbon, but FOS gates verify the
-        agent followed the right post-harvest sequence.
+            Post-harvest agronomic step: returning organic matter to the soil
+            rather than burning it. Logged action only — the reduced physics
+            engine doesn't model soil organic carbon, but FOS gates verify the
+            agent followed the right post-harvest sequence.
 
         Args:
-            start_ridge: First ridge (0-63).
-            end_ridge:   Last ridge (0-63, max 10-ridge span).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 10 ridges.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=10)
         if err:
@@ -1451,11 +1472,12 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def harvest(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Harvest a contiguous block of ridges (up to 4 per pass).
+        Description:
+            Harvest a contiguous block of ridges (up to 4 per pass).
 
         Args:
-            start_ridge: First ridge to harvest (0-63).
-            end_ridge:   Last ridge to harvest (0-63, max 4-ridge span).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge; at most 4 ridges.
         """
         err = self._validate_ridge_window(start_ridge, end_ridge, max_width=4)
         if err:
@@ -1552,9 +1574,13 @@ class TractorApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def unload_grain(self) -> dict[str, Any]:
         """
-        Unload the combine grain bin into the farm warehouse (trailer transfer).
-        Takes about 8 minutes. Call this when the bin is full or after the
-        final harvest pass to deposit grain into the warehouse inventory.
+        Description:
+            Unload the combine grain bin into the farm warehouse (trailer transfer).
+            Takes about 8 minutes.
+
+        Relation:
+            Call this when the bin is full or after the
+            final harvest pass to deposit grain into the warehouse inventory.
         """
         if self._grain_bin_kg <= 0.0:
             return {"error": "Grain bin is already empty"}

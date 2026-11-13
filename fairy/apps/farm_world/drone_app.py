@@ -134,18 +134,19 @@ class DroneApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def fly_survey(self, start_ridge: int, end_ridge: int) -> dict[str, Any]:
         """
-        Fly an aerial survey over a contiguous ridge range, collecting
-        multispectral (NDVI) and thermal (canopy temperature) observations
-        for every surveyed ridge.
+        Description:
+            Fly an aerial survey over a contiguous ridge range, collecting
+            multispectral (NDVI) and thermal (canopy temperature) observations
+            for every surveyed ridge.
 
-        The drone covers ridges in passes; each pass covers a number of
-        ridges determined by the drone's effective_ridges_per_pass setting.
-        If battery runs low mid-flight the drone returns automatically and
-        reports the ridges it managed to cover.
+            The drone covers ridges in passes; each pass covers a number of
+            ridges determined by the drone's effective_ridges_per_pass setting.
+            If battery runs low mid-flight the drone returns automatically and
+            reports the ridges it managed to cover.
 
         Args:
-            start_ridge: First ridge of the survey range (0-based).
-            end_ridge:   Last ridge of the survey range (inclusive, >= start_ridge).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge.
         """
         self._sync_charge_state()
         num_ridges = self._farm_world_app.num_ridges
@@ -233,7 +234,10 @@ class DroneApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def check_status(self) -> dict[str, Any]:
-        """Return battery level, charging state, and drone configuration."""
+        """
+        Description:
+            Return battery level, charging state, and drone configuration.
+        """
         self._sync_charge_state()
         return {
             "drone": self.name,
@@ -250,10 +254,11 @@ class DroneApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def charge(self) -> dict[str, Any]:
         """
-        Send this drone to its charging station.
+        Description:
+            Send this drone to its charging station.
 
-        Charging completes asynchronously after about 30 minutes of
-        environment time. The battery level increases gradually while charging.
+            Charging completes asynchronously after about 30 minutes of
+            environment time. The battery level increases gradually while charging.
         """
         self._sync_charge_state()
         if self._charging:

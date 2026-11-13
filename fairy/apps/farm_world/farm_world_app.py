@@ -274,16 +274,17 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_farm_overview(self) -> dict[str, Any]:
         """
-        Return a concise farm summary: current date, season phase, inventory,
-        and a per-ridge overview (key fields only, not full detail).
+        Description:
+            Return a concise farm summary: current date, season phase, inventory,
+            and a per-ridge overview (key fields only, not full detail).
 
-        season_phase indicates the current stage of the agricultural calendar:
-          "prep"     — pre-planting field preparation
-          "planting" — active sowing window
-          "growing"  — crop vegetative and reproductive growth
-          "harvest"  — grain maturity and harvesting
+            season_phase indicates the current stage of the agricultural calendar:
+              "prep"     — pre-planting field preparation
+              "planting" — active sowing window
+              "growing"  — crop vegetative and reproductive growth
+              "harvest"  — grain maturity and harvesting
 
-        Use get_ridge_state() or get_ridge_range_state() for full ridge detail.
+            Use get_ridge_state() or get_ridge_range_state() for full ridge detail.
         """
         self.advance_physics_time()
         overview = []
@@ -311,13 +312,14 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_ridge_state(self, ridge_id: int) -> dict[str, Any]:
         """
-        Return an operational state lookup for one ridge.
+        Description:
+            Return an operational state lookup for one ridge.
 
-        Includes planting status, seed type, growth stage, days since planting,
-        grain moisture, yield-potential proxy, and days since pesticide application.
+            Includes planting status, seed type, growth stage, days since planting,
+            grain moisture, yield-potential proxy, and days since pesticide application.
 
         Args:
-            ridge_id: Ridge identifier, 0-63.
+            ridge_id: Zero-based ID of an existing ridge.
         """
         if not 0 <= ridge_id < self.num_ridges:
             return {
@@ -332,14 +334,15 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_ridge_range_state(self, start: int, end: int) -> dict[str, Any]:
         """
-        Return the operational state of ridges from start to end (inclusive).
+        Description:
+            Return the operational state of ridges from start to end (inclusive).
 
-        Includes planting status, seed type, growth stage, days since planting,
-        grain moisture, yield-potential proxy, and days since pesticide application.
+            Includes planting status, seed type, growth stage, days since planting,
+            grain moisture, yield-potential proxy, and days since pesticide application.
 
         Args:
-            start: First ridge ID
-            end:   Last ridge ID , must be >= start.
+            start: Zero-based ID of the first existing ridge.
+            end: Last existing ridge ID, inclusive; must be >= start.
         """
         if not 0 <= start <= end < self.num_ridges:
             return {
@@ -357,9 +360,8 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_inventory(self) -> dict[str, Any]:
         """
-
-        Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information.
-        
+        Description:
+            Return the current farm inventory (seeds, pesticide, fertilizer, fuel, grain), management resource limits and usage (including irrigation quota), and post-harvest market information.
         """
         return {
             **self._inventory.to_dict(),
@@ -834,13 +836,14 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def commit_daily_physics(self) -> dict[str, Any]:
         """
-        Force a full daily physics tick at the current simulation time.
+        Description:
+            Force a full daily physics tick at the current simulation time.
 
-        Use this when you've taken several actions and want to advance the
-        world by exactly one day so their delayed effects (canopy growth,
-        biotic pressure decay, soil dry-down) become visible. Most agents
-        should prefer ``SystemApp.advance_time(days=N)`` to advance multiple
-        days; this is the single-day version with explicit "commit" semantics.
+            Use this when you've taken several actions and want to advance the
+            world by exactly one day so their delayed effects (canopy growth,
+            biotic pressure decay, soil dry-down) become visible. Most agents
+            should prefer ``SystemApp.advance_time(days=N)`` to advance multiple
+            days; this is the single-day version with explicit "commit" semantics.
         """
         if not self.physics_active:
             return {"status": "noop", "reason": "physics_inactive"}
@@ -860,17 +863,18 @@ class FarmWorldApp(App):
         water_mm: float,
     ) -> dict[str, Any]:
         """
-        Apply nutrient and carrier water to a ridge range.
+        Description:
+            Apply nutrient and carrier water to a ridge range.
 
-        The nutrient amount is normalized (1.0 = a typical strong dose).
-        ``water_mm`` is the per-ridge carrier-water depth; it consumes the
-        irrigation quota and enters the soil water balance.
+            The nutrient amount is normalized (1.0 = a typical strong dose).
+            ``water_mm`` is the per-ridge carrier-water depth; it consumes the
+            irrigation quota and enters the soil water balance.
 
         Args:
-            start_ridge:     First ridge (0-63).
-            end_ridge:       Last ridge (0-63, inclusive, >= start_ridge).
-            nutrient_amount: Normalized nutrient input (>0); typical 0.5-1.5.
-            water_mm:        Carrier-water metadata in millimetres (>=0).
+            start_ridge: Zero-based ID of the first existing ridge.
+            end_ridge: Last existing ridge ID, inclusive; must be >= start_ridge.
+            nutrient_amount: Positive nutrient dose per ridge; 1.0 uses 30 kg of fertilizer per ridge.
+            water_mm: Carrier-water depth per ridge in millimetres, >= 0. Quota use is this depth times the treated fraction of the field.
         """
         if not 0 <= start_ridge <= end_ridge < self.num_ridges:
             return {"error": f"Invalid ridge range [{start_ridge}, {end_ridge}]"}
@@ -971,17 +975,17 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def dry_grain(self, target_moisture_pct: float = 13.0) -> dict[str, Any]:
         """
-        Dry harvested grain in storage to a target moisture percentage.
+        Description:
+            Dry harvested grain in storage to a target moisture percentage.
 
-        Used post-harvest when grain came in above the safe storage moisture
-        window (usually 13-14%). The drying step advances the yield-recovery
-        state's grain_moisture_frac for harvested ridges, and flips the
-        inventory's `grain_dried` flag so subsequent `store_grain()` knows
-        the grain is safe for long-term storage.
+            Used post-harvest when grain came in above the safe storage moisture
+            window (usually 13-14%). The drying step advances the yield-recovery
+            state's grain_moisture_frac for harvested ridges, and flips the
+            inventory's `grain_dried` flag so subsequent `store_grain()` knows
+            the grain is safe for long-term storage.
 
         Args:
-            target_moisture_pct: Target storage moisture, typically 13.0.
-                                 Must be in [11, 16].
+            target_moisture_pct: Target grain moisture percentage, 11-16 inclusive and no higher than the storage limit; default 13.0.
         """
         if not 11.0 <= float(target_moisture_pct) <= 16.0:
             return {"error": "target_moisture_pct must be in [11, 16]"}
@@ -1052,13 +1056,14 @@ class FarmWorldApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def store_grain(self) -> dict[str, Any]:
         """
-        Finalise harvested grain into long-term warehouse storage.
+        Description:
+            Finalise harvested grain into long-term warehouse storage.
 
-        Moves the trailer's `harvest_grain_kg` into the warehouse's
-        `warehouse_grain_kg` and zeroes the trailer. Records an action for
-        the workflow validator + FOS gate matchers so the post-harvest
-        sequence (harvest → dry → store) is observable end-to-end. If the
-        grain wasn't dried first, returns a warning but still moves it.
+            Moves the trailer's `harvest_grain_kg` into the warehouse's
+            `warehouse_grain_kg` and zeroes the trailer. Records an action for
+            the workflow validator + FOS gate matchers so the post-harvest
+            sequence (harvest → dry → store) is observable end-to-end. If the
+            grain wasn't dried first, returns a warning but still moves it.
         """
         moved_kg = round(self._inventory.harvest_grain_kg, 2)
         market = self._postharvest_market

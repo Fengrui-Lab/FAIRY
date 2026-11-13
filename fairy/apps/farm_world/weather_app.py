@@ -69,7 +69,10 @@ class WeatherApp(App):
     @data_tool()
     @event_registered(operation_type=OperationType.READ)
     def get_current_weather(self) -> dict[str, Any]:
-        """Return today's weather readings from the on-farm weather station."""
+        """
+        Description:
+            Return today's weather readings from the on-farm weather station.
+        """
         return self._current_weather_dict()
 
     @type_check
@@ -78,10 +81,11 @@ class WeatherApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_forecast(self, days: int = 7) -> dict[str, Any]:
         """
-        Return weather forecast for the next N days (max 7).
+        Description:
+            Return weather forecast for the next N days (max 7).
 
         Args:
-            days: Number of forecast days to return (1-7).
+            days: Requested number of simulation days; clamped to 1 to 7, default 7. Fewer entries may be available.
         """
         days = max(1, min(7, int(days)))
         return {"forecast": self._weather.forecast[:days]}

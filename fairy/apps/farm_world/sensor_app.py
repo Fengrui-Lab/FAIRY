@@ -78,15 +78,16 @@ class SensorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def read_soil_sensors(self) -> dict[str, Any]:
         """
-        Return the latest readings from the six fixed soil probes.
+        Description:
+            Return the latest readings from the six fixed soil probes.
 
-        Each probe reports volumetric water content (vwc) and soil temperature
-        (temp_c) at 5 cm depth. The reading represents the average condition
-        of the ridges within the sensor's coverage zone.
+            Each probe reports volumetric water content (vwc) and soil temperature
+            (temp_c) at 5 cm depth. The reading represents the average condition
+            of the ridges within the sensor's coverage zone.
 
-        Sensor zones:
-          S1: ridges 0-10,  S2: ridges 11-21, S3: ridges 22-32,
-          S4: ridges 33-43, S5: ridges 44-53, S6: ridges 54-63.
+            Sensor zones:
+              S1: ridges 0-10,  S2: ridges 11-21, S3: ridges 22-32,
+              S4: ridges 33-43, S5: ridges 44-53, S6: ridges 54-63.
         """
         self._sync_sensors()
         readings = []
@@ -106,15 +107,16 @@ class SensorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def read_canopy_sensors(self) -> dict[str, Any]:
         """
-        Return the latest readings from the six fixed canopy sensors.
+        Description:
+            Return the latest readings from the six fixed canopy sensors.
 
-        Each sensor reports an ndvi_proxy value (0.0-1.0). A value of -1
-        means no valid reading yet (pre-emergence). The reading represents
-        the average canopy condition within the sensor's coverage zone.
+            Each sensor reports an ndvi_proxy value (0.0-1.0). A value of -1
+            means no valid reading yet (pre-emergence). The reading represents
+            the average canopy condition within the sensor's coverage zone.
 
-        Sensor zones:
-          C1: ridges 0-10,  C2: ridges 11-21, C3: ridges 22-32,
-          C4: ridges 33-43, C5: ridges 44-53, C6: ridges 54-63.
+            Sensor zones:
+              C1: ridges 0-10,  C2: ridges 11-21, C3: ridges 22-32,
+              C4: ridges 33-43, C5: ridges 44-53, C6: ridges 54-63.
         """
         self._sync_sensors()
         readings = []
@@ -132,10 +134,11 @@ class SensorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def read_soil_sensor(self, sensor_id: str) -> dict[str, Any]:
         """
-        Return the latest reading from a single soil probe.
+        Description:
+            Return the latest reading from a single soil probe.
 
         Args:
-            sensor_id: "S1" through "S6".
+            sensor_id: Existing sensor ID, case-sensitive; default IDs S1 to S6. Get active IDs and coverage from read_soil_sensors.
         """
         self._sync_sensors()
         sensor = self._find_soil(sensor_id)
@@ -154,10 +157,11 @@ class SensorApp(App):
     @event_registered(operation_type=OperationType.READ)
     def read_canopy_sensor(self, sensor_id: str) -> dict[str, Any]:
         """
-        Return the latest reading from a single canopy sensor.
+        Description:
+            Return the latest reading from a single canopy sensor.
 
         Args:
-            sensor_id: "C1" through "C6".
+            sensor_id: Existing sensor ID, case-sensitive; default IDs C1 to C6. Get active IDs and coverage from read_canopy_sensors.
         """
         self._sync_sensors()
         sensor = self._find_canopy(sensor_id)

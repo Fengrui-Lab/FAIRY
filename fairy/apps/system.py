@@ -37,11 +37,12 @@ class SystemApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_current_time(self) -> dict:
         """
-        Get the current simulation time, date, and weekday in UTC.
+        Description:
+            Get the current simulation time, date, and weekday in UTC.
 
-        Returns a dictionary with the keys "current_timestamp" (epoch
-        timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
-        "current_weekday" (Monday, Tuesday, etc.).
+            Returns a dictionary with the keys "current_timestamp" (epoch
+            timestamp), "current_datetime" (YYYY-MM-DD HH:MM:SS), and
+            "current_weekday" (Monday, Tuesday, etc.).
         """
         timestamp = self.time_manager.time()
         date = datetime.fromtimestamp(timestamp, tz=timezone.utc)
@@ -68,21 +69,22 @@ class SystemApp(App):
         days: int = 0,
     ) -> dict:
         """
-        Advance the simulation clock by a specified amount of time.
+        Description:
+            Advance the simulation clock by a specified amount of time.
 
-        Use this fast-forward tool when waiting for biological or physical
-        processes to play out, such as crop growth, soil drying, treatment
-        residual decay, irrigation effects, or post-harvest drying. After time
-        advances, subsequent state reads reflect the evolved world.
+            Use this fast-forward tool when waiting for biological or physical
+            processes to play out, such as crop growth, soil drying, treatment
+            residual decay, irrigation effects, or post-harvest drying. After time
+            advances, subsequent state reads reflect the evolved world.
+
+            Returns: A dictionary containing the new current time.
 
         Args:
-            seconds: Seconds to advance.
-            minutes: Minutes to advance.
-            hours: Hours to advance.
-            days: Days to advance.
-
-        Returns:
-            A dictionary containing the new current time.
+            seconds: Simulation seconds to add; default 0.
+            minutes: Simulation minutes to add; default 0.
+            hours: Simulation hours to add; default 0.
+            days: Simulation days to add; default 0. The sum of all four duration components
+                must be positive.
         """
         total_seconds = (
             int(seconds) + int(minutes) * 60 + int(hours) * 3600 + int(days) * 86400
@@ -121,14 +123,16 @@ class SystemApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def wait_for_notification(self, timeout: int = 0) -> None:
         """
-        Wait until the next notification or user message is received.
+        Description:
+            Wait until the next notification or user message is received.
 
-        Use this only when there are no other useful tasks to perform. If
-        timeout is greater than zero, waiting ends after at most that many
-        seconds even if no notification arrives.
+            If timeout is greater than zero, waiting ends after at most that many seconds even if no notification arrives.
+
+        Relation:
+            Use this only when there are no other useful tasks to perform.
 
         Args:
-            timeout: Maximum number of seconds to wait.
+            timeout: Maximum simulation seconds to wait, >= 0; default 0 checks only for an already-due notification.
         """
         timeout = int(timeout)
         assert timeout >= 0, "Timeout must be non-negative"

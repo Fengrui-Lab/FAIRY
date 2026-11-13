@@ -81,11 +81,12 @@ class FieldOpsApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def irrigate_ridge(self, ridge_id: int, duration_hours: float) -> dict[str, Any]:
         """
-        Irrigate a single ridge.
+        Description:
+            Irrigate a single ridge.
 
         Args:
-            ridge_id:       Ridge to irrigate (0-63).
-            duration_hours: Irrigation run time in hours.
+            ridge_id: Zero-based ID of an existing ridge.
+            duration_hours: Irrigation duration in simulation hours; must be positive.
         """
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
@@ -103,17 +104,18 @@ class FieldOpsApp(App):
     @event_registered(operation_type=OperationType.WRITE)
     def irrigate(self, start: int, end: int, hours: float) -> dict[str, Any]:
         """
-        Irrigate a contiguous range of ridges.
+        Description:
+            Irrigate a contiguous range of ridges.
 
-        Round-3 / round-4 alias for ``irrigate_range`` with a shorter
-        signature (``hours`` instead of ``duration_hours``). Behaves
-        identically. Provided to match the scenario scaffolds that use
-        the more concise name.
+            Round-3 / round-4 alias for ``irrigate_range`` with a shorter
+            signature (``hours`` instead of ``duration_hours``). Behaves
+            identically. Provided to match the scenario scaffolds that use
+            the more concise name.
 
         Args:
-            start: First ridge to irrigate (0-63).
-            end:   Last ridge to irrigate (0-63, >= start).
-            hours: Irrigation run time per ridge in hours.
+            start: Zero-based ID of the first existing ridge.
+            end: Last existing ridge ID, inclusive; must be >= start.
+            hours: Irrigation duration in simulation hours; must be positive. The same period applies to all target ridges, not a sum across them.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge range [{start}, {end}]"}
@@ -134,12 +136,13 @@ class FieldOpsApp(App):
         self, start: int, end: int, duration_hours: float
     ) -> dict[str, Any]:
         """
-        Irrigate a contiguous range of ridges.
+        Description:
+            Irrigate a contiguous range of ridges.
 
         Args:
-            start:          First ridge to irrigate (0-63).
-            end:            Last ridge to irrigate (0-63, >= start).
-            duration_hours: Irrigation run time per ridge in hours.
+            start: Zero-based ID of the first existing ridge.
+            end: Last existing ridge ID, inclusive; must be >= start.
+            duration_hours: Irrigation duration in simulation hours; must be positive. The same period applies to all target ridges, not a sum across them.
         """
         if not 0 <= start <= end < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge range [{start}, {end}]"}
@@ -175,15 +178,17 @@ class FieldOpsApp(App):
         ridge_count: int = 1,
     ) -> dict[str, Any]:
         """
-        Apply pesticide to one or two contiguous ridges using the handheld backpack sprayer.
-        Suitable for small, localised problems. For larger outbreaks use the
-        tractor spray boom instead.
+        Description:
+            Apply pesticide to one or two contiguous ridges using the handheld backpack sprayer.
+            Suitable for small, localised problems. For larger outbreaks use the
+            tractor spray boom instead.
 
         Args:
-            ridge_id: Ridge to spray (0-63).
-            liters_per_ridge: Pesticide volume to apply on this ridge.
-            advance_time: Whether to advance the simulation clock for one operator pass.
-            ridge_count: Number of contiguous ridges to spray, max 2.
+            ridge_id: Zero-based ID of the first existing ridge to spray.
+            liters_per_ridge: Insecticide volume per ridge in litres; positive, default 3.0.
+            advance_time: Whether to advance simulation time for spraying; default True. False
+                still applies and consumes pesticide.
+            ridge_count: Number of adjacent ridges, 1 or 2; default 1. All must exist.
         """
         if not 0 <= ridge_id < self._farm_world_app.num_ridges:
             return {"error": f"Invalid ridge_id {ridge_id}"}
@@ -251,7 +256,8 @@ class FieldOpsApp(App):
     @event_registered(operation_type=OperationType.READ)
     def get_irrigation_log(self) -> dict[str, Any]:
         """
-        Return the irrigation history for all ridges.
+        Description:
+            Return the irrigation history for all ridges.
         """
         return {"irrigation_log": list(self._irrigation_log)}
 

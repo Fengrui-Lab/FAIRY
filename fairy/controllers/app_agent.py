@@ -29,7 +29,13 @@ class FinalAnswerApp(App):
     @app_tool()
     @event_registered(operation_type=OperationType.READ)
     def final_answer(self, answer: str) -> str:
-        """Return the final answer for an app-agent delegated task."""
+        """
+        Description:
+            Return the final answer for an app-agent delegated task.
+
+        Args:
+            answer: Concise results, including any unfinished work.
+        """
         return str(answer)
 
 
@@ -70,10 +76,14 @@ class AppAgent(App):
     @event_registered(operation_type=OperationType.READ)
     def expert_agent(self, task: str) -> str:
         """
-        Ask the expert agent for this app to complete a specific task.
+        Description:
+            Ask the expert agent for this app to complete a specific task.
 
-        The expert can call the wrapped app's tools and should answer with a
-        concise completion summary or call `FinalAnswerTool__final_answer`.
+            The expert can call the wrapped app's tools and should answer with a
+            concise completion summary or call `FinalAnswerTool__final_answer`.
+
+        Args:
+            task: Specific task, relevant context, and constraints for this app's expert.
         """
         self.app_agent.set_time_manager(self.time_manager)
         self.app_agent.messages = Messages(
