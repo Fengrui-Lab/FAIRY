@@ -51,7 +51,7 @@ class FakeLLM:
 
 
 class ToolRelationsCLITests(unittest.TestCase):
-    def _run_cli(self, flags: list[str], *, a2a: bool = False):
+    def _run_cli(self, flags: list[str], *, a2a: bool = False, llm_builder=None):
         app = RelationExampleApp()
         scenario = SimpleNamespace(apps=[app], setup=Mock(), seed=0)
         argv = ["fairy", "--agent", "--scenario", "schema-test", *flags]
@@ -64,7 +64,7 @@ class ToolRelationsCLITests(unittest.TestCase):
             stack.enter_context(patch("sys.argv", argv))
             stack.enter_context(redirect_stdout(StringIO()))
             stack.enter_context(patch.object(cli, "get_scenario_class", return_value=lambda **_: scenario))
-            stack.enter_context(patch.object(cli.BaseLLM, "llm_builder", side_effect=lambda _: FakeLLM()))
+            stack.enter_context(patch.object(cli.BaseLLM, "llm_builder", side_effect=llm_builder or (lambda _: FakeLLM())))
             stack.enter_context(patch.object(Path, "mkdir"))
             stack.enter_context(patch.object(Path, "exists", return_value=False))
             stack.enter_context(patch.object(cli, "_cleanup_legacy_artifacts"))
@@ -124,15 +124,22 @@ class ToolRelationsCLITests(unittest.TestCase):
 
 
 class ToolRelationsRunnerTests(unittest.TestCase):
-    def test_runner_modes_reach_child_schema_and_results(self) -> None:
+    def test_runner_settings_reach_child_schema_request_and_results(self) -> None:
         cases = (
-            ([], {}, "on"),
-            (["--tool-relations", "off"], {}, "off"),
-            (["--config", "config.json"], {"tool_relations": "off"}, "off"),
+            ([], {}, "on", None),
+            (["--tool-relations", "off"], {}, "off", None),
+            (["--config", "config.json"], {"tool_relations": "off"}, "off", None),
             (["--config", "config.json", "--tool-relations", "on"],
-             {"tool_relations": "off"}, "on"),
+             {"tool_relations": "off"}, "on", None),
+            (["--config", "config.json"], {"enable_thinking": False}, "on", False),
+            (["--config", "config.json"], {"enable_thinking": True}, "on", True),
+            (["--config", "config.json"], {"enable_thinking": None}, "on", None),
+            (["--config", "config.json", "--enable-thinking", "false"],
+             {"enable_thinking": True}, "on", False),
+            (["--config", "config.json", "--a2a", "true", "--a2a-app-prop", "1"],
+             {"enable_thinking": False}, "on", False),
         )
-        for flags, config, expected in cases:
+        for flags, config, expected, thinking in cases:
             with self.subTest(flags=flags), ExitStack() as stack:
                 argv = ["runner", "--phase", "test", "--output-root", "/tmp/fairy-test",
                         "--families", "farm_baseline_react", "--scenarios", "schema-test",
@@ -150,11 +157,43 @@ class ToolRelationsRunnerTests(unittest.TestCase):
                 command = process.call_args.args[0]
                 self.assertEqual(command[command.index("--tool-relations") + 1], expected)
                 self.assertEqual(csv_write.call_args.args[1][0]["tool_relations"], expected)
+                self.assertIs(csv_write.call_args.args[1][0]["enable_thinking"], thinking)
+                if thinking is None:
+                    self.assertNotIn("--enable-thinking", command)
+                else:
+                    self.assertEqual(command[command.index("--enable-thinking") + 1], str(thinking).lower())
             # Feed the actual generated child arguments into real CLI/schema
             # construction, with scenario execution and artifact I/O mocked.
-            agent, _, report = ToolRelationsCLITests()._run_cli(command[3:])
+            real_builder = cli.BaseLLM.llm_builder
+            with patch("fairy.agents.llm.vllm_client.OpenAI") as sdk:
+                agent, scenario, report = ToolRelationsCLITests()._run_cli(command[3:], llm_builder=real_builder)
+                clients = [agent.llm]
+                if report["a2a"]["enabled"]:
+                    clients.append(scenario.apps[0].app_agent.llm)
+                for client in clients:
+                    client.chat_completion([{"role": "user", "content": "Test"}], tools=[])
+                    request = sdk.return_value.chat.completions.create.call_args.kwargs
+                    if thinking is None:
+                        self.assertNotIn("extra_body", request)
+                    else:
+                        self.assertEqual(request["extra_body"], {"chat_template_kwargs": {"enable_thinking": thinking}})
             self.assertEqual(agent.include_tool_relations, expected == "on")
             self.assertEqual(report["tool_relations"], expected)
+            self.assertIs(report["llm_config"]["enable_thinking_override"], thinking)
+
+    def test_invalid_thinking_cli_value_or_provider_fails_before_lookup(self) -> None:
+        cases = (
+            ["--provider", "vllm", "--enable-thinking", "invalid"],
+            ["--provider", "deepseek", "--enable-thinking", "false"],
+            ["--provider", "vllm", "--enable-thinking", "false", "--a2a", "true", "--a2a-provider", "qwen"],
+        )
+        for flags in cases:
+            with self.subTest(flags=flags), patch("sys.argv", ["fairy", "--agent", "-s", "schema-test", *flags]), \
+                    patch.object(cli, "get_scenario_class") as lookup, \
+                    redirect_stderr(StringIO()), self.assertRaises(SystemExit) as error:
+                cli.main()
+            self.assertEqual(error.exception.code, 2)
+            lookup.assert_not_called()
 
     def test_invalid_config_mode_fails_before_launch(self) -> None:
         for value in ("invalid", None, False, []):

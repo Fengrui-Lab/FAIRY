@@ -619,6 +619,7 @@ Parameters:
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client type. |
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
 | `--temperature` | float | `0.1` | Sampling temperature. Some reasoning/OpenAI models may ignore it. |
+| `--enable-thinking` | `true` / `false` | unset | Override `chat_template_kwargs.enable_thinking` for vLLM main and A2A clients. Unset preserves the server default; requires vLLM for both when A2A is enabled. Effective value is recorded as `llm_config.enable_thinking_override`. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; passed to the provider as `max_tokens`. |
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
 | `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
@@ -1251,6 +1252,7 @@ Parameters:
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
 | `--tool-relations` | `on` / `off` | `on` | Passed to `fairy-run` for main and A2A agent tool schemas; recorded in `run_report.json` and `results.csv`. JSON config key: `tool_relations`. `off` omits only explicit Relation sections. |
+| `--enable-thinking` | `true` / `false` | unset | Passed to `fairy-run` for vLLM clients and recorded in `results.csv`. JSON key `enable_thinking` accepts `true`, `false`, or `null` (inherit server default). |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
 | `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`. |

@@ -145,6 +145,13 @@ def main() -> None:
     parser.add_argument("--model", default="deepseek-chat", help="LLM model for --agent")
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
     parser.add_argument(
+        "--enable-thinking",
+        type=_str_to_bool,
+        default=None,
+        metavar="{true,false}",
+        help="Override thinking for vLLM main/A2A clients; omit to inherit the server default",
+    )
+    parser.add_argument(
         "--max-output-tokens",
         "--max-tokens",
         dest="max_output_tokens",
@@ -185,6 +192,11 @@ def main() -> None:
         return
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
+    if args.enable_thinking is not None:
+        if args.provider.lower() != "vllm":
+            parser.error("--enable-thinking currently requires --provider vllm")
+        if args.a2a and (args.a2a_provider or args.provider).lower() != "vllm":
+            parser.error("--enable-thinking also requires a vllm A2A provider when A2A is enabled")
     if not args.scenario:
         parser.error("--scenario is required unless --list is used")
     scenario_class = get_scenario_class(args.scenario)
@@ -286,6 +298,7 @@ def main() -> None:
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
+                **({"enable_thinking": args.enable_thinking} if args.enable_thinking is not None else {}),
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
         )
@@ -304,6 +317,7 @@ def main() -> None:
                         "temperature": args.temperature,
                         "max_output_tokens": args.max_output_tokens,
                         "parallel_tool_calls": args.parallel_tool_calls,
+                        **({"enable_thinking": args.enable_thinking} if args.enable_thinking is not None else {}),
                         **({"base_url": app_endpoint} if app_endpoint else {}),
                     }
                 )
