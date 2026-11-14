@@ -107,7 +107,7 @@ Args:
 """
 Description:
     Return fuel, fertilizer, pesticide, seed and grain loads, grain-bin capacity, and
-    attached/available implements. Fungicide level is omitted.
+    attached/available implements. Trailer and warehouse stocks are excluded. Fungicide level is omitted.
 
     grader = levelling attachment; EARLY_COLD = early, cold-tolerant seed;
     HEIHE/HEINONG/HEIKE codes name cultivars.
@@ -405,14 +405,21 @@ Args:
 ```python
 """
 Description:
-    Collect grain from mature ridges into the onboard bin. Requires R8 (full maturity),
-    grain moisture <= 18%, no rain, trafficable ground, and sufficient bin space.
-    Consume fuel and simulation time; return harvested ridges and collected grain mass.
-    Current bin capacity: 2000 kg.
+    Collect grain from planted, mature ridges into the onboard grain bin.
+    Every target ridge must be at R8 (full maturity) with grain moisture <= 18%.
+    Requires no rain and trafficable ground. Currently consumes 2 L of fuel per
+    pass and advances simulation time.
+
+    Current bin capacity is 2000 kg. The capacity check requires at least
+    245 kg of free space per requested ridge: 980 kg for four ridges.
+    This conservative requirement applies even when actual collected grain
+    is lower. Return harvested ridges and collected grain mass.
 
 Relation:
-    Check FarmWorldApp.get_ridge_range_state for maturity and grain moisture.
-    Use unload_grain if the bin lacks space for the next harvest pass.
+    Check FarmWorldApp.get_ridge_range_state for maturity and grain moisture,
+    and get_status for onboard grain load and bin capacity.
+    Use unload_grain when space is insufficient, and after the final pass
+    if the task requires all harvested grain to be unloaded.
 
 Args:
     start_ridge: Zero-based ID of the first existing ridge.
@@ -428,8 +435,11 @@ Args:
 ```python
 """
 Description:
-    Transfer all harvested grain from the onboard bin to the trailer, freeing the bin
-    for further harvesting. Return unloaded mass and empty-bin status. Currently takes 8
-    simulation minutes; no drying or warehouse storage occurs.
+    Transfer all grain from the onboard grain bin to the trailer and empty
+    the bin. Return unloaded mass and empty-bin status.
+    Currently takes 8 simulation minutes; no drying or warehouse storage occurs.
+    
+Relation:
+    Use between harvest passes or to unload the final harvested batch.
 """
 ```

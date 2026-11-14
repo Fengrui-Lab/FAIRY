@@ -73,7 +73,9 @@ Args:
 ```python
 """
 Description:
-    Return farm stocks, management limits/usage, and drying/storage requirements.
+    Return warehouse supplies, trailer and warehouse grain stocks,
+    management limits/usage, and drying/storage requirements.
+    Tractor onboard loads, including grain in the onboard bin, are excluded.
     harvest_grain_kg is trailer grain; warehouse_grain_kg is stored grain; null limits
     are unset.
 
@@ -149,11 +151,14 @@ Args:
 ```python
 """
 Description:
-    Move the whole trailer batch into warehouse storage within capacity. Return
-    transferred mass, updated stocks, and batch moisture. No drying or simulation time
-    advance occurs; unsafe grain may still be stored with a warning.
+    Move the whole trailer batch into warehouse storage within capacity,
+    emptying the trailer. Grain remaining in the tractor's onboard bin is not transferred.
+    Return transferred mass, updated stocks, and batch moisture.
+    No drying or simulation time advance occurs; unsafe grain may still
+    be stored with a warning.
 
 Relation:
-    Use dry_grain first if the batch needs drying for storage.
+    Use TractorApp.unload_grain first if the grain to store is still onboard.
+    Use dry_grain first if the trailer batch needs drying for storage.
 """
 ```
