@@ -3,9 +3,21 @@
 状态：设计文档，待用户校准后再实施。更新：2026-11-15。
 反馈格式与新增统计遵守 [README.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/README.md)。
 
+本版采用统一旧失败标签和 workflow 错误内容的方案；旧清单/执行 prompt 尚未同步，其中冻结旧表示及旧数值的条款已失效。
+
 ## 1. 工具错误
 
-以对应工具回复进入上下文；content 是 error 对象的 JSON 字符串：
+同一次工具错误先生成一个 error 对象，再分别保存记录和构造消息：
+
+```python
+error_obj = {"error": original_error_text}
+workflow_step.content = error_obj
+tool_message["content"] = json.dumps(error_obj, ensure_ascii=False)
+```
+
+workflow.content 是字典对象，消息 content 是字符串；JSON 解码消息正文后，应与 workflow.content 相等。以上为设计示意，统一包装不修改工具错误原因。异常文本不再作为新 workflow 的裸字符串；已有合规业务 error 对象复用。
+
+对应工具回复进入上下文的形式：
 
 ```json
 {
@@ -18,8 +30,9 @@
 - 使用真实 tool_call_id，每次已处理调用只有一个匹配回复；不另加 user/system 错误消息。
 - 发起调用的 assistant 消息之后，先补齐同批所有工具回复，再放执行过程中暂存的其他通知。
 - 本轮不改变工具历史的保留规则；不自动删除失败、不永久钉住失败、不自动推断已经修复。
-- 外发反馈独立生成；现有 workflow 继续保存原始结果及原异常表示，不用新 JSON 反馈覆盖它。
-- 将来若裁剪工具历史，只改变发送视图；原始 workflow 与运行记录保留，工具调用/回复必须保持合法关联。
+- 运行继续时，工具错误随正常历史进入后续请求，不采用 LLM 纠错的一次性移除规则；若运行已停止，不为发送错误额外发起 LLM 请求。
+- 三类工具失败均按 README 记为 TOOL_ERROR；成功结果的消息和 workflow 内容沿用原处理方式。一次调用只保留一个工具步骤，不再加一条错误反馈步骤。
+- 将来若裁剪工具历史，只改变发送视图；完整 workflow 与运行记录保留，工具调用/回复必须保持合法关联。
 
 ## 2. LLM 错误：只反馈给紧接着的一次请求
 
@@ -64,41 +77,45 @@ system 表示框架提供的生成纠正反馈，不是第三类系统/引擎报
 
 ## 3. 如何在场景运行后定位
 
-沿用现有完整 `*.runtime_log.jsonl`，只附加必要字段，不重写旧事件。
+沿用现有完整 `*.runtime_log.jsonl`。新运行按 README 重新分类工具主结果事件，并附加必要关联字段；已经生成的历史文件不追溯改写。
 
-兼容要求不冻结请求描述：response_policy.retry_changes_request 允许更新为符合新行为的值，messages 快照必须记录实际发送内容；旧事件类型/status/计数与评估输入仍保持。
+response_policy.retry_changes_request 须如实反映新行为，messages 快照记录实际发送内容。不能为保留旧字段值而记录失真的请求。工具事件类型/status 按新协议变化；全部旧统计字段、显示与计算方法保持不变，只追加新四项，旧数值可因输入变化而变化。
 
 | 位置 | 保留或附加的信息 |
 |---|---|
-| 既有工具主结果事件 | 原有字段不变；附加 is_error、实际生成的 agent_feedback；使用运行归属、事件序号及 tool_call_id 定位 |
+| 工具主结果事件 | 按 README 设置事件类型/status；附加 is_error、完整 agent_feedback；使用运行归属、事件序号及 tool_call_id 定位 |
+| 对应工具 runtime_metrics 行 | 失败 status=error、is_error=true；每次已处理调用一行，不因附加反馈重复计数 |
 | LLM 开始与结束事件 | 附加本次运行内唯一的 llm_call_id；保留原时间、响应和判定信息 |
 | 拒绝的 llm_call_end | 保留 accepted=false、rejection_reason；附加完整 agent_feedback |
 | 实际携带反馈的 llm_call_start | 保留本次发送的 messages 快照；附加 feedback_for_llm_call_id，指向反馈来源 |
 
-- agent_feedback 保存 `{"error":"..."}`；它是日志附加信息，不替代旧 error_message、content_preview 或 workflow.content。
+- agent_feedback 保存完整 `{"error":"..."}` 对象；工具失败时，它与 workflow.content 及实际 tool.content 解码结果一致。原有 error_type/error_message/raw_arguments 等诊断信息继续如实记录；业务错误不伪造异常类型，短 preview 不能代替完整反馈。
 - 若请求没有携带临时反馈，不填写其来源；历史日志快照不得因后续移除反馈而被修改。
 - 拒绝后停止仍有拒绝记录，但不存在对应的反馈使用请求。
 - 日志只能证明“反馈纳入了哪个 client 请求”；网络失败时不能宣称服务端已收到。
 - 当前进度日志省略完整 messages，最终诊断应查看 runtime_log.jsonl。agent_workflow.json 不记录 LLM 响应错误，也不加入 LLM 纠错步骤。
 - 同一个 tool_call_id 不应作为跨运行唯一身份；请求/事件编号需限定在所属 Agent 运行内。
-- 日志保留原始评估结果与真实 Agent 展示反馈；统一展示后，这两份文本不必相同，不能再假定 workflow.content 就是实际发送的全部文字。
+- 工具错误原因在日志、workflow 和实际消息中一致，只有对象/字符串的存储类型不同。LLM 错误原因保留在运行日志及其一次性请求中，不出现在 workflow。
 
-## 4. 不影响旧回放和评分的约束
+## 4. workflow、回放与评估的范围
 
-- 回放与评分继续使用原 workflow；不从裁剪后的消息或临时反馈列表重建评估轨迹。
-- 不改 workflow 的 content、op_type、error_stage、工具名、参数、顺序、时间及其既有构造逻辑。
+- 回放与评分使用完整 workflow，不从裁剪后的消息或临时 LLM 反馈列表重建评估轨迹。工具失败的 content/op_type/error_stage 按新协议保存，工具名、参数、顺序、实际时间不变。
 - 不给 workflow 增加 LLM 错误、重试或反馈节点，不把被拒绝响应中的工具变成实际工具调用。
-- 不为新统计改变旧 runtime 事件的数量、类型和含义；附加元数据不应被旧读取器重新解释。
-- 不改评分公式、错误关键词判断、回放是否执行的规则或 controller 的原有行为。
-- 在固定调用/轨迹、环境和实现版本下检验旧结果一致。模型得到新反馈后的新轨迹可能不同，这属于交互改变，不能承诺重跑仍同分。
+- 本协议覆盖的记录转换须保留失败事实及原阶段；若转换为 CompletedEvent 再导出 workflow，也不能仅凭工具读/写类型覆盖掉 TOOL_ERROR。必要字段传递属于协议适配，不等于给 gate 增加成功条件。
+- TOOL_ERROR 表示调用失败，不代表工具未执行、无状态变化或应自动重试。解析失败的未执行事实不能在转换中丢失；tool_call 阶段不能被一律当作未执行。
+- 本轮不主动改变 gate、路径指标、安全关键词、回放是否执行/缺工具恢复/结果比较策略或 controller 分流。只读检查这些消费者，区分旧缺陷与由新记录触发的行为变化；超出字段传递的修复单独提出。
+- 当前消费者并非全按同一失败字段判定：有的读 TOOL_ERROR，有的读 content.error，有的只匹配工具名/参数。规则不变仍可能因为输入表示改变而变分；既有误判不得被描述为协议已解决或必然合理。
+- 历史数据保留原貌，新运行按新协议；不以固定旧分数、旧统计值或旧 workflow 字节完全一致作为验收条件。LLM 纠错不进入评估输入，但它引导的新操作仍正常参与评估。
 
 ## 5. 必须通过的验证
 
-- 工具错误：反馈为合法 JSON；实际下次请求有正确 tool_call_id；原始结果和旧 workflow 与改造前一致。
+- 三类工具错误：事件/指标/workflow 标签符合 README；workflow.content 是对象，实际下次请求的 tool.content 是合法 JSON 字符串，解码后二者及 agent_feedback 相等，原有错误文字不变。
+- 工具名、参数、实际时间与业务执行不因包装改变；成功输出沿用原方式。每个已处理请求只处理一次，工具方法至多执行一次，解析/查找等执行前失败不执行工具；记一个主结果事件、一条指标及一个原工具步骤。
 - 同批多个工具包含异常及执行期间通知：先补齐对应 tool 回复，再插入暂存通知，调用与回复不遗漏、不重复。
 - LLM 拒绝→有效响应→后续请求：反馈只出现一次；日志始终可定位原错误及使用位置。
 - LLM 拒绝→网络失败→重试：旧反馈不进入第二个后续请求。
 - 连续两次拒绝：两次错误各计一次，各自反馈只关联一次请求。
 - 拒绝后停止：不增加请求，不伪造反馈已经使用。
-- 同一合成事件序列：旧统计不变，新四项满足 README 的减法关系。
-- 固定 trace：旧回放动作、评分与结果保持一致；LLM 反馈不成为评估步骤。
+- 统计验收分两步：同一日志/指标输入下，新增四项前后全部旧字段结果相同；换成新协议事件后，旧数值变化应由事件重分类解释。新四项满足 README 的口径与减法关系，不重复计数。
+- 记录转换：失败对象、TOOL_ERROR 和原 error_stage 不丢失；Agent JSON 字符串不能直接替代 workflow 对象。
+- 回放/评估兼容核查：记录实际是否执行、失败事件是否保留、缺失工具如何处理、原结果与回放结果是否不同；区分预期识别变化、既有判别缺陷和迁移引入的问题，不以“允许分数变化”代替解释，也不自动扩大评分修改范围。
