@@ -9,8 +9,10 @@
 ```python
 """
 Description:
-    Attach an implement and return its name. Use detach_implement first if a different
-    implement is attached.
+    Attach an implement and return its name. A different implement must not already be attached.
+
+Relation:
+    Use detach_implement to remove the current implement before switching.
 
 Args:
     implement: grader (levelling), furrower (furrowing), harvester (harvesting), sprayer

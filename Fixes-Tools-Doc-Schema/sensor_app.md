@@ -14,7 +14,7 @@ Description:
     measurement error. Current readings represent 5 cm depth.
 
     Default deployment: S1-S6 cover ridges 0-10, 11-21, 22-32, 33-43, 44-53, and 54-63
-    respectively. Use returned IDs and coverage for the active deployment.
+    respectively. Returned IDs and coverage reflect the active deployment.
 """
 ```
 
@@ -30,7 +30,7 @@ Description:
     measurement error.
 
     Default deployment: C1-C6 cover ridges 0-10, 11-21, 22-32, 33-43, 44-53, and 54-63
-    respectively. Use returned IDs and coverage for the active deployment.
+    respectively. Returned IDs and coverage reflect the active deployment.
 """
 ```
 
