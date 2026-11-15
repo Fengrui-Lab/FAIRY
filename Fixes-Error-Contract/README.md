@@ -1,6 +1,6 @@
 # Agent 错误反馈协议
 
-状态：设计文档，待用户校准后再实施。更新：2026-11-15。
+状态：错误反馈与统计已实现；记录转换及回放适配已按最新要求撤回。验证与保留边界见 [IMPLEMENTATION-NOTES.md](IMPLEMENTATION-NOTES.md)。更新：2026-11-15。
 
 本协议只约束两类面向 Agent 的错误：**工具调用错误**、**LLM 响应不可用的纠错反馈**，以及它们的分类、记录、上下文和统计。系统 debug、基础设施故障处理、停止机制、评分规则不在改造范围内。
 
@@ -109,6 +109,7 @@ elapsed=... llm=... tools=... tool_errors=... tokens_in=... tokens_out=... last=
 - **规则不变不代表结果不变。** TOOL_ERROR 会被回放读取；workflow 中异常文本改为 error 对象，也会改变现有消费者的识别范围。即使固定调用轨迹，统计与评分也可能改变。
 - 已知条件性风险：异常对象开始进入安全关键词检测后，解析错误中的 dry_grain 可能因含 rain 被计安全违规；部分 gate 则仍可能接受失败尝试。这些是消费者的判别问题，单列说明，不自动扩大为本轮评分改造，也不能宣称变化都代表评估更正确。
 - 不根据 TOOL_ERROR 自动删除失败步骤、跳过所有回放执行或将它当作真实异常。回放缺工具恢复、实际结果与原记录的差异，以及记录转换中的失败信息传递，都需按实际路径核查并报告；不以格式统一为由自行改变这些策略。
+- 按最新回退要求，本轮保留原版 CompletedEvent、workflow 转换与回放实现，包括原时间口径、工具名称/读写类型生成方式及连续 advance_time 合并规则。原始 Agent workflow 仍按本协议记录错误；后续转换可能丢失失败标签/阶段的旧问题暂不修复。
 - 模型看到统一反馈后也可能改变后续决策，不保证重新运行得到相同轨迹或分数。本轮不修具体工具文案、参数条件或失败前的状态修改。
 
 上下文位置、一次性反馈与运行后定位见 [ErrorContextManagement.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/ErrorContextManagement.md)。文件范围和执行 prompt 见 [FILE-INVENTORY.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/FILE-INVENTORY.md)、[FILE-PROMPTS.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/FILE-PROMPTS.md)。
