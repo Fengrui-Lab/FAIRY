@@ -8,7 +8,7 @@
 5. ✅ System prompt 的结构和内容的校验，进一步区分“固定公用部分、可选（可注入）部分、Scenario 私有部分”；[详见Fixes-Knowledge-Library/README.md](Fixes-Knowledge-Library/README.md)
 6. ✅ Library：FAIRY Library中知识抽取时可能利用了工具的tag，这一模式需要校对；[详见Fixes-Knowledge-Library/README.md](Fixes-Knowledge-Library/README.md)
 7. Library：知识载入的多模式划分，以及其内容、格式、位置、时间的校对；[详见Fixes-Knowledge-Library/README.md](Fixes-Knowledge-Library/README.md)
-8. <span style="background-color:#FF5722; color:white;">TODO</span>: 统一代码库中所有描述所用的语言/做成双语？
+8. <span style="background-color:#FF5722; color:white;">TODO</span>: 统一代码库中所有描述所用的语言，或者做成双语。
 9. <span style="background-color:#FF5722; color:white;">TODO</span> 工具的删减（推进时间的工具advance_time、wait_for_notification、commit_daily_physics功能重叠）
 10. <span style="background-color:#FF5722; color:white;">TODO</span> LLM的“思考”模式等其他参数的配置只打通了vllm，通过enable_thinking参数配置。
 11. <span style="background-color:#FF5722; color:white;">TODO</span>: Agent Controller的实际实现；以及其与当前System的固定提示词之间的冲突或覆盖问题。

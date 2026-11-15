@@ -400,7 +400,7 @@ Relation 当前是原文追加，**不会按实例名改写引用，也不校验
 | `l2_pathsim_*` / `l3_pathsim_*` | 外部 context map 中该 ID 对应的参考卡/工作流摘要；不是由此 ID 固定对应一份内置答案 | 先独立预跑或读取 candidate 轨迹，与 oracle 参考库离线评分、写 map，再开始带知识的新 run |
 | `l3_textsim_differ` | 外部 map 中检索到的跨 L3 完整工作流摘要 | 离线按任务描述与参考工作流文本检索；不需要 candidate 预跑，仍依赖参考池 |
 
-pathsim 结果取决于 candidate 轨迹、参考池与 top-k；L3 textsim 取决于目标/参考文本、参考池与 top-k。运行时均读取 `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指定的 map，不能只凭场景 ID 和模式名给出唯一正文。本次未发现工作区内已有这些三例的 context map，也未假定外部环境变量指向的文件内容。
+pathsim 结果取决于 candidate 轨迹、参考池与 top-k；L3 textsim 取决于目标/参考文本、参考池与 top-k。运行时均读取 `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指定的 map，不能只凭场景 ID 和模式名给出唯一正文。首次三例审计时未发现已有 context map；后续生成的离线预览及条件见下一节，不代表找到了历史检索结果。
 
 L2 textsim 的一次**当前代码预览**如下：显式 top-k=6、使用现有卡池，表内只列前两张；不是历史实验记录，也不是相关性质量结论。
 
@@ -431,8 +431,263 @@ L2 textsim 的一次**当前代码预览**如下：显式 top-k=6、使用现有
 
 这证明“能加载知识”与“知识符合当前环境”是两件事，不是实际模型误调用或任务失败的证据。来源：[FarmWorld 工具](../fairy/apps/farm_world/farm_world_app.py)、[Tractor 杀菌实现](../fairy/apps/farm_world/tractor_app.py)、[FieldOps 手动杀虫实现](../fairy/apps/farm_world/field_ops_app.py)。本次仅核验并记录，未修改这些文本或运行真实任务。
 
+## 三类检索的流水线与版本影响
+
+### 1. 可直接查看的结果
+
+已新增 [三场景预览索引](previews/retrieval_2026-11-15/INDEX.md)：7个具体模式 × 3个场景，共21份完整 briefing；每份包含基础任务与检索知识，不含 system/controller context/tools。[manifest](previews/retrieval_2026-11-15/manifest.json) 记录参数、参考池、选中条目/分数、源码与数据哈希。5种离线模式还附实际 `contexts.json`。
+
+本次仅离线调用现有检索/渲染函数，没有调用 LLM 或执行 oracle 农事工具。预览条件必须保留：
+
+- L2 卡池为 pilot20/72卡，textsim top-k=6，grouped 为建植1/管理2/收获1；L3 参考池为 mini20，top-k=4。两组20个来源不是同一集合。
+- pathsim 使用已有 `validation_runs/l3_first5_qwen36_35b_on_nothink_errorfix_round3_eru7m4` 中三条真实轨迹（106/135/104步），但其 `detail=true`，不是设计中的 `detail=false` 基线。这里只作为检索演示。
+- 原始轨迹的 `time` 为字符串，直接评分报 TypeError。本次仅在预览目录保存按 CST 转为 epoch 秒的派生副本；保留执行后时刻和整秒精度，其他字段不变，未替换为 time_before/time_after，未修改原始轨迹或生产代码。
+
+TXT 如实保存 loader 的输出。脚本的 pathsim 说明硬编码了“DETAIL=FALSE”，而且不校验候选 detail；因此预览索引和 manifest 显式说明该句与本次输入不符，不能把它当作标准基线实验结果。
+
+### 2. 从什么数据得到 briefing
+
+这些机制执行的是**已有知识/操作示例的检索、选择和压缩**；没有在本轮用 LLM 提炼新知识，也没有根据目标任务成败更新知识库。
+
+| 模式 | 查询依据 | 候选知识与选择方法 | 最终追加到基础任务的内容 |
+|---|---|---|---|
+| L2 textsim / grouped | spec 的 ID、profile、description、briefing、可选 primary_metric | 静态 skill JSON；比较 skill_id、task_type、crop_stage、belief、constraints、success_checks 的词频 | 选中卡的来源、阶段、belief、证据链、约束、成功检查、oracle_event_template及分数 |
+| L2 pathsim / grouped | 目标 candidate 的实际工具轨迹 | 从 pilot 来源目录枚举 L2 场景，构建其 oracle 工作流；与 candidate 多个局部窗口算 FARM-FOS，取每个 L2 的最高分，排序选卡 | 按 source_l2_scenario_id 找回静态卡渲染，附匹配窗口位置/长度；不是直接发送 candidate 错误记录 |
+| L3 pathsim same/differ | 目标 candidate 的整条轨迹 | 与参考池每个 L3 oracle 的整条工作流算 FARM-FOS；same允许自身入池，differ排除自身 | 选中的 L3 ID、分数、压缩后的 oracle 工具调用序列 |
+| L3 textsim differ | 目标 ID/slug、profile、description、briefing、primary_seed、cultivar、可选 primary_metric | 对比参考 L3 的上述描述 + oracle 工作流摘要；排除自身，按词频相似度选 top-k | 选中的 L3 ID、分数与 oracle 工作流摘要 |
+
+两个 textsim 使用同类归一化词频重合分数：
+
+`score = Σ min(query词频, candidate词频) / sqrt(query总词数 × candidate总词数)`
+
+分词仅取英文字母和数字，去部分停用词；L2/L3 的停用词表不同。它不是 embedding 或完整中文语义检索。L2 的普通 top-k 不设最低相似度门槛，零分卡也可能被选中。
+
+pathsim 的 `_metric_score()` 调用 **FARM-FOS v1（compute_farm_fos）**：按工具名识别农事类别，同类动作以目标垄覆盖率 × 时间接近度匹配，贪心一对一分配；加权匹配分减去未匹配 candidate 动作的惩罚，再归一化到0–1。它不是严格的工具调用序列对齐，也不是词相似度。L2 的滑动窗口在全部步骤排序后截取，多种长度/位置取最大值；grouped 再按1/2/1取卡。
+
+Oracle 来源是 `scenario.setup() → workflow_from_oracle_events()`：读取声明的事件图和参数，并依据 advance_time 补时间，不执行 oracle 工具来获取真实观测。L3 摘要最多90步，只保留部分参数；L2 卡渲染会压缩连续等待并截断长字段。外部 map 保存这些渲染结果，任务启动时 loader 只读取对应文本。
+
+证据：[L2 查询/词频检索/卡渲染](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_context_briefings.py)；[oracle、局部窗口、L3摘要及离线检索](../scripts/fullseason/run_l3_skill_retrieval_experiments.py)；[FARM-FOS](../fairy/scenarios/fos/spatiotemporal.py)、[农事类别与权重](../fairy/scenarios/fos/calibration.py)。
+
+### 3. 相较 a7654d87 的 error/tag 修正影响
+
+比较 `a7654d87ee6f4e0ade1c3f74a6014cd4c9ac127c → 845eb13`。该区间检索脚本、briefing loader、FOS 实现、pilot 静态卡和本次查询文本来源均未修改。Agent 错误反馈与工具 doc/schema 有改动；以下将它们与标签效应分开。
+
+| 模式 | error 修正的直接影响 | READ/WRITE 修正的直接影响（固定 candidate） |
+|---|---|---|
+| L2 textsim / grouped | 无；不读取 Agent 轨迹/错误日志 | 无；不读取 operation tag，静态卡不自动更新 |
+| L2 pathsim / grouped | 仅改变 error 内容/标签时，现有 v1 分数不变 | 分数、窗口及卡正文不变；全部节点仍保留，v1不读取 READ/WRITE |
+| L3 pathsim same/differ | 仅改变 error 内容/标签时，分数不变 | 排序不直接变，**输出 oracle 摘要会变化** |
+| L3 textsim differ | 无 candidate 依赖，error 修正不直接参与 | **参考文本、相似度分数和输出摘要会变化**，排名也可能变化 |
+
+READ/WRITE 实际改动只有 `SystemApp.advance_time`、`wait_for_notification` 的 READ→WRITE。标签进入 oracle 工作流的 op_type；`_workflow_summary()` 在已输出超过20行后跳过 READ，改为 WRITE 后时间推进会被保留，并可能在90步上限下挤掉后续动作。因此 L3 textsim 的参考文字与 L3 pathsim 的输出文字会变。标签本身不导出到 function schema；同区间 doc/schema 的其他改动仍可影响模型。
+
+另有 `SystemApp.get_current_time` 新增 `@data_tool()`，APP 标记保留，无 APP/ENV 标记增删。当前检索不读取 DATA 标记，可见工具集合也不因此改变。
+
+受控内存验证（当前 mini20 oracle 图，仅将两项标签还原为旧 READ，不代表完整旧版本实验）：20/20个摘要变化，380个跨源文本分数中331个变化；mini20/k=4 下20个目标的 top4 集合和顺序恰好均未变化。400个有序工作流配对的 FARM-FOS 报告完全不变。三个示例的摘要中 advance_time 数量分别由0变为16/12/12。
+
+error 修正将业务错误标为 `TOOL_ERROR`、异常内容规范为 `{"error":...}`，并改变后续送模反馈。重新运行时，Agent 决策、动作和时间可能因此变化，进而**间接改变新 candidate 与 pathsim 结果**。这与给同一份旧轨迹重标 error 是不同实验；没有真实新旧对照时不能断言排名必变。
+
+### 4. 已确认的兼容与评分边界
+
+- **时间类型不兼容**：现有 loader 直接读取 Agent workflow，v1 `_season_day_map()` 对字符串 time 做减法会失败。字符串 time 在基准提交已存在，不是本次 error 修正引入；本次派生副本仅用于查看检索结果，未修复生产链路。
+- **候选条件未校验**：读取器只检查 `results.csv.return_code=="0"` 并选首条匹配记录，不校验 detail=false，也不要求场景成功。记录“成功执行”不能等同“任务成功”。
+- **错误标签没有接入当前 pathsim 评分**：v1不查看 content、TOOL_ERROR、error_stage 或 is_error，失败调用仍可能与 oracle 匹配。合成验证中，同一播种动作仅把错误字符串改为 error 字典，pathsim分数仍为1；v2才识别此变化，但检索未使用v2。
+- **农事评分覆盖有限**：当前 category 映射不含 mechanical_weed；v1也不核验肥量等一般参数。不能把高 pathsim 分数解释为完整农艺过程或执行结果正确，尤其这两个有机控草场景。
+- **旧 map 是冻结文本**：仍可加载，不会自动反映新标签、工具文档或错误反馈。重建 L3 map 才能体现新摘要；若希望 candidate 也体现新错误恢复行为，需要新的 candidate→新 map→评估。旧 map 可保留为明确的固定上下文条件。
+
+证据：[Agent 工作流/错误反馈](../fairy/agents/agent/agent.py)、[System 标签](../fairy/apps/system.py)、[工作流导出](../fairy/scenarios/workflow_validation.py)、[检索读取器与摘要器](../scripts/fullseason/run_l3_skill_retrieval_experiments.py)、[v1/v2 评分](../fairy/scenarios/fos/spatiotemporal.py)。本轮只增加文档和预览材料，保留原始轨迹；未修改检索或运行逻辑。
+
 ## 核验依据
 
 已完成 140 个注册 ID、清单关系与 briefing 分支的核对；16 组构造对照复现 CLI addendum 覆盖，首轮内存 mock 确认 system/user/tools 的结构，两轮 mock 确认研究记忆不回注但普通工具结果保留。上述均未调用真实 LLM。本次仅重整文档，并校验固定 prompt 原文、链接与 Markdown 格式，不修改运行时代码。
 
 ## 结构优化方案
+
+### structured_true：已确定的组合语义与可行性
+
+状态：**下述四种组合语义由用户明确；本轮已整理G/P审阅材料并给出拟议参数与接入方案，运行时尚未实现。** 现有 `true/false` 和知识模式保持原义。可行性核对基于 HEAD `961367a` 及当前工作区。
+
+#### 1. 基础任务固定，后两部分分别可选
+
+令 B 为同一 Scenario 的现有 false briefing，G 为从其他场景 detailed 文案归纳的可复用指南（也可由跨场景library知识替换），P 为从当前 Scenario 的现有 true briefing 提炼出的场景特定计划及其必要信息：
+
+| reusable_operational_guidelines | scenario_specific_plan | 最终 briefing |
+|---|---|---|
+| 不选 | 不选 | **B，逐字等于 false briefing** |
+| 选 | 不选 | B + G |
+| 不选 | 选 | B + P |
+| 选 | 选 | B + G + P |
+
+`detailed_briefing="structured_true"` 选择这一组装机制；还需两个独立组件选择项决定 G/P 是否加入。选择集合允许为空、任一单项或同时选择；具体 CLI/kwargs 建议见下方兼容式修正方案。
+
+- **B 始终保留原样。** 都不选时不增加标题、空章节、说明句或分隔符，也不加载未选组件；在其他配置相同时，不能再因选择 structured_true 而产生额外提示差异。
+- **G/P 互不依赖。** 只选 G 不得自动加入目标场景计划；只选 P 不得自动检索外部库。两者都选时按 B→G→P 拼接，并保留来源边界。
+- 四组合的等价/差异针对 briefing；system、tools、controller 等仍由各自配置控制。
+
+#### 2. 两类附加内容的来源与边界
+
+| 组件 | 来源与内容 | 边界 |
+|---|---|---|
+| `reusable_operational_guidelines`（G） | 默认从**其他场景的当前true详细文案**总结的可复用指南；也可替换为现有library/检索模式的跨源知识 | 不从目标场景 true 临时抽取一段充作跨场景知识；当前 L3 范围须排除目标 L3 同源材料。参考场景的日期、垄号、剂量不能自动变成目标参数 |
+| `scenario_specific_plan`（P） | 从**当前场景 true**总结出的场景特定计划，并包含理解/执行该计划所需的已知配置、硬约束、条件及复查要求 | 保留原有信息边界，不从完整 oracle/spec 自动补入原 true 未暴露的目标区域、剂量或等待时间；单独启用时应能配合 B 理解，不依赖未启用的 G |
+
+第二部分默认来自其他场景的detailed归纳，可由library来源替换；第三部分同样可关闭。目标true只为P提供计划内容，不作为G的知识来源。
+
+**“必要信息必须完整”只约束启用 P 时的提炼质量，不代表强制启用 P。** P 关闭时，原 true 独有的配置/约束不会被偷偷补入 B 或 G；B 中本来已有的约束则始终保留。若原 true 存在应移入所有模式的硬规则缺失，应作为单独的基础任务修订处理，不能破坏本模式“都不选等于 false”的约定。
+
+#### 3. 现有内容与三例可行性
+
+formal90 的详细字典全部包含步骤提示；81份有相似的“已知田块与种植计划 / 管理重点 / 总体约束”段落，9份采用其他结构。387条编号步骤去掉编号后有88种不同原文。这支持结构化维护 P，但不能靠统一标题切割或全文去重自动完成。以上统计并不意味着 G 应从目标 true 产生。
+
+| 场景 | G 的主要跨场景知识主题（完整映射见下方整理材料） | P 启用时应保留的场景信息 |
+|---|---|---|
+| 有机残茬 | 湿冷/高残茬建植、杂草与作物绿度鉴别、补种收益判断 | 有机限制、种植配置；底肥/播种后按证据控草，按缺苗与剩余季节判断补种，再完成收获后处理 |
+| 有机斑块 | 草害定位、地面确认、机械作业条件与复查方法 | 禁用常规除草剂、最多16垄；比较0–15/16–31/32–63并确认处理区，不能预先认定0–15必为最高压力 |
+| 微量元素 | 营养问题与水分/病虫问题的鉴别、定向恢复和复查 | 初花期叶色异常与种植配置；确认营养受限后处理，避免误喷药/灌溉；不补入原 true 未给出的28–43垄及0.16/0.8参数 |
+
+G 本轮同时整理一份来自其他场景详细文案的指南库，作为默认来源；替换为现有library知识时，来源模式、检索参数和版本需显式记录。允许目标自身入池的 same 模式不能直接保证 G 的跨场景要求。未来如扩至 L1/L2，需明确“其他场景”按 ID 还是 source L3 判断，不能默认同一母场景拆出的子任务就满足跨源要求。
+
+P 仍是从已有内容整理的**预置条件式计划**，不是当前观测生成的动态计划。“诊断后按需处理”不能改成无条件动作；共享文字也不能导致原计划的阶段、重复处理或收获批次被擅自合并。本轮按原文整理并保存证据，拟议运行时按ID加载，不增加在线LLM提炼或自动补全。
+
+#### 4. 工程接入与兼容性
+
+| 环节 | 所需工作 / 已知边界 |
+|---|---|
+| 模式与组合参数 | 在 `BriefingMode`、normalize 和 briefing loader 中显式注册 structured_true，新增独立组件选择及组装逻辑；不能仅将其别名为 true |
+| CLI / runner | 模式字符串本身已能透传，但组件选择参数及结果元数据需接入；当前 loader 尚不接受 structured_true |
+| 内容来源 | G 默认使用本轮跨场景detailed归纳指南，可替换为library/检索结果；P 使用按场景维护的提炼内容。启用但缺少内容时不能静默降级为其他组合 |
+| L3 入口 | 78个共享入口易统一接入；12个类内入口往往只传 ID/base/detail，不能假设完整 ScenarioSpec；错期播种的 true 额外日期约束也须纳入 P 提炼 |
+| L1/L2 | selected50 目前把任意非空字符串当作 true；需另行接入或拒绝不支持模式，避免误报新模式已生效；还须保留 checkpoint 的局部任务语义 |
+| 实验与预览 | 如经 ablation/retrieval 脚本运行，需登记新组并记录组件选择、G来源/检索参数、P版本，才能区分四种条件 |
+| 送模与 controller | 仍渲染为初始 user 文本，不需改变 LLM 返回解析器或 tools 协议；需核验 controller 对整个 briefing 的编号步骤提取 |
+
+`parse_rewoo_plan(task)` 被 ReWOO/tree/critic/graph 复用，会抓取全文行首编号；G 中的示例步骤可能被误当成目标计划，P 关闭时也有此风险。渲染格式应区分来源示例与目标计划，必要时让 controller 显式读取相应段落；仅加章节标题不会自动实现隔离。
+
+#### 5. 验证与范围建议
+
+- **先验证四组合契约。** 都不选与 false 逐字一致；单选不混入另一组件；全选同时保留二者及顺序；未选组件不加载，已选内容缺失不静默省略。
+- **分别验证 G 与 P。** G 检查跨源排除、来源和适用条件；P 逐项核对原 true 的参数、禁令、条件、顺序与复查要求。不能用“全选看起来完整”掩盖单选 P 对 G 的依赖。
+- **区分模式对照。** false 与空组合应等价；旧 true 与 P-only 不要求逐字相等，且要核对 B 加入后是否带来原 true 没有的信息；G+P 更不是旧 true 的纯格式变化。
+- **先以这三个 L3 试点。** 保留旧 true，验证首轮 payload、计划提取和四组合内容，再扩展90个L3。L1/L2 有“诊断已完成，只做最小复核”等语义，应单独适配。
+
+这一组合定义可实现，并可分别考察跨场景知识、目标场景计划及二者共同提供时的效果。它仍属于初始化注入，不能据此保证 token 减少、成功率提升或获得动态规划能力。本轮完成内容审阅材料和接入方案，未实现参数或修改运行代码。
+
+证据：[详细字典](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py)、[模式入口](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_context_briefings.py)、[错期播种附加约束](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_staggered_planting.py)、[runner 透传](../scripts/iclr_validation_runner.py)、[controller 计划提取](../fairy/controllers/research_strategies.py)。
+
+### scenario_specific_plan 整理材料
+
+本轮整理对象为 `harbin_l3_detailed_briefings.py` 的全部字典记录，产物是**内容审阅材料，不是已经接入运行时的新模式**。入口：[计划索引](scenario_specific_plan/INDEX.md)；[全部计划正文](scenario_specific_plan/PLANS.md)；[覆盖与来源清单](scenario_specific_plan/manifest.json)。
+
+范围为91条来源记录：formal90全部覆盖，另有 `scenario_full_season_hb_organic_杂草覆盖和行间竞争_allowed_inputs` 这一不在formal90中的记录。额外记录原样保留其ID并标为未匹配来源，不自动改名、映射或注册成场景。
+
+三个JSON分片为审阅数据：[01](scenario_specific_plan/plans_01.json)、[02](scenario_specific_plan/plans_02.json)、[03](scenario_specific_plan/plans_03.json)，统一记录：
+
+| 字段 | 用途 |
+|---|---|
+| scenario_id / in_formal90 | 场景映射与本次清单归属 |
+| scenario_requirements | 从当前true提炼的任务条件、配置、限制及必要前提 |
+| steps[].order / instruction | 按原次序保留的精简步骤，不合并重复动作 |
+| steps[].timing / quantities | 原文明确给出的阶段、时间、间隔、范围、数量及单位；未明确则留空 |
+| source_start_line / source_end_line / source_sha256 | 来源定位与内容版本 |
+| steps[].source_text / review_notes | 原步骤与疑点，供人工审阅；不作为默认送模正文 |
+
+提炼保留条件性及必要证据链，压缩泛泛的作用说明；不从 spec/actions、oracle 或 Kwoo 补充目标参数。原文没有日期、阶段或剂量时不自行推算。源文重复步骤、未指明分区、数值不一致或疑似错配的管理重点保留审阅备注，整理不等于已纠正这些原文问题。
+
+此数据只覆盖指定文件。布尔true在某些场景类中追加的文字仍须在接入时补齐，例如错期播种的最早日期；不能把“字典91条已整理”误写成“所有最终true内容已无差异迁移”。L1/L2 的类内详细文案不属于这次数据整理范围。
+
+### reusable_operational_guidelines 整理材料
+
+本轮同样完成G材料：[指南索引](reusable_operational_guidelines/INDEX.md)、[12类通用指南](reusable_operational_guidelines/GUIDES.md)、[各场景G正文](reusable_operational_guidelines/BY_SCENARIO.md)、[目标→指南/来源映射与正文JSON](reusable_operational_guidelines/scenario_guidelines.json)、[来源及选择规则](reusable_operational_guidelines/manifest.json)。与P一样，仅作为审阅材料，尚未接入运行时。
+
+| 方法类别 | 指南 |
+|---|---|
+| 建植与观测 | 播种准备、分区/错期管理、异常定位与地面核验 |
+| 决策与执行条件 | 天气/可作业窗口、有限资源优先级 |
+| 按需处理 | 草害诊断与控草、缺苗补种、病虫确证、营养恢复、水分胁迫与灌溉 |
+| 收后环节 | 收获条件、卸粮/干燥/储藏衔接 |
+
+指南共12类、37条精确来源引文；每类有至少3个formal90来源支持。针对91个来源条目分别建立主题映射，其中90个为正式清单目标，额外未匹配ID仅保留审阅。每条选中指南绑定**2个非目标场景来源**，逐项检查排除了自身；每条引用可回查原字典，不使用oracle、Kwoo或外部农艺资料。
+
+目标当前true的开场说明和步骤行动名只用于选择需求主题，规则正文采用外部来源可支持的归纳。选择采用本轮公开的显式主题规则，排除了“管理重点/总体约束”重复模板对匹配的影响；不是现有textsim算法，也不声称检索质量已经过任务实验验证。规则与命中依据均保存在manifest/映射JSON中。
+
+| 样本 | 选中的G主题 |
+|---|---|
+| 有机残茬 | 播种准备、异常核验、作业窗口、控草、补种、收获、收后处理 |
+| 有机斑块 | 播种准备、异常核验、作业窗口、控草、资源优先级、收获、收后处理 |
+| 微量元素 | 播种准备、异常核验、作业窗口、营养诊断恢复、收获、收后处理 |
+
+通用guidance不携带来源场景的数字常量；具体品种、日期、垄号、剂量和预算以目标任务为准。原始引文中的数值只保存在审计数据，不渲染进默认G正文。引文来自其他场景不等于每条方法在目标上都必然适用，因此正文保留适用条件，不强迫执行所有方法，也不把它们变成一份目标计划。
+
+该资料是默认 `cross_scenario_detailed` 来源。替换为某种library模式知识时，应替换整个G正文及其来源元数据，P保持不变；既不自动追加两份G，也不改变旧library模式自身的加载行为。
+
+### structured_true：兼容式修正方案（尚未实施）
+
+#### 1. 新增配置，不重定义旧模式
+
+推荐在 Scenario 增加默认 `None` 的 `structured_briefing` 配置，仅当 `detailed_briefing="structured_true"` 时解释它；空配置等价于 `components=[]`。建议接口如下，属于**拟议配置**：
+
+```json
+{
+  "detailed_briefing": "structured_true",
+  "structured_briefing": {
+    "components": [
+      "reusable_operational_guidelines",
+      "scenario_specific_plan"
+    ],
+    "guidelines": {
+      "source": "cross_scenario_detailed"
+    }
+  }
+}
+```
+
+CLI 继续通过 `--scenario-kwargs` 传入，runner 继续通过 `--scenario-kwargs` 与 `--detail structured_true` 合并；不必新增另一套顶层模式开关。components只允许这两个名称，重复项规范化、未知项明确报错，输出顺序固定为B→G→P，不受输入列表顺序影响。G启用且未指定来源时，建议默认 `cross_scenario_detailed`；选择 `{"source":"library","mode":"l2_textsim_differ","top_k":6}` 可替换G正文，不与默认指南重复拼接。
+
+新配置与旧模式同时提供且非空时，应提示配置不适用，而不是悄悄修改旧模式正文。未提供新字段的全部既有调用保持行为不变。
+
+#### 2. 独立组装分支与来源接口
+
+在现有loader显式增加structured_true分支，其他13种规范模式、已有别名、环境变量及默认值保留。推荐给新分支返回一份“正文＋来源元数据”的内部对象，最终送模仍是原有user字符串：
+
+```text
+B = 该场景现有 false 分支的原始 briefing
+若 components 为空：直接返回 B，不生成标签或加载 G/P
+若选 G：默认加载跨场景 detailed 归纳指南，或以指定 library 来源替换
+若选 P：按 scenario_id 取审阅完成的计划，补齐该场景原true的类内附加约束
+按 B → 已选G → 已选P 拼接
+```
+
+G和P分别加载，单选任何一项不要求另一项资源存在。已选项缺失/非法时报出具体原因，不自动回退成true、false或另一种知识模式。
+
+- **P接口**：将审阅通过的计划数据部署到公共场景资源目录，通过按ID查表的loader加载；`source_text/review_notes` 用于审计，不默认进入LLM。正文包含scenario_requirements、按顺序的instruction及timing/quantities中的有效要求，不带另一次完整基础任务；同一要求可去重呈现，但不得只读取instruction而遗漏独立字段。审阅未解决的数值冲突不得在部署时被自动任选其一。
+- **G接口**：用来源适配器区分 `cross_scenario_detailed` 与 `library`。前者加载本轮归纳的指南及目标→指南/外部来源映射；后者复用既有知识池与检索结果，例如 `l2_textsim_differ`、grouped或已生成的工作流map。两种来源替换同一个G插槽，均不取代原有同名模式；P的内容和开关不随G来源变化。
+- **跨源校验**：L3排除目标同源材料；记录每条来源ID、资源版本和选择方法/依据。本轮主题规则记录命中词，不伪造相似度分数；检索来源另记录其实际分数。现有纯文字context map不足以可靠证明跨源；将来接入pathsim/L3摘要时，新增来源元数据校验，旧模式仍可按原格式读取旧map。
+- **参数隔离**：新配置显式的top_k只用于本次G，不写进全局环境变量；旧模式继续保留原有ENV优先级。渲染器/检索器提取公共辅助函数时，应维持旧函数的默认输出与排序。
+
+#### 3. 接入点与边界
+
+| 位置 | 修正内容 | 保留策略 |
+|---|---|---|
+| `Scenario` 配置 | 增加可选structured_briefing字段与仅针对新模式的校验 | 原字段默认值、旧参数和setup行为不变 |
+| `harbin_l3_context_briefings.py` | mode/normalize新增structured_true；新组装器、P loader、G适配器 | 不替换true字典，不更改false/library/Kwoo/retrieval分支 |
+| 78个共享L3入口 | 给新组装器传入场景ID、原base和可选配置 | 旧模式仍调用原分支 |
+| 12个类内L3入口 | 透传配置，显式登记原true附加信息，按ID加载计划 | 保留原布尔/字符串true及null的既有行为；新模式不复制这些历史歧义 |
+| L1/L2及其他未支持场景 | 对新模式做能力校验并明确报“不支持” | 不把新字符串当truthy静默退为旧true；现有模式不受影响 |
+| runner/实验脚本 | 帮助文字、预览、结果元数据加入新配置；可增加四种独立实验组 | 不自动扩充旧默认实验矩阵、不改旧结果命名 |
+| controller输入 | 新模式单独提供策略输入来源；见下段 | 旧模式继续使用现有全文处理路径；不修改LLM响应解析协议 |
+
+为保持兼容，初期支持范围明确为formal90；仅在新模式下检查场景是否支持，CLI与直接Python运行入口都需要校验，避免L1/L2绕过限制。额外未匹配ID不加入支持清单。
+
+既有工具调用错误恢复、tool tag、工具schema和Relation处理保持不变；这些功能不属于本轮新增briefing模式的改动范围。
+
+controller需区分“给模型看的全部briefing”和“供现有策略提取步骤的输入”：新模式P开启时使用显式目标计划步骤，P关闭时使用B；G始终作为可读知识，不能因其中有编号而被解析成目标计划。旧模式不启用此选择规则。空组合因此与false沿用同样的策略输入；不借此次改动修复或重写原controller算法。
+
+#### 4. 验证与实施顺序
+
+1. **先审计划数据**：核对91条来源、formal90覆盖、原步骤次数/次序、数值与条件、未匹配条目及原文疑点；接入前补齐类内true附加内容。具体时间缺失不通过oracle补全。
+2. **保存旧模式对照**：用固定资源对false、true、library、Kwoo及现有检索模式生成正文快照；运行所需缺失资源使用固定测试夹具，不调用真实LLM。验证新增实现后字节输出及失败边界不漂移，既有别名/null特例也不顺手修改。
+3. **验证四组合**：空组合与false字节一致；G-only不加载P、P-only不检索G；全选顺序正确；未选资源缺失不阻塞，已选资源缺失明确报错。
+4. **检查首轮payload与策略输入**：只改变选定的briefing/来源元数据；system、tools、A2A等原接口保持原样。核验G中的编号不污染目标计划、空组合不增加controller上下文差异。
+5. **显式登记实验条件**：记录components、知识来源/参数/hash、P版本/hash、完整最终briefing/hash；固定同一G比较G-only与G+P，固定同一P比较P-only与G+P。
+
+实施顺序建议为“三例内容确认 → 新分支及四组合 → formal90覆盖与回归 → 可选的其他G来源或L1/L2扩展”。本轮产物是计划数据和可实施方案，尚未增加任何运行时模式；旧功能继续由原代码提供。
