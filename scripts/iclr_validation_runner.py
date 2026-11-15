@@ -53,6 +53,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from fairy.agents.llm.base_llm import DEFAULT_MAX_OUTPUT_TOKENS
+from fairy.controllers.run_artifacts import NEW_ERROR_METRIC_FIELDS, error_metric_totals
 
 PYTHON_BIN = (
     str(REPO_ROOT / ".venv312" / "bin" / "python")
@@ -263,9 +264,11 @@ def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
         "last_tool": None,
         "last_timestamp": None,
         "idle_seconds": None,
+        **dict.fromkeys(NEW_ERROR_METRIC_FIELDS),
     }
     if path is None or not path.exists():
         return snapshot
+    result_metrics: list[dict[str, object]] = []
     try:
         with path.open(encoding="utf-8") as handle:
             for raw_line in handle:
@@ -288,10 +291,18 @@ def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
                     snapshot["tool_calls"] = int(snapshot["tool_calls"]) + 1
                 elif record_type in {"tool_call_error", "tool_args_parse_error"}:
                     snapshot["tool_errors"] = int(snapshot["tool_errors"]) + 1
+                if record_type == "llm_call_end":
+                    result_metrics.append({"role": "assistant", "accepted": row.get("accepted")})
+                elif record_type in {"tool_call_end", "tool_call_error", "tool_args_parse_error"}:
+                    result_metrics.append({"role": "tool", "is_error": row.get("is_error")})
                 snapshot["last_type"] = record_type
                 snapshot["last_tool"] = row.get("tool_name")
                 snapshot["last_timestamp"] = row.get("wall_timestamp")
         snapshot["idle_seconds"] = max(0.0, time.time() - path.stat().st_mtime)
+        if snapshot["records"]:
+            # A readable stream with no result yet has zero completed calls;
+            # an absent/empty stream still has unknown values and shows waiting.
+            snapshot.update(error_metric_totals(result_metrics))
     except OSError:
         pass
     return snapshot
@@ -313,19 +324,29 @@ def _format_cell_progress(path: Path | None, label: str, elapsed_s: float) -> st
         f"tokens_in={progress['prompt_tokens']} "
         f"tokens_out={progress['completion_tokens']} "
         f"last={last} idle={idle_text}"
+        + "".join(
+            f" {key}={progress[key] if progress[key] is not None else 'unknown'}"
+            for key in NEW_ERROR_METRIC_FIELDS
+        )
     )
 
 
 def _write_results_csv(csv_path: Path, rows: list[dict]) -> None:
     if not rows:
         return
-    fieldnames = sorted({key for row in rows for key in row})
+    fieldnames = sorted({key for row in rows for key in row} - set(NEW_ERROR_METRIC_FIELDS))
+    fieldnames.extend(NEW_ERROR_METRIC_FIELDS)
     temporary_path = csv_path.with_suffix(csv_path.suffix + ".tmp")
     with temporary_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
     temporary_path.replace(csv_path)
+
+
+def _new_error_metrics_from_report(report: dict | None) -> dict[str, int | None]:
+    metrics = (report.get("metrics") or {}) if report is not None else {}
+    return {key: metrics.get(key) for key in NEW_ERROR_METRIC_FIELDS}
 
 
 def _load_env_file(env: dict[str, str]) -> None:
@@ -905,6 +926,7 @@ def run_cell(
             "cell_dir": str(cell_dir),
             "stdout_path": str(cell_dir / "stdout.log"),
             "stderr_path": str(cell_dir / "stderr.log"),
+            **dict.fromkeys(NEW_ERROR_METRIC_FIELDS),
         }
     # Direct FOS export to this cell's dir so concurrent cells don't race.
     env["FOS_EXPORT_DIR"] = str(cell_dir)
@@ -1089,6 +1111,7 @@ def run_cell(
         "run_report_path": str(run_report_path) if run_report_path.exists() else "",
         "stdout_path": str(cell_dir / "stdout.log"),
         "stderr_path": str(cell_dir / "stderr.log"),
+        **_new_error_metrics_from_report(run_report),
     }
 
 

@@ -93,7 +93,7 @@ class Agent(BaseAgent):
             "max_llm_call_retries": self.max_llm_call_retries,
             "max_llm_call_attempts": self.max_llm_call_retries + 1,
             # An agent attempt may include the SDK's own HTTP retries.
-            "retry_changes_request": False,
+            "retry_changes_request": True,
         }
 
     def before_llm_turn(self, task: str) -> str:
@@ -144,6 +144,41 @@ class Agent(BaseAgent):
             raise AgentRunLimitExceeded("timeout_seconds", timeout_seconds)
 
     def call_function(self, tool_call):
+        message_start = len(self.messages.messages)
+        try:
+            return self._call_function(tool_call)
+        finally:
+            self._order_tool_replies(message_start, {tool_call.id})
+
+    def _order_tool_replies(self, message_start, tool_call_ids):
+        """Keep notifications after all replies belonging to this call/batch."""
+        added = self.messages.messages[message_start:]
+        replies = []
+        notifications = []
+        for message in added:
+            is_reply = (
+                isinstance(message, dict)
+                and message.get("role") == "tool"
+                and message.get("tool_call_id") in tool_call_ids
+            )
+            (replies if is_reply else notifications).append(message)
+        self.messages.messages[message_start:] = replies + notifications
+
+    @staticmethod
+    def _tool_exception_feedback(tool_name, raw_arguments, exc):
+        # Preserve the existing reason and advice verbatim; only wrap its format.
+        error_text = (
+            f"[OUTPUT OF TOOL {tool_name}] ERROR:\n"
+            "***\n"
+            f"{type(exc).__name__}: {exc}\n"
+            f"Raw arguments: {raw_arguments}\n"
+            "***\n\n"
+            "Now retry with valid arguments or choose a different tool. "
+            "Do not repeat the same invalid call."
+        )
+        return {"error": error_text}
+
+    def _call_function(self, tool_call):
 
         name = tool_call.function.name
         tool_call_id = tool_call.id
@@ -152,6 +187,7 @@ class Agent(BaseAgent):
         try:
             args = json.loads(raw_arguments or "{}")
         except json.JSONDecodeError as exc:
+            feedback = self._tool_exception_feedback(name, raw_arguments, exc)
             self.record_event(
                 "tool_args_parse_error",
                 status="error",
@@ -160,6 +196,10 @@ class Agent(BaseAgent):
                 raw_arguments=raw_arguments,
                 error_type=type(exc).__name__,
                 error_message=str(exc),
+                error_stage="tool_args_parse",
+                error_source="arguments",
+                is_error=True,
+                agent_feedback=dict(feedback),
             )
             self.tool_call_count += 1
             self._append_tool_error_observation(
@@ -171,6 +211,7 @@ class Agent(BaseAgent):
                 exc=exc,
                 elapsed_time=0.0,
                 error_stage="tool_args_parse",
+                error_feedback=feedback,
             )
             raise RecoverableToolCallError(exc, name, tool_call_id) from exc
 
@@ -186,7 +227,6 @@ class Agent(BaseAgent):
 
         # Call corresponding function with provided arguments
         start_time = time.perf_counter()
-        message_count_before_tool = len(self.messages.messages)
         self.record_event(
             "tool_call_start",
             status="running",
@@ -199,6 +239,7 @@ class Agent(BaseAgent):
             tool_response = self.tools_map[name](**args)
         except Exception as exc:
             elapsed_time = round(time.perf_counter() - start_time, 6)
+            feedback = self._tool_exception_feedback(name, raw_arguments, exc)
             self.record_event(
                 "tool_call_error",
                 status="error",
@@ -209,6 +250,10 @@ class Agent(BaseAgent):
                 wall_time_seconds=elapsed_time,
                 error_type=type(exc).__name__,
                 error_message=str(exc),
+                error_stage="tool_call",
+                error_source="exception",
+                is_error=True,
+                agent_feedback=dict(feedback),
             )
             self.tool_call_count += 1
             self._append_tool_error_observation(
@@ -221,38 +266,55 @@ class Agent(BaseAgent):
                 elapsed_time=elapsed_time,
                 error_stage="tool_call",
                 time_before=env_time_before,
+                error_feedback=feedback,
             )
             raise RecoverableToolCallError(exc, name, tool_call_id) from exc
         elapsed_time = round(time.perf_counter() - start_time, 6)
         self.tool_call_count += 1
 
-        # If the tool injected notifications into the conversation while it was
-        # running, delay them until after the required tool response message.
-        deferred_messages = self.messages.messages[message_count_before_tool:]
-        if deferred_messages:
-            del self.messages.messages[message_count_before_tool:]
+        is_error = isinstance(tool_response, dict) and "error" in tool_response
+        feedback = None
+        error_details = {}
+        if is_error:
+            reason = tool_response["error"]
+            error_details = {
+                "error_stage": "tool_call",
+                "error_source": "returned_error",
+            }
+            if isinstance(reason, str) and reason.strip():
+                feedback = {"error": reason}
+                error_details.update(
+                    error_message=reason, agent_feedback=dict(feedback),
+                )
+            else:
+                # An invalid error value is still a failure.  Preserve it for
+                # review instead of inventing a business reason or raising.
+                error_details["error_contract_issue"] = "invalid_error_value"
+                error_details["error_value"] = self._jsonable(reason)
 
         # Add time prefix to tool response
         env_time_after = self.time_manager.time()
         env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        self.messages.tool_call_response(tool_response, tool_call, elapsed_time, env_ts)
-        if deferred_messages:
-            self.messages.messages.extend(deferred_messages)
+        self.messages.tool_call_response(
+            tool_response, tool_call, elapsed_time, env_ts,
+            is_error=is_error, agent_feedback=feedback,
+        )
         self.workflow.add_node(WorkflowStep(
-            op_type="TOOL",
+            op_type="TOOL_ERROR" if is_error else "TOOL",
             tool_name=name,
             tool_args=args,
-            content=tool_response,
+            content=feedback if feedback is not None else tool_response,
             time=env_ts,
             time_before=env_time_before,
             time_after=env_time_after,
+            error_stage="tool_call" if is_error else None,
         )
         )
         self.record_event(
-            "tool_call_end",
-            status="ok",
+            "tool_call_error" if is_error else "tool_call_end",
+            status="error" if is_error else "ok",
             tool_name=name,
             tool_call_id=tool_call_id,
             tool_type=tool_type,
@@ -260,6 +322,8 @@ class Agent(BaseAgent):
             wall_time_seconds=elapsed_time,
             content_type=type(tool_response).__name__,
             content_preview=str(tool_response)[:500],
+            is_error=is_error,
+            **error_details,
         )
         return tool_response
 
@@ -275,42 +339,25 @@ class Agent(BaseAgent):
         elapsed_time: float,
         error_stage: str,
         time_before: float | None = None,
+        error_feedback: dict[str, str] | None = None,
     ) -> None:
         env_time_after = self.time_manager.time()
         env_ts = datetime.fromtimestamp(env_time_after, tz=CST).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        error_text = (
-            f"[OUTPUT OF TOOL {tool_name}] ERROR:\n"
-            "***\n"
-            f"{type(exc).__name__}: {exc}\n"
-            f"Raw arguments: {raw_arguments}\n"
-            "***\n\n"
-            "Now retry with valid arguments or choose a different tool. "
-            "Do not repeat the same invalid call."
+        feedback = error_feedback if error_feedback is not None else self._tool_exception_feedback(
+            tool_name, raw_arguments, exc,
         )
-        self.messages.messages.append(
-            {
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": error_text,
-                "time": env_ts,
-            }
-        )
-        self.messages.runtime_metrics.append(
-            {
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "time": elapsed_time,
-                "status": "error",
-            }
+        self.messages.tool_call_response(
+            feedback, tool_call, elapsed_time, env_ts,
+            is_error=True, agent_feedback=feedback,
         )
         self.workflow.add_node(
             WorkflowStep(
                 op_type="TOOL_ERROR",
                 tool_name=tool_name,
                 tool_args=tool_args,
-                content=error_text,
+                content=dict(feedback),
                 time=env_ts,
                 time_before=(
                     float(time_before) if time_before is not None else env_time_after
@@ -329,7 +376,7 @@ class Agent(BaseAgent):
             error_stage=error_stage,
             error_type=type(exc).__name__,
             error_message=str(exc),
-            content_preview=error_text[:500],
+            content_preview=feedback["error"][:500],
         )
 
     def _chat_completion_with_retries(self, messages, tools=None):
@@ -363,6 +410,7 @@ class Agent(BaseAgent):
                     error_message=str(exc),
                     rejection_reason=getattr(exc, "reason", None),
                     finish_reason=getattr(exc, "finish_reason", None),
+                    **({"llm_call_id": exc.llm_call_id} if getattr(exc, "llm_call_id", None) else {}),
                 )
                 if sleep_seconds > 0:
                     time.sleep(sleep_seconds)
@@ -385,6 +433,7 @@ class Agent(BaseAgent):
         self.run_started_at_wall = time.perf_counter()
         self.run_wall_timeout_seconds = timeout_seconds
         self.stop_reason = None
+        self.reset_llm_feedback()
         env_ts = self.env_time_str()
         self.record_event(
             "agent_run_start",
@@ -419,14 +468,18 @@ class Agent(BaseAgent):
                     break
 
                 # === handle tool calls ===
-                for tool_call in message.tool_calls:
-                    self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
-                    try:
-                        tool_response = self.call_function(tool_call)
-                    except RecoverableToolCallError as exc:
-                        self.after_agent_error(exc.original)
-                        continue
-                    self.after_tool_response(tool_call, tool_response)
+                message_start = len(self.messages.messages)
+                try:
+                    for tool_call in message.tool_calls:
+                        self._check_limits(max_tool_calls=max_tool_calls, timeout_seconds=timeout_seconds)
+                        try:
+                            tool_response = self.call_function(tool_call)
+                        except RecoverableToolCallError as exc:
+                            self.after_agent_error(exc.original)
+                            continue
+                        self.after_tool_response(tool_call, tool_response)
+                finally:
+                    self._order_tool_replies(message_start, {call.id for call in message.tool_calls})
             wall_elapsed = round(time.perf_counter() - self.run_started_at_wall, 6)
             self.after_agent_run()
             self.record_event(

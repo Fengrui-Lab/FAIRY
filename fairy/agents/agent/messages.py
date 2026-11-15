@@ -1,3 +1,4 @@
+import json
 
 class Messages:
 
@@ -18,7 +19,10 @@ class Messages:
     def system_notify(self, input,time=None):
         self.messages.append({"role": "system", "content": input,"time": time})
 
-    def llm_response(self, response, elapsed_time, message=None, *, add_to_history=True):
+    def llm_response(
+        self, response, elapsed_time, message=None, *, add_to_history=True,
+        llm_call_id=None, rejection_reason=None,
+    ):
 
         if add_to_history:
             self.messages.append(
@@ -32,27 +36,43 @@ class Messages:
             "completion_tokens": getattr(usage, "completion_tokens", 0) if usage else 0,
             "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
         }
-        self.runtime_metrics.append({
+        metric = {
             "role": "assistant",
             "time": elapsed_time,
             "accepted": add_to_history,
             "tokens": tokens
-        })
+        }
+        if llm_call_id is not None:
+            metric["llm_call_id"] = llm_call_id
+        if rejection_reason is not None:
+            metric["rejection_reason"] = rejection_reason
+        self.runtime_metrics.append(metric)
         
 
-    def tool_call_response(self, tool_response, tool_call, elapsed_time,env_time):
+    def tool_call_response(
+        self, tool_response, tool_call, elapsed_time, env_time, *,
+        is_error=None, agent_feedback=None,
+    ):
 
         self.messages.append({
             "role": "tool",
             "tool_call_id": tool_call.id,
-            "content": str(tool_response),
+            "content": (
+                json.dumps(agent_feedback, ensure_ascii=False)
+                if agent_feedback is not None else str(tool_response)
+            ),
             "time": env_time
         })
-        self.runtime_metrics.append({
+        metric = {
             "role": "tool",
             "tool_call_id": tool_call.id,
             "time": elapsed_time,
-        })
+        }
+        if is_error is not None:
+            metric["is_error"] = is_error
+        if is_error:
+            metric["status"] = "error"
+        self.runtime_metrics.append(metric)
 
     def context(self):
         return self.messages

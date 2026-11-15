@@ -45,6 +45,39 @@ def token_usage_from_metrics(metrics: list[dict[str, Any]]) -> dict[str, Any]:
     return totals
 
 
+NEW_ERROR_METRIC_FIELDS = (
+    "new_tools",
+    "new_tool_errors",
+    "new_llm",
+    "new_llm_errors",
+)
+
+
+def error_metric_totals(metrics: list[dict[str, Any]]) -> dict[str, int | None]:
+    """Count completed results; missing classification is unknown, not success.
+
+    Each input row represents one completed result. Empty input therefore
+    means no completed results; callers without a readable source must retain
+    unknown values instead of passing an empty list as evidence of zero calls.
+    """
+    tools = [entry for entry in metrics if entry.get("role") == "tool"]
+    assistant = [entry for entry in metrics if entry.get("role") == "assistant"]
+    return {
+        "new_tools": len(tools),
+        "new_tool_errors": (
+            sum(entry["is_error"] for entry in tools)
+            if all(isinstance(entry.get("is_error"), bool) for entry in tools)
+            else None
+        ),
+        "new_llm": len(assistant),
+        "new_llm_errors": (
+            sum(not entry["accepted"] for entry in assistant)
+            if all(isinstance(entry.get("accepted"), bool) for entry in assistant)
+            else None
+        ),
+    }
+
+
 def metric_totals(metrics: list[dict[str, Any]]) -> dict[str, Any]:
     assistant = [entry for entry in metrics if entry.get("role") == "assistant"]
     tools = [entry for entry in metrics if entry.get("role") == "tool"]
@@ -54,6 +87,7 @@ def metric_totals(metrics: list[dict[str, Any]]) -> dict[str, Any]:
         "llm_wall_time_seconds": round(sum(float(entry.get("time") or 0) for entry in assistant), 6),
         "tool_wall_time_seconds": round(sum(float(entry.get("time") or 0) for entry in tools), 6),
         "token_usage": token_usage_from_metrics(metrics),
+        **error_metric_totals(metrics),
     }
 
 
@@ -107,6 +141,11 @@ def build_run_report(
     response_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     totals = metric_totals(runtime_metrics)
+    if totals["new_tools"] != tool_call_count:
+        # Oracle/legacy reports may have a call count without per-call metrics.
+        # Do not mistake their missing result rows for a zero-call execution.
+        totals["new_tools"] = None
+        totals["new_tool_errors"] = None
     status = "completed" if stopped_reason in {"agent_finished", "completed"} and error is None else "stopped"
     if error is not None:
         status = "failed"

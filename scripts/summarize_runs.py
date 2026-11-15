@@ -25,6 +25,10 @@ FIELDS = [
     "warehouse_grain_kg",
     "harvested_ridges",
     "yield_g_m2",
+    "new_tools",
+    "new_tool_errors",
+    "new_llm",
+    "new_llm_errors",
 ]
 
 
@@ -60,6 +64,10 @@ def row_from_report(path: Path) -> dict[str, Any]:
             report,
             "outcome.yield_recovery.avg_recovered_yield_g_m2_at_market_moisture",
         ),
+        "new_tools": nested(report, "metrics.new_tools"),
+        "new_tool_errors": nested(report, "metrics.new_tool_errors"),
+        "new_llm": nested(report, "metrics.new_llm"),
+        "new_llm_errors": nested(report, "metrics.new_llm_errors"),
     }
 
 
