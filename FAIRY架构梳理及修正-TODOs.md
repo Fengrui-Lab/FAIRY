@@ -8,7 +8,7 @@
 5. (Ongoing) Library：FAIRY Library中知识抽取时可能利用了工具的tag，这一模式需要校对；[详见Fixes-Knowledge-Library/README.md](Fixes-Knowledge-Library/README.md)
 6. (Ongoing) Library：知识载入的多模式划分，以及其内容、格式、位置、时间的校对；[详见Fixes-Knowledge-Library/README.md](Fixes-Knowledge-Library/README.md)
 7. <span style="background-color:#FF5722; color:white;">TODO</span> 工具的删减（推进时间的工具advance_time、wait_for_notification、commit_daily_physics功能重叠）
-8. <span style="background-color:#FF5722; color:white;">TODO</span> Agent的“思考”模式的配置只打通了vllm，通过enable_thinking参数配置。
+8. <span style="background-color:#FF5722; color:white;">TODO</span> LLM的“思考”模式等其他参数的配置只打通了vllm，通过enable_thinking参数配置。
 9. <span style="background-color:#FF5722; color:white;">TODO</span>: 重新校准所有工具doc的内容（已经准备好了一个校准好的版本，位于Fixes-Tools-Doc-Schema中的一系列以脚本文件为单位的md中）并测试，同时与老版本对比
 10. <span style="background-color:#FF5722; color:white;">TODO</span>: 重新校准所有工具error的内容（尚未校准）并测试，同时与老版本对比
 11. <span style="background-color:#FF5722; color:white;">TODO</span>: 当前的回放、评分逻辑的校准与修正（尚未校准）；目前观察到有多个回放与评估脚本/模式；一些被抛弃的统计指标（如FOS）也还仍然在被计算和记录
