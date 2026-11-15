@@ -1,115 +1,128 @@
 # Agent 错误反馈协议
 
-状态：错误反馈与统计已实现；记录转换及回放适配已按最新要求撤回。验证与保留边界见 [IMPLEMENTATION-NOTES.md](IMPLEMENTATION-NOTES.md)。更新：2026-11-15。
+本文描述当前实现，统一说明定义、改动与保留边界。适用范围只有 **Agent 工具调用错误**和 **LLM 响应不可用时的纠错反馈**，以及两者的记录、上下文与统计。
 
-本协议只约束两类面向 Agent 的错误：**工具调用错误**、**LLM 响应不可用的纠错反馈**，以及它们的分类、记录、上下文和统计。系统 debug、基础设施故障处理、停止机制、评分规则不在改造范围内。
+## 格式与分类
 
-**采用统一旧失败标签及错误内容表示的方案，不再冻结旧 workflow 的错误表示或要求旧统计值、评分值不变。具体工具的错误文案、业务条件和行为仍不修改。**
-
-FILE-INVENTORY.md 与 FILE-PROMPTS.md 尚未同步这一决定；其中“冻结旧事件、workflow 和统计值”的约束已失效，本版以这两份主协议为准。
-
-## 1. 统一格式与生成逻辑
-
-两类反馈都只有一个字段：
+两类反馈采用同一正文格式，`error` 为非空字符串，不增加对外 `type/status/code`：
 
 ```json
-{"error": "错误内容"}
+{"error": "清楚的错误原因"}
 ```
 
-| 类别 | 生成者 | 判断依据 |
-|---|---|---|
-| 工具调用错误 | 工具提供业务原因，调用层统一生成反馈 | 调用前解析/查找/参数绑定失败、业务拒绝、原有处理路径捕获的执行异常 |
-| LLM 响应错误 | 响应校验层 | 本次响应被判不可用；当前明确处理 `empty_response`、`output_truncated` |
+工具调用按以下规则分类：
 
-- `error` 必须为非空字符串，不增加对外 type/status/code。成功结果不使用顶层 error。
-- 工具错误保留原有错误内容，不翻译、扩写、润色或新增建议。已有合规 error 对象直接复用；解析/执行异常将现有反馈文本包装进 error。统一对象同时用于工具错误记录和 Agent 反馈，不为两者编写不同原因。
-- 普通字符串、None 或内部 False 不自动变成错误。只处理已有明确失败字段、调用前错误和原有捕获异常，不按文本中是否出现 error 一词判错。
-- 工具参数 JSON 错误归工具错误；整条 LLM 响应被拒绝时，其中工具不执行，也不另计工具错误。
-- `raise` 只是内部实现方式。返回 error 字典同样算失败；内部异常被处理且操作最终完成，不仅因曾抛异常就判失败。
-- 正常空结果、None、已满电、等待生效不是通用错误。不在本轮补充新的业务失败判定或部分完成协议。
-- 工具 error 值为空或类型不合法时，不因空值判成功；若无法无损提取符合协议的原有错误文字，列为待确认项，不自行编写新的工具错误原因。
-- LLM 请求侧网络/鉴权/SDK 故障不计为 LLM 响应错误。工具内部依赖故障若使这次工具调用失败，仍属于工具错误。
-- 本轮不新增响应拒绝条件、工具业务限制或恢复/停止规则；发现缺失校验另列待确认，不以格式统一为由改变运行行为。
+| 调用结果 | 主结果事件 | workflow.op_type | error_stage | is_error |
+|---|---|---|---|---|
+| 参数 JSON 解析失败 | `tool_args_parse_error` | `TOOL_ERROR` | `tool_args_parse` | true |
+| 工具查找、参数绑定或执行时抛出被捕获的异常 | `tool_call_error` | `TOOL_ERROR` | `tool_call` | true |
+| 正常返回顶层包含 `error` 键的 Python 字典 | `tool_call_error` | `TOOL_ERROR` | `tool_call` | true |
+| 其他正常返回 | `tool_call_end` | `TOOL` | 无 | false |
 
-示例：
+- 失败主事件和对应 `runtime_metrics.status` 均为 `error`；正常主事件为 `ok`，正常工具指标行只写 `is_error=false`，沿用不写 `status` 的方式。
+- 合规业务错误提取原 `error` 字符串，构造只含该字段的反馈；额外返回字段不进入标准反馈。解析/调用异常将原有完整错误文本包装为 error 对象，不改原因或建议。原工具返回值仍交给原控制器回调。
+- `error` 为空或不是字符串时仍判失败，记录 `error_contract_issue=invalid_error_value` 和原值；workflow 保留原返回，消息沿用 `str(原返回)`，不编造原因，也不保证生成标准 JSON 反馈。
+- 不按文字中的 error、单独的 `status`、嵌套错误、`None` 或 `False` 推断失败。`TOOL` 仅表示未命中上述失败规则，不保证业务目标完成。失败也不保证无副作用。
+- 每次已处理调用只记一个主结果事件、一条工具指标和一个原工具步骤；不为包装错误重跑工具。`tool_call` 阶段不证明方法体已经执行，业务 error 不伪造 Python 异常。
 
-```json
-{"error": "<原有工具错误内容，保持不变>"}
-```
+LLM 沿用两项拒绝条件：`finish_reason="length"` 对应 `output_truncated`；既无非空文本、又无工具调用对应 `empty_response`。程序按原因生成标准反馈。空文本但含工具调用仍可接受；本轮未增加其他响应校验。
 
-```json
-{"error": "Previous response was truncated at the output token limit. No tool calls from that response were executed. Generate a shorter, complete response."}
-```
+拒绝记录为 `llm_call_end/status=rejected/accepted=false`，保留 `rejection_reason` 和完整 `agent_feedback`。请求侧网络、鉴权、SDK 异常仍走 `llm_call_error`，不混作响应拒绝。工具内部异常若向调用层传播，则按工具错误处理。
 
-工具示例仅表示包装方式；LLM 示例是根据已有拒绝原因生成的新反馈，不用于修改任何工具文案。
+## 新统计与旧统计
 
-## 2. 统一失败标签与记录
-
-| 记录位置 | 参数 JSON 解析失败 | 捕获的调用异常 | 正常返回 error 对象 |
-|---|---|---|---|
-| 主结果事件类型 | tool_args_parse_error | tool_call_error | tool_call_error |
-| 主结果事件 status | error | error | error |
-| runtime_metrics.status | error | error | error |
-| workflow.op_type | TOOL_ERROR | TOOL_ERROR | TOOL_ERROR |
-| workflow.error_stage | tool_args_parse | tool_call | tool_call |
-| workflow.content | error 对象 | error 对象 | error 对象 |
-| 内部 is_error | true | true | true |
-
-成功调用仍使用 tool_call_end/status=ok，is_error=false，成功结果的内容表示沿用原方式。is_error 是内部记录字段，不加入对外 error 对象。
-
-- tool_call 阶段包含现有工具查找、参数绑定、执行异常及业务拒绝；它不证明工具已进入方法体，也不证明曾抛 Python 异常。诊断需要时可另保留真实来源，业务拒绝不得伪造异常类型。
-- LLM 响应拒绝沿用 llm_call_end/status=rejected、accepted=false、rejection_reason，并记录标准 error 反馈。llm_call_error 仍表示请求侧异常，不把它混作响应拒绝；两类错误统一正文格式，不混用工具和 LLM 事件标签。
-- **工具 workflow.content 保存 error 字典对象；Agent 的 tool.content 保存该对象的 JSON 字符串。** 同一次调用只生成一份错误原因，序列化前后应相等；LLM 拒绝及纠错反馈不写入 workflow。
-- 因此 workflow.content 会改变：已有合规业务 error 对象保持内容，旧解析/执行异常文本变为 error 对象。不能再承诺旧 workflow 完全不变；也不把 JSON 字符串双重编码后存入 workflow。
-- 统一在通用调用/消息层完成；每次调用只有一个主结果事件、一条工具指标和一个原有工具步骤，不重跑工具、不增设“错误反馈步骤”。工具名、参数、顺序和实际时间保持。
-- 失败不等于未执行、无副作用或需要自动重试。记录统一不要求把业务 error 改成 Python 抛异常；本轮保持既有控制器回调、反思、重试、预算及停止分流，不顺带改策略。
-
-## 3. 统计与旧字段的关系
-
-**保留全部现有统计字段、显示方式、读取数据源、计数条件和汇总公式，只追加四项新指标。不得为统一报错重写旧指标的计算方法，或用新指标覆盖旧字段。**
-
-例如旧 progress.tools 仍只数 tool_call_end，旧 tool_errors 仍只数 tool_call_error 与 tool_args_parse_error，旧 llm 仍只数 llm_call_end；不把旧 tools 改成“全部已处理调用数”。完整新口径使用下面四项：
-
-| 新字段 | 含义 |
+| 新指标 | 当前口径 |
 |---|---|
-| `new_tools` | 已处理并得到明确结果的工具调用数，包含成功、调用前失败、业务失败和执行异常 |
-| `new_tool_errors` | 上述调用中确定失败的次数 |
-| `new_llm` | 已完成响应接收或拒绝判定的次数，包含有效和不可用响应 |
-| `new_llm_errors` | 上述响应中因不可用而被拒绝的次数 |
+| `new_tools` | 已处理并得到结果的工具调用数，包含上述三类失败 |
+| `new_tool_errors` | 其中 `is_error=true` 的次数 |
+| `new_llm` | 已完成响应接收及接受/拒绝判定的次数 |
+| `new_llm_errors` | 其中 `accepted=false` 的次数 |
 
-因此：
+两组总数减错误数，分别得到未报错工具调用数、未被拒绝响应数；不代表任务成功或回答正确。没有响应判定的请求侧异常不计入 `new_llm`；被拒绝响应中的工具不执行、不另计工具调用。
 
-- `new_tools - new_tool_errors` = 未报错的工具调用次数。
-- `new_llm - new_llm_errors` = 未被拒绝的 LLM 响应次数。
+四项指标追加到 `run_report.metrics`、终端进度、runner CSV 和通用汇总 CSV/TSV。报告按 `runtime_metrics` 计数，进度按主结果事件计数；辅助日志和反馈消息不重复计数，父子 Agent 分别统计。
 
-“未报错”不代表任务目标达成或回答内容正确。尚无明确结果、仍在运行的尝试不计入；没有响应判定的 LLM 基础设施故障不计入 new_llm。
+**旧字段、显示内容、数据来源和计算条件保持不变；旧数值不保证不变。** 例如进度中的 `tools` 仍只数 `tool_call_end`，`tool_errors` 仍数两类工具错误事件，`llm` 仍数 `llm_call_end`。业务 error 被重新分类后，这些旧数值可能变化；新指标不覆盖旧字段，也不接入评分公式。
 
-记录和汇总规则：
+缺少失败分类时，已知总数保留、错误数标为未知（JSON 为 `null`，终端为 `unknown`，CSV/TSV 留空）。若报告的工具总数与逐次指标数不一致，两项新工具指标均为未知；缺少数据不能冒充零次调用。确认没有结果的空集合计为零。历史文件不追溯改写，不从预览文字猜测错误。
 
-- 工具按第 2 节分类：成功才记 tool_call_end；业务 error 与调用异常记 tool_call_error；解析失败记 tool_args_parse_error。一次调用只记其中一种主结果事件，失败不能再补一个 tool_call_end。
-- 同一 is_error 写入主结果事件和对应 runtime_metrics 行，包括手工追加的异常行；报告读取指标行、进度读取事件，应得到相同的新统计，不依赖正文关键词猜测。
-- LLM 沿用 `llm_call_end.accepted/rejection_reason`；拒绝一次只计一次。retry、异常传播、反馈消息都不重复计数。
-- 工具辅助观察事件不再次计数；反馈在上下文中出现或移除不影响失败发生次数。
-- 新字段追加到 run_report.metrics、CSV 新列及终端进度行，不覆盖旧字段，不接入评分公式。new_tools 是三种工具主结果事件之和，new_tool_errors 是其中两种错误事件之和；指标行按相同事实各计一次。
-- 父子 Agent 按各自运行计数；不把子 Agent 的内部调用重复累计到父调用。
-- 旧日志缺少完整分类时标记未知，不默认填零或通过 content_preview 猜测。旧报告仍按旧逻辑读取。
-- 旧统计计算方法保持不变；输入事件按新协议重新分类，所以旧数值可能改变。旧 error_count/controller telemetry 仍按原回调统计，不能当作统一后的全部工具失败数。同一份日志/指标输入交给修改前后的统计实现，全部旧字段应得到相同结果。
+# 错误反馈的上下文管理
 
-终端示意（旧字段及显示保留，不保证旧数值；新字段追加）：
+## 工具错误：进入正常历史
 
-```text
-elapsed=... llm=... tools=... tool_errors=... tokens_in=... tokens_out=... last=... idle=... new_tools=... new_tool_errors=... new_llm=... new_llm_errors=...
+合规工具错误在三个位置保存同一原因：
+
+| 位置 | 表示 |
+|---|---|
+| 原始 Agent `workflow.content` | error 字典对象 |
+| 主结果事件 `agent_feedback` | 同一 error 对象 |
+| 消息 `role="tool"` 的 `content` | error 对象经 `json.dumps(..., ensure_ascii=False)` 得到的字符串 |
+
+工具消息使用原 `tool_call_id`，不另加 user/system 错误消息。成功返回仍沿用 `str(tool_response)`；不合规 error 值按前述例外保留原返回。
+
+同批**已处理调用**的工具回复排在执行期间产生的通知之前，包括异常回复。工具错误随正常历史进入后续请求，不自动删除、不推断已修复，也不采用 LLM 反馈的一次性规则。运行停止后，不为发送错误额外调用 LLM。
+
+## LLM 错误：只进入紧接着的一次实际请求
+
+纠错提示作为临时 `system` 消息追加在发送列表末尾，`content` 是 error 对象的 JSON 字符串。该角色表示框架纠错反馈，不是新增一类系统报错。
+
+1. 第 N 次响应被拒绝：记录错误，该响应不进入有效 assistant 历史，其中工具不执行。
+2. 现有重试规则允许继续时，将反馈加入 N+1 次实际 LLM client 调用的消息副本。
+3. 在 client 调用边界消费反馈；无论成功、再次拒绝或网络失败，旧反馈都不进入 N+2。调用前的本地准备失败不消费反馈。
+4. N+1 若再次被拒绝，则另记一次错误、生成新反馈供 N+2 使用。若没有后续请求，只保留拒绝记录，不伪造使用记录。
+
+临时反馈不写入持久消息历史或 workflow。新 `Agent.run()` 清空待发送反馈；重试次数、等待和停止条件保持原样。这里的“请求”以 FAIRY 的 client 调用为单位，不另计算 SDK 内部 HTTP 重试。由于请求可能增加反馈，`response_policy.retry_changes_request=true`。
+
+## 运行后定位
+
+查看完整 `*.runtime_log.jsonl`；进度日志省略完整请求消息，不能代替它。
+
+| 要定位的内容 | 关联字段 |
+|---|---|
+| 工具失败及完整原因 | 运行归属、`record_index`（内存事件为 `event_index`）、`tool_call_id`、`is_error`、`agent_feedback`；不合规值另查 `error_contract_issue/error_value` |
+| LLM 不可用响应 | `llm_call_end.llm_call_id`、`accepted`、`rejection_reason`、`agent_feedback` |
+| 哪次请求使用了纠错反馈 | `llm_call_start.feedback_for_llm_call_id` 指向来源请求，`messages` 保存实际发送列表的快照 |
+
+`llm_call_id` 按 Agent 实例递增；新运行清空反馈，不重置该计数。所有 ID 均结合所属 Agent/运行解读。日志可证明反馈进入了哪个 client 调用，不能在网络失败时证明服务端已收到。
+
+LLM 拒绝、重试和临时纠错不成为 workflow 步骤；原始 Agent workflow 保留实际工具尝试及其结果。后续回放和评估继续使用原有输入链路，不从临时消息列表构造轨迹。
+
+# 错误协议实现记录
+
+## 改了什么
+
+| 文件 | 本轮保留的改动 |
+|---|---|
+| [agent.py](../fairy/agents/agent/agent.py) | 统一三类工具失败的事件、标签、指标和反馈；业务 error 沿用正常返回回调，捕获异常沿用异常回调；同批工具回复统一排在通知前 |
+| [base_agent.py](../fairy/agents/agent/base_agent.py) | 为原有 LLM 响应拒绝增加一次性反馈、请求编号和来源关联；原发送快照记录实际含反馈的请求 |
+| [messages.py](../fairy/agents/agent/messages.py) | 合规工具错误使用 JSON 字符串；指标记录 `is_error`、响应接受/拒绝信息 |
+| [run_artifacts.py](../fairy/controllers/run_artifacts.py) | 汇总四个新指标，区分零值与缺失信息 |
+| [iclr_validation_runner.py](../scripts/iclr_validation_runner.py)、[summarize_runs.py](../scripts/summarize_runs.py) | 在进度和 CSV/TSV 中追加新指标，保留旧统计方法 |
+
+## 保留了什么
+
+具体工具的文案、业务条件、执行行为，以及控制器回调分流、反思、预算、重试和停止策略均未修改。系统 debug 和基础设施故障恢复也未改造。工具未校验非法输入、内部吞异常或未实现预期效果等存量问题，不会仅因统一错误格式而自动解决；部分完成、警告和降级不自动改判失败。
+
+此前对 `fairy/types.py`、`fairy/scenarios/workflow_validation.py`、`fairy/controllers/engine.py`、`scripts/rebatch_fos_from_traces.py` 的转换/回放适配已撤回，这四个文件保持本轮修改前的实现：
+
+| 路径 | 当前保留的行为 |
+|---|---|
+| 后续 workflow 转换 | 保留原数值事件时间、工具名称/读写类型和连续 `advance_time` 合并规则；可能丢失原始 `TOOL_ERROR/error_stage`，未实现全链路统一 |
+| rebatch 回放 | 有效错误记录若属参数解析失败或缺 App/方法，可不执行并恢复错误事件；方法存在的其他失败仍尝试执行。缺工具检查适用于所有非 `TOOL_ERROR` 记录，不只 `TOOL`。使用历史 content 建事件，不逐条比较重执行返回值；`failed()` 为真本身不拒绝评分 |
+| Engine 直接回放 | 不按 `TOOL_ERROR/error_stage` 豁免执行；未知工具和执行异常向外抛出，正常返回 error 字典仍可能记为 `status=ok` |
+| 评分 | 公式、权重和判定规则未修改。部分 gate 不统一排除失败；FARM-FOS v2 根据内容识别错误；有事件日志时，FOS 安全子串匹配可能把异常文本中的 `dry_grain` 误匹配为 `rain` |
+| Oracle 指标 | 新指标依赖逐次 Agent 记录；Oracle 可能显示零或未知，不能据此推断其实际工具调用与错误次数 |
+
+**实现未改，不等于输入和结果不变。** 新错误格式/标签可能触发原有回放及评分分支，反馈也可能改变 Agent 后续决策；不承诺旧统计值、轨迹或分数相同，也不将所有分数变化解释为纠正了旧误判。
+
+## 验证
+
+本轮新增测试合并为 [tests/test_error_contract.py](../tests/test_error_contract.py)，保留 41 项：工具反馈 12、LLM 上下文 8、统计 10、汇总导出 3、运行产物集成 1、原版转换/回放 7。
+
+在仓库根目录运行：
+
+```bash
+.venv/bin/python -B tests/test_error_contract.py -v
 ```
 
-例：5 次成功、2 次业务 error、1 次解析失败、1 次执行异常。原事件下旧 progress 是 tools=7/tool_errors=2；按新标签、沿用旧读取公式后为 tools=5/tool_errors=4；完整新口径为 new_tools=9/new_tool_errors=4。只有新四项适用上面的减法关系，不能承诺新旧数值可直接比较。已有历史文件不追溯改写；历史分类信息不足时不得伪造新口径统计。
-
-## 4. 评估与回放边界
-
-- 本轮不主动改 gate 成功条件、路径评分公式或安全关键词规则；不修这些旧规则，并不妨碍统一错误记录或继续评估。字段传递适配与评分定义修改分别处理。
-- **规则不变不代表结果不变。** TOOL_ERROR 会被回放读取；workflow 中异常文本改为 error 对象，也会改变现有消费者的识别范围。即使固定调用轨迹，统计与评分也可能改变。
-- 已知条件性风险：异常对象开始进入安全关键词检测后，解析错误中的 dry_grain 可能因含 rain 被计安全违规；部分 gate 则仍可能接受失败尝试。这些是消费者的判别问题，单列说明，不自动扩大为本轮评分改造，也不能宣称变化都代表评估更正确。
-- 不根据 TOOL_ERROR 自动删除失败步骤、跳过所有回放执行或将它当作真实异常。回放缺工具恢复、实际结果与原记录的差异，以及记录转换中的失败信息传递，都需按实际路径核查并报告；不以格式统一为由自行改变这些策略。
-- 按最新回退要求，本轮保留原版 CompletedEvent、workflow 转换与回放实现，包括原时间口径、工具名称/读写类型生成方式及连续 advance_time 合并规则。原始 Agent workflow 仍按本协议记录错误；后续转换可能丢失失败标签/阶段的旧问题暂不修复。
-- 模型看到统一反馈后也可能改变后续决策，不保证重新运行得到相同轨迹或分数。本轮不修具体工具文案、参数条件或失败前的状态修改。
-
-上下文位置、一次性反馈与运行后定位见 [ErrorContextManagement.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/ErrorContextManagement.md)。文件范围和执行 prompt 见 [FILE-INVENTORY.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/FILE-INVENTORY.md)、[FILE-PROMPTS.md](/Users/hanlinyuan/Documents/Codex_Projects/FAIRY/Fixes-Error-Contract/FILE-PROMPTS.md)。
+测试使用假 client 和内存文件，覆盖反馈一致性、消息顺序、既有回调/预算、一次性纠错、统计与导出，以及转换后进入 FARM-FOS/FARM-FOS v2 的兼容性。没有真实 LLM 请求；这些测试不代表已穷举全部工具状态、全部场景或模型服务行为。
