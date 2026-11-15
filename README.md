@@ -175,26 +175,27 @@ PYTHONPATH=. uv run python -m fairy.cli \
   --output-dir validation_runs/quickstart/fullseason/detail_false
 ```
 
-Complete `detailed_briefing` values:
+Complete L3 `detailed_briefing` values (availability of external resources still depends on the scenario). `structured_true` supports only the [formal 90 L3 scenarios](scripts/fullseason/formal_90_scenario_ids.txt); L1/L2 and other scenarios reject this new mode.
 
 | Value | JSON form | Meaning | Extra dependency |
 |---|---|---|---|
 | `false` | `{"detailed_briefing": false}` | Use only the base L3 prompt; no extra detail/context. | None |
 | `true` | `{"detailed_briefing": true}` | Use the scenario's built-in human detailed briefing. | Scenario `detailed_briefing_text` |
+| `structured_true` | `{"detailed_briefing": "structured_true"}` | Base task plus independently selected guidelines and/or target plan; no components selected by default. See [component configuration](#structured-briefing-components). | Packaged `structured_knowledge/` records for selected components |
 | `kwoo` | `{"detailed_briefing": "kwoo"}` | Append Kwoo-generated expert context to the base prompt. | `FARM_FAIRY_KWOO_CONTEXT_PATH` |
 | `library` | `{"detailed_briefing": "library"}` | Append same-L3 structured L2 skill-library context. This is not a Python package; it comes from `knowledge_library_pilot/<scenario_slug>/library_same_l3.md`. | Scenario-specific `library_same_l3.md` |
 | `l2_human_same` | `{"detailed_briefing": "l2_human_same"}` | Same-source-L3 human/structured L2 skill context. | Same-L3 skill JSON under `knowledge_library_pilot` |
 | `l2_human_differ` | `{"detailed_briefing": "l2_human_differ"}` | Cross-L3 transferred human/structured L2 skill context. | Cross-L3 skill JSON under `knowledge_library_pilot` |
-| `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | Cross-L3 L2 skills retrieved by text similarity. | Generated retrieval context |
-| `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | Text-similar cross-L3 L2 skills grouped by establishment/management/harvest quotas. | Generated retrieval context |
+| `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | Cross-L3 L2 skills selected by text similarity during initialization. | Existing skill JSON pool; no pre-generated context map |
+| `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | Text-similar cross-L3 L2 skills selected during initialization with establishment/management/harvest quotas. | Existing skill JSON pool; no pre-generated context map |
 | `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | Cross-L3 L2 skills retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l2_pathsim_grouped_differ` | `{"detailed_briefing": "l2_pathsim_grouped_differ"}` | Path-similar cross-L3 L2 skills grouped by farming stage. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
-| `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | Same-L3 reference context retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
+| `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | L3 workflow/path retrieval from a pool that allows the target itself; not limited to the target. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_differ` | `{"detailed_briefing": "l3_pathsim_differ"}` | Cross-L3 reference context retrieved by workflow/path similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_textsim_differ` | `{"detailed_briefing": "l3_textsim_differ"}` | Cross-L3 reference context retrieved by text similarity. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_textdiff_differ` | `{"detailed_briefing": "l3_textdiff_differ"}` | Backward-compatible legacy experiment name; normalized to `l3_textsim_differ` at runtime. | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 
-`iclr_validation_runner.py --detail <value>` merges the same value into `--scenario-kwargs` as `detailed_briefing`.
+`iclr_validation_runner.py --detail <value>` merges the same value into `--scenario-kwargs` as `detailed_briefing`, overriding that field if already present. For `structured_true`, pass `structured_briefing.components` through `--scenario-kwargs`; `--detail structured_true` alone gives the same briefing as `false`.
 
 ### 4. Run A Controller × Scenario Batch
 
@@ -559,7 +560,7 @@ Parameters:
 | `--evaluate` | flag | false | Evaluate the replayed workflow and store the result in `run_report.evaluation`. |
 | `--workflow` | path | `<output-dir>/<scenario>.oracle.json` | Output path for `--build-oracle`; input path for `--replay` and `--evaluate`. |
 | `--output-dir` | path | `runs` | Output directory for the run bundle. |
-| `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Detail/context such as `'{\"detailed_briefing\":\"kwoo\"}'` belongs here. |
+| `--scenario-kwargs` | JSON object string | `{}` | Scenario constructor arguments, including `detailed_briefing` and optional `structured_briefing`; see [component configuration](#structured-briefing-components). |
 | `--init-kwargs` | JSON object string | `{}` | Arguments passed to `scenario.setup(**init_kwargs)`. Most FARM scenarios do not need this. |
 
 Common commands:
@@ -625,7 +626,7 @@ Parameters:
 | `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
 | `--max-tool-calls` | int | `300` | Maximum main-agent tool calls. If reached, `run_report.status=stopped` and `stopped_reason=max_tool_calls`. |
 | `--timeout-seconds` | float | `1200.0` | Maximum main-agent wall time. If reached, `stopped_reason=timeout`. |
-| `--scenario-kwargs` | JSON object string | `{}` | Arguments passed when the scenario object is created. Put `detailed_briefing` / detail-context mode here. |
+| `--scenario-kwargs` | JSON object string | `{}` | Scenario constructor arguments, including `detailed_briefing` and optional `structured_briefing`; see [component configuration](#structured-briefing-components). |
 | `--init-kwargs` | JSON object string | `{}` | Arguments passed to `scenario.setup(**init_kwargs)`. Most FARM scenarios do not need this; keep `{}` unless a scenario's `setup()` explicitly requires extra initialization arguments. |
 
 App tool documentation uses three sections. Opening prose, or an explicit
@@ -655,10 +656,10 @@ such as `Returns:` remain in Description during documentation migration.
 
 Difference between `--scenario-kwargs` and `--init-kwargs`:
 
-- `--scenario-kwargs` controls how the scenario object is constructed. Full-season `detailed_briefing` is a dataclass/constructor field, so it belongs here.
+- `--scenario-kwargs` controls how the scenario object is constructed. Full-season `detailed_briefing` and `structured_briefing` are constructor fields, so they belong here.
 - `--init-kwargs` controls how `setup()` initializes the already-created scenario. Most FARM scenarios do not use it.
 
-The detail true/false/kwoo modes all use `--scenario-kwargs`:
+All detail/context modes use `--scenario-kwargs`:
 
 ```bash
 # detail false: no extra detailed context
@@ -676,6 +677,9 @@ The detail true/false/kwoo modes all use `--scenario-kwargs`:
 # L2/L3 retrieval context
 --scenario-kwargs '{"detailed_briefing": "l2_textsim_differ"}'
 --scenario-kwargs '{"detailed_briefing": "l3_pathsim_differ"}'
+
+# structured_true: base task + reusable guidelines + scenario plan (formal90 only)
+--scenario-kwargs '{"detailed_briefing":"structured_true","structured_briefing":{"components":["reusable_operational_guidelines","scenario_specific_plan"]}}'
 ```
 
 JSON booleans are lowercase `true` / `false`. String modes need double quotes, for example `"kwoo"`.
@@ -879,6 +883,7 @@ Final overview:
 | `metrics.llm_call_count` | Main-agent LLM call count. |
 | `metrics.token_usage` | Main-agent prompt, completion, cached, and total tokens. |
 | `controller_telemetry` | Planner/skill/ReWOO/tree/critic/graph counters. |
+| `structured_briefing` | Present only for `structured_true` agent runs: selected components, knowledge sources/resource hashes, and the actual briefing text/hash. |
 | `a2a` | A2A config, wrapped apps, expert tool/LLM/token totals. |
 | `evaluation` | Scenario validation and outcome. |
 | `outcome` | Farm state summary, such as inventory, yield recovery, and physics state. |
@@ -964,7 +969,7 @@ scenario_full_season_balanced_v2
 
 ## Full-Season Detail/Context Modes
 
-Set these through `--scenario-kwargs '{"detailed_briefing": ...}'` or `iclr_validation_runner.py --detail`.
+Set these through `--scenario-kwargs '{"detailed_briefing": ...}'` or `iclr_validation_runner.py --detail`. The full mode protocol applies to formal90 L3; `structured_true` is explicitly rejected for L1/L2 and other unsupported scenarios. Existing L1/L2 classes use boolean branching, so use JSON `false` or `true` there.
 
 `fairy-run` example:
 
@@ -1004,6 +1009,7 @@ Values:
 |---|---|
 | `false` | No extra L3 detail/context. |
 | `true` | Original detailed L3 briefing. |
+| `structured_true` | Base task plus optional cross-scenario guidelines and/or the current scenario's plan; see [component configuration](#structured-briefing-components). |
 | `kwoo` | Kwoo-generated expert context. |
 | `library` | Same-L3 `knowledge_library_pilot` context. |
 | `l2_human_same` | Human/structured L2 skills from the same source L3. |
@@ -1012,7 +1018,7 @@ Values:
 | `l2_textsim_grouped_differ` | Text-similar cross-L3 L2 skills grouped by establishment, management, harvest. |
 | `l2_pathsim_differ` | Cross-L3 L2 skills retrieved by workflow/path similarity. |
 | `l2_pathsim_grouped_differ` | Path-similar cross-L3 L2 skills grouped by farm stage. |
-| `l3_pathsim_same` | Same-L3 context retrieved by L3 workflow/path similarity. |
+| `l3_pathsim_same` | L3 workflow/path retrieval with the target itself allowed in the reference pool. |
 | `l3_pathsim_differ` | Cross-L3 context retrieved by L3 workflow/path similarity. |
 | `l3_textsim_differ` | Cross-L3 context retrieved by L3 text similarity. |
 | `l3_textdiff_differ` | Legacy compatibility alias. |
@@ -1072,6 +1078,53 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --agent-max-iterations 200 \
   --cell-timeout-s 1200
 ```
+
+### Structured Briefing Components
+
+`structured_true` assembles the initial **user** briefing once, in B → G → P order. B is the unchanged `false` task, G is reusable guidance from other scenarios, and P is the current scenario's plan and necessary constraints. It does not refresh knowledge after tool observations.
+
+Later requests carry the existing user message in history without reloading or appending G/P. G omits source labels and source IDs from its presentation; provenance remains in local records and run-report metadata. Existing independent library modes keep their original text.
+
+| `structured_briefing.components` | Result |
+|---|---|
+| Omitted or `[]` | B, exactly equal to `false` |
+| `["reusable_operational_guidelines"]` | B + G |
+| `["scenario_specific_plan"]` | B + P |
+| Both names | B + G + P |
+
+Pass this JSON through `--scenario-kwargs`:
+
+```json
+{
+  "detailed_briefing": "structured_true",
+  "structured_briefing": {
+    "components": ["reusable_operational_guidelines", "scenario_specific_plan"],
+    "guidelines": {"source": "cross_scenario_detailed"}
+  }
+}
+```
+
+The runner can instead set the mode with `--detail structured_true`, while the same `structured_briefing` object remains in `--scenario-kwargs`. These are constructor options, not `--init-kwargs` options. Unknown components fail; duplicates are removed. Unselected components are not loaded, and missing selected content raises an error. A nonempty `structured_briefing` object with an old mode also raises an error.
+
+`guidelines` selects the source of G; it does not enable G. Its fields are:
+
+| Field | Default / supported values |
+|---|---|
+| `source` | `cross_scenario_detailed` (default): load offline summaries and target mappings from other scenarios' detailed descriptions. `library`: replace G with an existing cross-scenario knowledge mode; P is unchanged. |
+| `mode` | Required for `source="library"`: `l2_human_differ`, `l2_textsim_differ`, `l2_textsim_grouped_differ`, `l2_pathsim_differ`, `l2_pathsim_grouped_differ`, `l3_pathsim_differ`, or `l3_textsim_differ`. Same-source modes are not valid G sources. |
+| `top_k` | Optional positive integer, only for `l2_textsim_differ`. An explicit value overrides the existing textsim environment setting for this G only; otherwise the environment/default of 6 applies. Grouped retrieval retains its 1/2/1 quotas. |
+| `context_path` | Only for pathsim/L3-textsim modes. Path to an offline JSON map; overrides `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` for this G. The map must declare the matching mode and non-target source IDs with actual retrieval scores, in addition to its contexts. |
+
+For example, replace the `guidelines` object with `{"source":"library","mode":"l2_textsim_differ","top_k":6}`. Existing library coverage limits still apply. L2 textsim selects from stored cards during initialization; map modes load offline results. Old independent modes retain their existing behavior and map format; the stricter source metadata applies only to `structured_true` G.
+
+Runtime records live in [structured_knowledge/](fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/README.md): `plans.json`, `guides.json`, `scenario_guidelines.json`, and `manifest.json`. Runtime reads these records without accessing `Fixes-Knowledge-Library/`. That directory contains the reviewed source material used by the offline builder and its consistency check:
+
+```bash
+python3 scripts/fullseason/build_structured_knowledge.py
+python3 scripts/fullseason/build_structured_knowledge.py --check
+```
+
+See the [implementation and map-format notes](Fixes-Knowledge-Library/README.md#structured_true实现与使用) for provenance and source metadata. `run_report.structured_briefing` records the loaded components, sources, resource versions, and final briefing text/hash. Controllers receive B or P for target-step extraction; the model still receives the full selected B/G/P content.
 
 ## Oracle Baselines: Where Yield Loss Comes From
 
@@ -1254,8 +1307,8 @@ Parameters:
 | `--tool-relations` | `on` / `off` | `on` | Passed to `fairy-run` for main and A2A agent tool schemas; recorded in `run_report.json` and `results.csv`. JSON config key: `tool_relations`. `off` omits only explicit Relation sections. |
 | `--enable-thinking` | `true` / `false` | unset | Passed to `fairy-run` for vLLM clients and recorded in `results.csv`. JSON key `enable_thinking` accepts `true`, `false`, or `null` (inherit server default). |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
-| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. |
-| `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`. |
+| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. Put `structured_briefing` in `--scenario-kwargs`, not `--init-kwargs`. |
+| `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`, overriding that field. `structured_true` uses separately selected [components](#structured-briefing-components); mode alone selects none. |
 | `--a2a`, `--a2a-*` | same as FAIRY CLI | off                              | Batch A2A settings. |
 
 For named pools such as `selected_l2_l1_20_30`, use the manifest-expansion snippet in the Scenario Pools section and pass the resulting `"$SCENARIOS"` string here.

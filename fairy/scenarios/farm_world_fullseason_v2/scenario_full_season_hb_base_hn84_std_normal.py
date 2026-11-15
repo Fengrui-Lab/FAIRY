@@ -112,6 +112,7 @@ class ScenarioFullSeasonHBBaseHN84StdNormal(Scenario):
                     detailed_briefing_text=DETAILED_BRIEFING_TEXT,
                 ),
                 self.detailed_briefing,
+                structured_briefing=self.structured_briefing,
             )
         else:
             briefing_text = BRIEFING_TEXT

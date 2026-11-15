@@ -332,6 +332,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                     ),
                 ),
                 self.detailed_briefing,
+                structured_briefing=self.structured_briefing,
             )
 
         with EventRegisterer.capture_mode():

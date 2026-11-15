@@ -175,26 +175,27 @@ PYTHONPATH=. uv run python -m fairy.cli \
   --output-dir validation_runs/quickstart/fullseason/detail_false
 ```
 
-`detailed_briefing` 完整取值：
+以下是 formal90 L3 的 `detailed_briefing` 完整取值。L1/L2 应使用布尔 `true`/`false`，不支持 `structured_true`。
 
 | 取值 | JSON 写法 | 含义 | 额外依赖 |
 |---|---|---|---|
 | `false` | `{"detailed_briefing": false}` | 只使用基础 L3 prompt，不注入额外 detail/context。 | 无 |
 | `true` | `{"detailed_briefing": true}` | 使用场景自带的人工 detailed briefing。 | 场景内置 `detailed_briefing_text` |
+| `structured_true` | `{"detailed_briefing": "structured_true"}` | 基础任务 + 可选跨场景指南 G + 可选当前场景计划 P；默认不选组件，等于 false。 | 本地 `structured_knowledge/`；[组件参数](#structured_true-参数) |
 | `kwoo` | `{"detailed_briefing": "kwoo"}` | 在基础 prompt 后追加 Kwoo 生成的 expert context。 | `FARM_FAIRY_KWOO_CONTEXT_PATH` 指向 Kwoo JSON/text |
 | `library` | `{"detailed_briefing": "library"}` | 在基础 prompt 后追加同 L3 的结构化 L2 skill library。不是 Python 包；文件来自 `knowledge_library_pilot/<scenario_slug>/library_same_l3.md`。 | 该场景必须在 `knowledge_library_pilot` 下有 `library_same_l3.md` |
 | `l2_human_same` | `{"detailed_briefing": "l2_human_same"}` | 注入同 source L3 的人工/结构化 L2 skill context。 | `knowledge_library_pilot` 中同 L3 skill JSON |
 | `l2_human_differ` | `{"detailed_briefing": "l2_human_differ"}` | 注入其他 L3 source 转移来的人工/结构化 L2 skill context。 | `knowledge_library_pilot` cross-L3 skill JSON |
-| `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | 注入文本相似度检索到的跨 L3 L2 skills。 | 已生成的 retrieval context |
-| `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | 文本相似度检索跨 L3 L2 skills，并按 establishment/management/harvest 分组配额。 | 已生成的 retrieval context |
+| `l2_textsim_differ` | `{"detailed_briefing": "l2_textsim_differ"}` | 初始化时按文本相似度检索跨 L3 L2 skills。 | 本地 skill JSON；无需预生成 context map |
+| `l2_textsim_grouped_differ` | `{"detailed_briefing": "l2_textsim_grouped_differ"}` | 初始化时检索跨 L3 L2 skills，按 establishment/management/harvest 分组配额。 | 本地 skill JSON；无需预生成 context map |
 | `l2_pathsim_differ` | `{"detailed_briefing": "l2_pathsim_differ"}` | 注入 workflow/path 相似度检索到的跨 L3 L2 skills。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指向 retrieval JSON |
 | `l2_pathsim_grouped_differ` | `{"detailed_briefing": "l2_pathsim_grouped_differ"}` | workflow/path 相似度检索跨 L3 L2 skills，并按农事阶段分组配额。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
-| `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | 注入 workflow/path 相似度检索到的同 L3 reference context。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
+| `l3_pathsim_same` | `{"detailed_briefing": "l3_pathsim_same"}` | 注入路径相似度检索的 L3 reference context；参考池允许包含目标自身。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_pathsim_differ` | `{"detailed_briefing": "l3_pathsim_differ"}` | 注入 workflow/path 相似度检索到的跨 L3 reference context。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_textsim_differ` | `{"detailed_briefing": "l3_textsim_differ"}` | 注入文本相似度检索到的跨 L3 reference context。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 | `l3_textdiff_differ` | `{"detailed_briefing": "l3_textdiff_differ"}` | 兼容旧实验命名；运行时规范化为 `l3_textsim_differ`。 | `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` |
 
-`iclr_validation_runner.py --detail <value>` 会把同样的值自动合并进 `--scenario-kwargs` 的 `detailed_briefing` 字段。
+`iclr_validation_runner.py --detail <value>` 会覆盖合并 `--scenario-kwargs` 的 `detailed_briefing` 字段，保留其他字段。选择 `structured_true` 时，还需通过 `structured_briefing.components` 指定要加入的 G/P。
 
 ### 4. 执行 controller × scenario 批量运行
 
@@ -559,7 +560,7 @@ fairy-run \
 | `--evaluate` | flag | false | 对 replay 后的 workflow 和 farm state 做评估，结果写入 `run_report.evaluation`。 |
 | `--workflow` | path | `<output-dir>/<scenario>.oracle.json` | `--build-oracle` 时的输出路径；`--replay/--evaluate` 时的输入路径。 |
 | `--output-dir` | path | `runs` | 本次 run bundle 的输出目录。 |
-| `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。detail/context 例如 `'{\"detailed_briefing\":\"kwoo\"}'` 放这里。 |
+| `--scenario-kwargs` | JSON object string | `{}` | 场景构造参数；`detailed_briefing` 和可选 `structured_briefing` 均放这里，见[组件参数](#structured_true-参数)。 |
 | `--init-kwargs` | JSON object string | `{}` | 调用 `scenario.setup(**init_kwargs)` 时传入的参数。普通 FARM 场景一般不用。 |
 
 常见组合：
@@ -624,7 +625,7 @@ fairy-run \
 | `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
 | `--max-tool-calls` | int | `300` | 主 agent 最多允许多少次工具调用。到达后 `run_report.status=stopped`，`stopped_reason=max_tool_calls`。 |
 | `--timeout-seconds` | float | `1200.0` | 主 agent 最大 wall time。到达后 `stopped_reason=timeout`。 |
-| `--scenario-kwargs` | JSON object string | `{}` | 创建 scenario 对象时传入的参数。`detailed_briefing` / detail-context 模式就放这里。 |
+| `--scenario-kwargs` | JSON object string | `{}` | 场景构造参数；`detailed_briefing` 和可选 `structured_briefing` 均放这里，见[组件参数](#structured_true-参数)。 |
 | `--init-kwargs` | JSON object string | `{}` | 调用 `scenario.setup(**init_kwargs)` 时传入的参数。普通 FARM 场景一般不用；只有某个场景的 `setup()` 明确需要额外初始化参数时才用。 |
 
 App 工具文档分为三部分：开头正文或显式 `Description:` 描述工具能力及正常返回值；
@@ -650,10 +651,10 @@ Description 和开启时的 Relation 进入 `function.description`，参数说�
 
 `--scenario-kwargs` 和 `--init-kwargs` 的区别：
 
-- `--scenario-kwargs`：控制“这个场景对象怎么创建”。例如 full-season 场景的 `detailed_briefing` 是 dataclass/constructor 字段，所以必须放这里。
+- `--scenario-kwargs`：控制“这个场景对象怎么创建”。`detailed_briefing` 和 `structured_briefing` 都是构造字段，必须放这里。
 - `--init-kwargs`：控制“创建后 setup 怎么初始化”。目前大多数 FARM 场景不需要它，保持 `{}` 即可。
 
-detail true/false/kwoo 这些都走 `--scenario-kwargs`：
+detail/context 模式都走 `--scenario-kwargs`：
 
 ```bash
 # detail false：不加额外 detailed context
@@ -661,6 +662,9 @@ detail true/false/kwoo 这些都走 `--scenario-kwargs`：
 
 # detail true：使用场景自带 detailed briefing
 --scenario-kwargs '{"detailed_briefing": true}'
+
+# structured_true：基础任务 + 当前场景计划（仅 formal90 L3）
+--scenario-kwargs '{"detailed_briefing":"structured_true","structured_briefing":{"components":["scenario_specific_plan"]}}'
 
 # Kwoo context
 --scenario-kwargs '{"detailed_briefing": "kwoo"}'
@@ -673,7 +677,7 @@ detail true/false/kwoo 这些都走 `--scenario-kwargs`：
 --scenario-kwargs '{"detailed_briefing": "l3_pathsim_differ"}'
 ```
 
-注意 JSON 里布尔值是小写 `true` / `false`，字符串模式要加双引号，例如 `"kwoo"`。
+注意 JSON 里布尔值是小写 `true` / `false`，字符串模式要加双引号，例如 `"kwoo"`。G/P 的四种组合和来源选项见 [structured_true 参数](#structured_true-参数)。
 
 DeepSeek 示例：
 
@@ -863,6 +867,7 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 | `run_type` | `agent` 或 `oracle_replay_evaluate`。 |
 | `scenario_id` | 场景 ID。 |
 | `controller_id` | agent controller；oracle/replay 模式为 `null`。 |
+| `structured_briefing` | 仅 structured_true 的 Agent 报告存在：组件选择、知识来源/版本、实际 briefing 正文及 hash。 |
 | `provider`, `model`, `temperature` | LLM 配置。 |
 | `system_prompt_mode` | agent run 为 `fairy` 或 `are`；oracle/replay 模式为 `null`。 |
 | `status` | `completed`、`stopped` 或 `failed`。 |
@@ -959,7 +964,7 @@ scenario_full_season_balanced_v2
 
 ## Full-season detail/context 模式
 
-通过 `--scenario-kwargs '{"detailed_briefing": ...}'` 或 `iclr_validation_runner.py --detail` 设置。
+通过 `--scenario-kwargs '{"detailed_briefing": ...}'` 或 `iclr_validation_runner.py --detail` 设置。以下多模式协议适用于 [formal90 L3](scripts/fullseason/formal_90_scenario_ids.txt)；L1/L2 使用布尔 true/false。
 
 `fairy-run` 示例：
 
@@ -999,6 +1004,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 |---|---|
 | `false` | 不注入额外 L3 detail/context。 |
 | `true` | 使用原始 detailed L3 briefing。 |
+| `structured_true` | 基础任务 + 独立可选的 G/P；未选组件等于 false，见[组件参数](#structured_true-参数)。 |
 | `kwoo` | 使用 Kwoo 生成的 expert context。 |
 | `library` | 使用同 L3 的 `knowledge_library_pilot` context。 |
 | `l2_human_same` | 同 source L3 内的人工/结构化 L2 skills。 |
@@ -1007,10 +1013,62 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `l2_textsim_grouped_differ` | 按 establishment、management、harvest 分组的文本相似跨 L3 L2 skills。 |
 | `l2_pathsim_differ` | workflow/path 相似度检索的跨 L3 L2 skills。 |
 | `l2_pathsim_grouped_differ` | 按农事阶段分组的 path 相似跨 L3 L2 skills。 |
-| `l3_pathsim_same` | L3 workflow/path 相似度检索的同 L3 context。 |
+| `l3_pathsim_same` | L3 workflow/path 相似度检索，参考池允许包含目标自身。 |
 | `l3_pathsim_differ` | L3 workflow/path 相似度检索的跨 L3 context。 |
 | `l3_textsim_differ` | L3 文本相似度检索的跨 L3 context。 |
 | `l3_textdiff_differ` | 旧实验配置兼容别名。 |
+
+### structured_true 参数
+
+这是与 false、true、library 平级的模式，仅支持 formal90 L3。内容在第一次 LLM 调用前装入初始 **user / Scenario briefing**，后续不随观测自动更新。
+
+指引只在初始化时组装一次，后续随历史消息发送，不重复加载或追加。G正文不显示来源字段；来源保留在本地记录和运行报告元数据中，旧library模式正文不变。
+
+令 B 为原 false 基础任务，G 为从其他场景归纳的可复用指南，P 为当前场景计划及必要条件：
+
+| `structured_briefing.components` | 结果 |
+|---|---|
+| `[]` 或省略配置 | B，逐字等于 false |
+| `["reusable_operational_guidelines"]` | B + G |
+| `["scenario_specific_plan"]` | B + P |
+| 两项都选 | B + G + P |
+
+装配顺序固定；未选组件不加载，已选内容缺失时报错。完整配置示例：
+
+```json
+{
+  "detailed_briefing": "structured_true",
+  "structured_briefing": {
+    "components": ["reusable_operational_guidelines", "scenario_specific_plan"],
+    "guidelines": {"source": "cross_scenario_detailed"}
+  }
+}
+```
+
+把该 JSON 作为 `--scenario-kwargs` 的值。以下字段位于 `structured_briefing` 内：
+
+| 字段 | 默认值 / 适用范围 | 含义 |
+|---|---|---|
+| `components` | `[]` | 独立选择 G/P；重复项去重，未知项报错 |
+| `guidelines.source` | G 开启时默认 `cross_scenario_detailed` | 使用本地跨场景指南；可改为 `library` 替换整个 G，P 不变 |
+| `guidelines.mode` | source=library 时必填 | 跨源模式：`l2_human_differ`、`l2_textsim_differ`、`l2_textsim_grouped_differ`、`l2_pathsim_differ`、`l2_pathsim_grouped_differ`、`l3_pathsim_differ`、`l3_textsim_differ` |
+| `guidelines.top_k` | 仅 `l2_textsim_differ` | 正整数；显式值优先，否则读取原 textsim 环境变量，再默认 6；不修改环境变量 |
+| `guidelines.context_path` | 仅 pathsim / L3 textsim map 模式 | 显式 JSON 路径优先，否则使用原 retrieved-context 环境变量 |
+
+`source` 只选择来源，启用 G 仍需 components 包含 `reusable_operational_guidelines`。同源 library/same 模式不能作为 G 来源；原有独立模式照常可用。map 用于新 G 时须包含匹配的 mode、正文、非目标来源 ID 和实际检索分数，格式见[实现说明](Fixes-Knowledge-Library/README.md#3-用现有library知识替换g)。旧模式配非空 structured_briefing 会报错。
+
+例如将 G 换成现有 L2 textsim 知识时，只将上述 guidelines 改为 `{"source":"library","mode":"l2_textsim_differ","top_k":6}`。该来源在初始化时从预存卡池检索；默认 cross_scenario_detailed 则按 ID 直接读取离线指南映射。
+
+在已有 runner 命令中，可这样传递两类组件：
+
+```bash
+--detail structured_true \
+--scenario-kwargs '{"structured_briefing":{"components":["reusable_operational_guidelines","scenario_specific_plan"]}}'
+```
+
+运行文件在 [structured_knowledge/](fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/README.md)，含90份计划、12类指南和目标映射。`Fixes-Knowledge-Library/` 是设计/审阅和离线生成的源材料，运行时不读取；重新生成或 `--check` 会读取它。维护命令为 `python3 scripts/fullseason/build_structured_knowledge.py`（生成）和追加 `--check`（只核对）。实际注入内容可查 `run_report.structured_briefing`。
+
+### 既有 context 资产与检索实验
 
 相关资产：
 
@@ -1247,8 +1305,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | 传给 `fairy-run`。如果要严格一轮只出一个工具调用的 ReAct trace，设成 `false`。 |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | 传给 `fairy-run`，并记录在 `run_report.json` 和 `results.csv`。`are` 迁移与 FAIRY 兼容的旧 ARE 行为规则，但不会恢复相冲突的文本 JSON `Action:`/`<end_action>` 协议或内嵌工具目录。 |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | 兼容旧 runner 字段；当前 FAIRY CLI 不直接使用。 |
-| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | 透传给 FAIRY CLI。 |
-| `--detail` | detail mode | none                             | 自动合并进 `--scenario-kwargs` 的 `detailed_briefing`。 |
+| `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | 透传给 FAIRY CLI；structured_briefing 组件配置放在 scenario-kwargs。 |
+| `--detail` | detail mode，包括 `structured_true` | none                             | 覆盖合并 detailed_briefing，保留其他 scenario-kwargs；新模式的 components 默认空，见[组件参数](#structured_true-参数)。 |
 | `--a2a`, `--a2a-*` | 同 FAIRY CLI | off                              | 批量 A2A 配置。 |
 
 跑 `selected_l2_l1_20_30` 这类场景池时，先按上面“场景池”一节的命令生成 `SCENARIOS`，这里传 `--scenarios "$SCENARIOS"`。

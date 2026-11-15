@@ -1,0 +1,4961 @@
+{
+  "schema_version": "structured-knowledge/v1",
+  "plans": {
+    "scenario_full_season_heinong60_high_density_baseline": {
+      "scenario_requirements": [
+        "哈尔滨正常年份HEINONG60高密度全季基准：完成播前准备、底肥、高密播种、出苗/密度、早期长势/营养、初花期按需营养、R5/R6水分检查及成熟收获、干燥、安全入库。允许轻度背景营养、水分、病虫草风险；非理论最高产或无压力环境。每次管理前读取天气、土壤、冠层、病虫害或库存，再决定额外动作。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.1（株距 6.1 cm），约 29.8 plants/m²（约 29.8 万株/ha）。",
+        "按正常年份专家标准管理完成全季流程，并通过常规巡查和按需轻量操作控制背景风险。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "收获后的偏湿批次先干燥到安全储藏水分。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "收获后批次达到安全水分且储藏容量允许后入库。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 4,
+        "end_line": 18,
+        "sha256": "286b1645f725484cfe5aba198b6777a1e5f6b461d3fcad7433420af6d32220f8"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_wet_june_ab_zoned_disease": {
+      "scenario_requirements": [
+        "哈尔滨6月湿+A/B分区全季：A区0-31垄黑农84标准密度，B区32-63垄黑农60高密度。春季正常、6月偏湿、R5/R6与收获期整体正常；湿后比较A区通风较好应基本正常与B区高密冠层局部病害风险。完成播前/底肥/分区播种/分区出苗、早期长势营养、初花按需营养、6月湿期及R5/R6水分巡查和收获后闭环；有观测依据才处理异常垄段，禁全田统一喷药。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）；ridges 32–63: HEINONG60，高密度，seed_spacing_cm=6.1（株距 6.1 cm），约 29.8 plants/m²（约 29.8 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 9,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 10,
+          "instruction": "收获后的偏湿批次先干燥到安全储藏水分。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 11,
+          "instruction": "收获后批次达到安全水分且储藏容量允许后入库。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 19,
+        "end_line": 36,
+        "sha256": "911599d0ad7c083e47966298b6e8d1573971aac74069107700e0c9634ee36f0c"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤4/5重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤6/8重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤7/9重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。",
+        "原文分区配置指定不同品种，但播种步骤统写0-63垄；保留步骤，执行时须结合配置，不新增来源未明确的播种子步骤。"
+      ]
+    },
+    "scenario_full_season_heinong84_edge_low_fertility": {
+      "scenario_requirements": [
+        "黑农84标准密度全季；春季、6月、R5/R6及收获期整体正常。播后局部出苗慢、弱苗或不均时，以全田出苗、叶色、NDVI、土壤水分、病虫迹象定位诊断异常垄段。完成播前准备、种肥/底肥、播种、出苗、必要局部恢复及早期复查、初花按需营养、中期巡查、R5/R6水分管理和成熟收获/干燥/安全储藏。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据叶色/长势和营养诊断信号、叶色/NDVI和地面检查决定是否定向补肥或水肥。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "结合出苗率、stand缺口和剩余季节长度，仅对仍有补种收益的缺苗区域补种。",
+          "timing": [
+            "剩余季节长度"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 9,
+          "instruction": "收获后的偏湿批次先干燥到安全储藏水分。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 10,
+          "instruction": "收获后批次达到安全水分且储藏容量允许后入库。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 37,
+        "end_line": 53,
+        "sha256": "2000357032a82f3ae1cda58540167b5e6dda03a2ebf86b074fcfbcb87957aab6"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/4重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤5/7重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤6/8重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_fastdraining_dry_patch_irrigation": {
+      "scenario_requirements": [
+        "哈尔滨黑农84标准密度全季：春季和6月正常，R5/R6有干旱风险。禁按全田平均值灌溉；用土壤传感器、热红外和冠层定位真正缺水垄段，排除病虫害/营养问题后局部水分管理，再完成成熟收获、干燥及安全储藏。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认区域达到R8成熟或收获条件，并检查籽粒水分、天气和田间可作业性后收获。",
+          "timing": [
+            "R8成熟"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "本批收获完成后立即卸粮并形成后处理批次，保持收后处理顺序。",
+          "timing": [
+            "收获批次完成后立即"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "收获后的偏湿批次先干燥到安全储藏水分。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 9,
+          "instruction": "收获后批次达到安全水分且储藏容量允许后入库。",
+          "timing": [
+            "收获后批次"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 54,
+        "end_line": 69,
+        "sha256": "4cce8fd26a3a50dbc6d7ec9418b2669a82bf57db64c58a0c1d8240bb4eece0ef"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤4/6重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文步骤5/7重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_heinong84_staggered_planting": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨黑农84错期播种大豆田。全田分为早播0-20垄、中播21-42垄、晚播43-63垄；垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=7.9，约23.0 plants/m²。",
+        "错期播种窗口：early_0_20 ridges 0-20 最早 2026-05-05；mid_21_42 ridges 21-42 最早 2026-05-12；late_43_63 ridges 43-63 最早 2026-05-19。不同分区不能同日提前播完；只能在对应最早日期当天或之后，且天气、土壤水分/温度和设备状态允许时播种。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、3天预报、土壤温度/水分、拖拉机、播种机及HEINONG84库存；条件合适后装种，按4垄一趟播种0-20垄并提交播种物理更新。",
+          "timing": [
+            "播种前",
+            "3天预报"
+          ],
+          "quantities": [
+            "HEINONG84",
+            "4垄一趟",
+            "0-20垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "等待7天，重新检查天气、预报、土壤和设备；条件合适后按4垄一趟播种21-42垄并提交播种物理更新。",
+          "timing": [
+            "等待7天后"
+          ],
+          "quantities": [
+            "4垄一趟",
+            "21-42垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "再等待7天并复查晚播区播床；若偏干，先灌溉43-63垄1.2小时，等待约6小时入渗后复查土壤，再按4垄一趟播种43-63垄并提交播种物理更新。",
+          "timing": [
+            "再等待7天后",
+            "灌溉1.2小时",
+            "等待约6小时"
+          ],
+          "quantities": [
+            "43-63垄",
+            "4垄一趟"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "全田出苗后分别检查早/中/晚播区的stand、NDVI、冠层、土壤水分和生育阶段，不把错期区合并为同一作物状态。",
+          "timing": [
+            "全田出苗后"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "中后期按区巡查R1、mid、R5/R6；出现低NDVI、热信号或弱长势时，先用土壤、无人机和地面检查区分水分、营养、病虫草原因，再决定行动。",
+          "timing": [
+            "中后期",
+            "R1",
+            "mid",
+            "R5/R6"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "到R8后分区检查成熟度、grain_moisture、当前天气、3天预报和可作业性：>18%等待；13.5%-18%在质量/天气风险支持下可收后按需干燥；<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "3天预报"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%-18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "仅收获成熟、水分、天气和通行条件均满足的分区，按4垄一趟执行并及时卸粮；依实际水分和仓储限制，直接store_grain或先dry_grain(target_moisture_pct=13.0)再store_grain。",
+          "timing": [],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 70,
+        "end_line": 79,
+        "sha256": "b0241ad82e1d7c723f1981366203f776f98ab6d566a4b7658776dd0a7ceda9ad"
+      },
+      "additional_sources": [
+        {
+          "file": "fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_staggered_planting.py",
+          "start_line": 319,
+          "end_line": 323,
+          "sha256": "baf5e12380b7a3dd9375f1ff962f554cec2f547f90021931e0bc86c8406e17a5"
+        }
+      ],
+      "review_notes": [
+        "这里只整理字典内的7天/再7天等安排；该场景类在true分支另外追加的绝对日期不属于本文件源内容，需在接入层单独合并并标注来源。"
+      ]
+    },
+    "scenario_full_season_heinong84_threshold_insect_limited_spray": {
+      "scenario_requirements": [
+        "黑农84标准密度全季，完成播前检查、整地、基肥、播种、出苗、生长期巡查及收获。虫害先查天气、土壤、NDVI和地面健康；低于阈值只记录复查。仅虫害达到阈值、天气可喷且药剂够用时处理异常垄段，禁全田统一喷或阈值以下提前喷。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据虫害观察、pest count或虫口和虫害迹象阈值决定是否定向杀虫。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由冠层/叶片异常发现疑似虫害，经无人机定位、robot或地面复查虫口、叶片损伤和虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 80,
+        "end_line": 89,
+        "sha256": "dc5f301564471f06616f68e26504d0c0210516ef6c4e39681a9bb00d035115e3"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_heinong84_low_chemical_wet_disease": {
+      "scenario_requirements": [
+        "低化学投入黑农84全季，完成播前检查、整地、基肥、播种、出苗、生长期巡查及收获。病害先查天气、土壤、NDVI/热红外和地面健康；轻风险只记录复查。仅病害达明确阈值、天气可喷且田间可通行时局部处理，禁全田统一喷。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 90,
+        "end_line": 100,
+        "sha256": "2a436ad199e1457c0bd63d17612ac502b7302012900deedb4e15fd3e7b04d1ac"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_early_vs_standard_late_rain_harvest": {
+      "scenario_requirements": [
+        "哈尔滨全季A/B分区：A区0-31垄黑科71，B区32-63垄黑农84；完成播前检查、整地、基肥、分区播种、巡查和收获。收前查短期天气、土壤可作业性、各区成熟与籽粒水分；仅收成熟、水分合格、可通行分区，禁因一区可收而全田统一收。每批立即卸粮、按水分决定干燥，安全水分且容量允许后入库。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEIKE71，早熟品种标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），早熟区；ridges 32–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），标准品种区。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 101,
+        "end_line": 110,
+        "sha256": "f602436c9fc11b927a548b5f1cd0267d62c1ba822e0740bb17c92ad586daa9db"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复同一文字，未分别说明阶段/对象；保留顺序与次数，不合并也不补推阶段。",
+        "原文任务聚焦收获/储藏，但“管理重点”写定向灌溉；保留该原有要求，标记待审，不据此新增灌溉步骤。",
+        "原文分区配置指定不同品种，但播种步骤统写0-63垄；保留步骤，执行时须结合配置，不新增来源未明确的播种子步骤。"
+      ]
+    },
+    "scenario_full_season_hb_base_hn84_std_normal": {
+      "scenario_requirements": [
+        "哈尔滨黑农84标准密度正常年份全季基准：完成播前准备、底肥、播种、出苗、长势/营养、中期病虫与水分、R5/R6水分检查及收获后闭环。不预设病害、虫害、干旱或晚雨，仅weather/soil/canopy/drone/robot/range-state返回支持异常时额外管理；收前须观测确认成熟、水分及可作业性。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "按正常年份专家标准管理完成全季流程，并通过常规巡查和按需轻量操作控制背景风险。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 111,
+        "end_line": 120,
+        "sha256": "b2f7830b0b612facb471e4b54bfbda53922dc665a9ea70a9e209990fa707501f"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_dryr5r6_hn58_std_waterlimit": {
+      "scenario_requirements": [
+        "哈尔滨黑农58标准密度全季，按播前/底肥/播种/出苗/早中期长势营养病虫巡查推进，重点在R5/R6结荚鼓粒期用soil moisture、canopy/NDVI、thermal observation、生育阶段和ground check识别真正缺水的高优先级垄段。黑农58有抗逆性，轻压不立即灌溉；有限水不能全田平均分，只灌观测支持的高风险区；收前确认成熟、水分、天气、可作业性。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG58，抗逆品种标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 121,
+        "end_line": 131,
+        "sha256": "78fc6f12b8701e2fde7d5e9b46c69b83453d67a89b1db8168f4b96e335d3d20a"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_poordrainage_wetjune_disease_trafficability": {
+      "scenario_requirements": [
+        "哈尔滨黑农84标准密度全季；6月偏湿时重点评估积湿、病害及机械窗口，完成播前/底肥/播种/出苗/早期长势营养检查。湿后以soil/canopy定位，drone/ground robot确诊，结合weather/forecast/soil trafficability判定喷药窗口；禁见病即全田喷，过湿或天气不适合须等待，只处理观测支持的异常垄段；诊断、窗口、范围及收获决策均需前置证据。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 132,
+        "end_line": 142,
+        "sha256": "c05e7ba0f50eb3074a0a5ce88d1a16300970f4ddcbaea0557cc012d3ad6d7ab6"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_soy_after_soy_wetjune_disease": {
+      "scenario_requirements": [
+        "哈尔滨黑农84标准密度全季，完成基础流程及早期长势/营养检查。前茬大豆/病害历史导致6月湿后风险，应提高scouting优先级，以soil/canopy、drone、thermal observation、ground robot区分病害、缺水、虫害、营养不足；不能把field history风险改归因于高密度/差排水。禁默认全田喷，仅处理观测确认受影响区，再完成R5/R6水分检查与收获后闭环。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 143,
+        "end_line": 153,
+        "sha256": "51341d67952dd869c61d28a5854c1258c0b91227ec71a09c9498ce8ec1f5dde8"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_coldspring_planting_window_heihe50": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨冷春年份黑河50大豆田。品种为HEIHE50，垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=8.2，约22.2 plants/m²；冷春开局下播种窗口需要由天气和土壤共同确认。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "开局检查天气、3天预报、土壤温度/水分、拖拉机/播种机及HEIHE50库存；冷春土温或播床不适合时等待复查，不机械固定在5月5日播种。",
+          "timing": [
+            "开局",
+            "3天预报",
+            "不在5月5日机械固定播种"
+          ],
+          "quantities": [
+            "HEIHE50"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "条件合适后确认播前底肥和整地，装载HEIHE50，按4垄一趟播种0-63垄，播深4.0 cm、株距8.2 cm，并提交播种物理更新。",
+          "timing": [
+            "播前"
+          ],
+          "quantities": [
+            "HEIHE50",
+            "4垄一趟",
+            "0-63垄",
+            "播深4.0 cm",
+            "株距8.2 cm"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "出苗后检查全田概览、stand、NDVI、土壤水分和冠层，判断冷春慢出苗/弱苗；没有明确病虫草水肥证据时继续监测，不误处理。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "在R1/mid/R5检查长势、水分和病虫草信号，记录黑河50早熟品种的生育期推进。",
+          "timing": [
+            "R1/mid/R5阶段"
+          ],
+          "quantities": [
+            "黑河50"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "到R8后检查成熟度、grain_moisture、当前天气、3天预报及可作业性：>18%等待；13.5%-18%在质量/天气风险支持下可收后按需干燥；<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "3天预报"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%-18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 6,
+          "instruction": "仅对成熟、水分、天气和通行条件均满足的区域按4垄一趟收获并及时卸粮；依实际水分和仓储限制，直接store_grain或先dry_grain(target_moisture_pct=13.0)再store_grain。",
+          "timing": [],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 154,
+        "end_line": 162,
+        "sha256": "3d7496fc3898e985525f39cb7b9131f40c9945d2471c07744ab32a4855e51d21"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition": {
+      "scenario_requirements": [
+        "管理一块前季养分带出较多的黑农84标准密度大豆田。请通过全田检查、叶色/NDVI、土壤和地面复查判断是否需要花期营养补充，不能在没有田间观测和状态结果支持时直接补肥。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据叶色/长势和营养诊断信号、叶色/NDVI和地面检查决定是否定向补肥或水肥。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 163,
+        "end_line": 172,
+        "sha256": "c459b5915d68f775c50d72abfa1257f33a580b6302bc7ec7826425f4128c729a"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_high_weed_seedbank_mechanical_only_baseline": {
+      "scenario_requirements": [
+        "管理有高杂草种子库历史的黑农84标准密度大豆田，作为全田早期机械控草 baseline。NDVI不能单独代表作物正常；本场景不允许使用化学除草剂，请结合地面杂草检查决定是否早期全田机械控草，并复查作物恢复。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据杂草覆盖、行间竞争、作物长势和土壤可作业性判断是否进行全田机械控草，避免把杂草绿色覆盖误当作作物健康。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；草害处理必须走机械除草路径，不得使用化学除草剂。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或冠层闭合慢后，用无人机区分杂草绿度与作物长势，再由robot或地面确认杂草覆盖、行间竞争及土壤可作业性；确认全田早期草害竞争后仅机械控草，禁用herbicide。",
+          "timing": [
+            "早期"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 173,
+        "end_line": 182,
+        "sha256": "213c79d042c848834cd50fb27bc88f1ae3e1ca72d51c00a16fe18d0e9265acdb"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_wetjune_short_spray_window": {
+      "scenario_requirements": [
+        "管理湿六月后存在病害风险且喷药窗口很短的黑农84田。必须先诊断病害与作业窗口，再在天气和土壤允许时有针对性喷药。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 183,
+        "end_line": 192,
+        "sha256": "8534b5d5d1309f8f70389e1aa0bf86d1ce05f2a5ff2e69b60f615cddeef3c7e5"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_r5_leaf_feeder_defoliation": {
+      "scenario_requirements": [
+        "管理R5附近可能出现食叶性害虫的大豆田。请根据阶段、冠层/NDVI和地面虫害检查判断是否达到处理阈值，只对确认区域处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由冠层/叶片异常发现疑似虫害，经无人机定位、robot或地面复查虫口、叶片损伤和虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 193,
+        "end_line": 202,
+        "sha256": "936b165018dd16195743b4df02f3fb710c9eaf47c625ed23db57382be394d4b6"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_limited_spray_budget_season": {
+      "scenario_requirements": [
+        "在季节喷药次数有限的黑农84田中管理虫害。早期轻信号应监测和复查，只有后期达到阈值并有地面确认时才使用有限喷药预算。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由冠层/叶片异常发现疑似虫害，经无人机定位、robot或地面复查虫口、叶片损伤和虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 203,
+        "end_line": 212,
+        "sha256": "24cd350365001aab62d9d2bdc9bb75846a8f6dc0fbe6df5eb331999c87fb5964"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_dryr5r6_hn84_water_limit": {
+      "scenario_requirements": [
+        "管理R5/R6干旱且灌溉水量有限的黑农84田。请根据根区土壤水分/VWC、热胁迫、阶段和预报选择需要保护的区域，不能全田平均灌水。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 213,
+        "end_line": 222,
+        "sha256": "f8edc840efa47f69838a3afaa7d93f38adff81d1dd9396f4ce4f81e7d4c75eaa"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_hn60_high_dryr5r6_water_demand": {
+      "scenario_requirements": [
+        "管理黑农60高密度大豆田的R5/R6干旱风险。请先用土壤、冠层和热信号确认水分胁迫，再决定是否补水。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 223,
+        "end_line": 232,
+        "sha256": "09836484b0c272dc192d0b7fc9b7cb8b8ebca4476dd7a97813807cd7400fe425"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。",
+        "原文同时给株距6.8 cm对应约26.7 plants/m²（26.7万株/ha）与目标约29 plants/m²；均保留，未统一数值。"
+      ]
+    },
+    "scenario_full_season_hb_two_dry_patches_one_irrigation": {
+      "scenario_requirements": [
+        "管理两个局部缺水斑块但灌溉水量不足的黑农84田。请比较阶段、水分胁迫和产量敏感性，优先处理风险更高区域。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 233,
+        "end_line": 242,
+        "sha256": "2af00baa7acfd2fa3f7b2065483b861349286a4cefb313a77eb0b3c24ab5b2c1"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_staggered_dryr5r6_stage_mismatch": {
+      "scenario_requirements": [
+        "管理错期播种黑农84田在R5/R6干旱下的分区水分决策。请按区比较生育阶段和根区土壤水分/VWC，不要把全田当作统一作物状态。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），早播区；ridges 32–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），晚播区。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-31垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-31"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种32-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 32-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 243,
+        "end_line": 253,
+        "sha256": "7b7a7ac8b3ce46854537a840bfb01f754571fa7f6bc4f0fbe94027df0f6e189b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_staggered_wetjune_canopy_disease": {
+      "scenario_requirements": [
+        "管理错期播种黑农84田的湿六月病害风险。请按区检查冠层闭合、NDVI、热信号和地面病害，只处理确认区域。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），早播区；ridges 32–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），晚播区。",
+        "根据R8、grain_moisture、天气窗口和烘干/储藏能力安排收获、烘干和入库批次。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-31垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-31"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种32-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 32-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 254,
+        "end_line": 264,
+        "sha256": "2eb7bca2db2a287994cd630da44329c2413713338fa5ef87261a908c8b561488"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。",
+        "原文任务聚焦错期湿六月病害，而“管理重点”写收获批次；两者均保留，未将管理重点改写。"
+      ]
+    },
+    "scenario_full_season_hb_hn60_high_late_grain_moisture": {
+      "scenario_requirements": [
+        "管理高密度黑农60的成熟和籽粒水分风险。收获前必须检查成熟、籽粒水分、未来降雨和可作业性，并按批次干燥入库。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 265,
+        "end_line": 273,
+        "sha256": "591f8a24bc2901492b66dc0a7ec9cf7306c56658bb1cb2ae4ec6b7351e104a82"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文任务聚焦收获/储藏，但“管理重点”写定向灌溉；保留该原有要求，标记待审，不据此新增灌溉步骤。",
+        "原文同时给株距6.8 cm对应约26.7 plants/m²（26.7万株/ha）与目标约29 plants/m²；均保留，未统一数值。"
+      ]
+    },
+    "scenario_full_season_hb_harvester_days_limit_laterain": {
+      "scenario_requirements": [
+        "管理晚雨风险前的黑农84收获排序。请根据各区成熟度、籽粒水分、天气和收获机状态分批收获，不能硬等全田统一窗口。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 274,
+        "end_line": 282,
+        "sha256": "57f589a020a41e90f53eb03e3f3c9618904bb4922dc3c7995e1e3b0824be35dc"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文任务聚焦收获/储藏，但“管理重点”写定向灌溉；保留该原有要求，标记待审，不据此新增灌溉步骤。"
+      ]
+    },
+    "scenario_full_season_hb_adversarial_multi_event_light": {
+      "scenario_requirements": [
+        "管理一个轻量综合压力的黑农84全季场景。每个窗口都要先检查再行动，干预应适度、固定、可解释，不能把轻度压力当作极端灾害。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "依据播前肥力计划和肥料库存完成全田底肥，避免基础营养不足干扰后续诊断。",
+          "timing": [
+            "播前"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "由传感器/冠层异常发现疑似病害，经无人机定位、robot或地面确认病斑和病害信号并核对喷药天气；仅在依据充分时对确认病害区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "由土壤水分/VWC或冠层热异常定位水分风险，经无人机/热信号和robot或地面复核排除病虫草/营养主因后，结合生育阶段和水量预算，仅灌溉确认缺水且值得用水的区域。",
+          "timing": [
+            "生育阶段"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 283,
+        "end_line": 294,
+        "sha256": "a19de4089fb31311b567b534167092e2fc662934f18662acdeb45774dc055866"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_wetcold_high_residue_establishment": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨黑农84标准密度大豆田。本场景为湿冷春高残茬建植压力；垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=7.9，约23.0 plants/m²。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、3天预报、土壤温度/水分、残茬/seedbed、拖拉机及HEINONG84库存；高残茬湿冷条件下先确认底肥和整地。",
+          "timing": [
+            "播种前",
+            "3天预报"
+          ],
+          "quantities": [
+            "HEINONG84"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "等待合适播种窗口后装载HEINONG84，按4垄一趟播种0-63垄，播深4.0 cm、株距7.9 cm，并提交播种物理更新。",
+          "timing": [
+            "等待合适播种窗口后"
+          ],
+          "quantities": [
+            "HEINONG84",
+            "4垄一趟",
+            "0-63垄",
+            "播深4.0 cm",
+            "株距7.9 cm"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "出苗后结合降雨、土壤表层、stand、NDVI、土壤温度和地面检查，重点检查0-15垄慢出苗区，以32-47垄为参考；不将湿冷/残茬引起的慢出苗直接归因于肥力。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": [
+            "0-15垄",
+            "32-47垄"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "仅当0-15垄stand缺口明确且剩余季节支持补种时，等待目标窗口后对0-15垄replant；随后复查出苗、苗势及与参考区的差异。",
+          "timing": [
+            "剩余季节长度",
+            "等待目标窗口后",
+            "补种后"
+          ],
+          "quantities": [
+            "0-15垄"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "后续R1/mid/R5巡查时，分别检查补种区与未补种区的生育期、长势、水分和病虫草信号。",
+          "timing": [
+            "后续R1/mid/R5巡查时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "到R8后分区检查成熟度、grain_moisture、当前天气、3天预报及可作业性，分别判断补种/未补种区收获窗口；>18%等待，13.5%-18%在质量/天气风险支持下可收后干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "3天预报"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%-18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "仅对成熟、水分、天气和通行条件均满足的区域按4垄一趟收获并及时卸粮；依实际水分和仓储限制，直接store_grain或先dry_grain(target_moisture_pct=13.0)再store_grain。",
+          "timing": [],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 295,
+        "end_line": 304,
+        "sha256": "e919a7df3577333ee9625e63e2a7055355c27586a05f0c1bc84a3b340a2cd743"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_compacted_headland_stand_recovery": {
+      "scenario_requirements": [
+        "管理有地头压实风险的黑农84田。请通过土壤、冠层、无人机和地面检查区分压实/湿土、缺肥和病害，并做局部恢复管理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "结合出苗率、stand缺口和剩余季节长度，仅对仍有补种收益的缺苗区域补种。",
+          "timing": [
+            "剩余季节长度"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 305,
+        "end_line": 315,
+        "sha256": "196f7d6efa3e6409a7c5ae6986b1519f5ad238142faeabd3d1b7bbe11cc88589"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_storage_capacity_limit_batching": {
+      "scenario_requirements": [
+        "管理储藏容量有限的黑农84收获季。请根据库存、粮食水分和天气按批次收获、干燥和入库，不要把收后处理拖到最后。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "按分区确认成熟、籽粒水分、天气和田间可作业性；在对应窗口完成该区收获、卸粮、必要干燥及安全入库。",
+          "timing": [
+            "对应窗口"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 316,
+        "end_line": 324,
+        "sha256": "06097ccb636839a187e3bfd0d8a70ca0f81d1e633360cee1ed6deb21870a626e"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文任务聚焦收获/储藏，但“管理重点”写定向灌溉；保留该原有要求，标记待审，不据此新增灌溉步骤。"
+      ]
+    },
+    "scenario_full_season_hb_low_carbon_min_machinery_passes": {
+      "scenario_requirements": [
+        "按低碳少机械进地目标管理黑农84田。请用检查结果决定是否合并操作，减少不必要进地，但不能牺牲关键营养、病虫草和收获窗口。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种、密度和分区配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "由土壤/作物状态、叶色、长势和NDVI发现异常，经无人机定位、robot或地面复核确认为营养受限而非水分/病虫草主导后，仅对确认区域定向水肥/补肥并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气和田间可作业性后收获，并完成卸粮、必要干燥和安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 325,
+        "end_line": 334,
+        "sha256": "097aa994d3dd9ff953c8052a8f7315ce50a5f477cab6129ee22dc5baf6849594"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文部分处理仅指定“确认区域”，未给具体垄号、剂量或执行日期；以观测确认，不从oracle补齐。"
+      ]
+    },
+    "scenario_full_season_hb_organic_patch_weed_mechanical_capacity": {
+      "scenario_requirements": [
+        "有机黑农84早期斑块草害：禁用常规除草剂、机械能力仅16垄；用全田状态、NDVI、无人机及地面检查分出高/中/低压力，只处理最需保护的最高压力斑块。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在有机约束和机械资源限制下，按“全田状态发现异常 → 无人机定位高/中/低斑块 → robot或地面确认草害与可作业性 → 只处理最高压力斑块 → 复查恢复”的闭环管理，避免把杂草绿色覆盖误判为作物健康。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不得使用化学除草剂；机械除草面积最多16垄，不能全田机械除草。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI筛查后，用无人机比较0-15、16-31、32-63，再地面确认杂草竞争及土壤可作业性；有机约束下只对最高压力且可进地的16垄机械控草。",
+          "timing": [],
+          "quantities": [
+            "16垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 484,
+        "end_line": 493,
+        "sha256": "c1c6bbc7ffa66d2f4e1471350c279ffe9eea76b00ea8166c34a8909959c6590f"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_coldspring_lateplanting_laterain_hn50": {
+      "scenario_requirements": [
+        "冷春推迟播种后的早熟黑河50：依据土壤和天气选择播期，依据成熟度、籽粒水分和预报安排收获/烘干，不预设未来降雨。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEIHE50，早熟/低积温品种标准密度，seed_spacing_cm=8.2（株距 8.2 cm），约 22.2 plants/m²（约 22.2 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "依据播前肥力计划与肥料库存对全田投入基础养分，避免基础营养不足干扰后续诊断。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 345,
+        "end_line": 354,
+        "sha256": "71cac51d7ccd405d4e7366754299be16d1a6504d42d3444f2f12460baca0d248"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文管理重点谈定向灌溉，但编号计划未列灌溉步骤；原样保留该重点，不据此新增动作，待后续内容审阅。"
+      ]
+    },
+    "scenario_full_season_hb_wetjune_highdensity_poordrainage_disease": {
+      "scenario_requirements": [
+        "高密度黑农60在湿六月后需同时诊断病害和进地风险；土壤、冠层、无人机及地面定位异常后，才按天气/土壤窗口决定定向杀菌。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 355,
+        "end_line": 364,
+        "sha256": "3deffbb3368e40f70c678ad7256025d27dd25d2ac00c716586783b988c852e69"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。",
+        "原文同时给出约26.7 plants/m²和目标约29 plants/m²，保留两种表述，不自行统一。"
+      ]
+    },
+    "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease": {
+      "scenario_requirements": [
+        "有前茬病史、局部排水偏差的黑农84：6月湿后加强巡查，喷药必须同时有诊断证据和可作业窗口。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 365,
+        "end_line": 375,
+        "sha256": "6c8803b9774a179a11c57bb0580285d53752f356b8cb4620814e7cb66bc58f4e"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_wetjune_weed_disease_diagnosis": {
+      "scenario_requirements": [
+        "湿六月黑农84：先区分杂草覆盖、作物长势与病害症状；NDVI异常不直接等于病害，按原因选择定向处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "区分杂草导致的 田块NDVI 偏高和病害导致的 作物健康 下降，并选择控草或杀菌的不同处理。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 376,
+        "end_line": 386,
+        "sha256": "38b50369b2987030211bbfa3e3d2ae2b34a435aea15298182f26e939adaffb7b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_highdensity_wetjune_limited_fungicide": {
+      "scenario_requirements": [
+        "高密度黑农60的杀菌剂使用次数有限；早期轻微风险先监测，仅病害达到明确阈值且天气/土壤窗口允许时使用处理机会。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 387,
+        "end_line": 396,
+        "sha256": "f97308a9dc546842f656f6218fb41d5877560dc0a21c5f387f550299bee2ed6e"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。",
+        "原文同时给出约26.7 plants/m²和目标约29 plants/m²，保留两种表述，不自行统一。"
+      ]
+    },
+    "scenario_full_season_hb_wetjune_shortwindow_trafficability": {
+      "scenario_requirements": [
+        "湿六月后短喷药窗口：联合检查病害、天气、风速、土壤水分及进地条件，仅在窗口合适时处理确认区域。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 397,
+        "end_line": 406,
+        "sha256": "0df4223e6654d2702d6ca14b0bc4c00bc0f71e678c4d03ca08c18999192ff407"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_hn84_hn58_dry_patch_waterlimit": {
+      "scenario_requirements": [
+        "黑农84/黑农58分区局部干旱：结合品种、根区VWC、热胁迫和生育期选择灌溉优先级，不全田平均灌水。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）；ridges 32–63: HEINONG58，抗逆品种标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-31垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-31"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种32-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 32-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 407,
+        "end_line": 417,
+        "sha256": "1db85352c1c4eda9078eab2b9757531bd2c16e1aa058653ae4d4785339f4ecc2"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_hn60_high_fastdrain_dryr5r6": {
+      "scenario_requirements": [
+        "黑农60高密度田R5/R6局部缺水风险：用土壤、热信号及冠层定位真实缺水区，只定向灌溉。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 418,
+        "end_line": 427,
+        "sha256": "60ed142d1e2887317b6011039e2f7a3f01a4dd4b596cb7f6519fda20f7816343"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。",
+        "原文同时给出约26.7 plants/m²和目标约29 plants/m²，保留两种表述，不自行统一。"
+      ]
+    },
+    "scenario_full_season_hb_dryr5r6_insect_threshold_waterstress": {
+      "scenario_requirements": [
+        "黑农84在R5/R6需区分干旱与虫害阈值；用soil/thermal判断缺水、地面虫害检查判断虫口，不能直接灌溉或喷药。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在干旱和虫害信号同时出现时，区分水分胁迫与虫害阈值，并决定定向灌溉或定向杀虫。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "冠层/叶片筛查后，以无人机定位，再地面复查虫口、叶片损伤和虫害迹象；压力可控则继续监测，仅确认虫害区定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 428,
+        "end_line": 438,
+        "sha256": "1847360deff4e9f7aca41d669912dc3157bded5f50003081755596e2158e2d0c"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_heatdry_aphid_limitedspray_waterlimit": {
+      "scenario_requirements": [
+        "热干天气下区分蚜虫压力和水分胁迫，再决定是否补水、保留或使用有限喷药机会。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "冠层/叶片筛查后，以无人机定位，再地面复查虫口、叶片损伤和虫害迹象；压力可控则继续监测，仅确认虫害区定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 439,
+        "end_line": 449,
+        "sha256": "682b4801d8d6a1d57793e50753af276e52aabbc2e05838d009094f6f4ff19de4"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_lowdensity_weed_dry_competition": {
+      "scenario_requirements": [
+        "低密度黑农84的杂草与轻旱竞争：NDVI偏高可能来自杂草，结合地面检查、土壤水分和冠层决定控草及补水。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，低密度，seed_spacing_cm=11.8（株距 11.8 cm），约 15.4 plants/m²（约 15.4 万株/ha）；目标密度约 16.5 plants/m²。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 450,
+        "end_line": 460,
+        "sha256": "ebb007737926d926684b072b0832d0bac9bb96c74805fd75e811e2453d92daef"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。",
+        "原文同时给出约15.4 plants/m²和目标约16.5 plants/m²，保留两种表述，不自行统一。"
+      ]
+    },
+    "scenario_full_season_hb_hn84_hn58_weed_mechanical_allocation": {
+      "scenario_requirements": [
+        "低化学投入分区田：B区0-31垄为黑农84，A区32-63垄为较耐草竞争的黑农58；禁用化学除草剂，机械能力仅一个32垄分区，按检查结果选择可避免产量损失更大的分区，不能全田机械除草。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），B区/高草害优先保护区；ridges 32–63: HEINONG58，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），A区/相对耐草竞争区。",
+        "根据传感器、无人机和地面检查返回的杂草覆盖、行间竞争、品种分区和作物长势，在只能机械除草32垄的约束下选择收益更高的分区。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；草害处理必须走机械除草路径，不得使用化学除草剂；机械除草面积最多32垄，不能全田机械除草。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气、设备和HEINONG84库存后，播种B区0-31垄，建立黑农84标准密度群体。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-31"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气、设备和HEINONG58库存后，播种A区32-63垄，建立黑农58标准密度群体。",
+          "timing": [],
+          "quantities": [
+            "ridges 32-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "先以全田传感器/NDVI发现草害，再以无人机比较B区0-31与A区32-63，最后地面复查杂草竞争、stand及可作业性；禁用herbicide且最多32垄，只机械处理可避免产量损失更大的分区。",
+          "timing": [],
+          "quantities": [
+            "32垄"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 461,
+        "end_line": 471,
+        "sha256": "f66dc01ad1134b90b6da50c995ee2d6658dbb399972ea55e4843fb8ddba871f3"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_organic_residue_weed_establishment": {
+      "scenario_requirements": [
+        "有机/允许投入下的高残茬湿冷春：检查seedbed、出苗及杂草，使用允许的机械/监测路径，禁止常规化学除草剂。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据杂草覆盖和行间竞争和作物长势判断是否控草，避免把杂草绿色覆盖误当作作物健康。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "依据播前肥力计划与肥料库存对全田投入基础养分，避免基础营养不足干扰后续诊断。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "依据出苗率、stand缺口与剩余季节长度，仅补种仍有收益的确认缺苗区，以恢复群体、降低早期stand损失。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 472,
+        "end_line": 483,
+        "sha256": "592b5b44df9e44aff8322cbd80e0fa9ef78e87e56459d87ba1abc510d4ce5088"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_lowcarbon_batch_operations_wetdisease": {
+      "scenario_requirements": [
+        "低碳少机械进地管理湿六月病害：减少非必要进地，但病害达到阈值且窗口合适时仍定向处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 494,
+        "end_line": 503,
+        "sha256": "aca746c67abed6152bb4dc2ae74d40d7565880ba510271db9548b3c1f447a40b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_dryer_capacity_batch_harvest_storage": {
+      "scenario_requirements": [
+        "黑农84收获受烘干能力限制：每批收获前检查成熟、水分、天气及烘干/储藏容量，收后及时卸粮、烘干并入库。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 504,
+        "end_line": 513,
+        "sha256": "4aace846d1e24076aa2b66cf6350ec0e1fc78705cda3e737b2874351910146b3"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "原文管理重点谈定向灌溉，但编号计划未列灌溉步骤；原样保留该重点，不据此新增动作，待后续内容审阅。"
+      ]
+    },
+    "scenario_full_season_hb_laterain_shattering_drying_tradeoff": {
+      "scenario_requirements": [
+        "根据田间观测权衡晚雨、籽粒水分、裂荚风险与烘干成本，不简单等待全田最低水分再收获。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 514,
+        "end_line": 523,
+        "sha256": "03087fe3b6f7d7a01cb92871a410ebc6f7dd64af70c8a7f7f9c96b52ee9f74b8"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "原文管理重点谈定向灌溉，但编号计划未列灌溉步骤；原样保留该重点，不据此新增动作，待后续内容审阅。"
+      ]
+    },
+    "scenario_full_season_hb_cool_august_lategrain_laterain": {
+      "scenario_requirements": [
+        "黑农84因凉8月成熟偏慢且收获期有降雨风险；按成熟度、籽粒水分及天气窗口决定等待或分批收获，并按水分干燥。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 524,
+        "end_line": 533,
+        "sha256": "f2315ba40ebf0217fa90d420bebec8de3bf3b6fa7a8ee5053eed9afa81351152"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "原文管理重点谈定向灌溉，但编号计划未列灌溉步骤；原样保留该重点，不据此新增动作，待后续内容审阅。"
+      ]
+    },
+    "scenario_full_season_hb_hn50_hn84_hn58_mixed_stress": {
+      "scenario_requirements": [
+        "早熟、标准、抗逆品种分区错期播种；各区分别检查出苗、生育期、水分和成熟窗口，不将全田视为同品种或同播期。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。这个场景是分区错期播种，不是全田同日播种：ridges 0–20: HEIHE50，早熟/低积温品种标准密度，seed_spacing_cm=8.2（株距 8.2 cm），约 22.2 plants/m²（约 22.2 万株/ha），第一批早播/早熟区；ridges 21–42: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），第二批标准播期区；ridges 43–63: HEINONG58，抗逆品种标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha），第三批后播抗逆区。播种时序约束：完成播前准备后，先播0-20垄；等待约5天并重新检查天气、土壤和设备后播21-42垄；再等待约2天并复查后播43-63垄。不要把三个区同日播完。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "依据播前肥力计划与肥料库存对全田投入基础养分，避免基础营养不足干扰后续诊断。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气、设备及HEIHE50库存后，第一批播种0-20垄，建立早播/早熟区。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-20"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "等待约5天并重新确认播床、土壤水分、天气、设备及HEINONG84库存后，第二批播种21-42垄；不能与第一批同日完成。",
+          "timing": [
+            "等待约5天后"
+          ],
+          "quantities": [
+            "ridges 21-42"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "第二批后再等约2天，重新确认播床、土壤水分、天气、设备及HEINONG58库存，再播第三批43-63垄；不能提前与前两批同日完成。",
+          "timing": [
+            "第二批后再等待约2天"
+          ],
+          "quantities": [
+            "ridges 43-63"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 534,
+        "end_line": 548,
+        "sha256": "770c756e2176426b4ccb33f1f2128e2234ea2917525cff20622536dc4443e548"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤6/7/8重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_density_gradient_wetdry": {
+      "scenario_requirements": [
+        "密度梯度田经历湿转干季节；按区判断低密度草害、高密度病害和后期水分需求，不统一全田处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–20: HEINONG84，低密度，seed_spacing_cm=11.8（株距 11.8 cm），约 15.4 plants/m²（约 15.4 万株/ha）；ridges 21–42: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）；ridges 43–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-20垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-20"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种21-42垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 21-42"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种43-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 43-63"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 7,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 8,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 549,
+        "end_line": 563,
+        "sha256": "14f757be586d838904cda52c766fa7a1334ca3b45e074b6df482646595560357"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤6/7/8重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。",
+        "原文要求关注后期水分需求且管理重点为灌溉，但编号步骤未列灌溉；不自动补入。"
+      ]
+    },
+    "scenario_full_season_hb_fertilizer_quota_edge_lowfertility": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨黑农84标准密度大豆田。本场景肥料配额有限，边缘低肥力造成0-7垄重度弱苗、8-15垄轻度弱苗风险；垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=7.9，约23.0 plants/m²。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、预报、土壤、拖拉机及HEINONG84库存；条件合适后装种，按4垄一趟播完0-63垄并提交播种物理更新。",
+          "timing": [
+            "播种前"
+          ],
+          "quantities": [
+            "4垄",
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗后检查全田概览、stand、叶色、NDVI、土壤水分及肥料预算；无人机定位弱势边缘区，地面确认低肥力/营养受限，排除水分、病虫草及机械漏播主导。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "仅证据成立且预算允许时，对0-7垄重度边缘低肥力区水肥处理（amount=0.32，water_mm=1.2）；等待响应后复查叶色、NDVI、stand与预算余量。",
+          "timing": [
+            "等待响应后"
+          ],
+          "quantities": [
+            "0-7垄",
+            "amount=0.32",
+            "water_mm=1.2"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "若0-3垄stand缺口仍明确且剩余季节支持补种，对0-3垄replant；随后复查出苗及苗势。",
+          "timing": [
+            "补种后"
+          ],
+          "quantities": [
+            "0-3垄"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "R1阶段复查8-15垄轻度低肥力区的叶色、NDVI、地面营养及肥料预算；证据成立后水肥处理（amount=0.16，water_mm=1.0），等待响应再复查。",
+          "timing": [
+            "R1阶段",
+            "等待响应后"
+          ],
+          "quantities": [
+            "8-15垄",
+            "amount=0.16",
+            "water_mm=1.0"
+          ]
+        },
+        {
+          "order": 6,
+          "instruction": "中后期持续监测20-63垄健康对照区，避免将水分或病虫草压力误判为营养问题。",
+          "timing": [
+            "中后期"
+          ],
+          "quantities": [
+            "20-63垄"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "到R8后检查成熟、grain_moisture、天气、预报及可作业性；水分>18%等待，13.5%-18%可在质量/天气风险支持下收后按需干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "收后"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%",
+            "18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 8,
+          "instruction": "符合收获条件的区域按4垄一趟收获并及时卸粮；按实际水分与仓储限制选择直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "收后"
+          ],
+          "quantities": [
+            "4垄",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 564,
+        "end_line": 574,
+        "sha256": "b439319959f36976b56c607a263908f40ea7832cdbf5881a52103e9866125cb1"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_insect_after_fungicide_budget_conflict": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨黑农84标准密度大豆田。垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=7.9，约23.0 plants/m²；本场景总喷药预算有限，先出现病害风险，后出现虫害风险。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、预报、土壤、拖拉机及HEINONG84库存；条件合适后装种，按4垄一趟播完0-63垄并提交播种物理更新。",
+          "timing": [
+            "播种前"
+          ],
+          "quantities": [
+            "4垄",
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗和R1前后读取全田概览、土壤、NDVI、冠层及预算，保留0-15垄作为reference区。",
+          "timing": [
+            "出苗和R1前后"
+          ],
+          "quantities": [
+            "0-15垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "中期18-39垄出现病害风险时，先传感器/冠层筛查，再无人机定位、地面确认病斑及喷药窗口；证据及预算允许后按3.4 L/ridge、约10垄分块杀菌，等待响应后复查并提交物理更新。",
+          "timing": [
+            "中期",
+            "等待响应后"
+          ],
+          "quantities": [
+            "18-39垄",
+            "3.4 L/ridge",
+            "10垄"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "R5后24-47垄出现虫害风险时检查叶片损伤、虫口、冠层及预算；若土壤不适合机械喷药但天气适合人工喷施，按3.2 L/ridge走manual insecticide小批次人工点喷并复查。",
+          "timing": [
+            "R5后"
+          ],
+          "quantities": [
+            "24-47垄",
+            "3.2 L/ridge"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "中后期监测病害复发、虫害扩展、水分及籽粒发育；轻微信号不直接作为消耗预算的依据。",
+          "timing": [
+            "中后期"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "到R8后检查天气、3天预报、可作业性及grain_moisture；水分>18%等待，13.5%-18%可在质量/天气风险支持下收后按需干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "到R8后",
+            "收后",
+            "3天预报"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%",
+            "18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "符合成熟、水分、天气及通行条件的区域按4垄一趟收获并及时卸粮；按实际水分与仓储限制选择直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "收后"
+          ],
+          "quantities": [
+            "4垄",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 575,
+        "end_line": 584,
+        "sha256": "553194b3da2d22596b56f1eb5d4780b0d767dbbef09ebe991d69866b32b2839a"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_disease_then_drought_recovery_tradeoff": {
+      "scenario_requirements": [
+        "先病害后干旱：病害处理后复查恢复；后续长势慢时用土壤/热信号区分缺水与病害复发。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 585,
+        "end_line": 595,
+        "sha256": "171fb8f0cdfa8ccf195ea97e36566e130b45428984707c6e6a2e7b415ce3eb85"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_weed_then_disease_canopy_confusion": {
+      "scenario_requirements": [
+        "早期草害与后期湿病害相继出现；区分field greenness和作物健康，不能将高NDVI直接当作作物健康。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "区分杂草导致的 田块NDVI 偏高和病害导致的 作物健康 下降，并选择控草或杀菌的不同处理。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 596,
+        "end_line": 606,
+        "sha256": "656133e987797afe51a2c5af0e921e2dd53a86acb1fd7a126f7a217b5d37641b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_lowinput_waterlimited_weed_pressure": {
+      "scenario_requirements": [
+        "低投入且限水的草害田：在允许投入与水量限制下判断控草/补水优先级，不依赖全田高投入处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 607,
+        "end_line": 617,
+        "sha256": "dabbab7c0b4ccd3992120b19ce9fc701f9cfe5519104675e15873f01cc0c839b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_planter_skip_rows_stand_gap": {
+      "scenario_requirements": [
+        "黑农84播种后出苗检查与补种：用全田出苗检查、无人机和地面检查定位缺苗条带，排除肥水病虫原因后只补种确认区域。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "依据出苗率、stand缺口与剩余季节长度，仅补种仍有收益的确认缺苗区，以恢复群体、降低早期stand损失。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "依据出苗率、stand缺口与剩余季节长度，仅补种仍有收益的确认缺苗区，以恢复群体、降低早期stand损失。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 618,
+        "end_line": 630,
+        "sha256": "5e3386240ecd3eeab2b5fd4a00ac50525cfe24ffcb7cb3b50503dade2137291f"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文步骤2/3重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。",
+        "原文步骤4/5/6重复，分别保留；原文未指明它们的独立阶段/对象，不从oracle补全或合并。"
+      ]
+    },
+    "scenario_full_season_hb_replant_after_crusting_short_season": {
+      "scenario_requirements": [
+        "在大垄密植、一垄两行种植模式下，全季管理最多64条垄（0-63）的哈尔滨黑农84标准密度大豆田。本场景播后强雨导致表层板结和局部出苗压力；垄距1.1 m，常规播深4.0 cm，seed_spacing_cm=7.9，约23.0 plants/m²。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、预报、土壤、拖拉机及HEINONG84库存；条件合适后装种，按4垄一趟播完0-63垄并提交播种物理更新。",
+          "timing": [
+            "播种前"
+          ],
+          "quantities": [
+            "4垄",
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗后结合降雨、土壤表层、全田概览、NDVI、stand及地面检查，重点诊断0-11垄是否板结致缺苗，20-31垄作参考。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": [
+            "0-11垄",
+            "20-31垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "仅0-7垄stand缺口明确且剩余季节支持补种时，对0-7垄replant；等待恢复窗口后比较出苗、苗势及参考区差异，并提交物理更新。",
+          "timing": [
+            "补种后等待恢复窗口"
+          ],
+          "quantities": [
+            "0-7垄"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "后续R1/mid/R5巡查中，分开比较补种区与非补种区的生育期、长势、水分及病虫草信号。",
+          "timing": [
+            "后续R1/mid/R5巡查时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "到R8后分区检查成熟、grain_moisture、天气、3天预报及可作业性，分别判断补种/未补种区收获窗口；水分>18%等待，13.5%-18%可在质量/天气风险支持下收后按需干燥，<=13.5%直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "收后",
+            "3天预报"
+          ],
+          "quantities": [
+            ">18%",
+            "13.5%",
+            "18%",
+            "<=13.5%"
+          ]
+        },
+        {
+          "order": 6,
+          "instruction": "符合成熟、水分、天气及通行条件的区域按4垄一趟收获、及时卸粮；按实际水分和仓储限制选择直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "收后"
+          ],
+          "quantities": [
+            "4垄",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 631,
+        "end_line": 639,
+        "sha256": "5ea437f7e844b1d8115e52d52b8c120aaa48c7047e9310d05de8659bf624e079"
+      },
+      "additional_sources": [],
+      "review_notes": []
+    },
+    "scenario_full_season_hb_fertilizer_misapplication_strip_recovery": {
+      "scenario_requirements": [
+        "局部叶色与长势异常：以叶色、NDVI、土壤和地面复查识别空间模式，排除病虫及水分原因后定向补肥。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据叶色/长势和营养诊断信号、叶色/NDVI和地面检查决定是否定向补肥或水肥。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，以无人机定位、地面复核；确认营养受限而非水分/病虫草主导时定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 640,
+        "end_line": 649,
+        "sha256": "db0483c76ebd9e21b14585bde48a292a0ed7de4cc7aba24378cb9ca714c2c624"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_nutrient_vs_disease_leafcolor_diagnosis": {
+      "scenario_requirements": [
+        "叶色异常时，结合水分、病虫、叶色、NDVI及地面检查区分营养不足与病害；不能未经判断直接补肥或杀菌。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，以无人机定位、地面复核；确认营养受限而非水分/病虫草主导时定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "先以传感器/冠层筛查，再以无人机定位，地面确认病斑、病害信号及喷药天气；仅病害证据充分时定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 650,
+        "end_line": 660,
+        "sha256": "ac1baa1c4290bb959c332e590a79dcb71b351ffea9dee00ad5eac1a0ad8b67f9"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_weed_green_ndvi_masked_drought": {
+      "scenario_requirements": [
+        "R5/R6水分与杂草竞争：高NDVI不能证明不缺水，结合土壤水分、热信号和地面杂草/作物状态决定控草及补水。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "根据杂草覆盖和行间竞争和作物长势判断是否控草，避免把杂草绿色覆盖误当作作物健康。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力。收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备及种子库存后，按已知品种/密度配置播种0-63垄。",
+          "timing": [],
+          "quantities": [
+            "ridges 0-63"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或闭合慢后，无人机区分杂草绿度与作物长势，地面复查杂草覆盖和行间竞争；仅对确认草害竞争区控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤/作物状态发现VWC下降或热异常后，以无人机/热信号定位，地面排除病虫草或营养主导；结合生育期和水量预算，仅对确认缺水且值得用水区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认目标区域成熟、籽粒水分、天气及田间可作业性后，在相应窗口收获，完成卸粮、必要干燥与安全入库。",
+          "timing": [],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 661,
+        "end_line": 671,
+        "sha256": "e5fafb59c41ad8cc47f21b165a43bfbbf7874924dbd7ca828f463b3c24e44d97"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "部分处理步骤只规定“确认区域”，未给出具体目标垄或执行日期；保持条件性，不补入oracle位置/剂量/时间。"
+      ]
+    },
+    "scenario_full_season_hb_herbicide_window_missed_rain_delay": {
+      "scenario_requirements": [
+        "早期除草窗口被降雨延误；检查天气、土壤可作业性和杂草压力，等窗口合适后再定向控草。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或冠层闭合慢后，用无人机区分杂草绿度和作物长势，再经robot/地面确认杂草覆盖与行间竞争；仅对确认的草害竞争区域控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 672,
+        "end_line": 681,
+        "sha256": "7cc7fb96959d533f0e154aba9fdc346335963ea8a41df23fcd23e4e9d53335e9"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文未给出延误后的可作业日期、目标控草垄段或处理剂量；保持条件式选择。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_mechanical_weed_trafficability_window": {
+      "scenario_requirements": [
+        "有机雨后草害的机械作业窗口任务，不是资源分配题。出苗/早期检查发现杂草或NDVI/冠层异常时先确认湿土不可作业；top VWC过高不能强行进地，也不得改用herbicide。等待并复查至trafficable，再用robot确认全田草害/作物状态，随后全田机械除草并复查。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：本场景不是资源分配题，而是机械除草作业窗口题。先确认草害和湿土不可作业，再等待雨后土壤转为 trafficable，复查后才能机械除草。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不得使用化学除草剂；湿土条件下不能强行机械进地，必须等待并复查 trafficability",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗/早期发现杂草或NDVI/冠层异常后，读取weather、forecast、soil sensors、canopy sensors和ridge range state；top VWC/trafficability不允许tractor进地时只记录等待，不机械除草也不改用化学除草。",
+          "timing": [
+            "出苗/早期检查发现异常后",
+            "top VWC/trafficability不支持tractor进地时等待"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "等待雨后土壤可作业，再复查weather、forecast、soil sensors、canopy sensors和ridge range state。",
+          "timing": [
+            "等待雨后土壤转为可作业后复查"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "trafficable后，以robot inspect_crop_health检查全田杂草覆盖、行间竞争及作物状态；确认后执行全田mechanical_weed_control。",
+          "timing": [
+            "trafficable后",
+            "robot全田确认后"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "机械除草后复查杂草压力、NDVI/冠层和作物恢复。",
+          "timing": [
+            "机械除草后"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 682,
+        "end_line": 694,
+        "sha256": "004e751b010dc90dfa9cef0abc5b48b94f7643a6e5460872ff76651239ade76e"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文明确要求可作业后全田机械除草；不套用其他有机场景的16/32垄配额。等待时长和top VWC数值阈值未给出。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_leaffeeder_vs_disease_spots_diagnosis": {
+      "scenario_requirements": [
+        "R3/R4叶片异常须结合无人机、热信号和地面检查区分虫食与病斑，再选择pesticide或fungicide；不能仅凭视觉异常喷药。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "冠层/叶片出现疑似虫害或长势异常时，用无人机定位，再经robot/地面确认虫口、叶片损伤与虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 695,
+        "end_line": 705,
+        "sha256": "b7397855787d2b103c189b46a5f9307e644b85e8db817ab992a2b57261e43d9f"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "编号步骤分别列出杀虫与杀菌，但任务要求先鉴别原因；保留两项条件分支，不解释为两药必用。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide": {
+      "scenario_requirements": [
+        "全季管理最多64条垄（0-63）的哈尔滨黑农84标准密度田，重点是湿六月病害风险及杀菌后复查。采用大垄密植、一垄两行，垄距1.1 m、播深4.0 cm、seed_spacing_cm=7.9、约23.0 plants/m²。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、预报、土壤、拖拉机与HEINONG84库存；条件合适后装种，以4垄一趟播完0-63垄并提交播种物理更新。",
+          "timing": [
+            "播种前",
+            "条件合适后"
+          ],
+          "quantities": [
+            "HEINONG84种子",
+            "4垄一趟",
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗、R1和mid阶段读取farm overview、土壤、NDVI、冠层和病害风险，以0-15垄为reference区。",
+          "timing": [
+            "出苗、R1和mid阶段"
+          ],
+          "quantities": [
+            "0-15垄reference区"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "湿六月后20-43垄出现病害风险时，经传感器/冠层发现异常、无人机定位、robot/ground check确认病斑和冠层湿度，并检查喷药天气；证据成立后对20-43垄第一次fungicide，3.6 L/ridge，等待响应后复查。",
+          "timing": [
+            "湿六月后",
+            "证据成立后",
+            "第一次fungicide后等待响应再复查"
+          ],
+          "quantities": [
+            "20-43垄",
+            "第一次fungicide",
+            "3.6 L/ridge"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "后续湿度窗口或R5前后复查20-43垄病斑、disease pressure、冠层与天气；病害再发展且资源支持时，对20-43垄第二次fungicide，2.8 L/ridge，等待响应后复查。",
+          "timing": [
+            "后续湿度窗口或R5前后",
+            "病害再发展且资源支持时",
+            "第二次fungicide后等待响应再复查"
+          ],
+          "quantities": [
+            "20-43垄",
+            "第二次fungicide",
+            "2.8 L/ridge"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "中后期继续区分病害、水分、虫害和营养信号，不单凭NDVI或绿度诊断。",
+          "timing": [
+            "中后期"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "R8后检查成熟度、grain_moisture、当前天气、3天预报与可作业性；>18%等待，13.5%-18%在质量/天气风险支持下收后按需干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "grain_moisture >18%时等待"
+          ],
+          "quantities": [
+            "3天预报",
+            "grain_moisture >18%：等待",
+            "13.5%-18%：风险支持时收后按需干燥",
+            "<=13.5%：直接安全入库"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "对成熟、水分、天气和通行条件均满足的区域，以4垄一趟收获并及时卸粮；依据实际粮食水分和仓储限制直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "满足成熟、水分、天气和通行条件后",
+            "收获中及时卸粮",
+            "收后按水分和仓储限制处理"
+          ],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 706,
+        "end_line": 715,
+        "sha256": "013e15cc95cb16bd23954675d8544f8d753e8386636c0efd27e5b759f5cd922c"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "两次fungicide有明确区域、剂量和条件；等待响应的具体天数未给出，不补写。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_drought_recovery_false_disease_signal": {
+      "scenario_requirements": [
+        "对旱后恢复慢的田块，结合土壤水分、热信号、历史天气和病害地面症状区分恢复慢与病害，不把弱长势直接判作病害复发。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 716,
+        "end_line": 725,
+        "sha256": "bc71c29ddc98e6f26593d928b96f733c3bdf58c0ee50fcf7e6bf26c6ea29a627"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "管理重点提及按病害证据定向杀菌，编号步骤却只列灌溉与收获；保留该关注点，不新增杀菌步骤。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_r5_heat_stress_without_soil_drought": {
+      "scenario_requirements": [
+        "R5热胁迫但土壤水分尚可；比较canopy thermal、根区VWC与预报，不把高温热信号直接判为缺水并盲目灌溉。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 726,
+        "end_line": 734,
+        "sha256": "9c51e2b4263284c9635af7c7f5395cc447ac28b97b4818592a079fb8eedfa1bd"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "R5热胁迫诊断要求出现在任务说明，编号步骤未单列；保留在scenario_requirements，不新增动作或灌溉。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_cloudy_wet_low_radiation_biomass": {
+      "scenario_requirements": [
+        "连阴雨低辐射季节结合天气辐射、NDVI、叶色和土壤养分诊断长势慢，不把低辐射导致的生物量增长慢直接判为缺肥。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据R8、grain_moisture、天气窗口和烘干/储藏能力安排收获、烘干和入库批次。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 735,
+        "end_line": 743,
+        "sha256": "3dddd488f663fc2f873f8b7c3a83b6f67e55f29534d76fa0bfa20e42848a1702"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "管理重点偏向收获储藏，任务重点为低辐射鉴别；同时保留，不把长势慢自动改成补肥计划。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_split_irrigation_schedule_power_limit": {
+      "scenario_requirements": [
+        "R5/R6灌溉受电力/设备限制；依据soil moisture、thermal stress和生育阶段分批安排，不能一次灌完全部缺水垄段。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 744,
+        "end_line": 754,
+        "sha256": "f69c5b0be5044b28ff47f1be4222c0ec7c6acc51b752599a9848a6ec0557d58e"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "两条灌溉步骤逐字重复；保留次数和顺序。各批目标、用水量及间隔未给出。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_fuel_limit_irrigation_harvest_ops": {
+      "scenario_requirements": [
+        "燃油有限时检查库存和设备，按压力与天气窗口排序灌溉、喷药、收获等关键作业，不平均分配资源。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 755,
+        "end_line": 765,
+        "sha256": "146b9ddd2d1d1b96e0ac79c7251a1fb8086af8e092630456ea34fe245f33156a"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "任务提及喷药优先级，但编号步骤未列喷药；不新增喷药步骤。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_market_discount_high_moisture_delivery": {
+      "scenario_requirements": [
+        "权衡高水分交售折扣与烘干成本，同时考虑成熟度、籽粒水分、降雨风险和烘干能力；收后按批次干燥或入库。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据R8、grain_moisture、天气窗口和烘干/储藏能力安排收获、烘干和入库批次。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 766,
+        "end_line": 775,
+        "sha256": "75902f5ca2af66e01d7411adefd28e6415b7c8dec48597be56626159a1eeb511"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文未给出折扣、成本或具体批次数量参数；不从场景配置推算。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_split_quality_batches_late_disease": {
+      "scenario_requirements": [
+        "晚期病害造成分批质量差异；按区检查病害、籽粒水分和收获窗口，分批收获、按水分干燥入库，不混合问题批次与正常批次。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 776,
+        "end_line": 786,
+        "sha256": "bcbce3ef439e440b3101322eab1210815710a7a57427911cfd711da5e5197066"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "问题/正常批次须分开；重复分区收获步骤未具体指定对应垄段。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_rhizobia_nodulation_failure_nutrition": {
+      "scenario_requirements": [
+        "中期叶色偏浅且水分、病虫正常时，结合叶色、NDVI、土壤水分和地面复查判断根瘤/固氮或氮素供应不足，再按需补充营养。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，用无人机缩小范围、robot/地面复核，确认营养受限而非水分或病虫草主导；仅对确认营养问题区定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 787,
+        "end_line": 796,
+        "sha256": "6a03a3c52cc085723afb3f7bc5b9a8684680b3d6d31e1634e058291d769f73d3"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "根瘤/固氮不足是待诊断原因，原文没有独立根瘤工具、处理剂量或目标垄段。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_local_soil_constraint_nutrition_patch": {
+      "scenario_requirements": [
+        "局部土壤约束导致出苗和营养吸收问题；用土壤、出苗、NDVI及地面检查排除病虫害，再判断定向恢复需要。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据田间观测和状态结果的土壤、冠层、病虫草、资源和收获状态，选择有依据的分区管理动作。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，用无人机缩小范围、robot/地面复核，确认营养受限而非水分或病虫草主导；仅对确认营养问题区定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 797,
+        "end_line": 806,
+        "sha256": "ed2f43e9ddcebf3f5505b7981c7d57b8c3993c025267969ddae66931c8c488b3"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文没有指定局部土壤问题的目标垄段或恢复剂量。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_micronutrient_deficiency_flowering_patch": {
+      "scenario_requirements": [
+        "初花期局部叶色异常先确认水分和病虫正常，再判断小剂量微肥/叶面营养需要；不能误喷药或灌溉。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据叶色/长势和营养诊断信号、叶色/NDVI和地面检查决定是否定向补肥或水肥。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，用无人机缩小范围、robot/地面复核，确认营养受限而非水分或病虫草主导；仅对确认营养问题区定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 807,
+        "end_line": 816,
+        "sha256": "d1c7700e06ca8950443089cd458b5d011fad39ee7ced679c5203b4e8a1f3e67d"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文未给出28-43垄、amount=0.16或water_mm=0.8；不得从oracle/spec补入。微肥/叶面营养为任务表述，未新增工具映射。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_potassium_deficit_dry_podfill_interaction": {
+      "scenario_requirements": [
+        "钾素不足与R5/R6轻旱交互风险：花期检查营养，R5/R6检查根区土壤水分/VWC和热信号，区分单纯缺水与养分—水分交互。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，用无人机缩小范围、robot/地面复核，确认营养受限而非水分或病虫草主导；仅对确认营养问题区定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 817,
+        "end_line": 827,
+        "sha256": "861752bef72533f228163c9e17fdeef8f512cface797f8da4021310b6b04592a"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "花期/R5/R6要求来自任务段；编号步骤未指定具体日期、目标区及剂量。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_overfertilized_dense_canopy_disease_risk": {
+      "scenario_requirements": [
+        "黑农60高密度田局部过旺密冠层有病害风险；用冠层、无人机和地面病害检查判断定向杀菌需要，不继续补肥。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）；目标密度约 29 plants/m²。",
+        "管理重点：根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 828,
+        "end_line": 837,
+        "sha256": "e6eae9972d2e8828c9e0deaae75b8cdcc01dcc19c50559be3694e3f469f0a8d6"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "已知种植配置同时写约26.7 plants/m²（按6.8cm）和目标约29 plants/m²；保留原值并标记需审阅，未自行纠正。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_laterain_insect_risk": {
+      "scenario_requirements": [
+        "晚雨后局部虫害先确认虫害迹象和虫口阈值，再决定定向杀虫。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据虫害观察、pest count或虫口和虫害迹象阈值决定是否定向杀虫。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "冠层/叶片出现疑似虫害或长势异常时，用无人机定位，再经robot/地面确认虫口、叶片损伤与虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 838,
+        "end_line": 848,
+        "sha256": "d4d0f7dc3709ee98e1532f854ed9cf736a42d6004d7830eab8483e9663470491"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文要求虫口阈值但未给具体数值；不补阈值或目标垄段。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_coolwet_flowering_disease_risk": {
+      "scenario_requirements": [
+        "花期凉湿后的湿冠层病害风险须结合天气、冠层和地面症状判断；未达病害阈值时仅复查，达到阈值后才定向杀菌。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据病斑和病害确认信号、冠层/地面病害迹象和喷药窗口决定是否定向杀菌。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 849,
+        "end_line": 858,
+        "sha256": "c9dce0171cee9878bb24b8401db3deaf3f78c06ebfa421631bb36affe0e7bbcc"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "原文要求达到病害阈值后处理，但未提供数值；未达时仅复查。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_grain_moisture_sensor_failure_harvest": {
+      "scenario_requirements": [
+        "收获窗口的籽粒水分读数不可靠；结合天气、田间成熟、分区状态和替代检查确认窗口，不依赖单一水分读数。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：根据R8、grain_moisture、天气窗口和烘干/储藏能力安排收获、烘干和入库批次。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 859,
+        "end_line": 868,
+        "sha256": "b57d9f57c6ea07fe946a679225700d8cb01e189a3bffc80b12bf33e9c87241e4"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "替代水分检查没有指定工具或测量方法；保留要求，不虚构替代能力。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_storage_aeration_failure_after_harvest": {
+      "scenario_requirements": [
+        "收获后储藏通风能力不足；检查库存、水分和储藏能力，优先干燥或分批入库低风险批次。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 869,
+        "end_line": 878,
+        "sha256": "645f74b2e5953731c1234a71eca5fb715e318a60874bb01ade6b93f8f4e9c62b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "管理重点是灌溉模板，与储藏通风不足主任务不一致；保留源文关注点并标记待审阅，不新增灌溉步骤。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_dryer_breakdown_between_batches": {
+      "scenario_requirements": [
+        "分批收获中烘干能力突然受限；根据批次水分、天气与可用烘干/储藏能力调整后续收获和处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 879,
+        "end_line": 888,
+        "sha256": "e888531fbf9935be4d60c6f706dabb0b21c8115330f717de942db6ca5e70fa6b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "管理重点是灌溉模板，与烘干故障主任务不一致；保留源文关注点并标记待审阅，不新增灌溉步骤。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heinong58_drought_insect_diagnosis_waterlimit": {
+      "scenario_requirements": [
+        "哈尔滨黑农58全季生产，中后期水分/虫害异常须依据天气、土壤水分、冠层、NDVI及地面虫害检查诊断。水量有限，无根区土壤水分/VWC胁迫证据不得全田灌溉，虫害未达阈值不得喷药。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG58，抗逆品种标准密度，seed_spacing_cm=7.9（株距 7.9 cm），约 23.0 plants/m²（约 23.0 万株/ha）。",
+        "管理重点：在干旱和虫害信号同时出现时，区分水分胁迫与虫害阈值，并决定定向灌溉或定向杀虫。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "冠层/叶片出现疑似虫害或长势异常时，用无人机定位，再经robot/地面确认虫口、叶片损伤与虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 889,
+        "end_line": 901,
+        "sha256": "5cb77c038ae6425be39b5cbb9ed45b01407c0f744a14e1ead07faba7ccf14062"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "未给具体虫口阈值、水预算数值、目标区及批次范围；保持证据触发和预算约束。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heinong60_highdensity_wetjune_weed_disease": {
+      "scenario_requirements": [
+        "哈尔滨黑农60高密度全季生产，湿润天气后用传感器、无人机及地面检查区分杂草、病害、水分和作物长势；仅在证据支持时对相应区域控草或杀菌。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm），约 26.7 plants/m²（约 26.7 万株/ha）。",
+        "管理重点：区分杂草导致的 田块NDVI 偏高和病害导致的 作物健康 下降，并选择控草或杀菌的不同处理。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "全田状态/NDVI发现异常绿度或冠层闭合慢后，用无人机区分杂草绿度和作物长势，再经robot/地面确认杂草覆盖与行间竞争；仅对确认的草害竞争区域控草。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 902,
+        "end_line": 912,
+        "sha256": "c4caa2b90d58f66875a05fbf34b1c0e5da1d9a34202faf518351e5e1cecb38aa"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "田块NDVI偏高可能来自杂草，作物健康下降可能来自病害；不得把两个编号动作视为无条件均执行。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heike71_lateplanting_laterain_highmoisture_quality": {
+      "scenario_requirements": [
+        "晚播黑科71全季生产持续检查GDD、生育期、预报与籽粒水分；仅在作物可收且天气允许时收获，水分高于安全入库目标必须先烘干再入库。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–63: HEIKE71，早熟品种标准密度，seed_spacing_cm=8.4（株距 8.4 cm），约 21.6 plants/m²（约 21.6 万株/ha），晚播区。",
+        "管理重点：在水量或水分窗口受限时，根据土壤水分/VWC、冠层热异常、生育阶段和品种抗逆性决定是否定向灌溉。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前按肥力计划及肥料库存对全田投入基础养分，避免基础营养不足干扰后续诊断。",
+          "timing": [
+            "播前"
+          ],
+          "quantities": [
+            "全田"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "确认区域成熟、籽粒水分、天气及田间可作业性后，收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "确认区域达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 913,
+        "end_line": 922,
+        "sha256": "95e851f860f0edaaa60d86dbfd96443a92596053fe12869ac2c31e620d594438"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "任务侧重晚播高水分质量，管理重点却是定向灌溉模板；保留该关注点并标记待审阅，未新增灌溉步骤。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heihe43_early_density_weed_nutrient_recovery": {
+      "scenario_requirements": [
+        "哈尔滨黑河43全季推荐密度建植，最多64条垄（0-63），大垄密植、一垄两行；垄距1.1 m、播深4.0 cm、seed_spacing_cm=8.1、约22.436 plants/m²。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、3天预报、土壤温度/水分、拖拉机、播种机与HEIHE43库存；条件合适后装种，以4垄一趟播种0-63垄并提交播种物理更新。",
+          "timing": [
+            "播种前",
+            "条件合适后"
+          ],
+          "quantities": [
+            "3天预报",
+            "HEIHE43种子",
+            "4垄一趟",
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗后读取farm overview、土壤、NDVI和stand检查全田建植，以24-35垄为参考区。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": [
+            "24-35垄参考区"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "8-19垄叶色/NDVI/长势偏弱时，先无人机定位，再robot/ground check排除水分、病虫、草害主导并确认营养受限；证据成立后对8-19垄fertigation，amount=0.24、water_mm=1.2，等待响应后复查并提交物理更新。",
+          "timing": [
+            "异常且证据成立后",
+            "等待响应后复查并提交物理更新"
+          ],
+          "quantities": [
+            "8-19垄",
+            "amount=0.24",
+            "water_mm=1.2"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "44-55垄冠层闭合慢或异常绿度时，先无人机区分作物长势和杂草绿度，再地面确认草害竞争；证据成立后对44-55垄herbicide，2.4 L/ridge，等待响应后复查并提交物理更新。",
+          "timing": [
+            "异常且证据成立后",
+            "等待响应后复查并提交物理更新"
+          ],
+          "quantities": [
+            "44-55垄",
+            "2.4 L/ridge"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "中后期持续R1/mid/R5巡查，区分营养、水分、草害、病害及虫害信号，不用一种处理解决另一类压力。",
+          "timing": [
+            "中后期R1/mid/R5"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "R8后检查成熟度、grain_moisture、当前天气、3天预报及可作业性；>18%等待，13.5%-18%在质量/天气风险支持下收后按需干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "grain_moisture >18%时等待"
+          ],
+          "quantities": [
+            "3天预报",
+            "grain_moisture >18%：等待",
+            "13.5%-18%：风险支持时收后按需干燥",
+            "<=13.5%：直接安全入库"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "对成熟、水分、天气及通行条件均满足的区域，以4垄一趟收获并及时卸粮；按实际粮食水分和仓储限制直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "满足成熟、水分、天气和通行条件后",
+            "收获中及时卸粮",
+            "收后按水分和仓储限制处理"
+          ],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 923,
+        "end_line": 932,
+        "sha256": "be9f0d287d46e8e05fc03fc48869653ac0897941f1a353b501f6afaedf2b0ad0"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "营养恢复与控草目标、参数均由原详细文案明确给出；仅保留这些已提供的先验，不补等待天数。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heinong58_resistant_biotic_water_budget_priority": {
+      "scenario_requirements": [
+        "哈尔滨64条垄分区种植HEINONG84和HEINONG58；用天气、土壤、冠层、NDVI、病虫与地面检查决定两区处理需要。水量有限，仅灌溉有明确水分胁迫且产量风险高的区域；病虫达到阈值后才定向处理。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0–31: HEINONG84，标准密度，seed_spacing_cm=7.9（株距 7.9 cm）；ridges 32–63: HEINONG58，抗逆品种标准密度，seed_spacing_cm=8.4（株距 8.4 cm）。。分区：Zone A HEINONG84 ridges 0–31；Zone B HEINONG58 ridges 32–63。。",
+        "管理重点：需要比较两区病斑/病害确认、虫口/虫害迹象、土壤水分/VWC、冠层热异常和生育阶段；只有达到阈值的区域才定向处理，水量有限时优先灌溉真正产量风险更高的区域。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-31垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-31垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种32-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "32-63垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 933,
+        "end_line": 945,
+        "sha256": "a6c75f972aed8329cfaa3378e0963910dbeb72de6db04227296211f529ee455c"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "场景任务说64条ridges；原配置未给plants/m²目标，未按株距推算。未指定两条收获步骤的区域顺序。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_three_cultivar_wet_disease_dry_harvest_sequence": {
+      "scenario_requirements": [
+        "三品种全季分区：0-20垄HEIHE50、seed_spacing_cm=8.2；21-42垄HEINONG84、seed_spacing_cm=7.9；43-63垄HEINONG58、seed_spacing_cm=8.4。最多64条垄（0-63），大垄密植、一垄两行，垄距1.1 m、播深4.0 cm。"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "播前检查天气、预报、土壤、拖拉机及三种种子库存；条件合适后分别以4垄一趟播种0-20、21-42、43-63垄，并提交播种物理更新。",
+          "timing": [
+            "播种前",
+            "条件合适后"
+          ],
+          "quantities": [
+            "三种种子",
+            "4垄一趟",
+            "0-20、21-42、43-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "出苗后按区检查stand、GDD、生育期、NDVI、冠层与土壤水分，不将三品种合并为同一生育状态。",
+          "timing": [
+            "出苗后"
+          ],
+          "quantities": [
+            "三品种分别判断生育状态"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "湿六月后重点检查21-42垄HEINONG84的冠层湿度、NDVI、病斑和地面病害症状；证据成立且喷药窗口合适时，对21-42垄fungicide，3.8 L/ridge，等待响应后复查。",
+          "timing": [
+            "湿六月后",
+            "证据成立且喷药窗口合适时",
+            "等待响应后复查"
+          ],
+          "quantities": [
+            "21-42垄HEINONG84",
+            "3.8 L/ridge"
+          ]
+        },
+        {
+          "order": 4,
+          "instruction": "后期转干时重点检查43-63垄HEINONG58的root-zone VWC、water_stress、热信号与预报；水分胁迫、阶段和水量预算支持时，对43-63垄irrigation，hours=0.8，等待响应后复查。",
+          "timing": [
+            "后期转干时",
+            "水分胁迫、阶段和水量预算支持时",
+            "等待响应后复查"
+          ],
+          "quantities": [
+            "43-63垄HEINONG58",
+            "hours=0.8"
+          ]
+        },
+        {
+          "order": 5,
+          "instruction": "中后期继续分区检查病虫草、水分、成熟度和grain_moisture，不因一个区需处理而全田统一处理。",
+          "timing": [
+            "中后期"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "R8后按区检查成熟度、grain_moisture、当前天气、3天预报及可作业性；>18%等待，13.5%-18%在质量/天气风险支持下收后按需干燥，<=13.5%可直接安全入库。",
+          "timing": [
+            "推进到R8后",
+            "grain_moisture >18%时等待"
+          ],
+          "quantities": [
+            "3天预报",
+            "grain_moisture >18%：等待",
+            "13.5%-18%：风险支持时收后按需干燥",
+            "<=13.5%：直接安全入库"
+          ]
+        },
+        {
+          "order": 7,
+          "instruction": "对成熟、水分、天气和通行条件均满足的分区，以4垄一趟收获并及时卸粮；按实际粮食水分及仓储限制直接store_grain，或dry_grain(target_moisture_pct=13.0)后store_grain。",
+          "timing": [
+            "满足成熟、水分、天气和通行条件后",
+            "收获中及时卸粮",
+            "收后按水分和仓储限制处理"
+          ],
+          "quantities": [
+            "4垄一趟",
+            "target_moisture_pct=13.0"
+          ]
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 946,
+        "end_line": 955,
+        "sha256": "9f6ac8e79f68c92cedd0893f0b02a3d92e6e71681a4099e37d4d7af94f425855"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "三品种区域、不同处理剂量及条件是原详细文案已有信息；不从oracle补绝对日期或等待天数。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heinong60_highdensity_fertigation_irrigation_water_budget": {
+      "scenario_requirements": [
+        "哈尔滨黑农60高密度全季生产；依据出苗、营养、土壤水分、冠层和NDVI判断水肥/灌溉需要。二者共享有限水预算，无足够依据不得全田水肥或全田灌溉；先判断营养弱区定向fertigation收益，保留水量给后期真正缺水区。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0-63: HEINONG60，高密度，seed_spacing_cm=6.8（株距 6.8 cm）。",
+        "管理重点：在水肥和灌溉共用有限水资源时，先判断营养弱区是否值得定向fertigation，再保留足够水量给后期真正缺水的区域。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤/作物状态发现叶色、长势或NDVI异常后，用无人机缩小范围、robot/地面复核，确认营养受限而非水分或病虫草主导；仅对确认营养问题区定向水肥/补肥，并保留水肥资源。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 956,
+        "end_line": 968,
+        "sha256": "8eff418155e7623baed6de3b660d6f6c37fc6f49e468a9f6fb4a4dd2bfacf0f7"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "水肥和灌溉明确共用水预算，但原文未给预算数值或各处理量。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_hn84_hn58_low_chemical_disease_insect_budget": {
+      "scenario_requirements": [
+        "哈尔滨HEINONG84/HEINONG58分区全季低化学投入；按区检查病虫、作物长势和喷药窗口。有限化学预算仅用于证据充分且收益更高的区域。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0-31: HEINONG84，标准/推荐密度，seed_spacing_cm=7.9（株距 7.9 cm）；ridges 32-63: HEINONG58，标准/推荐密度，seed_spacing_cm=8.4（株距 8.4 cm）。",
+        "管理重点：在低化学投入下比较 HEINONG84 和 HEINONG58 的病虫压力差异，只把有限喷药预算用在有足够证据且收益更高的区域。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-31垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-31垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种32-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "32-63垄"
+          ]
+        },
+        {
+          "order": 3,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "冠层/叶片出现疑似虫害或长势异常时，用无人机定位，再经robot/地面确认虫口、叶片损伤与虫害迹象；压力可控时继续监测，仅对确认虫害区域定向杀虫。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 969,
+        "end_line": 981,
+        "sha256": "7e889c59c5dc22798abc6caccdb06333ee36b235609b74c7359cad5e11fe0b6b"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "有限化学预算只作约束，原文未给预算数值、阈值或处理剂量。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    },
+    "scenario_full_season_hb_heinong58_water_chemical_priority_under_dual_stress": {
+      "scenario_requirements": [
+        "哈尔滨黑农58全季生产，考虑其一定抗逆性，依据土壤水分、冠层热异常、冠层、病虫迹象和预算决定观察或优先处理。水量和化学预算均有限，不得全田灌溉或喷药；在灌溉、喷药、继续观察间按压力强度和剩余预算选择。",
+        "64条垄，采用大垄密植、一垄两行种植模式，垄距1.1 m，常规播深4.0 cm。ridges 0-63: HEINONG58，标准密度，seed_spacing_cm=7.9；plants/m2仅作参考，不用于反推株距。",
+        "管理重点：全田 HEINONG58 下同时面对水分和病害压力，依据压力强度、品种抗逆和剩余预算决定先灌溉、先喷药还是继续观察。",
+        "每个关键处理前都要先确认对应田间证据和资源状态；不要因为风险存在就全田统一处理，也不要用一种处理去解决另一类压力",
+        "收获只在成熟、籽粒水分已知、天气可收且田间可作业时进行；≤13.5%批次可直接入库，偏湿批次先干燥到安全水分"
+      ],
+      "steps": [
+        {
+          "order": 1,
+          "instruction": "确认播床、土壤水分、天气窗口、设备和种子库存后，按本场景品种/密度/分区配置播种0-63垄。",
+          "timing": [
+            "播种前确认条件"
+          ],
+          "quantities": [
+            "0-63垄"
+          ]
+        },
+        {
+          "order": 2,
+          "instruction": "土壤水分/VWC下降或冠层热异常时，先用无人机/热信号定位，再经robot/地面复查排除病虫草及营养主因；结合生育阶段和水预算，仅对确认缺水且值得用水的区域定向灌溉。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 3,
+          "instruction": "传感器/冠层发现异常后，用无人机定位，再经robot/地面确认病斑、病害信号及喷药天气；病害处理依据充分时，仅对确认区域定向杀菌。",
+          "timing": [],
+          "quantities": []
+        },
+        {
+          "order": 4,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 5,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        },
+        {
+          "order": 6,
+          "instruction": "确认对应分区成熟、籽粒水分、天气及田间可作业性后，分区收获并完成卸粮、必要干燥和安全入库。",
+          "timing": [
+            "对应分区达到成熟及作业条件时"
+          ],
+          "quantities": []
+        }
+      ],
+      "source": {
+        "file": "fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py",
+        "start_line": 982,
+        "end_line": 994,
+        "sha256": "00bb1d4b58e698a41f36467852fdd3fe42678d55c7644171105044a57ffcc5d1"
+      },
+      "additional_sources": [],
+      "review_notes": [
+        "管理重点允许按压力选择先灌溉、先喷药或观察，编号顺序却先灌溉后杀菌；保留编号顺序与选择条件，不把列表解释为强制执行顺序。plants/m2只供参考，不反推株距。",
+        "原文含逐字重复的编号步骤；按原顺序和次数保留，未推定其分区/批次对应关系或合并。",
+        "源文未给绝对日期；阶段/条件照原文保留，不从场景起始时间或oracle补日程。"
+      ]
+    }
+  }
+}

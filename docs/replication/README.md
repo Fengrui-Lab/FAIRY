@@ -134,6 +134,22 @@ checks `--cost-cap-dollars` only after a cell finishes: at 80% it cancels queued
 cells, but it cannot stop a cell that is already running. Treat the cap as a
 batch guard, not a per-request or per-cell spending limit.
 
+For the formal90 L3 scenarios, `structured_true` is an additional briefing
+condition. To include both reusable guidelines and the target scenario plan,
+replace `--detail true` in the full-season command with:
+
+```bash
+--detail structured_true \
+--scenario-kwargs '{"structured_briefing":{"components":["reusable_operational_guidelines","scenario_specific_plan"]}}'
+```
+
+An empty or omitted components list gives exactly the `false` base briefing.
+The default guidelines come from the packaged local records; a supported
+cross-scenario library mode can replace them. See the
+[component and source configuration](../../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/README.md).
+This mode is not supported by the physics smoke or L1/L2 scenarios. The existing
+`--detail true` examples above retain their original meaning.
+
 ## 3. Select a scenario set
 
 The runner accepts a comma-separated list of real scenario IDs. It does not
@@ -186,7 +202,9 @@ After setting `SCENARIOS`, reuse the command in section 2 with:
 ```
 
 Keep `detail`, controller, system-prompt mode, parallel-tool policy, model,
-timeouts, output-token cap, and commit hash fixed when comparing runs.
+timeouts, output-token cap, and commit hash fixed when comparing runs. For
+`structured_true`, also keep the selected components, guidelines source/options,
+and knowledge-file hashes fixed unless one is the intended comparison factor.
 
 ## 4. Build oracle baselines and launch the sweep
 
@@ -226,7 +244,9 @@ Read artifacts in this order:
 
 1. `*.run_report.json`: completion state, stop reason, aggregate tokens, tool
    calls, LLM time, outcome, and artifact paths. A subprocess killed by the
-   outer batch timeout may exit before this file is written.
+   outer batch timeout may exit before this file is written. New
+   `structured_true` runs also record their components, knowledge sources and
+   rendered briefing/hash under `structured_briefing`.
 2. `*.runtime_log.jsonl`: exact message context plus per-call LLM timing,
    prompt/completion/cached tokens, returned text, tool calls, and errors.
 3. `*.agent_workflow.json`: ordered semantic tool trace used for replay.

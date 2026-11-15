@@ -86,6 +86,7 @@ class ResearchARESimulationAgent(Agent):
 
     def _reset_research_state(self) -> None:
         self.reflection_memory = []
+        self.briefing_metadata: dict[str, Any] | None = None
         self.telemetry = {
             "family_id": self.controller_profile.family_id,
             "planning_mode": self.controller_profile.planning_mode,
@@ -235,8 +236,10 @@ class ResearchARESimulationAgent(Agent):
             telemetry=dict(self.telemetry),
         )
 
-    def _build_task_with_research_context(self, task: str) -> str:
-        context = self._controller_context(task)
+    def _build_task_with_research_context(
+        self, task: str, *, strategy_task: str | None = None
+    ) -> str:
+        context = self._controller_context(task if strategy_task is None else strategy_task)
         if context.strip():
             self.record_event(
                 "controller_context",
@@ -268,7 +271,16 @@ class ResearchARESimulationAgent(Agent):
     def run(self, input, **kwargs):
         self._reset_research_state()
         self._ensure_current_time_system_prompt()
-        task = self._build_task_with_research_context(str(input))
+        from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_structured_briefings import (
+            BriefingText,
+        )
+
+        strategy_task = None
+        if isinstance(input, BriefingText):
+            strategy_task = input.strategy_task
+            self.briefing_metadata = input.metadata
+            self.record_event("structured_briefing", status="ok", **input.metadata)
+        task = self._build_task_with_research_context(str(input), strategy_task=strategy_task)
         return super().run(task, **kwargs)
 
 

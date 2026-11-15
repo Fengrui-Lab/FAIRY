@@ -12,6 +12,7 @@ BriefingMode = Literal[
     "kwoo",
     "library",
     "true",
+    "structured_true",
     "l2_human_same",
     "l2_human_differ",
     "l2_textsim_differ",
@@ -211,6 +212,8 @@ def normalize_briefing_mode(value: Any) -> BriefingMode:
     if value is None:
         return "true"
     normalized = str(value).strip().lower()
+    if normalized == "structured_true":
+        return "structured_true"
     if normalized in {"1", "true", "yes", "on", "human", "detail_true"}:
         return "true"
     if normalized in {"0", "false", "no", "off", "none", "no_context", "detail_false"}:
@@ -243,7 +246,7 @@ def normalize_briefing_mode(value: Any) -> BriefingMode:
     }:
         return "l3_textsim_differ"
     raise ValueError(
-        "detailed_briefing must be one of false, kwoo, library, true, "
+        "detailed_briefing must be one of false, kwoo, library, true, structured_true, "
         "l2_human_same, l2_human_differ, l2_textsim_differ, "
         "l2_textsim_grouped_differ, "
         "l2_pathsim_differ, l2_pathsim_grouped_differ, "
@@ -505,7 +508,7 @@ def _same_l3_skill_context(scenario_id: str) -> str:
     return _render_skill_context("L2_HUMAN_SAME atomic skill context", cards, same_l3=True)
 
 
-def _manual_differ_skill_context(scenario_id: str) -> str:
+def _select_manual_differ_cards(scenario_id: str) -> list[dict[str, Any]]:
     slug = _context_slug_for_scenario(scenario_id)
     if slug is None:
         raise FileNotFoundError(f"No source slug registered for {scenario_id!r}")
@@ -517,7 +520,15 @@ def _manual_differ_skill_context(scenario_id: str) -> str:
     missing = [key for key in selected if key not in by_key]
     if missing:
         raise KeyError(f"Manual L2 skill selection references missing skills: {missing}")
-    return _render_skill_context("L2_HUMAN_DIFFER atomic skill context", cards, same_l3=False)
+    return cards
+
+
+def _manual_differ_skill_context(scenario_id: str) -> str:
+    return _render_skill_context(
+        "L2_HUMAN_DIFFER atomic skill context",
+        _select_manual_differ_cards(scenario_id),
+        same_l3=False,
+    )
 
 
 def _tokenize(text: str) -> Counter[str]:
@@ -579,17 +590,20 @@ def _target_query_text(spec: Any) -> str:
     )
 
 
-def _textsim_differ_skill_context(spec: Any) -> str:
+def _select_textsim_differ_cards(
+    spec: Any, top_k: int | None = None
+) -> list[tuple[float, dict[str, Any]]]:
     scenario_id = str(getattr(spec, "scenario_id", "") or "")
     source_slug = _context_slug_for_scenario(scenario_id)
-    top_k = int(
-        _get_env_with_legacy(
-            TEXTSIM_TOP_K_ENV_VAR,
-            LEGACY_TEXTSIM_TOP_K_ENV_VAR,
-            "6",
+    if top_k is None:
+        top_k = int(
+            _get_env_with_legacy(
+                TEXTSIM_TOP_K_ENV_VAR,
+                LEGACY_TEXTSIM_TOP_K_ENV_VAR,
+                "6",
+            )
+            or "6"
         )
-        or "6"
-    )
     query = _target_query_text(spec)
     ranked: list[tuple[float, dict[str, Any]]] = []
     for card in _load_all_skill_cards():
@@ -597,7 +611,11 @@ def _textsim_differ_skill_context(spec: Any) -> str:
             continue
         ranked.append((_text_score(query, card), card))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    selected = ranked[:top_k]
+    return ranked[:top_k]
+
+
+def _textsim_differ_skill_context(spec: Any) -> str:
+    selected = _select_textsim_differ_cards(spec)
     scored = {
         (str(card.get("source_slug", "")), str(card["skill"].get("skill_id", ""))): score
         for score, card in selected
@@ -624,7 +642,9 @@ def _skill_farming_group(card: dict[str, Any]) -> str:
     return group
 
 
-def _textsim_grouped_differ_skill_context(spec: Any) -> str:
+def _select_textsim_grouped_differ_cards(
+    spec: Any,
+) -> list[tuple[float, dict[str, Any], str]]:
     scenario_id = str(getattr(spec, "scenario_id", "") or "")
     source_slug = _context_slug_for_scenario(scenario_id)
     query = _target_query_text(spec)
@@ -646,6 +666,11 @@ def _textsim_grouped_differ_skill_context(spec: Any) -> str:
         for score, card in ranked_group[: _GROUPED_RETRIEVAL_QUOTAS[group]]:
             selected.append((score, card, group))
 
+    return selected
+
+
+def _textsim_grouped_differ_skill_context(spec: Any) -> str:
+    selected = _select_textsim_grouped_differ_cards(spec)
     cards = [card for _, card, _ in selected]
     scored = {
         (str(card.get("source_slug", "")), str(card["skill"].get("skill_id", ""))): score
@@ -691,8 +716,18 @@ def _load_retrieved_context(scenario_id: str, mode: str) -> str:
     return text
 
 
-def build_l3_context_briefing(spec: Any, detailed_briefing: Any) -> str:
+def build_l3_context_briefing(
+    spec: Any, detailed_briefing: Any, structured_briefing: dict[str, Any] | None = None
+) -> str:
     mode = normalize_briefing_mode(detailed_briefing)
+    if mode == "structured_true":
+        from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_structured_briefings import (
+            build_structured_briefing,
+        )
+
+        return build_structured_briefing(spec, structured_briefing)
+    if structured_briefing:
+        raise ValueError("structured_briefing requires detailed_briefing='structured_true'")
     base = str(getattr(spec, "briefing_text", "") or "")
     if mode == "false":
         return base

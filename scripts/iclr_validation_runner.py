@@ -813,7 +813,8 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
             "l2_textsim_grouped_differ, l2_pathsim_differ, "
             "l2_pathsim_grouped_differ, l3_pathsim_same, "
             "l3_pathsim_differ, l3_textsim_differ, l3_textdiff_differ, "
-            "or library."
+            "library, or structured_true. For structured_true, select components "
+            "with structured_briefing in --scenario-kwargs."
         ),
     )
     parser.add_argument("--a2a", type=_str_to_bool, default=defaults.get("a2a"))

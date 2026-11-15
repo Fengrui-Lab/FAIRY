@@ -1,8 +1,10 @@
 # FAIRY System Prompts & Knowledge Library
 
-本文记录先验知识注入的现有组件、控制参数与实现边界；后续结构方案在文末维护。
+本文记录先验知识注入的现有组件、控制参数与实现边界；structured_true的实现和用法在文末维护。
 
 审计日期：2026-11-15（Asia/Shanghai）。组件审计基于本地 `test_Knowledge` 分支、HEAD `31be9f8` 及当时工作区代码；下文三场景专项复核基于 HEAD `845eb13`。范围为 `fairy-run --agent` / `iclr_validation_runner.py` 创建的新主 Agent；服务端 chat template 不在本文范围。
+
+实现更新：2026-11-16，基于HEAD `3c4e51b` 的工作区新增structured_true及本地知识记录；本文相关装配说明已同步。
 
 ## 场景范围与清单关系
 
@@ -45,7 +47,7 @@
 
 分类是对现有实现的整理，不是新增校验规则。**存在条件与内容来源是两个维度**：例如详细任务属于 Scenario 私有定义，但与基础任务二选一；跨源知识虽按 Scenario 检索，内容不一定由目标 Scenario 定义。
 
-本范围的任务正文必须存在一种表示：基础版或详细版；知识模式采用基础版再追加知识，不是省略任务。
+本范围的任务正文必须存在一种表示：基础版或详细版；知识模式和structured_true保留基础版，再按配置追加内容。
 
 ```text
 messages[0], system:
@@ -57,6 +59,7 @@ messages[1], user:
     false      → ⑦ 基础任务
     true       → ⑧ 详细任务（替换基础任务）
     L3知识模式 → ⑦ 基础任务 + ⑨ 场景知识/参考工作流
+    structured_true → ⑦ 基础任务 + [G 跨场景指南] + [P 当前场景计划]
   + [⑪ controller 策略上下文，可能含 ⑫ controller skill 检索结果]
 
 tools，与 messages 平级:
@@ -74,9 +77,9 @@ tools，与 messages 平级:
 | ④ 单工具补充 | 可注入部分 | `--parallel-tool-calls false`；句子已存在则不重复 |
 | ⑤ 额外 system | Scenario 私有定义；可不存在 | `--scenario-kwargs` 的 `additional_system_prompt` |
 | ⑥ 初始仿真日期 | Scenario 私有数据；正常主路径存在，公共模板渲染 | `--scenario`、场景起始时间/checkpoint |
-| ⑦ 基础任务 | Scenario 私有定义；briefing 的一种版本 | `--scenario`、`detailed_briefing=false` 或 L3 知识模式 |
+| ⑦ 基础任务 | Scenario 私有定义；briefing 的一种版本 | `--scenario`、`detailed_briefing=false`、L3 知识模式或 structured_true |
 | ⑧ 详细任务 | Scenario 私有定义；briefing 的另一版本 | `detailed_briefing=true`，本范围默认值 |
-| ⑨ 场景知识 | 可注入部分；按场景选取，来源可同源/跨源 | `detailed_briefing` 的知识模式 + 文件/检索参数 |
+| ⑨ 场景知识 | 可注入部分；按场景选取，来源可同源/跨源 | 旧知识模式的文件/检索参数；structured_true 的 components / guidelines |
 | ⑩ controller system addendum | 可注入部分；当前 CLI 被覆盖 | `--controller`；Python `system_message` 优先级 |
 | ⑪ controller 策略上下文 | 可注入部分；默认 baseline 为空 | `--controller`，runner 的 `--families` |
 | ⑫ controller skill 知识 | 可注入部分；内置 family 均未开启 | 仅 Python `ResearchSkillConfig` |
@@ -207,7 +210,7 @@ Today's date in 'YYYY-MM-DD HH' format is {仿真日期，CST，精确到小时}
 - Engine 取 events 中**第一条非空** `AgentUserInterface.send_message_to_agent` 内容；无该内容才退回 `scenario_input`。因此 `--scenario-kwargs '{"scenario_input":"..."}'` 不是已有 briefing 的覆盖开关。
 - `--init-kwargs` 传给 setup，按场景实现影响状态或文字，没有统一的 prompt 编辑语义。checkpoint 恢复也不会自动把所有状态送模。
 
-briefing 是基础/详细/带知识版本的最终承载文本；当前没有统一的“目标字段 + 知识字段”送模结构，也不会自动把完整 oracle 事件图送给模型。见 [Engine._resolve_agent_task](../fairy/controllers/engine.py)、[L3 批量构建器](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_scenario.py)。
+briefing 是基础/详细/带知识版本的最终承载文本；structured_true另外支持B/G/P分段装配，但最终仍是user字符串，不会自动把完整oracle事件图送给模型。见 [Engine._resolve_agent_task](../fairy/controllers/engine.py)、[L3 批量构建器](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_scenario.py)。
 
 ### 8. 详细任务
 
@@ -221,7 +224,7 @@ briefing 是基础/详细/带知识版本的最终承载文本；当前没有统
 
 重要边界：
 
-- L1/L2 不支持多模式协议：直接传非空字符串 `"kwoo"`、`"library"`、`"false"` 都会按真值选择详细版。关闭应传 JSON 布尔 `false`；runner 会归一化常见布尔字符串。
+- L1/L2 不支持多模式协议：直接传非空字符串 `"kwoo"`、`"library"`、`"false"` 都会按真值选择详细版。关闭应传 JSON 布尔 `false`；runner 会归一化常见布尔字符串。新增structured_true在L1/L2构造时明确报不支持，不走上述真值分支。
 - L3 loader 的 true 返回 `detailed_briefing_text`，缺失才回退基础版；不会默认拼成“基础 + 详细 + 知识”。
 - L3 的 JSON `null` 在 78 个共享入口归一为 true，在 12 个类内入口走基础版。错期播种场景 `scenario_full_season_heinong84_staggered_planting` 的布尔 true 另加最早播种日期，字符串 `"true"` 不执行该追加。
 
@@ -229,9 +232,9 @@ briefing 是基础/详细/带知识版本的最终承载文本；当前没有统
 
 ### 9. 场景知识与参考工作流
 
-**类别：可注入部分；位置：user / 基础任务之后。** 由目标 Scenario ID/spec 决定取哪份内容，但来源可以是目标同源知识、其他场景或外部文件。入口为 `--scenario-kwargs '{"detailed_briefing":"模式"}'`，或 runner 的 `--detail 模式`。模式互斥，当前 CLI 不能组合多种场景知识。“可以不存在”指可以不选知识模式；选中后，必需文件或映射缺失会报错。
+**类别：可注入部分；位置：user / 基础任务之后。** 由目标 Scenario ID/spec 决定取哪份内容，但来源可以是目标同源知识、其他场景或外部文件。入口为 `--scenario-kwargs '{"detailed_briefing":"模式"}'`，或 runner 的 `--detail 模式`。既有模式互斥；新增structured_true允许独立选择G/P，详见后文。“可以不存在”指可以不选知识模式；选中后，必需文件或映射缺失会报错。
 
-以下 11 种知识模式与 false/true 合计 **13 个规范模式**；完整协议适用于接入 loader 的 formal90 L3，不适用于 selected50 的布尔分支。
+以下11种既有知识模式与false/true构成原13个规范模式；新增structured_true后共14个。完整协议适用于接入loader的formal90 L3，不适用于selected50的布尔分支。
 
 | 模式 | 内容与实际加载方式 |
 |---|---|
@@ -261,7 +264,7 @@ briefing 是基础/详细/带知识版本的最终承载文本；当前没有统
 
 资源边界：pilot20 共 72 张卡，包含 belief、evidence_chain、constraints、success_checks、oracle_events 等，也包含具体步骤和参数。`library` / `l2_human_same` / `l2_human_differ` 的现有映射不覆盖 mini20；跨源 textsim 可利用已有卡池，map 模式需准备目标 ID 的内容。L1/L2 的 `scripts/kwoo_l1l2_expansion_result.json` 虽覆盖 selected50，但类中尚无加载接入。
 
-以上知识均在**每次 run 初始化时构建一次**。pathsim 是“预跑/旧轨迹 → 离线检索 → 带知识的新 run”，不是当前 Agent 执行中的动态检索；map loader 也不校验文件 mode 与请求模式一致。`detail=false` 只选基础任务，不关闭 system、工具说明或 controller 提示。
+以上知识均在**每次 run 初始化时构建一次**。pathsim 是“预跑/旧轨迹 → 离线检索 → 带知识的新 run”，不是当前 Agent 执行中的动态检索。旧模式的map loader不校验文件mode；structured_true的G map会校验mode及跨源元数据。`detail=false` 只选基础任务，不关闭 system、工具说明或 controller 提示。
 
 来源：[模式/知识 loader](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_context_briefings.py)、[离线检索脚本](../scripts/fullseason/run_l3_skill_retrieval_experiments.py)。
 
@@ -306,7 +309,7 @@ CLI 显式传 system_message = 基础 prompt
 | `farm_critic_refiner` | 从 task 生成提案/检查提示；blocked 只是文本，无工具层拦截 |
 | `farm_graph_memory` | 从 task 建初始 objective 图并注入；后续 action/outcome 节点不回注 |
 
-planner/specialist/verifier 主要取决于固定 profile；ReWOO/tree/critic/graph 会读取完整 briefing，因此详细任务或知识模式也会间接改变策略文字。Python 还可通过 `ResearchAgentProfileConfig` 的 planning、reflection、delegation、verification、rewoo、tree_search、critic、graph_memory 字段调整各项配置；CLI 没有逐项开关。
+planner/specialist/verifier 主要取决于固定 profile；旧模式的ReWOO/tree/critic/graph读取完整briefing，因此详细任务或知识模式也会间接改变策略文字。structured_true仅把P（开启时）或B作为策略输入，G保留在模型可见的user正文中。Python 还可通过 `ResearchAgentProfileConfig` 的 planning、reflection、delegation、verification、rewoo、tree_search、critic、graph_memory 字段调整各项配置；CLI 没有逐项开关。
 
 “一次性”的代码原因：`run()` 只在进入循环前调用 `_controller_context(task)`；每轮的 `before_llm_turn()` 返回空串。文本仍随对话历史保留，普通 assistant 消息、工具调用及结果也持续增加；停止更新的是额外策略/记忆注入。该改动始于 `d6a46529`，后续 README 已记载为已知限制，不能归因于统一 parser 的必然要求。
 
@@ -372,7 +375,7 @@ Relation 当前是原文追加，**不会按实例名改写引用，也不校验
 
 `detailed_briefing` 是这三个场景的**统一模式选择入口**，不是决定全部内容的唯一参数：Scenario ID/spec 决定任务，文件/映射/检索参数决定知识正文。runner 的 `--detail` 最终覆盖合并到同一字段，没有第二套独立模式。
 
-`false → 基础版`；`true → 详细版替换基础版`；其他 11 种知识模式 → `基础版 + 选定知识`。它们是三类分支，不是只有三个可选值；当前不能分别打开“详细任务”和“知识”再组合。这里的静态/动态指**任务运行时的行为**，不据此推断文本最初由人、脚本还是模型创作。
+旧模式分为三类：`false → 基础版`；`true → 详细版替换基础版`；11种知识模式 → `基础版 + 选定知识`。新增structured_true采用 `基础版 + 可选G + 可选P`，两组件由structured_briefing.components独立选择。这里的静态/动态指**任务运行时的行为**，不据此推断文本最初由人、脚本还是模型创作。
 
 ### 2. 基础任务与详细任务：都是预置文本
 
@@ -503,128 +506,24 @@ error 修正将业务错误标为 `TOOL_ERROR`、异常内容规范为 `{"error"
 
 ## 结构优化方案
 
-### structured_true：已确定的组合语义与可行性
+### structured_true：实现与使用
 
-状态：**下述四种组合语义由用户明确；本轮已整理G/P审阅材料并给出拟议参数与接入方案，运行时尚未实现。** 现有 `true/false` 和知识模式保持原义。可行性核对基于 HEAD `961367a` 及当前工作区。
+已实现为与 false、true、library 等模式平级的新模式；初期支持 formal90 L3。新增内容仍在第一次LLM调用前装配到 **user / Scenario briefing**，system、tools、工具错误恢复和Relation处理不变。
 
-#### 1. 基础任务固定，后两部分分别可选
+#### 1. 两个组件独立可选
 
-令 B 为同一 Scenario 的现有 false briefing，G 为从其他场景 detailed 文案归纳的可复用指南（也可由跨场景library知识替换），P 为从当前 Scenario 的现有 true briefing 提炼出的场景特定计划及其必要信息：
+B是原false基础任务，G是其他场景的可复用操作指南，P是当前场景的计划及必要条件。
 
-| reusable_operational_guidelines | scenario_specific_plan | 最终 briefing |
-|---|---|---|
-| 不选 | 不选 | **B，逐字等于 false briefing** |
-| 选 | 不选 | B + G |
-| 不选 | 选 | B + P |
-| 选 | 选 | B + G + P |
-
-`detailed_briefing="structured_true"` 选择这一组装机制；还需两个独立组件选择项决定 G/P 是否加入。选择集合允许为空、任一单项或同时选择；具体 CLI/kwargs 建议见下方兼容式修正方案。
-
-- **B 始终保留原样。** 都不选时不增加标题、空章节、说明句或分隔符，也不加载未选组件；在其他配置相同时，不能再因选择 structured_true 而产生额外提示差异。
-- **G/P 互不依赖。** 只选 G 不得自动加入目标场景计划；只选 P 不得自动检索外部库。两者都选时按 B→G→P 拼接，并保留来源边界。
-- 四组合的等价/差异针对 briefing；system、tools、controller 等仍由各自配置控制。
-
-#### 2. 两类附加内容的来源与边界
-
-| 组件 | 来源与内容 | 边界 |
-|---|---|---|
-| `reusable_operational_guidelines`（G） | 默认从**其他场景的当前true详细文案**总结的可复用指南；也可替换为现有library/检索模式的跨源知识 | 不从目标场景 true 临时抽取一段充作跨场景知识；当前 L3 范围须排除目标 L3 同源材料。参考场景的日期、垄号、剂量不能自动变成目标参数 |
-| `scenario_specific_plan`（P） | 从**当前场景 true**总结出的场景特定计划，并包含理解/执行该计划所需的已知配置、硬约束、条件及复查要求 | 保留原有信息边界，不从完整 oracle/spec 自动补入原 true 未暴露的目标区域、剂量或等待时间；单独启用时应能配合 B 理解，不依赖未启用的 G |
-
-第二部分默认来自其他场景的detailed归纳，可由library来源替换；第三部分同样可关闭。目标true只为P提供计划内容，不作为G的知识来源。
-
-**“必要信息必须完整”只约束启用 P 时的提炼质量，不代表强制启用 P。** P 关闭时，原 true 独有的配置/约束不会被偷偷补入 B 或 G；B 中本来已有的约束则始终保留。若原 true 存在应移入所有模式的硬规则缺失，应作为单独的基础任务修订处理，不能破坏本模式“都不选等于 false”的约定。
-
-#### 3. 现有内容与三例可行性
-
-formal90 的详细字典全部包含步骤提示；81份有相似的“已知田块与种植计划 / 管理重点 / 总体约束”段落，9份采用其他结构。387条编号步骤去掉编号后有88种不同原文。这支持结构化维护 P，但不能靠统一标题切割或全文去重自动完成。以上统计并不意味着 G 应从目标 true 产生。
-
-| 场景 | G 的主要跨场景知识主题（完整映射见下方整理材料） | P 启用时应保留的场景信息 |
-|---|---|---|
-| 有机残茬 | 湿冷/高残茬建植、杂草与作物绿度鉴别、补种收益判断 | 有机限制、种植配置；底肥/播种后按证据控草，按缺苗与剩余季节判断补种，再完成收获后处理 |
-| 有机斑块 | 草害定位、地面确认、机械作业条件与复查方法 | 禁用常规除草剂、最多16垄；比较0–15/16–31/32–63并确认处理区，不能预先认定0–15必为最高压力 |
-| 微量元素 | 营养问题与水分/病虫问题的鉴别、定向恢复和复查 | 初花期叶色异常与种植配置；确认营养受限后处理，避免误喷药/灌溉；不补入原 true 未给出的28–43垄及0.16/0.8参数 |
-
-G 本轮同时整理一份来自其他场景详细文案的指南库，作为默认来源；替换为现有library知识时，来源模式、检索参数和版本需显式记录。允许目标自身入池的 same 模式不能直接保证 G 的跨场景要求。未来如扩至 L1/L2，需明确“其他场景”按 ID 还是 source L3 判断，不能默认同一母场景拆出的子任务就满足跨源要求。
-
-P 仍是从已有内容整理的**预置条件式计划**，不是当前观测生成的动态计划。“诊断后按需处理”不能改成无条件动作；共享文字也不能导致原计划的阶段、重复处理或收获批次被擅自合并。本轮按原文整理并保存证据，拟议运行时按ID加载，不增加在线LLM提炼或自动补全。
-
-#### 4. 工程接入与兼容性
-
-| 环节 | 所需工作 / 已知边界 |
+| components | 最终briefing |
 |---|---|
-| 模式与组合参数 | 在 `BriefingMode`、normalize 和 briefing loader 中显式注册 structured_true，新增独立组件选择及组装逻辑；不能仅将其别名为 true |
-| CLI / runner | 模式字符串本身已能透传，但组件选择参数及结果元数据需接入；当前 loader 尚不接受 structured_true |
-| 内容来源 | G 默认使用本轮跨场景detailed归纳指南，可替换为library/检索结果；P 使用按场景维护的提炼内容。启用但缺少内容时不能静默降级为其他组合 |
-| L3 入口 | 78个共享入口易统一接入；12个类内入口往往只传 ID/base/detail，不能假设完整 ScenarioSpec；错期播种的 true 额外日期约束也须纳入 P 提炼 |
-| L1/L2 | selected50 目前把任意非空字符串当作 true；需另行接入或拒绝不支持模式，避免误报新模式已生效；还须保留 checkpoint 的局部任务语义 |
-| 实验与预览 | 如经 ablation/retrieval 脚本运行，需登记新组并记录组件选择、G来源/检索参数、P版本，才能区分四种条件 |
-| 送模与 controller | 仍渲染为初始 user 文本，不需改变 LLM 返回解析器或 tools 协议；需核验 controller 对整个 briefing 的编号步骤提取 |
+| `[]` 或不提供配置 | **B，逐字等于false** |
+| `["reusable_operational_guidelines"]` | B + G |
+| `["scenario_specific_plan"]` | B + P |
+| 两项都选 | B + G + P |
 
-`parse_rewoo_plan(task)` 被 ReWOO/tree/critic/graph 复用，会抓取全文行首编号；G 中的示例步骤可能被误当成目标计划，P 关闭时也有此风险。渲染格式应区分来源示例与目标计划，必要时让 controller 显式读取相应段落；仅加章节标题不会自动实现隔离。
+顺序固定为B→G→P；重复组件自动去重，未知组件报错。未选组件不加载，已选内容缺失或校验失败时报错，不静默降级。P关闭时不会把原true独有的计划或约束补入B/G。
 
-#### 5. 验证与范围建议
-
-- **先验证四组合契约。** 都不选与 false 逐字一致；单选不混入另一组件；全选同时保留二者及顺序；未选组件不加载，已选内容缺失不静默省略。
-- **分别验证 G 与 P。** G 检查跨源排除、来源和适用条件；P 逐项核对原 true 的参数、禁令、条件、顺序与复查要求。不能用“全选看起来完整”掩盖单选 P 对 G 的依赖。
-- **区分模式对照。** false 与空组合应等价；旧 true 与 P-only 不要求逐字相等，且要核对 B 加入后是否带来原 true 没有的信息；G+P 更不是旧 true 的纯格式变化。
-- **先以这三个 L3 试点。** 保留旧 true，验证首轮 payload、计划提取和四组合内容，再扩展90个L3。L1/L2 有“诊断已完成，只做最小复核”等语义，应单独适配。
-
-这一组合定义可实现，并可分别考察跨场景知识、目标场景计划及二者共同提供时的效果。它仍属于初始化注入，不能据此保证 token 减少、成功率提升或获得动态规划能力。本轮完成内容审阅材料和接入方案，未实现参数或修改运行代码。
-
-证据：[详细字典](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py)、[模式入口](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_context_briefings.py)、[错期播种附加约束](../fairy/scenarios/farm_world_fullseason_v2/scenario_full_season_heinong84_staggered_planting.py)、[runner 透传](../scripts/iclr_validation_runner.py)、[controller 计划提取](../fairy/controllers/research_strategies.py)。
-
-### scenario_specific_plan 整理材料
-
-本轮整理对象为 `harbin_l3_detailed_briefings.py` 的全部字典记录，产物是**内容审阅材料，不是已经接入运行时的新模式**。入口：[计划索引](scenario_specific_plan/INDEX.md)；[全部计划正文](scenario_specific_plan/PLANS.md)；[覆盖与来源清单](scenario_specific_plan/manifest.json)。
-
-范围为91条来源记录：formal90全部覆盖，另有 `scenario_full_season_hb_organic_杂草覆盖和行间竞争_allowed_inputs` 这一不在formal90中的记录。额外记录原样保留其ID并标为未匹配来源，不自动改名、映射或注册成场景。
-
-三个JSON分片为审阅数据：[01](scenario_specific_plan/plans_01.json)、[02](scenario_specific_plan/plans_02.json)、[03](scenario_specific_plan/plans_03.json)，统一记录：
-
-| 字段 | 用途 |
-|---|---|
-| scenario_id / in_formal90 | 场景映射与本次清单归属 |
-| scenario_requirements | 从当前true提炼的任务条件、配置、限制及必要前提 |
-| steps[].order / instruction | 按原次序保留的精简步骤，不合并重复动作 |
-| steps[].timing / quantities | 原文明确给出的阶段、时间、间隔、范围、数量及单位；未明确则留空 |
-| source_start_line / source_end_line / source_sha256 | 来源定位与内容版本 |
-| steps[].source_text / review_notes | 原步骤与疑点，供人工审阅；不作为默认送模正文 |
-
-提炼保留条件性及必要证据链，压缩泛泛的作用说明；不从 spec/actions、oracle 或 Kwoo 补充目标参数。原文没有日期、阶段或剂量时不自行推算。源文重复步骤、未指明分区、数值不一致或疑似错配的管理重点保留审阅备注，整理不等于已纠正这些原文问题。
-
-此数据只覆盖指定文件。布尔true在某些场景类中追加的文字仍须在接入时补齐，例如错期播种的最早日期；不能把“字典91条已整理”误写成“所有最终true内容已无差异迁移”。L1/L2 的类内详细文案不属于这次数据整理范围。
-
-### reusable_operational_guidelines 整理材料
-
-本轮同样完成G材料：[指南索引](reusable_operational_guidelines/INDEX.md)、[12类通用指南](reusable_operational_guidelines/GUIDES.md)、[各场景G正文](reusable_operational_guidelines/BY_SCENARIO.md)、[目标→指南/来源映射与正文JSON](reusable_operational_guidelines/scenario_guidelines.json)、[来源及选择规则](reusable_operational_guidelines/manifest.json)。与P一样，仅作为审阅材料，尚未接入运行时。
-
-| 方法类别 | 指南 |
-|---|---|
-| 建植与观测 | 播种准备、分区/错期管理、异常定位与地面核验 |
-| 决策与执行条件 | 天气/可作业窗口、有限资源优先级 |
-| 按需处理 | 草害诊断与控草、缺苗补种、病虫确证、营养恢复、水分胁迫与灌溉 |
-| 收后环节 | 收获条件、卸粮/干燥/储藏衔接 |
-
-指南共12类、37条精确来源引文；每类有至少3个formal90来源支持。针对91个来源条目分别建立主题映射，其中90个为正式清单目标，额外未匹配ID仅保留审阅。每条选中指南绑定**2个非目标场景来源**，逐项检查排除了自身；每条引用可回查原字典，不使用oracle、Kwoo或外部农艺资料。
-
-目标当前true的开场说明和步骤行动名只用于选择需求主题，规则正文采用外部来源可支持的归纳。选择采用本轮公开的显式主题规则，排除了“管理重点/总体约束”重复模板对匹配的影响；不是现有textsim算法，也不声称检索质量已经过任务实验验证。规则与命中依据均保存在manifest/映射JSON中。
-
-| 样本 | 选中的G主题 |
-|---|---|
-| 有机残茬 | 播种准备、异常核验、作业窗口、控草、补种、收获、收后处理 |
-| 有机斑块 | 播种准备、异常核验、作业窗口、控草、资源优先级、收获、收后处理 |
-| 微量元素 | 播种准备、异常核验、作业窗口、营养诊断恢复、收获、收后处理 |
-
-通用guidance不携带来源场景的数字常量；具体品种、日期、垄号、剂量和预算以目标任务为准。原始引文中的数值只保存在审计数据，不渲染进默认G正文。引文来自其他场景不等于每条方法在目标上都必然适用，因此正文保留适用条件，不强迫执行所有方法，也不把它们变成一份目标计划。
-
-该资料是默认 `cross_scenario_detailed` 来源。替换为某种library模式知识时，应替换整个G正文及其来源元数据，P保持不变；既不自动追加两份G，也不改变旧library模式自身的加载行为。
-
-### structured_true：兼容式修正方案（尚未实施）
-
-#### 1. 新增配置，不重定义旧模式
-
-推荐在 Scenario 增加默认 `None` 的 `structured_briefing` 配置，仅当 `detailed_briefing="structured_true"` 时解释它；空配置等价于 `components=[]`。建议接口如下，属于**拟议配置**：
+通过CLI的 `--scenario-kwargs` 传入以下JSON；runner也可用 `--detail structured_true` 配合相同的组件配置：
 
 ```json
 {
@@ -634,60 +533,85 @@ P 仍是从已有内容整理的**预置条件式计划**，不是当前观测�
       "reusable_operational_guidelines",
       "scenario_specific_plan"
     ],
-    "guidelines": {
-      "source": "cross_scenario_detailed"
-    }
+    "guidelines": {"source": "cross_scenario_detailed"}
   }
 }
 ```
 
-CLI 继续通过 `--scenario-kwargs` 传入，runner 继续通过 `--scenario-kwargs` 与 `--detail structured_true` 合并；不必新增另一套顶层模式开关。components只允许这两个名称，重复项规范化、未知项明确报错，输出顺序固定为B→G→P，不受输入列表顺序影响。G启用且未指定来源时，建议默认 `cross_scenario_detailed`；选择 `{"source":"library","mode":"l2_textsim_differ","top_k":6}` 可替换G正文，不与默认指南重复拼接。
+`components` 决定是否启用G/P；`guidelines.source` 只决定G的来源，不负责启用G。G开启时，未填写guidelines默认使用 `cross_scenario_detailed`。旧模式配非空structured_briefing时报错；不传新配置的已有调用保持原行为。
 
-新配置与旧模式同时提供且非空时，应提示配置不适用，而不是悄悄修改旧模式正文。未提供新字段的全部既有调用保持行为不变。
+#### 2. 本地知识记录
 
-#### 2. 独立组装分支与来源接口
+新增运行文件全部放在 [structured_knowledge/](../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/README.md)，运行时不依赖本目录。`Fixes-Knowledge-Library/`保存设计说明和知识源材料；离线生成器及其`--check`会读取本目录的P/G审阅JSON。
 
-在现有loader显式增加structured_true分支，其他13种规范模式、已有别名、环境变量及默认值保留。推荐给新分支返回一份“正文＋来源元数据”的内部对象，最终送模仍是原有user字符串：
+| 文件 | 内容 |
+|---|---|
+| [plans.json](../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/plans.json) | 按场景ID保存90份P、387个步骤，以及时间/数量/条件、来源和审阅备注 |
+| [guides.json](../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/guides.json) | 12类可复用指南、适用条件及来源证据定位 |
+| [scenario_guidelines.json](../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/scenario_guidelines.json) | 90个目标的指南选择，共587个绑定；每个绑定包含两个不同的非目标场景来源 |
+| [manifest.json](../fairy/scenarios/farm_world_fullseason_v2/structured_knowledge/manifest.json) | 正式支持清单、源文件及运行文件hash |
 
-```text
-B = 该场景现有 false 分支的原始 briefing
-若 components 为空：直接返回 B，不生成标签或加载 G/P
-若选 G：默认加载跨场景 detailed 归纳指南，或以指定 library 来源替换
-若选 P：按 scenario_id 取审阅完成的计划，补齐该场景原true的类内附加约束
-按 B → 已选G → 已选P 拼接
+**P：** 从目标场景当前true整理，保留原步骤次序、重复动作、条件、时间与数量；压缩泛泛的作用说明。不从oracle、完整spec或Kwoo补入原true未暴露的目标参数。运行正文包括scenario_requirements和各步骤instruction/timing/quantities；source_text、review_notes留在审阅/记录层。错期播种类内附加的最早日期及开工条件已补入运行P，并单独记录来源。原文数值不一致等疑点保留原值与备注，未擅自修正旧任务。
+
+**G：** 从其他场景detailed文案归纳播种准备、分区管理、异常核验、作业窗口、草害、补种、病虫、资源分配、营养、水分、收获、收后处理共12类方法。目标的开场描述/步骤行动名仅用于离线选择主题；运行时按ID加载已保存的映射，不重新总结或匹配。每个目标绑定均排除自身来源，通用规则不携带来源场景的数字常量，具体日期、垄号、剂量和预算以目标任务为准。
+
+G的模型正文不包含“来源”行、library的source_l3/source_l2/source_library字段或L3参考标题中的来源ID；知识正文和代码块保持原样。来源只保留在本地审阅/运行记录及run_report元数据中，跨源校验继续执行。此规则仅用于structured_true的G，不修改旧library模式正文。
+
+完整审阅材料保留在 [P索引](scenario_specific_plan/INDEX.md) 和 [G索引](reusable_operational_guidelines/INDEX.md)。审阅层覆盖指定字典全部91条，含1条不在formal90的来源记录；该额外记录不进入运行支持清单。G审阅库含37条精确引文，运行记录以来源位置与引文hash追溯，避免重复载入大段源文。
+
+更新审阅材料后，离线生成并检查运行文件：
+
+```sh
+python3 scripts/fullseason/build_structured_knowledge.py
+python3 scripts/fullseason/build_structured_knowledge.py --check
 ```
 
-G和P分别加载，单选任何一项不要求另一项资源存在。已选项缺失/非法时报出具体原因，不自动回退成true、false或另一种知识模式。
+生成器不调用LLM、不执行场景。运行时只读已保存的JSON，所选文件hash不匹配时要求重新生成。
 
-- **P接口**：将审阅通过的计划数据部署到公共场景资源目录，通过按ID查表的loader加载；`source_text/review_notes` 用于审计，不默认进入LLM。正文包含scenario_requirements、按顺序的instruction及timing/quantities中的有效要求，不带另一次完整基础任务；同一要求可去重呈现，但不得只读取instruction而遗漏独立字段。审阅未解决的数值冲突不得在部署时被自动任选其一。
-- **G接口**：用来源适配器区分 `cross_scenario_detailed` 与 `library`。前者加载本轮归纳的指南及目标→指南/外部来源映射；后者复用既有知识池与检索结果，例如 `l2_textsim_differ`、grouped或已生成的工作流map。两种来源替换同一个G插槽，均不取代原有同名模式；P的内容和开关不随G来源变化。
-- **跨源校验**：L3排除目标同源材料；记录每条来源ID、资源版本和选择方法/依据。本轮主题规则记录命中词，不伪造相似度分数；检索来源另记录其实际分数。现有纯文字context map不足以可靠证明跨源；将来接入pathsim/L3摘要时，新增来源元数据校验，旧模式仍可按原格式读取旧map。
-- **参数隔离**：新配置显式的top_k只用于本次G，不写进全局环境变量；旧模式继续保留原有ENV优先级。渲染器/检索器提取公共辅助函数时，应维持旧函数的默认输出与排序。
+标准CLI的Agent运行在scenario.setup时组装一次briefing，后续LLM循环不重新读取知识或追加G/P；原始user消息仍随历史发送。长上下文和提示导致的额外工具步骤可能增加运行时间，不能把“一次组装”理解成模型只处理一次这段内容。
 
-#### 3. 接入点与边界
+#### 3. 用现有library知识替换G
 
-| 位置 | 修正内容 | 保留策略 |
-|---|---|---|
-| `Scenario` 配置 | 增加可选structured_briefing字段与仅针对新模式的校验 | 原字段默认值、旧参数和setup行为不变 |
-| `harbin_l3_context_briefings.py` | mode/normalize新增structured_true；新组装器、P loader、G适配器 | 不替换true字典，不更改false/library/Kwoo/retrieval分支 |
-| 78个共享L3入口 | 给新组装器传入场景ID、原base和可选配置 | 旧模式仍调用原分支 |
-| 12个类内L3入口 | 透传配置，显式登记原true附加信息，按ID加载计划 | 保留原布尔/字符串true及null的既有行为；新模式不复制这些历史歧义 |
-| L1/L2及其他未支持场景 | 对新模式做能力校验并明确报“不支持” | 不把新字符串当truthy静默退为旧true；现有模式不受影响 |
-| runner/实验脚本 | 帮助文字、预览、结果元数据加入新配置；可增加四种独立实验组 | 不自动扩充旧默认实验矩阵、不改旧结果命名 |
-| controller输入 | 新模式单独提供策略输入来源；见下段 | 旧模式继续使用现有全文处理路径；不修改LLM响应解析协议 |
+只需更换guidelines配置，例如：
 
-为保持兼容，初期支持范围明确为formal90；仅在新模式下检查场景是否支持，CLI与直接Python运行入口都需要校验，避免L1/L2绕过限制。额外未匹配ID不加入支持清单。
+```json
+"guidelines": {
+  "source": "library",
+  "mode": "l2_textsim_differ",
+  "top_k": 6
+}
+```
 
-既有工具调用错误恢复、tool tag、工具schema和Relation处理保持不变；这些功能不属于本轮新增briefing模式的改动范围。
+替换整个G，不叠加默认指南，也不改变P。新G要求跨场景来源，支持：
 
-controller需区分“给模型看的全部briefing”和“供现有策略提取步骤的输入”：新模式P开启时使用显式目标计划步骤，P关闭时使用B；G始终作为可读知识，不能因其中有编号而被解析成目标计划。旧模式不启用此选择规则。空组合因此与false沿用同样的策略输入；不借此次改动修复或重写原controller算法。
+| mode | 加载方式 / 参数 |
+|---|---|
+| `l2_human_differ` | 复用既有手工选卡映射，仍受原映射覆盖范围限制 |
+| `l2_textsim_differ` | 初始化从预存卡池检索；可设正整数top_k，显式值优先，不修改环境变量 |
+| `l2_textsim_grouped_differ` | 复用建植/管理/收获1/2/1配额，不接受top_k |
+| `l2_pathsim_differ`、`l2_pathsim_grouped_differ`、`l3_pathsim_differ`、`l3_textsim_differ` | 加载离线context map；context_path优先，否则使用既有retrieved-context环境变量 |
 
-#### 4. 验证与实施顺序
+同源library/same模式不满足G的跨场景定义，不能作为新G来源；它们原有的独立运行方式不变。所有来源均在初始化完成选择与装配，不在后续观测中自动更新。
 
-1. **先审计划数据**：核对91条来源、formal90覆盖、原步骤次数/次序、数值与条件、未匹配条目及原文疑点；接入前补齐类内true附加内容。具体时间缺失不通过oracle补全。
-2. **保存旧模式对照**：用固定资源对false、true、library、Kwoo及现有检索模式生成正文快照；运行所需缺失资源使用固定测试夹具，不调用真实LLM。验证新增实现后字节输出及失败边界不漂移，既有别名/null特例也不顺手修改。
-3. **验证四组合**：空组合与false字节一致；G-only不加载P、P-only不检索G；全选顺序正确；未选资源缺失不阻塞，已选资源缺失明确报错。
-4. **检查首轮payload与策略输入**：只改变选定的briefing/来源元数据；system、tools、A2A等原接口保持原样。核验G中的编号不污染目标计划、空组合不增加controller上下文差异。
-5. **显式登记实验条件**：记录components、知识来源/参数/hash、P版本/hash、完整最终briefing/hash；固定同一G比较G-only与G+P，固定同一P比较P-only与G+P。
+map用于新G时，需记录匹配mode、正文及实际检索来源/分数：
 
-实施顺序建议为“三例内容确认 → 新分支及四组合 → formal90覆盖与回归 → 可选的其他G来源或L1/L2扩展”。本轮产物是计划数据和可实施方案，尚未增加任何运行时模式；旧功能继续由原代码提供。
+```json
+{
+  "mode": "l3_pathsim_differ",
+  "contexts": {"目标场景ID": "离线生成的参考工作流正文"},
+  "sources": {
+    "目标场景ID": [{"scenario_id": "其他场景ID", "score": 0.7}]
+  }
+}
+```
+
+这里的ID和分数只是格式示例，实际须来自对应离线检索。缺来源、包含目标自身或mode不匹配会报错。既有纯文字map仍可供旧模式按原规则读取。
+
+#### 4. 接入与验证边界
+
+- `Scenario` 增加structured_briefing配置；共享入口及12个类内入口均透传。L1/L2和其他未支持场景在构造时明确拒绝新模式，避免按truthy退回true。
+- loader最终仍返回可当普通字符串使用的briefing。仅新模式附带策略输入和来源元数据，经Engine送到controller；模型收到完整B/G/P，controller策略只读取P（开启时）或B，G的参考编号不会成为目标计划。旧模式沿用原处理路径。
+- `run_report.json` 新增structured_briefing字段，仅新模式存在；记录组件、知识来源/选择依据、资源hash、最终briefing正文/hash。runtime log同时记录对应事件，便于确认实际注入内容。
+- 已验证旧模式及别名正文快照、四组合、独立加载、跨源排除、library替换、ENV隔离、90场景setup、错期日期和模拟LLM首轮payload；原错误处理与Relation测试通过。空组合的完整controller任务已对11个controller核对为与false一致。
+
+本实现提供可控的初始化知识注入，不改变controller算法和LLM响应解析，不代表已验证任务成功率提升。原true、所有旧知识模式、原ENV优先级和null/字符串true特例保留。

@@ -110,6 +110,7 @@ class ScenarioFullSeasonHeinong84LowChemicalWetDisease(Scenario):
                     ),
                 ),
                 self.detailed_briefing,
+                structured_briefing=self.structured_briefing,
             )
 
         with EventRegisterer.capture_mode():

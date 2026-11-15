@@ -212,6 +212,16 @@ class Engine:
                 content = args[0] if args else None
             text = str(content or "").strip()
             if text:
+                from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_structured_briefings import (
+                    BriefingText,
+                )
+
+                if isinstance(content, BriefingText):
+                    return BriefingText(
+                        text,
+                        strategy_task=content.strategy_task.strip(),
+                        metadata=content.metadata,
+                    )
                 return text
         return ""
 

@@ -23,12 +23,30 @@ class Scenario:
     events: list[Any] = field(default_factory=list)
     workflow: Workflow | None = field(default_factory=Workflow)
     seed: int = 0
-    detailed_briefing: bool = True
+    detailed_briefing: bool | str | None = True
     expects_agent_harvest: bool = True
     additional_system_prompt: str | None = None
+    structured_briefing: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         self._apply_migrated_class_defaults()
+        if str(self.detailed_briefing).strip().lower() == "structured_true":
+            from fairy.scenarios.farm_world_fullseason_v2.harbin_l3_structured_briefings import (
+                supports_structured_scenario,
+                validate_structured_config,
+            )
+
+            if not supports_structured_scenario(self.scenario_id):
+                raise ValueError(
+                    f"structured_true is not supported for scenario {self.scenario_id!r}"
+                )
+            self.structured_briefing = validate_structured_config(
+                self.structured_briefing
+            )
+        elif self.structured_briefing:
+            raise ValueError(
+                "structured_briefing requires detailed_briefing='structured_true'"
+            )
         if self.apps is None:
             self.apps = []
         if self.dynamic_events is None:

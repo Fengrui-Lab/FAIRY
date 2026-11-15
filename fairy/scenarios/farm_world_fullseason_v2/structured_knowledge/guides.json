@@ -1,0 +1,322 @@
+{
+  "schema_version": "structured-knowledge/v1",
+  "guides": {
+    "planting_readiness": {
+      "title": "播前条件与种子设备检查",
+      "applicable_when": "任务涉及播种或分批播种，需要判断播床、天气及资源是否允许开始作业。",
+      "guidance": [
+        "播种前共同检查当前天气和短期预报、土壤温度与水分、播床状态，以及拖拉机等播种设备和目标种子库存。",
+        "仅在天气和播床条件适合时进入播种；条件不适合时等待合适窗口，不能把计划时间直接当作无条件开工指令。",
+        "使用当前任务指定的品种、分区及播种参数装种和播种，完成播种状态更新。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_heinong84_staggered_planting",
+          "source_start_line": 72,
+          "quote_sha256": "990cb54f2faab0b1ffcb3f3d5d8165987658182915f5d84a5ac91e05bee3433b"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_coldspring_planting_window_heihe50",
+          "source_start_line": 156,
+          "quote_sha256": "854642219e231118d0fad995e3040f411ba4d1d09182087af238ab742b4c5b57"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_wetcold_high_residue_establishment",
+          "source_start_line": 297,
+          "quote_sha256": "ac7b6012693cff102cfb25da06213060439865e4ef1f4a2c45228627f78fd27a"
+        }
+      ]
+    },
+    "zoned_staggered_management": {
+      "title": "分区与错期状态管理",
+      "applicable_when": "田块存在不同播期或需要按分区独立判断长势、压力与成熟状态。",
+      "guidance": [
+        "依据当前任务的分区和播期分别判断作物状态；早晚播区的阶段与压力可能不同，不能直接合并为一个全田判断。",
+        "按区观测长势和对应压力信号，定位异常后结合地面核验决定处理；风险存在不能替代该区的处理依据。",
+        "按分区分别确认成熟度、籽粒水分、天气和田间可作业性；满足条件的分区再收获并完成卸粮、必要干燥和入库。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_heinong84_staggered_planting",
+          "source_start_line": 71,
+          "quote_sha256": "b0241ad82e1d7c723f1981366203f776f98ab6d566a4b7658776dd0a7ceda9ad"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_staggered_dryr5r6_stage_mismatch",
+          "source_start_line": 244,
+          "quote_sha256": "7b7a7ac8b3ce46854537a840bfb01f754571fa7f6bc4f0fbe94027df0f6e189b"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_staggered_wetjune_canopy_disease",
+          "source_start_line": 255,
+          "quote_sha256": "2eb7bca2db2a287994cd630da44329c2413713338fa5ef87261a908c8b561488"
+        }
+      ]
+    },
+    "evidence_localization": {
+      "title": "状态发现、无人机定位与地面确诊",
+      "applicable_when": "土壤、叶片或冠层出现疑似营养、病害或虫害异常，需要确定原因与处理范围。",
+      "guidance": [
+        "先从与目标压力对应的土壤、作物、叶片或冠层状态识别疑似异常，保留异常的类型和范围。",
+        "使用无人机观察缩小异常范围，再由机器人或地面检查核验具体原因及处理依据。",
+        "只对已确认且具有处理依据的异常区域采取对应处理；疑似信号不足以直接确定处理原因或扩大处理范围。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_low_nutrient_carryover_flowering_nutrition",
+          "source_start_line": 169,
+          "quote_sha256": "65d975750c57d0c82994f372d03363ce84823c1e3b711b28f341d41c09bff262"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_wetjune_short_spray_window",
+          "source_start_line": 189,
+          "quote_sha256": "f19caa692ac34af2f25800b8cf7d67023bf88f9340a1c1ae9becbfdc5999a390"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_r5_leaf_feeder_defoliation",
+          "source_start_line": 199,
+          "quote_sha256": "f83602f445cf6f2090dbfd82b23e0a24f6f13f7240c7ab8a76851bff566faf86"
+        }
+      ]
+    },
+    "operation_window": {
+      "title": "天气与田间可作业窗口",
+      "applicable_when": "喷药、机械作业或收获受天气、土壤水分及田间通行条件限制。",
+      "guidance": [
+        "在确认处理需要的同时检查当前天气、土壤水分和田间可作业性；诊断成立不等于作业窗口已经成立。",
+        "只有天气和土壤允许时才执行作业；窗口不合适时等待，不能因已发现压力就强行进地。",
+        "仅在已确认的范围内执行对应处理，并遵守当前任务规定的投入品和操作限制。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_poordrainage_wetjune_disease_trafficability",
+          "source_start_line": 133,
+          "quote_sha256": "c05e7ba0f50eb3074a0a5ce88d1a16300970f4ddcbaea0557cc012d3ad6d7ab6"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_wetjune_shortwindow_trafficability",
+          "source_start_line": 398,
+          "quote_sha256": "0df4223e6654d2702d6ca14b0bc4c00bc0f71e678c4d03ca08c18999192ff407"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_mechanical_weed_trafficability_window",
+          "source_start_line": 683,
+          "quote_sha256": "004e751b010dc90dfa9cef0abc5b48b94f7643a6e5460872ff76651239ade76e"
+        }
+      ]
+    },
+    "weed_diagnosis_control": {
+      "title": "草害与作物长势鉴别后定向控草",
+      "applicable_when": "任务涉及杂草覆盖、草害竞争、异常绿度或机械控草，需要先确认处理对象与允许投入。",
+      "guidance": [
+        "不要将田块NDVI或绿色覆盖直接当作作物健康；先检查杂草覆盖、行间竞争与作物长势。",
+        "用全田状态或传感器筛查、无人机定位，再以地面检查确认草害竞争和土壤可作业性后决定处理范围。",
+        "仅在草害证据成立时采用当前任务允许的控草路径；资源受限时按实际压力与可避免损失选择优先区域，并遵守处理能力上限。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_high_weed_seedbank_mechanical_only_baseline",
+          "source_start_line": 173,
+          "quote_sha256": "213c79d042c848834cd50fb27bc88f1ae3e1ca72d51c00a16fe18d0e9265acdb"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_hn84_hn58_weed_mechanical_allocation",
+          "source_start_line": 461,
+          "quote_sha256": "f66dc01ad1134b90b6da50c995ee2d6658dbb399972ea55e4843fb8ddba871f3"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_organic_patch_weed_mechanical_capacity",
+          "source_start_line": 484,
+          "quote_sha256": "c1c6bbc7ffa66d2f4e1471350c279ffe9eea76b00ea8166c34a8909959c6590f"
+        }
+      ]
+    },
+    "stand_replant": {
+      "title": "缺苗原因确认与剩余季节约束下的补种",
+      "applicable_when": "任务涉及出苗不足、stand缺口、播种遗漏或板结/湿冷导致的建植问题，并允许评估补种。",
+      "guidance": [
+        "结合出苗或stand、冠层表现与地面检查定位缺苗，区分建植原因与肥水、病虫等其他压力，避免只凭长势异常补种。",
+        "只有缺苗证据明确、剩余季节长度仍支持恢复收益时，才决定补种。",
+        "将补种限定在目标场景检查确认且仍有收益的区域，保留原有分区差异，不把来源示例的处理范围直接套用到整田。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_wetcold_high_residue_establishment",
+          "source_start_line": 295,
+          "quote_sha256": "d0df69209d53f1cc4e8fae8e1285ba919175d80b528713bfba37b800774d3e41"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_planter_skip_rows_stand_gap",
+          "source_start_line": 618,
+          "quote_sha256": "5e3386240ecd3eeab2b5fd4a00ac50525cfe24ffcb7cb3b50503dade2137291f"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_replant_after_crusting_short_season",
+          "source_start_line": 631,
+          "quote_sha256": "8ea50f2f76c4f49ff93039f43d12886f54b09109ce41174c4ec0b3ec0110c0a1"
+        }
+      ]
+    },
+    "biotic_diagnosis_treatment": {
+      "title": "病虫害确证与处理窗口检查",
+      "applicable_when": "任务涉及病害或虫害风险、叶片/冠层异常、杀菌或杀虫决策，且需区分其他胁迫。",
+      "guidance": [
+        "把冠层或遥感异常当作筛查线索；结合定位结果和地面病斑、虫口或叶片损伤等相应证据确认病虫问题。",
+        "仅对证据支持的病害或虫害区域采用相应处理，不把一种压力的迹象直接当作另一种处理的依据。",
+        "处理前核对资源状态及当前天气、进地或喷施窗口；诊断证据与执行条件同时满足后再行动。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_wetjune_soyhistory_poordrainage_disease",
+          "source_start_line": 365,
+          "quote_sha256": "6c8803b9774a179a11c57bb0580285d53752f356b8cb4620814e7cb66bc58f4e"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_highdensity_wetjune_limited_fungicide",
+          "source_start_line": 387,
+          "quote_sha256": "f97308a9dc546842f656f6218fb41d5877560dc0a21c5f387f550299bee2ed6e"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_insect_after_fungicide_budget_conflict",
+          "source_start_line": 575,
+          "quote_sha256": "c7b72a979983988d96077dffaed78eba5f1caa60395277d470da846ad3e3f4c8"
+        }
+      ]
+    },
+    "resource_prioritization": {
+      "title": "有限资源下的证据与收益优先分配",
+      "applicable_when": "水、肥、药剂或机械能力受限，需要选择投入对象、优先级或处理时机。",
+      "guidance": [
+        "投入前核对当前资源预算或处理能力，并以现场证据确认问题和所需处理，不能因风险名称就直接消耗资源。",
+        "资源不足以覆盖所有潜在需求时，优先处理证据成立且风险或可避免损失更高的对象，避免未经区分的全田投入。",
+        "每次处理须符合允许投入路径和资源上限；后续是否继续投入，要结合更新的田间证据与剩余资源重新判断。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_two_dry_patches_one_irrigation",
+          "source_start_line": 233,
+          "quote_sha256": "2af00baa7acfd2fa3f7b2065483b861349286a4cefb313a77eb0b3c24ab5b2c1"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_hn84_hn58_weed_mechanical_allocation",
+          "source_start_line": 461,
+          "quote_sha256": "f66dc01ad1134b90b6da50c995ee2d6658dbb399972ea55e4843fb8ddba871f3"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_fertilizer_quota_edge_lowfertility",
+          "source_start_line": 564,
+          "quote_sha256": "b439319959f36976b56c607a263908f40ea7832cdbf5881a52103e9866125cb1"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_insect_after_fungicide_budget_conflict",
+          "source_start_line": 575,
+          "quote_sha256": "553194b3da2d22596b56f1eb5d4780b0d767dbbef09ebe991d69866b32b2839a"
+        }
+      ]
+    },
+    "nutrient_diagnosis_recovery": {
+      "title": "营养异常的证据诊断与定向恢复",
+      "applicable_when": "当前任务出现叶色、长势或NDVI异常，需要判断是否确为营养受限并决定定向恢复。",
+      "guidance": [
+        "先结合土壤与作物状态识别叶色、长势和NDVI异常，再用无人机缩小异常区域。",
+        "以地面机器人或地面复查确认营养受限，排除水分、病虫草作为主导原因；不能只凭异常绿度决定补肥。",
+        "仅对证据确认的营养问题区域定向水肥或补肥，恢复受限区域时保留水肥资源。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_rhizobia_nodulation_failure_nutrition",
+          "source_start_line": 793,
+          "quote_sha256": "65d975750c57d0c82994f372d03363ce84823c1e3b711b28f341d41c09bff262"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_local_soil_constraint_nutrition_patch",
+          "source_start_line": 803,
+          "quote_sha256": "65d975750c57d0c82994f372d03363ce84823c1e3b711b28f341d41c09bff262"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_micronutrient_deficiency_flowering_patch",
+          "source_start_line": 813,
+          "quote_sha256": "65d975750c57d0c82994f372d03363ce84823c1e3b711b28f341d41c09bff262"
+        }
+      ]
+    },
+    "water_stress_irrigation": {
+      "title": "确认水分胁迫后的按需灌溉",
+      "applicable_when": "当前任务出现土壤水分下降或冠层热异常，需要判断灌溉对象及有限水资源的使用。",
+      "guidance": [
+        "结合土壤水分/VWC与作物状态发现异常，使用无人机或热信号定位可能缺水的区域。",
+        "经地面复查排除病虫草或营养问题主导，不把热信号或长势异常直接当作灌溉依据。",
+        "结合当前生育阶段和水量预算，仅对确认缺水且值得用水的区域定向灌溉。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_potassium_deficit_dry_podfill_interaction",
+          "source_start_line": 824,
+          "quote_sha256": "0033e69b9c6ece915088c92b407c0d9edaa9f5a96f2acef7a91564c38fb93e88"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_drought_recovery_false_disease_signal",
+          "source_start_line": 722,
+          "quote_sha256": "e82c7bd820f5da234aee49d33818e980622d4907ee47b18f8c0f4d854e32b80d"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_heinong60_highdensity_fertigation_irrigation_water_budget",
+          "source_start_line": 963,
+          "quote_sha256": "0033e69b9c6ece915088c92b407c0d9edaa9f5a96f2acef7a91564c38fb93e88"
+        }
+      ]
+    },
+    "harvest_readiness": {
+      "title": "分区收获窗口与水分条件判断",
+      "applicable_when": "当前任务需要确认作物是否可收、选择收获窗口，或在降雨风险与偏湿籽粒之间权衡。",
+      "guidance": [
+        "达到成熟/可收状态后，结合分区成熟度、籽粒含水率、当前天气、预报和田间可作业性确认收获窗口。",
+        "水分过高而不满足当前任务收获要求时等待；允许收后干燥的批次，应在质量与天气风险支持下安排收获及后处理。",
+        "仅对成熟、水分、天气和通行条件均满足的区域或分区收获；安全入库与干燥目标采用当前任务要求，不照搬参考场景数值。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide",
+          "source_start_line": 713,
+          "quote_sha256": "2b657f1f50bbca6708a1f42947590d5c09da709d2e7c1d42881abe208da852be"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_heihe43_early_density_weed_nutrient_recovery",
+          "source_start_line": 930,
+          "quote_sha256": "2b657f1f50bbca6708a1f42947590d5c09da709d2e7c1d42881abe208da852be"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_three_cultivar_wet_disease_dry_harvest_sequence",
+          "source_start_line": 953,
+          "quote_sha256": "3b4edb6f1fad757f2b5523914b5cce190621def5ac4354d8e79f67857456338c"
+        }
+      ]
+    },
+    "postharvest_batch_storage": {
+      "title": "收获后的卸粮、干燥与分批储藏",
+      "applicable_when": "当前任务已经收获或即将收获，需要依据实际批次含水率和仓储限制完成卸粮、干燥及入库。",
+      "guidance": [
+        "收获过程中及时卸粮，并按收获批次衔接后处理，避免将收割完成直接当作安全入库完成。",
+        "根据实际粮食含水率和当前仓储限制判断批次能否直接入库；需要干燥的批次先干燥，再入库。",
+        "安全水分和干燥目标采用当前任务要求；不把参考场景的阈值或干燥目标固定为所有场景通用参数。"
+      ],
+      "source_evidence": [
+        {
+          "scenario_id": "scenario_full_season_hb_wetjune_disease_recheck_after_fungicide",
+          "source_start_line": 713,
+          "quote_sha256": "2b657f1f50bbca6708a1f42947590d5c09da709d2e7c1d42881abe208da852be"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_heihe43_early_density_weed_nutrient_recovery",
+          "source_start_line": 930,
+          "quote_sha256": "2b657f1f50bbca6708a1f42947590d5c09da709d2e7c1d42881abe208da852be"
+        },
+        {
+          "scenario_id": "scenario_full_season_hb_three_cultivar_wet_disease_dry_harvest_sequence",
+          "source_start_line": 953,
+          "quote_sha256": "3b4edb6f1fad757f2b5523914b5cce190621def5ac4354d8e79f67857456338c"
+        }
+      ]
+    }
+  }
+}

@@ -177,7 +177,14 @@ def main() -> None:
     parser.add_argument("--evaluate", action="store_true", help="Evaluate the replayed workflow")
     parser.add_argument("--workflow", help="Workflow JSON path for build output or replay input")
     parser.add_argument("--output-dir", default="runs", help="Directory for generated workflow/evaluation files")
-    parser.add_argument("--scenario-kwargs", default=None, help="JSON object passed to the scenario constructor")
+    parser.add_argument(
+        "--scenario-kwargs",
+        default=None,
+        help=(
+            "JSON object passed to the scenario constructor; structured_true uses "
+            "structured_briefing.components and guidelines"
+        ),
+    )
     parser.add_argument("--init-kwargs", default=None, help="JSON object passed to scenario setup/initialize")
     parser.add_argument("--list", action="store_true", help="List scenarios")
     parser.add_argument("--list-controllers", action="store_true", help="List controller families")
@@ -451,6 +458,8 @@ def main() -> None:
             scenario_kwargs=scenario_kwargs,
             init_kwargs=init_kwargs,
         )
+        if getattr(agent, "briefing_metadata", None) is not None:
+            run_report["structured_briefing"] = agent.briefing_metadata
         write_json(report_path, run_report)
         _cleanup_repo_side_exports()
         print(f"agent_workflow={workflow_path}")

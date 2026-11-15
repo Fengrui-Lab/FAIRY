@@ -238,7 +238,9 @@ def build_batch_events(scenario: Scenario, spec: ScenarioSpec) -> None:
 
     with EventRegisterer.capture_mode():
         briefing_text = build_l3_context_briefing(
-            spec, getattr(scenario, "detailed_briefing", True)
+            spec,
+            getattr(scenario, "detailed_briefing", True),
+            structured_briefing=scenario.structured_briefing,
         )
         briefing = (
             aui.send_message_to_agent(content=briefing_text)
