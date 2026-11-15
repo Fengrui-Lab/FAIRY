@@ -2,7 +2,7 @@
 
 本文记录先验知识注入的现有组件、控制参数与实现边界；后续结构方案在文末维护。
 
-审计日期：2026-11-15（Asia/Shanghai）。当前核对基于本地 `test_Knowledge` 分支、HEAD `31be9f8` 及工作区代码。范围为 `fairy-run --agent` / `iclr_validation_runner.py` 创建的新主 Agent；服务端 chat template 不在本文范围。
+审计日期：2026-11-15（Asia/Shanghai）。组件审计基于本地 `test_Knowledge` 分支、HEAD `31be9f8` 及当时工作区代码；下文三场景专项复核基于 HEAD `845eb13`。范围为 `fairy-run --agent` / `iclr_validation_runner.py` 创建的新主 Agent；服务端 chat template 不在本文范围。
 
 ## 场景范围与清单关系
 
@@ -357,6 +357,79 @@ Relation 当前是原文追加，**不会按实例名改写引用，也不校验
 - 专家 tools 为被包装 App 的原始工具 + FinalAnswerTool；跨 App Relation 不因此获得直接调用权限。
 
 来源：[AppAgentConfigBuilder](../fairy/controllers/agent_config.py)、[AppAgent](../fairy/controllers/app_agent.py)、[AppAgentBuilder](../fairy/controllers/agent_builder.py)。`--provider/model/endpoint/temperature/max-output-tokens/enable-thinking` 及 A2A 对应参数控制模型请求，不直接选择本文的提示文字。
+
+## 三个 L3 场景的 briefing 对照
+
+本节使用以下简称；三者均属于 formal90 和 mini20，均通过 `build_batch_events()` 进入统一 loader：
+
+| 简称 | Scenario ID | 类对应的 catalog slug |
+|---|---|---|
+| 有机残茬 | `scenario_full_season_hb_organic_residue_weed_establishment` | `hb_organic_residue_weed_establishment` |
+| 有机斑块 | `scenario_full_season_hb_organic_patch_weed_mechanical_capacity` | `hb_organic_weed_pressure_allowed_inputs`（与 ID 后缀不同） |
+| 微量元素 | `scenario_full_season_hb_micronutrient_deficiency_flowering_patch` | `hb_micronutrient_deficiency_flowering_patch` |
+
+### 1. 模式由谁控制
+
+`detailed_briefing` 是这三个场景的**统一模式选择入口**，不是决定全部内容的唯一参数：Scenario ID/spec 决定任务，文件/映射/检索参数决定知识正文。runner 的 `--detail` 最终覆盖合并到同一字段，没有第二套独立模式。
+
+`false → 基础版`；`true → 详细版替换基础版`；其他 11 种知识模式 → `基础版 + 选定知识`。它们是三类分支，不是只有三个可选值；当前不能分别打开“详细任务”和“知识”再组合。这里的静态/动态指**任务运行时的行为**，不据此推断文本最初由人、脚本还是模型创作。
+
+### 2. 基础任务与详细任务：都是预置文本
+
+基础版取 [catalog](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_catalog.py) 中 `ScenarioSpec.briefing_text`；详细版取 [DETAILED_BRIEFINGS](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py) 中按 ID 保存的字符串。`get_spec()` / `get_detailed_briefing()` 都是查表，运行时不读取田间观测来重写文本，也不调用 LLM 生成任务。
+
+| 场景 | 基础版实际包含的内容（摘要） | 详细版相较基础版的主要增量 |
+|---|---|---|
+| 有机残茬 | 黑农84标准密度、最多64垄、有机/允许投入约束；高残茬、湿冷春、建植压力和早期草害；要求完成全季管理 | 明确禁止常规化学除草剂；底肥→播种→确认区域控草→确认缺苗区域补种→收获后处理；区分杂草绿度与作物健康，按出苗率、stand 缺口和剩余季节判断补种收益 |
+| 有机斑块 | 有机黑农84；**已明确**禁用常规除草剂、机械能力仅16垄；通过传感器/无人机/地面检查区分草害等级，只处理最高压力斑块并复查 | 明确全田状态/NDVI→无人机定位→地面确认草害及可作业性→处理→复查；新增候选分区0–15、16–31、32–63，但没有直接声明哪区最高 |
+| 微量元素 | 黑农84、最多64垄、初花期局部叶色异常；关注水分、病虫、地面复查、微量元素/叶面营养及全季管理 | 明确先排除水分、病虫问题再考虑局部营养处理；土壤/作物异常→无人机缩小范围→地面复核→定向水肥/补肥；强调不能误喷药或灌溉 |
+
+三个详细版都还写入垄距 `1.1 m`、播深 `4.0 cm`、株距 `7.9 cm`、约 `23 plants/m²`，以及粮食含水率 `≤13.5%` 可直接入库、偏湿先干燥等规则。因此 true 不只是把文字写长，而是增加了**操作策略和定量先验**；false 也并非完全没有先验。
+
+详细版不等于完整 oracle：有机残茬的补种目标 `0–7` 垄、有机斑块的 `max_machine_passes=2`、微量元素的目标 `28–43` 垄及 `amount=0.16 / water_mm=0.8` 都存在于环境/oracle 配置中，但未写入对应详细正文。文案要求“根据观测确认”是固定指令，不表示初始化时已取得那些观测。三个基础/详细正文均无绝对日期；初始日期仍由独立 system 时间段提供。
+
+内存核验：三个 false 输出均逐字等于 spec 基础文案，三个 true 输出均逐字等于字典详细文案。源位置：catalog 中有机残茬 `briefing_text` 约1375行、有机斑块约802行、微量元素约2607行；详细字典分别约472、484、807行。
+
+### 3. 知识分支：预存内容、初始化检索与离线生成
+
+| 机制 | 这三个场景实际可加载什么 | 何时生成/选取 |
+|---|---|---|
+| `kwoo` | 默认 `scripts/kwoo_expansion_result.json` 中三者各有一条扩写记录 | 文本已保存；初始化按 ID 取 `detailed_briefing` 字符串并追加，不调用 Kwoo |
+| `library` / `l2_human_same` / `l2_human_differ` | 三者均无现成映射，选择后报错，不会自动补建知识 | 一般实现读取预存 Markdown/JSON 或固定选卡表；三例不在 pilot20 |
+| `l2_textsim_differ` / grouped | 可从现有20来源、72张卡中跨源检索；卡含证据链、约束、成功检查及 oracle 操作模板 | 初始化根据 spec 文本计算词频重合，选卡并渲染；动态的是选择/拼装，卡内容是预存的 |
+| `l2_pathsim_*` / `l3_pathsim_*` | 外部 context map 中该 ID 对应的参考卡/工作流摘要；不是由此 ID 固定对应一份内置答案 | 先独立预跑或读取 candidate 轨迹，与 oracle 参考库离线评分、写 map，再开始带知识的新 run |
+| `l3_textsim_differ` | 外部 map 中检索到的跨 L3 完整工作流摘要 | 离线按任务描述与参考工作流文本检索；不需要 candidate 预跑，仍依赖参考池 |
+
+pathsim 结果取决于 candidate 轨迹、参考池与 top-k；L3 textsim 取决于目标/参考文本、参考池与 top-k。运行时均读取 `FARM_FAIRY_RETRIEVED_CONTEXT_PATH` 指定的 map，不能只凭场景 ID 和模式名给出唯一正文。本次未发现工作区内已有这些三例的 context map，也未假定外部环境变量指向的文件内容。
+
+L2 textsim 的一次**当前代码预览**如下：显式 top-k=6、使用现有卡池，表内只列前两张；不是历史实验记录，也不是相关性质量结论。
+
+| 场景 | 前两张 skill ID | 来源 L3 简称 |
+|---|---|---|
+| 有机残茬 | `wetcold_residue_planting_window`；`standard_density_establishment` | `hb_wetcold_high_residue_establishment`；`hb_insect_after_fungicide_budget_conflict` |
+| 有机斑块 | `emergence_mechanical_weed_0_63`；`wetcold_residue_staged_harvest` | `hb_high_weed_seedbank_mechanical_only_baseline`；`hb_wetcold_high_residue_establishment` |
+| 微量元素 | `standard_density_planting`；`standard_density_establishment` | `hb_two_dry_patches_one_irrigation`；`hb_insect_after_fungicide_budget_conflict` |
+
+查询由 scenario_id、profile_name、description、briefing_text、可选 primary_metric 拼接；分词只保留英文字母/数字，中文正文大部分不进入匹配。这不是中文语义检索；运行中也不会根据新的观测重检索。来源：[loader/检索与卡渲染](../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_context_briefings.py)、[离线工作流脚本](../scripts/fullseason/run_l3_skill_retrieval_experiments.py)。
+
+### 4. Kwoo 三例的实际内容与边界
+
+以下针对仓库默认 [Kwoo JSON](../scripts/kwoo_expansion_result.json)，环境变量改源后应以指定文件为准。JSON 中名为 `detailed_briefing` 的字段，与 `detailed_briefing=true` 的源码详细版**不是同一份文案**。
+
+| 场景 | 已保存扩写的主要内容 |
+|---|---|
+| 有机残茬 | 播前天气/土壤/农机准备、播种、苗期除草补种、中后期巡查、收获；写入大量具体工具名和操作建议 |
+| 有机斑块 | 草害分级、16垄能力下的优先级选择、机械作业规划、效果复查；还加入刀具调整/磨损等说明 |
+| 微量元素 | 建植、初花期营养诊断、所谓微肥喷施、中后期巡查与收获；给出具体工具与示例处理区域 |
+
+当前 loader 只提取外层记录的字符串，不校验其中工具名、动作语义或与场景约束的一致性；也不会二次解析字符串中 JSON 外观的内容。部分扩写重复基础任务，拼接后这些内容也重复保留。文件没有生成模型、生成 prompt、引用来源或验证过程元数据，记录中的 `status=success` 不能证明其经过环境验证；本次未发现 Kwoo 生成调用代码。
+
+已确认的文本错配：
+
+- 有机残茬写有 `TractorApp__get_inventory`、`TractorApp__commit_daily_physics`、`TractorApp__apply_fertigation`，实际这三项属于 `FarmWorldApp__...`。
+- 微量元素将 `TractorApp__apply_fungicide` / `FieldOpsApp__apply_pesticide_manual` 当成微肥路径；当前实现分别是杀菌、杀虫操作，并不提供文中描述的微量元素营养效果。参考场景动作使用 `FarmWorldApp.apply_fertigation`。
+
+这证明“能加载知识”与“知识符合当前环境”是两件事，不是实际模型误调用或任务失败的证据。来源：[FarmWorld 工具](../fairy/apps/farm_world/farm_world_app.py)、[Tractor 杀菌实现](../fairy/apps/farm_world/tractor_app.py)、[FieldOps 手动杀虫实现](../fairy/apps/farm_world/field_ops_app.py)。本次仅核验并记录，未修改这些文本或运行真实任务。
 
 ## 核验依据
 
