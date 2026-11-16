@@ -144,7 +144,7 @@ class ScenarioL2HBColdspringHeihe50PlantingWindow(Scenario):
             plant_events, o_after_planting = apply_heihe50_planting_blocks(
                 tractor, o_status_ready, "o_whole_field_heihe50_coldspring_window"
             )
-            o_commit = farm_world.commit_daily_physics().oracle().with_id(
+            o_commit = system.advance_time(days=1).oracle().with_id(
                 "o_commit_whole_field_planting"
             ).depends_on(o_after_planting, delay_seconds=1)
             o_recheck = farm_world.get_farm_overview().oracle().with_id(

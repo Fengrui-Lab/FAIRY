@@ -262,7 +262,7 @@ def build_batch_events(scenario: Scenario, spec: ScenarioSpec) -> None:
             prev = _after_named_step(scenario, prev, f"before_{zone.label}_planting_action")
             prev = _plant_zone(weather, sensor, tractor, prev, zone, f"o_{zone.label}")
             prev = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id(f"o_commit_{zone.label}_planting")
                 .depends_on(prev, delay_seconds=1)

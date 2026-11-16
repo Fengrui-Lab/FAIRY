@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from fairy.apps.agent_user_interface import AgentUserInterface
+from fairy.apps.system import SystemApp
 from fairy.apps.farm_world import (
     DroneApp,
     FarmWorldApp,
@@ -78,6 +79,7 @@ class ScenarioFullSeasonEarlyVsStandardLateRainHarvest(Scenario):
         return prev
 
     def build_events_flow(self) -> None:
+        system = self.get_typed_app(SystemApp)
         aui = self.get_typed_app(AgentUserInterface)
         weather = self.get_typed_app(WeatherApp)
         sensor = self.get_typed_app(SensorApp)
@@ -218,7 +220,7 @@ class ScenarioFullSeasonEarlyVsStandardLateRainHarvest(Scenario):
                 id_prefix="o_b_standard_zone",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting")
                 .depends_on(o_plant_b, delay_seconds=1)

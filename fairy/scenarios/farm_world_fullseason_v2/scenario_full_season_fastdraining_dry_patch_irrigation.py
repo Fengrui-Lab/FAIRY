@@ -384,7 +384,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_base, delay_seconds=2)
             )
             o_commit_prep = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_prep_physics")
                 .depends_on(o_ridge, delay_seconds=1)
@@ -418,7 +418,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 "o_heinong84_second_half",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_heinong84_planting_physics")
                 .depends_on(o_plant_second, delay_seconds=1)
@@ -547,7 +547,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_r1_health, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_nutrient_management")
                 .depends_on(o_r1_topdress, delay_seconds=1)
@@ -710,7 +710,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 .depends_on(o_recheck_soil, delay_seconds=2)
             )
             o_commit_irrigation = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_targeted_irrigation_management")
                 .depends_on(o_recheck_thermal, delay_seconds=1)
@@ -765,7 +765,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 "o_main_harvest",
             )
             o_commit_main_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_main_harvest_recovery")
                 .depends_on(o_main_harvest, delay_seconds=1)
@@ -808,7 +808,7 @@ class ScenarioFullSeasonFastDrainingDryPatchIrrigation(Scenario):
                 "o_affected_harvest",
             )
             o_commit_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_all_recovered_yield")
                 .depends_on(o_affected_harvest, delay_seconds=1)

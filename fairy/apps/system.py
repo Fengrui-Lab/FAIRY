@@ -119,7 +119,7 @@ class SystemApp(App):
             ),
         }
 
-    @app_tool()
+    # @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def wait_for_notification(self, timeout: int = 0) -> None:
         """

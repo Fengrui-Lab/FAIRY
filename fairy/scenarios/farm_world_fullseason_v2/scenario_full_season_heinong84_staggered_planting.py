@@ -404,7 +404,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                 .depends_on(o_base, delay_seconds=2)
             )
             o_commit_prep = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_prep_physics")
                 .depends_on(o_ridge, delay_seconds=1)
@@ -441,7 +441,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                 tractor, o_early_tractor, EARLY_START, EARLY_END, "o_early_zone"
             )
             o_commit_early = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_early_zone_planting")
                 .depends_on(o_early_plant, delay_seconds=1)
@@ -481,7 +481,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                 tractor, o_mid_tractor, MID_START, MID_END, "o_mid_zone"
             )
             o_commit_mid = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_mid_zone_planting")
                 .depends_on(o_mid_plant, delay_seconds=1)
@@ -539,7 +539,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                 tractor, o_late_tractor, LATE_START, LATE_END, "o_late_zone"
             )
             o_commit_late = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_late_zone_planting")
                 .depends_on(o_late_plant, delay_seconds=1)
@@ -838,7 +838,7 @@ class ScenarioFullSeasonHeinong84StaggeredPlanting(Scenario):
                 "o_late_zone",
             )
             o_commit_final = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_final_harvest_state")
                 .depends_on(o_late_harvest, delay_seconds=1)

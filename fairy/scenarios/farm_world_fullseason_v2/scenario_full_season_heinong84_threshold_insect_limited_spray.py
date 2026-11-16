@@ -213,7 +213,7 @@ class ScenarioFullSeasonHeinong84ThresholdInsectLimitedSpray(Scenario):
                 id_prefix="o_whole_field",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting")
                 .depends_on(o_plant, delay_seconds=1)
@@ -264,7 +264,7 @@ class ScenarioFullSeasonHeinong84ThresholdInsectLimitedSpray(Scenario):
                 .depends_on(o_early_ndvi, delay_seconds=2)
             )
             o_no_spray_commit = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_no_spray_below_threshold")
                 .depends_on(o_early_ground, delay_seconds=1)
@@ -322,7 +322,7 @@ class ScenarioFullSeasonHeinong84ThresholdInsectLimitedSpray(Scenario):
                 id_prefix="o_targeted_insecticide",
             )
             o_commit_spray = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_targeted_insecticide")
                 .depends_on(o_spray, delay_seconds=1)

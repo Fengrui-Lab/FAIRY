@@ -148,8 +148,9 @@ def test_ensure_oracle_workflow_canonicalizes_captured_events() -> None:
         for left, right in zip(steps, steps[1:])
     )
     season_days = _season_day_map(actual)
-    assert season_days["step37"] == pytest.approx(15.0)
-    assert season_days["step43"] == pytest.approx(15.0 + 1.0 / 24.0)
+    # The post-planting day is now explicit in the exported reference timeline.
+    assert season_days["step37"] == pytest.approx(16.0)
+    assert season_days["step43"] == pytest.approx(16.0 + 1.0 / 24.0)
 
 
 def test_bfcl_normalizes_json_numbers_and_counts_oracle_agent_ui() -> None:
@@ -322,7 +323,8 @@ def test_fullseason_v2_oracle_replay_evaluate_smoke(tmp_path: Path) -> None:
     assert next(iter(oracle_workflow.dag)) == "briefing"
     assert oracle_workflow.dag["briefing"].time == "2026-05-05 07:00:05"
     assert oracle_workflow.dag["o_weather_before_prep"].depends_on == ["briefing"]
-    assert oracle_workflow.dag["o_report"].time == "2026-09-08 11:04:55"
+    # Three migrated daily commits now contribute to captured timestamps.
+    assert oracle_workflow.dag["o_report"].time == "2026-09-11 11:04:55"
     assert len(replay_workflow) == 242
     assert report["validation"]["success"] is True
 
@@ -844,7 +846,8 @@ def test_skill_retrieval_oracle_workflow_is_canonical() -> None:
     workflow = retrieval._oracle_workflow(scenario_id)
     steps = list(workflow.values())
 
-    assert len(steps) == 147
+    # The migrated one-day advance merges with its adjacent advance_time step.
+    assert len(steps) == 146
     timestamps = [step.get("time") for step in steps]
     assert all(isinstance(timestamp, (int, float)) for timestamp in timestamps)
     assert timestamps == sorted(timestamps)
@@ -1340,11 +1343,12 @@ def test_farm_agent_key_tool_descriptions_are_restored() -> None:
     expected_phrases = {
         "AgentUserInterface__send_message_to_user": "Send a message to the user",
         "SystemApp__advance_time": "Advance the simulation clock",
-        "SystemApp__get_current_time": "Get the current time",
-        "SystemApp__wait_for_notification": "Wait until the next notification",
+        "SystemApp__get_current_time": "Get the current simulation time",
     }
     for tool_name, phrase in expected_phrases.items():
         assert phrase in descriptions[tool_name]
+    assert "SystemApp__wait_for_notification" not in descriptions
+    assert "FarmWorldApp__commit_daily_physics" not in descriptions
 
 
 def test_engine_appends_scenario_additional_system_prompt_for_agent_run() -> None:

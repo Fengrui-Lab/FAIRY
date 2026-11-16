@@ -234,7 +234,7 @@ class ScenarioFullSeasonHeinong84LowChemicalWetDisease(Scenario):
                 id_prefix="o_whole_field",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting")
                 .depends_on(o_plant, delay_seconds=1)
@@ -303,7 +303,7 @@ class ScenarioFullSeasonHeinong84LowChemicalWetDisease(Scenario):
                 .depends_on(o_risk_soil, delay_seconds=1)
             )
             o_no_fungicide_commit = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_no_fungicide_below_threshold")
                 .depends_on(o_risk_canopy, delay_seconds=1)
@@ -394,7 +394,7 @@ class ScenarioFullSeasonHeinong84LowChemicalWetDisease(Scenario):
                 id_prefix="o_targeted_fungicide",
             )
             o_commit_spray = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_targeted_fungicide")
                 .depends_on(o_spray, delay_seconds=1)

@@ -832,7 +832,7 @@ class FarmWorldApp(App):
         self.is_state_modified = True
 
     @type_check
-    @app_tool()
+    # @app_tool()
     @event_registered(operation_type=OperationType.WRITE)
     def commit_daily_physics(self) -> dict[str, Any]:
         """

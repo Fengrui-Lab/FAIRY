@@ -292,6 +292,7 @@ def build_establishment_l2_flow(scenario: Scenario, spec: ScenarioSpec, briefing
 
 
 def build_planting_l1_flow(scenario: Scenario, spec: ScenarioSpec, zone_label: str, briefing_text: str) -> None:
+    system = scenario.get_typed_app(SystemApp)
     aui = scenario.get_typed_app(AgentUserInterface)
     weather = scenario.get_typed_app(WeatherApp)
     sensor = scenario.get_typed_app(SensorApp)
@@ -305,7 +306,7 @@ def build_planting_l1_flow(scenario: Scenario, spec: ScenarioSpec, zone_label: s
     with EventRegisterer.capture_mode():
         briefing = aui.send_message_to_agent(content=briefing_text).with_id("briefing").depends_on(None, delay_seconds=5)
         prev = _plant_zone(weather, sensor, tractor, briefing, zone, f"o_{zone.label}")
-        prev = farm_world.commit_daily_physics().oracle().with_id(f"o_commit_{zone.label}_planting").depends_on(prev, delay_seconds=1)
+        prev = system.advance_time(days=1).oracle().with_id(f"o_commit_{zone.label}_planting").depends_on(prev, delay_seconds=1)
         prev = farm_world.get_farm_overview().oracle().with_id("o_recheck_planted_field").depends_on(prev, delay_seconds=1)
         aui.send_message_to_user(content="Completed planting execution split.").oracle().with_id("o_report").depends_on(prev, delay_seconds=1)
     scenario.events = collect_event_graph(briefing)

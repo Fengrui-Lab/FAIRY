@@ -263,7 +263,7 @@ class ScenarioFullSeasonHBDryR5R6HN58StdWaterLimit(Scenario):
                 id_prefix="o_heinong58_whole_field",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting")
                 .depends_on(o_plant, delay_seconds=1)
@@ -388,7 +388,7 @@ class ScenarioFullSeasonHBDryR5R6HN58StdWaterLimit(Scenario):
                 .depends_on(o_r1_health, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_nutrient_management")
                 .depends_on(o_r1_topdress, delay_seconds=1)
@@ -566,7 +566,7 @@ class ScenarioFullSeasonHBDryR5R6HN58StdWaterLimit(Scenario):
                 .depends_on(o_recheck_soil, delay_seconds=2)
             )
             o_commit_irrigation = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_limited_irrigation_management")
                 .depends_on(o_recheck_thermal, delay_seconds=1)

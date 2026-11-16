@@ -354,7 +354,7 @@ class ScenarioFullSeasonHeinong60HighDensityBaseline(Scenario):
                 .depends_on(o_base, delay_seconds=2)
             )
             o_commit_prep = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_prep_physics")
                 .depends_on(o_ridge, delay_seconds=1)
@@ -377,7 +377,7 @@ class ScenarioFullSeasonHeinong60HighDensityBaseline(Scenario):
             )
             o_last_plant = self._plant_all_ridges(tractor, o_load_seed)
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting_physics")
                 .depends_on(o_last_plant, delay_seconds=1)
@@ -500,7 +500,7 @@ class ScenarioFullSeasonHeinong60HighDensityBaseline(Scenario):
                 .depends_on(o_charge_robot_after_r1, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_nutrient_management")
                 .depends_on(o_r1_topdress, delay_seconds=1)
@@ -598,7 +598,7 @@ class ScenarioFullSeasonHeinong60HighDensityBaseline(Scenario):
                 .depends_on(o_irrigate_pod, delay_seconds=1)
             )
             o_commit_podfill = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r5_water_management")
                 .depends_on(o_wait_irrigation_response, delay_seconds=1)
@@ -648,7 +648,7 @@ class ScenarioFullSeasonHeinong60HighDensityBaseline(Scenario):
             )
             o_last_harvest = self._harvest_all_ridges(tractor, o_attach_harvester)
             o_commit_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_recovered_yield")
                 .depends_on(o_last_harvest, delay_seconds=1)

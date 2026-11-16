@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fairy.apps.agent_user_interface import AgentUserInterface
+from fairy.apps.system import SystemApp
 from fairy.apps.farm_world import FarmWorldApp, SensorApp, TractorApp, WeatherApp
 from fairy.scenarios.scenario import Scenario
 from fairy.scenarios.registry import register_scenario
@@ -43,6 +44,7 @@ class ScenarioL1HBReplantHeinong84PlantingExecution(Scenario):
         tractor._completed_prep_ops = ["level", "base_fertilize", "form_ridges"]
 
     def build_events_flow(self) -> None:
+        system = self.get_typed_app(SystemApp)
         aui = self.get_typed_app(AgentUserInterface)
         weather = self.get_typed_app(WeatherApp)
         sensor = self.get_typed_app(SensorApp)
@@ -58,7 +60,7 @@ class ScenarioL1HBReplantHeinong84PlantingExecution(Scenario):
                 "3. 查看黑农84种子、燃油库存和播种设备状态。\n"
                 "4. 装载HEINONG84种子。\n"
                 "5. 按播深4.0cm、株距7.9cm完成0-63垄播种；中途种子不足时先补装。\n"
-                "6. 播种后提交当天物理状态并查看全田概览。\n"
+                "6. 播种后推进一个仿真日并查看全田概览。\n"
                 "7. 向我汇报已播垄数、资源余量和后续板结/出苗风险。"
             )
         else:
@@ -86,7 +88,7 @@ class ScenarioL1HBReplantHeinong84PlantingExecution(Scenario):
             plant_events, o_after_planting = apply_heinong84_planting_blocks(
                 tractor, o_status, "o_whole_field_heinong84_standard_density"
             )
-            o_commit = farm_world.commit_daily_physics().oracle().with_id(
+            o_commit = system.advance_time(days=1).oracle().with_id(
                 "o_commit_whole_field_planting"
             ).depends_on(o_after_planting, delay_seconds=2)
             o_recheck = farm_world.get_farm_overview().oracle().with_id(

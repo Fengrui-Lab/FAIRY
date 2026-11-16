@@ -258,7 +258,7 @@ class ScenarioFullSeasonHBPoorDrainageWetJuneDiseaseTrafficability(Scenario):
                 id_prefix="o_whole_field",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_planting")
                 .depends_on(o_plant, delay_seconds=1)
@@ -461,7 +461,7 @@ class ScenarioFullSeasonHBPoorDrainageWetJuneDiseaseTrafficability(Scenario):
                 .depends_on(o_load_fungicide, delay_seconds=2)
             )
             o_commit_disease = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_targeted_poordrainage_disease_management")
                 .depends_on(o_fungicide, delay_seconds=1)
@@ -516,7 +516,7 @@ class ScenarioFullSeasonHBPoorDrainageWetJuneDiseaseTrafficability(Scenario):
                 .depends_on(o_r1_health, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_nutrient_management")
                 .depends_on(o_r1_topdress, delay_seconds=1)
@@ -542,7 +542,7 @@ class ScenarioFullSeasonHBPoorDrainageWetJuneDiseaseTrafficability(Scenario):
                 .depends_on(o_r5_soil, delay_seconds=1)
             )
             o_r5_commit = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r5_r6_no_extra_water_action")
                 .depends_on(o_r5_canopy, delay_seconds=1)

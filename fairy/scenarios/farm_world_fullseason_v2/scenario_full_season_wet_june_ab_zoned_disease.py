@@ -390,7 +390,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 .depends_on(o_base, delay_seconds=2)
             )
             o_commit_prep = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_prep_physics")
                 .depends_on(o_ridge, delay_seconds=1)
@@ -424,7 +424,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 "o_b_zone",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_zoned_planting_physics")
                 .depends_on(o_last_b, delay_seconds=1)
@@ -632,7 +632,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 o_fungicide_50_55, "immediately_after_targeted_b_zone_fungicide"
             )
             o_commit_disease = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_targeted_disease_management")
                 .depends_on(o_after_fungicide, delay_seconds=1)
@@ -694,7 +694,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 "immediately_after_second_targeted_b_zone_fungicide",
             )
             o_commit_second_disease = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_second_targeted_disease_management")
                 .depends_on(o_after_second_fungicide, delay_seconds=1)
@@ -760,7 +760,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 .depends_on(o_charge_robot_after_r1, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_nutrient_management")
                 .depends_on(o_r1_topdress, delay_seconds=1)
@@ -797,7 +797,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 .depends_on(o_pod_soil, delay_seconds=2)
             )
             o_commit_podfill = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r5_nutrient_management")
                 .depends_on(o_r5_nutrient, delay_seconds=1)
@@ -852,7 +852,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 "o_first_batch",
             )
             o_commit_first_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_first_batch_recovered_yield")
                 .depends_on(o_first_batch, delay_seconds=1)
@@ -882,7 +882,7 @@ class ScenarioFullSeasonWetJuneABZonedDisease(Scenario):
                 "o_second_batch",
             )
             o_commit_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_recovered_yield")
                 .depends_on(o_last_harvest, delay_seconds=1)

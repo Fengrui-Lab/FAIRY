@@ -378,7 +378,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 .depends_on(o_base, delay_seconds=2)
             )
             o_commit_prep = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_prep_physics")
                 .depends_on(o_ridge, delay_seconds=1)
@@ -412,7 +412,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 "o_heinong84_second_half",
             )
             o_commit_plant = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_heinong84_planting_physics")
                 .depends_on(o_plant_second, delay_seconds=1)
@@ -560,7 +560,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 .depends_on(o_load_replant_seed, delay_seconds=2)
             )
             o_commit_recovery = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_edge_recovery_management")
                 .depends_on(o_replant_edge, delay_seconds=1)
@@ -668,7 +668,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 .depends_on(o_r1_reference, delay_seconds=2)
             )
             o_commit_r1 = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r1_edge_nutrient_management")
                 .depends_on(o_r1_edge_topdress, delay_seconds=1)
@@ -739,7 +739,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 .depends_on(o_pod_soil, delay_seconds=2)
             )
             o_commit_podfill = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_r5_r6_monitoring")
                 .depends_on(o_r5_nutrient, delay_seconds=1)
@@ -794,7 +794,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 "o_first_harvest_4_63",
             )
             o_commit_first_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_first_harvest_4_63")
                 .depends_on(o_first_harvest, delay_seconds=1)
@@ -830,7 +830,7 @@ class ScenarioFullSeasonHeinong84EdgeLowFertility(Scenario):
                 "o_late_harvest_0_3",
             )
             o_commit_harvest = (
-                farm_world.commit_daily_physics()
+                system.advance_time(days=1)
                 .oracle()
                 .with_id("o_commit_recovered_yield")
                 .depends_on(o_last_harvest, delay_seconds=1)
