@@ -1,5 +1,13 @@
 # AI Change Log
 
+- 2026-11-16: Connected runner CLI/JSON `temperature` and
+  `agent_llm_call_retries` to main and A2A agents. Explicit retry overrides
+  take precedence over the existing environment fallback; zero disables
+  agent retries without changing SDK retries. Fixed native OpenAI endpoint
+  forwarding and recorded the resolved SDK URL. Synchronized both READMEs,
+  the replication guide, and configuration pitfalls with four-setting
+  precedence, vLLM-only thinking overrides, and OpenAI temperature omissions.
+
 - 2026-08-10: Verified Qwen Cloud native function calling with both
   `qwen3.6-flash` and the fixed `qwen3.6-flash-2026-04-16` snapshot. A FAIRY
   physics smoke completed 14/14 oracle tool steps at temperature 0.1 with no

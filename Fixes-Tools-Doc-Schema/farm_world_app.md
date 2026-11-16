@@ -158,7 +158,7 @@ Description:
     be stored with a warning.
 
 Relation:
-    Use TractorApp.unload_grain first if the grain to store is still onboard.
+    Use unload_grain to control the tractor as it unloads the grain first if the grain to store is still onboard.
     Use dry_grain first if the trailer batch needs drying for storage.
 """
 ```

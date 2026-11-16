@@ -55,6 +55,7 @@ class ResearchARESimulationAgent(Agent):
         messages: Any = None,
         toolsets: list[Any] | None = None,
         include_tool_relations: bool = True,
+        max_llm_call_retries: int | None = None,
     ) -> None:
         super().__init__(
             name=name,
@@ -64,6 +65,7 @@ class ResearchARESimulationAgent(Agent):
             toolsets=toolsets,
             hidden_tool_names=FARM_AGENT_HIDDEN_TOOL_NAMES,
             include_tool_relations=include_tool_relations,
+            max_llm_call_retries=max_llm_call_retries,
         )
         self.controller_profile = controller_profile
         self.reflection_memory: list[str] = []
@@ -300,6 +302,7 @@ class AgentBuilder:
         toolsets: list[Any] | None = None,
         system_message: str | None = None,
         include_tool_relations: bool = True,
+        max_llm_call_retries: int | None = None,
     ) -> ResearchARESimulationAgent:
         if agent_config.research_profile is None:
             built_config = ControllerConfigBuilder(
@@ -318,12 +321,17 @@ class AgentBuilder:
             or DEFAULT_FARM_SYSTEM_MESSAGE,
             toolsets=toolsets,
             include_tool_relations=include_tool_relations,
+            max_llm_call_retries=max_llm_call_retries,
         )
 
 
 class AppAgentBuilder:
-    def __init__(self, *, include_tool_relations: bool = True) -> None:
+    def __init__(
+        self, *, include_tool_relations: bool = True,
+        max_llm_call_retries: int | None = None,
+    ) -> None:
         self.include_tool_relations = include_tool_relations
+        self.max_llm_call_retries = max_llm_call_retries
 
     def list_agents(self) -> list[str]:
         return AppAgentConfigBuilder().list_agents()
@@ -340,6 +348,7 @@ class AppAgentBuilder:
             system_message=app_agent_config.system_prompt,
             toolsets=[app, FinalAnswerApp()],
             include_tool_relations=self.include_tool_relations,
+            max_llm_call_retries=self.max_llm_call_retries,
         )
 
 
@@ -349,6 +358,7 @@ def build_controller_agent(
     toolsets: list[Any] | None = None,
     system_message: str | None = None,
     include_tool_relations: bool = True,
+    max_llm_call_retries: int | None = None,
 ) -> ResearchARESimulationAgent:
     config = ControllerConfigBuilder(
         farm_system_prompt=system_message or DEFAULT_FARM_SYSTEM_MESSAGE
@@ -359,4 +369,5 @@ def build_controller_agent(
         toolsets=toolsets,
         system_message=system_message,
         include_tool_relations=include_tool_relations,
+        max_llm_call_retries=max_llm_call_retries,
     )

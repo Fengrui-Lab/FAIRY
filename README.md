@@ -237,7 +237,10 @@ Complete `results.csv` columns:
 | `command_provider` | Provider actually passed to `fairy.cli`; some providers are normalized. |
 | `model` | Model name. |
 | `model_family` | Reporting label; inferred from provider/model if omitted. |
-| `endpoint` | Effective endpoint override. |
+| `endpoint` | Endpoint resolved by the runner and passed to the CLI; inspect `run_report.llm_config.base_url` for the client address. |
+| `temperature` | Configured value; the current OpenAI reasoning branch does not send this field. |
+| `agent_llm_call_retries` | Explicit override; empty means environment/default inheritance. Effective count is in `response_policy.max_llm_call_retries`. |
+| `enable_thinking` | Thinking override; empty means no override, not proof of the server thinking mode. |
 | `a2a_enabled` | Whether A2A is enabled. |
 | `a2a_app_prop` | A2A app-wrapper proportion; `0.0` when A2A is off. |
 | `a2a_policy` | A2A policy; `off` when A2A is disabled. |
@@ -433,24 +436,24 @@ Supported providers:
   - `--provider deepseek`
   - Common model: `deepseek-chat`
   - Environment variables: `DEEPSEEK_API_KEY`, optional `DEEPSEEK_API_BASE`
-  - Default endpoint: `https://api.deepseek.com`
+  - Runner default endpoint: `https://api.deepseek.com/v1`; direct client default: `https://api.deepseek.com`
 
 - OpenAI
   - `--provider openai`
   - Common models: `gpt-4o-mini`, `gpt-4o`
-  - Environment variable: `OPENAI_API_KEY`
-  - Endpoint: OpenAI SDK default
+  - Environment variables: `OPENAI_API_KEY`, optional `OPENAI_BASE_URL`
+  - Endpoint: `--endpoint` / runner JSON `endpoint` > `OPENAI_BASE_URL` > `https://api.openai.com/v1`; explicit overrides also work with the native OpenAI client
 
 - Generic OpenAI-compatible service
   - `--provider llama-api` or `--provider openai-compatible`
   - Model name: service-specific
   - Environment variables: `LLAMA_API_KEY` or `OPENAI_API_KEY`
-  - Endpoint: set `--endpoint` or `LLAMA_API_BASE`
+  - Endpoint: explicit `--endpoint` / runner JSON `endpoint` > `LLAMA_API_BASE` > `OPENAI_BASE_URL` > SDK official default
 
 - Qwen / DashScope
   - `--provider qwen`
   - Recommended model: `qwen3.6-flash`; reproducible snapshot: `qwen3.6-flash-2026-04-16`
-  - Environment variables: `QWEN_API_KEY` or `DASHSCOPE_API_KEY`, optional `QWEN_API_BASE`
+  - Environment variables: `QWEN_API_KEY` or `DASHSCOPE_API_KEY`, optional `QWEN_API_BASE` or `DASHSCOPE_API_BASE` (the former wins)
   - Default endpoint: `https://dashscope.aliyuncs.com/compatible-mode/v1`
 
 - vLLM
@@ -619,7 +622,8 @@ Parameters:
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Select the FARM controller prompt. `are` keeps native function calling and ports all compatible legacy ARE reasoning, one-tool, observation, error-recovery, tool-economy, and tool-output-use rules. |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client type. |
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
-| `--temperature` | float | `0.1` | Sampling temperature. Some reasoning/OpenAI models may ignore it. |
+| `--temperature` | float | `0.1` | Shared main/A2A sampling temperature; no environment fallback. The current OpenAI reasoning branch omits this request field; see configuration notes below. |
+| `--agent-llm-call-retries` | nonnegative int | unset | Agent retries after the initial attempt; overrides `FAIRY_AGENT_LLM_CALL_RETRIES`, which defaults to 5. `0` disables agent retries, not SDK retries. |
 | `--enable-thinking` | `true` / `false` | unset | Override `chat_template_kwargs.enable_thinking` for vLLM main and A2A clients. Unset preserves the server default; requires vLLM for both when A2A is enabled. Effective value is recorded as `llm_config.enable_thinking_override`. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; passed to the provider as `max_tokens`. |
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
@@ -873,6 +877,8 @@ Final overview:
 | `scenario_id` | Scenario ID. |
 | `controller_id` | Agent controller; `null` for oracle/replay mode. |
 | `provider`, `model`, `temperature` | LLM configuration. |
+| `llm_config` | Client settings including `base_url`, `temperature`, `enable_thinking_override`, and `sdk_max_retries`; not every recorded field is sent to the API. |
+| `response_policy` | Effective agent `max_llm_call_retries` and `max_llm_call_attempts`. |
 | `system_prompt_mode` | `fairy` or `are` for agent runs; `null` for oracle/replay. |
 | `status` | `completed`, `stopped`, or `failed`. |
 | `stopped_reason` | `agent_finished`, `completed`, `max_tool_calls`, `timeout`, `error`, etc. |
@@ -1294,6 +1300,8 @@ Parameters:
 | `--scenarios` | comma-separated or config list | required                         | Scenario list. |
 | `--repeats` | int | `1`                              | Runs per family x scenario pair. |
 | `--model`, `--provider`, `--endpoint` | string | `gpt-4o-mini`, `llama-api`, none | LLM configuration. |
+| `--temperature` | float | `0.1` | Shared main/A2A sampling temperature; no environment fallback. The current OpenAI reasoning branch omits this request field; see configuration notes below. |
+| `--agent-llm-call-retries` | nonnegative int | unset | Agent retries after the initial attempt; overrides `FAIRY_AGENT_LLM_CALL_RETRIES`, which defaults to 5. `0` disables agent retries, not SDK retries. |
 | `--model-family` | string | inferred                         | Reporting label for CSV. |
 | `--cost-cap-dollars` | float | `9999.0`                         | Estimated spend cap. Remaining cells are cancelled at 80 percent of cap. |
 | `--max-concurrent` | int | `1`                              | Parallel cells. |
@@ -1323,6 +1331,53 @@ Outputs:
 | `<output-root>/<family>__<scenario>__rN/<scenario>.progress.jsonl` | Lightweight live event stream, available while running and retained after timeout/kill. |
 | `<output-root>/<family>__<scenario>__rN/<scenario>.run_report.json` | Main cell report. |
 | Other `<scenario>.*` artifacts | Same as ordinary agent run. |
+
+### Precedence for the Four LLM Settings
+
+Runner JSON fields map to CLI flags, but not every setting has an environment fallback:
+
+| CLI / JSON field | Precedence, highest first |
+|---|---|
+| `--endpoint` / `endpoint` | CLI > JSON > provider environment variables > default URL |
+| `--temperature` / `temperature` | CLI > JSON > `0.1`; no environment fallback |
+| `--enable-thinking` / `enable_thinking` | CLI > JSON > omit the override and inherit server behavior; no environment fallback |
+| `--agent-llm-call-retries` / `agent_llm_call_retries` | CLI > JSON > `FAIRY_AGENT_LLM_CALL_RETRIES` > `5` |
+
+Endpoint environment variables are listed in the provider section above. The runner loads the repository `.env` without overriding existing shell exports. Supply an API base URL, without `/chat/completions`; the endpoint can be omitted when accessing OpenAI directly.
+
+Temperature must be finite and nonnegative; the server may impose further limits. The current OpenAI client sends temperature for `gpt-4o-mini` and `gpt-4o`, but omits it for `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o1`, and `o3`. A recorded configuration value is therefore not the effective sampling temperature for these reasoning models.
+
+JSON `enable_thinking` accepts `true`, `false`, or `null`. Omission or `null` means no override; `false` explicitly requests disabling thinking. Only the vLLM client sends this field, and its effect depends on the deployed model and chat template. Other providers reject this CLI flag.
+
+`agent_llm_call_retries` must be a nonnegative integer. Omission or `null` inherits the environment; `0` disables agent retries, and `3` allows up to three retries after the initial attempt. Main and A2A agents share temperature, thinking override, and retry count; A2A can use a separate `--a2a-endpoint`. SDK HTTP retries and retry delays are unchanged. Delays still use `FAIRY_AGENT_LLM_RETRY_SLEEP_S` (default 0 seconds) and `FAIRY_AGENT_RATE_LIMIT_SLEEP_S` (default 30 seconds).
+
+For example, save this as `validation_runs/llm_config.json` and replace `your-served-model` with the actual vLLM deployment name:
+
+```json
+{
+  "iclr_validation_runner": {
+    "phase": "llm_config_smoke",
+    "output_root": "validation_runs/llm_config_smoke",
+    "families": ["farm_baseline_react"],
+    "scenarios": ["scenario_farm_world_field_prep_physics_action_tick"],
+    "provider": "vllm",
+    "model": "your-served-model",
+    "endpoint": "http://localhost:8000/v1",
+    "temperature": 0.2,
+    "enable_thinking": null,
+    "agent_llm_call_retries": 3
+  }
+}
+```
+
+```bash
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
+  --config validation_runs/llm_config.json \
+  --temperature 0.1 \
+  --agent-llm-call-retries 0
+```
+
+This command overrides JSON temperature and retries, keeps the JSON endpoint, and inherits server thinking behavior. `results.csv` records configured overrides; inspect `run_report.json` at `response_policy.max_llm_call_retries` for effective retries and `llm_config.base_url` for the actual OpenAI endpoint.
 
 ## Summarize Reports: `summarize_runs.py`
 

@@ -32,7 +32,14 @@ class OpenAILLM(BaseLLM):
         super().__init__(model, temperature, **kwargs)
         self.provider = "openai"
         self.api_key = api_key
-        self.api_client = OpenAI(timeout=self.request_timeout)
+        # Explicit endpoint/key override SDK environment defaults. Leaving them
+        # unset preserves OPENAI_BASE_URL / OPENAI_API_KEY and the official URL.
+        self.api_client = OpenAI(
+            api_key=api_key,
+            base_url=kwargs.get("base_url") or None,
+            timeout=self.request_timeout,
+        )
+        self.base_url = str(self.api_client.base_url)
 
         self.api_mode = self._resolve_api_mode(model)
 
@@ -85,6 +92,7 @@ class OpenAILLM(BaseLLM):
             'llm_class': self.llm_class,
             'model': self.model,
             'temperature': self.temperature,
+            'base_url': self.base_url,
             'parallel_tool_calls': self.parallel_tool_calls,
             'max_output_tokens': self.max_output_tokens,
         }

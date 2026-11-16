@@ -120,9 +120,25 @@ Qwen3.6 Flash returned `reasoning_content`, so this configuration uses the
 provider's default thinking mode; FAIRY does not currently override
 `enable_thinking`.
 
-The batch runner currently uses the `fairy.cli` default temperature `0.1` for
-all providers. The same value is passed to the main agent and, when enabled,
-all A2A agents. Confirm it in `run_report.json` under `temperature`.
+The batch runner accepts `--temperature` / JSON `temperature` (default `0.1`)
+and `--agent-llm-call-retries` / JSON `agent_llm_call_retries` for both main
+and A2A agents. CLI overrides JSON. Temperature has no environment fallback;
+omitted/null retries inherit `FAIRY_AGENT_LLM_CALL_RETRIES` (default 5).
+Retries count attempts after the first: `0` disables agent retries, not SDK
+HTTP retries. Inspect `run_report.json` at `response_policy.max_llm_call_retries`
+for the effective count. The current OpenAI reasoning branch omits temperature
+from requests even when it is recorded in the configuration.
+
+Endpoint precedence is CLI > JSON > provider environment > default URL,
+including `--provider openai`: `OPENAI_BASE_URL` is its environment fallback,
+and `https://api.openai.com/v1` is its default. The actual OpenAI client URL is
+recorded in `llm_config.base_url`. `enable_thinking` has no environment fallback;
+only `--provider vllm` accepts an explicit `--enable-thinking true|false`.
+Omission or JSON null inherits server/template behavior. With A2A enabled,
+an explicit override requires both providers to be vLLM.
+
+See the [four-setting reference and JSON example](../../README.md#precedence-for-the-four-llm-settings)
+for exact priorities and shared A2A behavior.
 
 `--parallel-tool-calls false` requests one tool call per model turn, adds that
 rule to the system message, and keeps only the first call if a provider still

@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import ExitStack, redirect_stderr, redirect_stdout
 from io import StringIO
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -222,6 +223,163 @@ class ToolSchemaLifecycleTests(unittest.TestCase):
             build.assert_called_once()
             self.assertEqual(len(llm.received_tools), 2)
             self.assertTrue(all(received is schemas for received in llm.received_tools))
+
+
+class OpenAIEndpointTests(unittest.TestCase):
+    def test_runner_endpoint_precedence_reaches_http_requests_and_a2a(self) -> None:
+        import httpx
+        from openai import OpenAI
+
+        cases = (
+            ({}, [], {}, "https://api.openai.com/v1"),
+            ({}, [], {"OPENAI_BASE_URL": "https://env.example/v1"}, "https://env.example/v1"),
+            ({"endpoint": "https://json.example/v1"}, [],
+             {"OPENAI_BASE_URL": "https://env.example/v1"}, "https://json.example/v1"),
+            ({"endpoint": "https://json.example/v1"}, ["--endpoint", "https://cli.example/v1"],
+             {"OPENAI_BASE_URL": "https://env.example/v1"}, "https://cli.example/v1"),
+        )
+        required = ["--phase", "test", "--output-root", "/tmp/fairy-test",
+                    "--families", "farm_baseline_react", "--scenarios", "schema-test",
+                    "--provider", "openai", "--config", "config.json"]
+        for config, flags, extra_env, expected in cases:
+            with self.subTest(config=config, flags=flags), ExitStack() as stack:
+                env = {"OPENAI_API_KEY": "test-key", **extra_env}
+                stack.enter_context(patch.dict(os.environ, env, clear=True))
+                with patch.object(Path, "read_text", return_value=json.dumps(config)):
+                    args = runner._parse_args(required + flags)
+                provider, endpoint = runner._prepare_provider_env(env, args.provider, args.endpoint)
+                self.assertEqual(endpoint, expected)
+                command = runner._build_cell_command(
+                    runner.CellSpec("farm_baseline_react", "schema-test", 1),
+                    args.model, provider, args.output_root, endpoint=endpoint,
+                    a2a_enabled=True, a2a_app_prop=1,
+                    a2a_endpoint="https://expert.example/v1",
+                )
+                requests = []
+                def respond(request):
+                    requests.append(request)
+                    return httpx.Response(200, json={
+                        "id": "test", "object": "chat.completion", "created": 0,
+                        "model": "gpt-4o-mini", "choices": [{"index": 0,
+                        "message": {"role": "assistant", "content": "Done"}, "finish_reason": "stop"}],
+                    })
+                def make_sdk(**kwargs):
+                    sdk = OpenAI(http_client=httpx.Client(transport=httpx.MockTransport(respond)), **kwargs)
+                    stack.callback(sdk.close)
+                    return sdk
+                real_builder = cli.BaseLLM.llm_builder
+                stack.enter_context(patch("fairy.agents.llm.openai_llm.OpenAI", side_effect=make_sdk))
+                agent, scenario, report = ToolRelationsCLITests()._run_cli(command[3:], llm_builder=real_builder)
+                agent.llm.chat_completion([{"role": "user", "content": "test"}])
+                scenario.apps[0].app_agent.llm.chat_completion([{"role": "user", "content": "test"}])
+                self.assertEqual(str(requests[0].url), expected + "/chat/completions")
+                self.assertEqual(str(requests[1].url), "https://expert.example/v1/chat/completions")
+                self.assertEqual(report["llm_config"]["base_url"].rstrip("/"), expected)
+
+    def test_direct_client_preserves_sdk_fallbacks_and_explicit_key(self) -> None:
+        from fairy.agents.llm.openai_llm import OpenAILLM
+        for env, endpoint, expected in (
+            ({}, None, "https://api.openai.com/v1"),
+            ({"OPENAI_BASE_URL": "https://env.example/v1"}, None, "https://env.example/v1"),
+            ({"OPENAI_BASE_URL": "https://env.example/v1"}, "https://explicit.example/v1", "https://explicit.example/v1"),
+        ):
+            with self.subTest(endpoint=endpoint, env=env), patch.dict(os.environ, env, clear=True):
+                client = OpenAILLM("gpt-4o-mini", api_key="explicit-test-key", base_url=endpoint)
+                try:
+                    self.assertEqual(client.base_url.rstrip("/"), expected)
+                    self.assertEqual(client.api_client.api_key, "explicit-test-key")
+                    self.assertEqual(client.to_dict()["base_url"], client.base_url)
+                finally:
+                    client.api_client.close()
+
+    def test_reasoning_branch_omits_temperature_and_uses_completion_limit(self) -> None:
+        from fairy.agents.llm.openai_llm import OpenAILLM
+        for model in sorted(OpenAILLM.CHAT_COMPLETION_MODELS | OpenAILLM.RESPONSES_API_MODELS):
+            with self.subTest(model=model), patch("fairy.agents.llm.openai_llm.OpenAI") as sdk:
+                client = OpenAILLM(model, temperature=0.6, base_url="https://custom.example/v1")
+                client.chat_completion([])
+                request = sdk.return_value.chat.completions.create.call_args.kwargs
+                if model in OpenAILLM.CHAT_COMPLETION_MODELS:
+                    self.assertEqual(request["temperature"], 0.6)
+                    self.assertEqual(request["max_tokens"], 2048)
+                else:
+                    self.assertNotIn("temperature", request)
+                    self.assertNotIn("max_tokens", request)
+                    self.assertEqual(request["max_completion_tokens"], 2048)
+
+
+class LLMConfigurationTests(unittest.TestCase):
+    def test_runner_json_cli_and_environment_reach_main_and_a2a(self) -> None:
+        cases = (
+            ({}, [], 0.1, None, 7),
+            ({"temperature": 0.6, "agent_llm_call_retries": 2}, [], 0.6, 2, 2),
+            ({"temperature": 0.6, "agent_llm_call_retries": 2},
+             ["--temperature", "0", "--agent-llm-call-retries", "0"], 0.0, 0, 0),
+        )
+        for config, flags, temperature, override, retries in cases:
+            with self.subTest(config=config, flags=flags), ExitStack() as stack:
+                stack.enter_context(patch.dict(os.environ, {"FAIRY_AGENT_LLM_CALL_RETRIES": "7"}))
+                argv = ["runner", "--phase", "test", "--output-root", "/tmp/fairy-test",
+                        "--families", "farm_baseline_react", "--scenarios", "schema-test",
+                        "--provider", "vllm", "--a2a", "true", "--a2a-app-prop", "1",
+                        "--config", "config.json", *flags]
+                with ExitStack() as runner_stack:
+                    runner_stack.enter_context(patch("sys.argv", argv))
+                    runner_stack.enter_context(redirect_stdout(StringIO()))
+                    runner_stack.enter_context(patch.object(Path, "mkdir"))
+                    runner_stack.enter_context(patch.object(Path, "exists", return_value=False))
+                    runner_stack.enter_context(patch.object(Path, "read_text", return_value=json.dumps(config)))
+                    runner_stack.enter_context(patch.object(Path, "open", side_effect=lambda *a, **k: StringIO()))
+                    process = runner_stack.enter_context(patch.object(runner.subprocess, "Popen"))
+                    runner_stack.enter_context(patch.object(runner, "_wait_for_cell_process", return_value=(0, False, False)))
+                    csv_write = runner_stack.enter_context(patch.object(runner, "_write_results_csv"))
+                    self.assertEqual(runner.main(), 0)
+                    command = process.call_args.args[0]
+                    row = csv_write.call_args.args[1][0]
+                    self.assertEqual(row["temperature"], temperature)
+                    self.assertEqual(row["agent_llm_call_retries"], override)
+                real_builder = cli.BaseLLM.llm_builder
+                with patch("fairy.agents.llm.vllm_client.OpenAI") as sdk:
+                    agent, scenario, report = ToolRelationsCLITests()._run_cli(
+                        command[3:], llm_builder=real_builder)
+                    for current in (agent, scenario.apps[0].app_agent):
+                        self.assertEqual(current.max_llm_call_retries, retries)
+                        current.llm.chat_completion([], tools=[])
+                        request = sdk.return_value.chat.completions.create.call_args.kwargs
+                        self.assertEqual(request["temperature"], temperature)
+                self.assertEqual(report["response_policy"]["max_llm_call_retries"], retries)
+                self.assertEqual(report["llm_config"]["temperature"], temperature)
+
+    def test_agent_retry_count_controls_actual_attempts(self) -> None:
+        with patch.dict(os.environ, {"FAIRY_AGENT_LLM_RETRY_SLEEP_S": "0"}):
+            for retries in (0, 2):
+                agent = Agent("test", FakeLLM(), max_llm_call_retries=retries)
+                with patch.object(agent, "chat_completion", side_effect=RuntimeError("failure")) as call:
+                    with self.assertRaises(RuntimeError):
+                        agent._chat_completion_with_retries([])
+                self.assertEqual(call.call_count, retries + 1)
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(Agent("test", FakeLLM()).max_llm_call_retries, 5)
+
+    def test_invalid_values_fail_before_launch(self) -> None:
+        required = ["--phase", "test", "--output-root", "/tmp/fairy-test",
+                    "--families", "test", "--scenarios", "test"]
+        for flags in (["--agent-llm-call-retries", "-1"],
+                      ["--agent-llm-call-retries", "1.5"],
+                      ["--temperature", "nan"], ["--temperature", "-0.1"]):
+            with self.subTest(flags=flags), redirect_stderr(StringIO()):
+                with self.assertRaises(SystemExit):
+                    runner._parse_args(required + list(flags))
+                with patch("sys.argv", ["fairy", *flags]), patch.object(cli, "get_scenario_class") as lookup:
+                    with self.assertRaises(SystemExit):
+                        cli.main()
+                    lookup.assert_not_called()
+        for value in (True, 1.5, -1):
+            with self.subTest(value=value), patch.object(Path, "read_text", return_value=json.dumps(
+                {"agent_llm_call_retries": value}
+            )), redirect_stderr(StringIO()):
+                with self.assertRaises((ValueError, SystemExit)):
+                    runner._parse_args(required + ["--config", "config.json"])
 
 
 if __name__ == "__main__":

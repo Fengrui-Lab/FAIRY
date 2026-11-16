@@ -237,7 +237,10 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
 | `command_provider` | 实际传给 `fairy.cli` 的 provider；某些 provider 会被规范化。 |
 | `model` | 模型名。 |
 | `model_family` | 报表模型族标签；未指定时由 provider/model 推断。 |
-| `endpoint` | 实际使用的 endpoint override。 |
+| `endpoint` | runner 解析后传入 CLI 的 endpoint；客户端实际地址见 `run_report.llm_config.base_url`。 |
+| `temperature` | 请求配置值；OpenAI 当前 reasoning 分支不发送该字段。 |
+| `agent_llm_call_retries` | 显式覆盖值；为空时继承环境变量或默认值，实际次数见 `response_policy.max_llm_call_retries`。 |
+| `enable_thinking` | thinking 覆盖值；为空表示不覆盖服务端默认，不能据此判断实际 thinking 模式。 |
 | `a2a_enabled` | 是否开启 A2A。 |
 | `a2a_app_prop` | A2A app wrapper 比例；A2A off 时为 `0.0`。 |
 | `a2a_policy` | A2A policy；A2A off 时为 `off`。 |
@@ -433,24 +436,24 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
   - `--provider deepseek`
   - 常用模型：`deepseek-chat`
   - 环境变量：`DEEPSEEK_API_KEY`，可选 `DEEPSEEK_API_BASE`
-  - 默认 endpoint：`https://api.deepseek.com`
+  - runner 默认 endpoint：`https://api.deepseek.com/v1`；直接调用客户端时默认 `https://api.deepseek.com`
 
 - OpenAI
   - `--provider openai`
   - 常用模型：`gpt-4o-mini`、`gpt-4o`
-  - 环境变量：`OPENAI_API_KEY`
-  - endpoint：OpenAI SDK 默认
+  - 环境变量：`OPENAI_API_KEY`，可选 `OPENAI_BASE_URL`
+  - endpoint：`--endpoint` / runner JSON `endpoint` > `OPENAI_BASE_URL` > `https://api.openai.com/v1`；显式配置也适用于 OpenAI 原生客户端
 
 - 通用 OpenAI-compatible 服务
   - `--provider llama-api` 或 `--provider openai-compatible`
   - 模型名：取决于你的服务
   - 环境变量：`LLAMA_API_KEY` 或 `OPENAI_API_KEY`
-  - endpoint：用 `--endpoint` 或 `LLAMA_API_BASE` 指定
+  - endpoint：显式 `--endpoint` / runner JSON `endpoint` > `LLAMA_API_BASE` > `OPENAI_BASE_URL` > SDK 官方默认地址
 
 - Qwen / DashScope
   - `--provider qwen`
   - 推荐模型：`qwen3.6-flash`；固定复现快照：`qwen3.6-flash-2026-04-16`
-  - 环境变量：`QWEN_API_KEY` 或 `DASHSCOPE_API_KEY`，可选 `QWEN_API_BASE`
+  - 环境变量：`QWEN_API_KEY` 或 `DASHSCOPE_API_KEY`，可选 `QWEN_API_BASE` 或 `DASHSCOPE_API_BASE`（前者优先）
   - 默认 endpoint：`https://dashscope.aliyuncs.com/compatible-mode/v1`
 
 - vLLM
@@ -619,7 +622,9 @@ fairy-run \
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | 选择 FARM controller prompt。`are` 保留 native function calling，并迁移所有与 FAIRY 不冲突的旧 ARE 推理、单工具调用、观察、错误恢复、工具经济性和工具输出利用规则。 |
 | `--provider` | `deepseek`, `openai`, `llama-api`, `openai-compatible`, `qwen`, `vllm` | `deepseek` | LLM client 类型。 |
 | `--model` | string | `deepseek-chat` | provider 下的模型名。 |
-| `--temperature` | float | `0.1` | 采样温度。reasoning/openAI 某些模型可能忽略该值。 |
+| `--temperature` | float | `0.1` | 主 Agent 和 A2A 共用的采样温度；没有环境变量回退。OpenAI 当前 reasoning 分支不发送该字段，见下方配置说明。 |
+| `--agent-llm-call-retries` | 非负整数 | 未指定 | 首次失败后的 Agent 重试次数；优先于 `FAIRY_AGENT_LLM_CALL_RETRIES`，环境变量未设置时为 5。`0` 关闭 Agent 重试，不改变 SDK 重试。 |
+| `--enable-thinking` | `true` / `false` | 未指定 | 仅 vLLM：发送 `chat_template_kwargs.enable_thinking`；未指定则继承服务端默认。显式设置且启用 A2A 时，两者 provider 都必须是 vLLM。 |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用允许的最大 completion token 数；以 `max_tokens` 传给 provider。 |
 | `--endpoint` | URL | provider 默认 | 覆盖 OpenAI-compatible base URL。会传成 client 的 `base_url`。 |
 | `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
@@ -869,6 +874,8 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 | `controller_id` | agent controller；oracle/replay 模式为 `null`。 |
 | `structured_briefing` | 仅 structured_true 的 Agent 报告存在：组件选择、知识来源/版本、实际 briefing 正文及 hash。 |
 | `provider`, `model`, `temperature` | LLM 配置。 |
+| `llm_config` | 客户端配置：包括 `base_url`、`temperature`、`enable_thinking_override` 和 `sdk_max_retries`；不等同于 API 实际发送了所有字段。 |
+| `response_policy` | Agent 实际重试次数 `max_llm_call_retries` 与最多尝试次数 `max_llm_call_attempts`。 |
 | `system_prompt_mode` | agent run 为 `fairy` 或 `are`；oracle/replay 模式为 `null`。 |
 | `status` | `completed`、`stopped` 或 `failed`。 |
 | `stopped_reason` | `agent_finished`、`completed`、`max_tool_calls`、`timeout`、`error` 等。 |
@@ -1294,6 +1301,9 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--scenarios` | 逗号分隔或 config list | 必填                               | scenario 列表。 |
 | `--repeats` | int | `1`                              | 每个 family × scenario 跑几次。 |
 | `--model`, `--provider`, `--endpoint` | string | `gpt-4o-mini`, `llama-api`, none | LLM 配置。 |
+| `--temperature` | float | `0.1` | 主 Agent 和 A2A 共用的采样温度；没有环境变量回退。OpenAI 当前 reasoning 分支不发送该字段，见下方配置说明。 |
+| `--agent-llm-call-retries` | 非负整数 | 未指定 | 首次失败后的 Agent 重试次数；优先于 `FAIRY_AGENT_LLM_CALL_RETRIES`，环境变量未设置时为 5。`0` 关闭 Agent 重试，不改变 SDK 重试。 |
+| `--enable-thinking` | `true` / `false` | 未指定 | 仅 vLLM：发送 `chat_template_kwargs.enable_thinking`；未指定则继承服务端默认。显式设置且启用 A2A 时，两者 provider 都必须是 vLLM。 |
 | `--model-family` | string | 自动推断                             | CSV 里的模型族标签。 |
 | `--cost-cap-dollars` | float | `9999.0`                         | 估算费用上限；达到 80% 时取消剩余 cells。 |
 | `--max-concurrent` | int | `1`                              | 并行 cell 数。 |
@@ -1321,6 +1331,53 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `<output-root>/<family>__<scenario>__rN/<scenario>.progress.jsonl` | 运行中的轻量事件流；timeout/kill 后仍会保留。 |
 | `<output-root>/<family>__<scenario>__rN/<scenario>.run_report.json` | cell 的主报告。 |
 | 其他 `<scenario>.*` artifacts | 同普通 agent run。 |
+
+### 四项 LLM 配置的优先级
+
+runner 的 JSON 字段与 CLI 参数对应，但并非每项都读取环境变量：
+
+| CLI / JSON 字段 | 优先级（从高到低） |
+|---|---|
+| `--endpoint` / `endpoint` | CLI > JSON > 对应 provider 环境变量 > 默认地址 |
+| `--temperature` / `temperature` | CLI > JSON > `0.1`；无环境变量回退 |
+| `--enable-thinking` / `enable_thinking` | CLI > JSON > 不发送覆盖参数，由服务端决定；无环境变量回退 |
+| `--agent-llm-call-retries` / `agent_llm_call_retries` | CLI > JSON > `FAIRY_AGENT_LLM_CALL_RETRIES` > `5` |
+
+endpoint 环境变量见上方 provider 列表。runner 读取仓库 `.env`，但不覆盖已有 shell 环境变量。endpoint 是 API 基础地址，不附加 `/chat/completions`；直接访问 OpenAI 官方服务时可以省略。
+
+`temperature` 必须为有限非负数，服务端可能进一步限制取值范围。当前 OpenAI 客户端仅对 `gpt-4o-mini`、`gpt-4o` 发送 temperature；对 `gpt-5`、`gpt-5-mini`、`gpt-5-nano`、`o1`、`o3` 不发送。因此报告中的配置值不能视为这些 reasoning 模型的实际采样温度。
+
+`enable_thinking` 的 JSON 值可以为 `true`、`false`、`null`；`null` 或省略表示不覆盖，`false` 才是显式关闭请求。只有 vLLM 客户端发送该字段，最终是否生效取决于服务端模型和聊天模板；其他 provider 不接受此 CLI 开关。
+
+`agent_llm_call_retries` 为非负整数；`null` 或省略表示读取环境变量，`0` 表示关闭 Agent 层重试，`3` 表示首次请求后最多再试 3 次。主 Agent 和 A2A 共用 temperature、thinking 覆盖和重试次数；A2A 可以通过 `--a2a-endpoint` 独立设置地址。SDK HTTP 重试和重试等待时间不受次数配置影响；等待时间仍由 `FAIRY_AGENT_LLM_RETRY_SLEEP_S`（默认 0 秒）和 `FAIRY_AGENT_RATE_LIMIT_SLEEP_S`（默认 30 秒）控制。
+
+例如，将以下内容保存为 `validation_runs/llm_config.json`，并把 `your-served-model` 换成实际 vLLM 部署名称：
+
+```json
+{
+  "iclr_validation_runner": {
+    "phase": "llm_config_smoke",
+    "output_root": "validation_runs/llm_config_smoke",
+    "families": ["farm_baseline_react"],
+    "scenarios": ["scenario_farm_world_field_prep_physics_action_tick"],
+    "provider": "vllm",
+    "model": "your-served-model",
+    "endpoint": "http://localhost:8000/v1",
+    "temperature": 0.2,
+    "enable_thinking": null,
+    "agent_llm_call_retries": 3
+  }
+}
+```
+
+```bash
+PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
+  --config validation_runs/llm_config.json \
+  --temperature 0.1 \
+  --agent-llm-call-retries 0
+```
+
+此命令覆盖 JSON 中的温度和重试次数；endpoint 仍来自 JSON，thinking 继承服务端默认。`results.csv` 记录配置覆盖值；实际重试次数见 `run_report.json` 的 `response_policy.max_llm_call_retries`，OpenAI 实际端点见 `llm_config.base_url`。
 
 ## 汇总 run_report：`summarize_runs.py`
 

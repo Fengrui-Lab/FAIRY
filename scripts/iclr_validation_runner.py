@@ -19,6 +19,12 @@ Usage:
 
     python scripts/iclr_validation_runner.py --config validation_runs/iclr.json
 
+LLM overrides work in both CLI and JSON: ``--temperature 0.2`` /
+``"temperature": 0.2`` and ``--agent-llm-call-retries 3`` /
+``"agent_llm_call_retries": 3``. CLI overrides JSON. Retries apply to main
+and A2A agents, count attempts after the first, and do not change SDK retries.
+Omitting retries (or JSON null) inherits FAIRY_AGENT_LLM_CALL_RETRIES, default 5.
+
 For Qwen, use ``--provider qwen``. FAIRY runs it through an
 OpenAI-compatible function-calling client and reads ``QWEN_API_KEY`` plus
 optional ``QWEN_API_BASE`` / ``DASHSCOPE_API_BASE``.
@@ -36,6 +42,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import re
 import shlex
@@ -83,6 +90,8 @@ RUNNER_DEFAULTS = {
     "provider": "llama-api",
     "model_family": None,
     "endpoint": None,
+    "temperature": 0.1,
+    "agent_llm_call_retries": None,
     "log_level": "INFO",
     "cost_cap_dollars": 9999.0,
     "max_concurrent": 1,
@@ -141,6 +150,8 @@ def _build_cell_command(
     a2a_endpoint: str | None = None,
     tool_relations: str = "on",
     enable_thinking: bool | None = None,
+    temperature: float = 0.1,
+    agent_llm_call_retries: int | None = None,
 ) -> list[str]:
     cmd = [
         PYTHON_BIN,
@@ -155,6 +166,8 @@ def _build_cell_command(
         provider,
         "--model",
         model,
+        "--temperature",
+        str(temperature),
         "--output-dir",
         str(output_dir),
         "--max-tool-calls",
@@ -170,6 +183,8 @@ def _build_cell_command(
         "--tool-relations",
         tool_relations,
     ]
+    if agent_llm_call_retries is not None:
+        cmd.extend(["--agent-llm-call-retries", str(agent_llm_call_retries)])
     if endpoint:
         cmd.extend(["--endpoint", endpoint])
     if enable_thinking is not None:
@@ -387,12 +402,8 @@ def _prepare_provider_env(
     if provider == "openai":
         if not env.get("OPENAI_API_KEY"):
             raise RuntimeError("Missing OPENAI_API_KEY for --provider openai")
-        # ARE's current `openai` provider path goes through HuggingFaceLLMEngine,
-        # which passes HF_INFERENCE_TOKEN/HF_TOKEN as the provider api_key.
-        # Keep the provider as "openai", but expose the OpenAI key where that
-        # engine actually reads it.
-        env.setdefault("HF_INFERENCE_TOKEN", env["OPENAI_API_KEY"])
-        return "openai", endpoint
+        resolved_endpoint = endpoint or env.get("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+        return "openai", resolved_endpoint
 
     if provider in {"deepseek", "deepseek-json"}:
         if not env.get("DEEPSEEK_API_KEY"):
@@ -497,6 +508,11 @@ def _load_runner_config(config_path: Path | None) -> dict:
         raise ValueError(f"Unknown runner config field(s): {', '.join(unknown)}")
     if "output_root" in config and config["output_root"] is not None:
         config["output_root"] = Path(str(config["output_root"]))
+    if config.get("agent_llm_call_retries") is not None:
+        value = config["agent_llm_call_retries"]
+        if isinstance(value, bool) or not isinstance(value, (int, str)):
+            raise ValueError("agent_llm_call_retries must be a nonnegative integer")
+        config["agent_llm_call_retries"] = int(value)
     for field_name in (
         "repeats",
         "max_concurrent",
@@ -508,6 +524,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
         if field_name in config and config[field_name] is not None:
             config[field_name] = int(config[field_name])
     for field_name in (
+        "temperature",
         "cost_cap_dollars",
         "wait_for_user_input_timeout",
         "a2a_app_prop",
@@ -701,6 +718,12 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
     )
     parser.add_argument("--repeats", type=int, default=defaults.get("repeats"))
     parser.add_argument("--model", default=defaults.get("model"))
+    parser.add_argument("--temperature", type=float, default=defaults.get("temperature"))
+    parser.add_argument(
+        "--agent-llm-call-retries", type=int, default=defaults.get("agent_llm_call_retries"),
+        help="Agent retries after the initial LLM attempt; 0 disables agent retries. "
+             "Omit to inherit FAIRY_AGENT_LLM_CALL_RETRIES (default: 5).",
+    )
     parser.add_argument(
         "--provider",
         default=defaults.get("provider"),
@@ -852,6 +875,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             + ", ".join(f"--{name.replace('_', '-')}" for name in missing)
             + " (provide on CLI or in --config)"
         )
+    if args.temperature is None or not math.isfinite(args.temperature) or args.temperature < 0:
+        parser.error("--temperature must be a finite nonnegative number")
+    if args.agent_llm_call_retries is not None and args.agent_llm_call_retries < 0:
+        parser.error("--agent-llm-call-retries must be a nonnegative integer")
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
     if args.system_prompt_mode not in {"fairy", "are"}:
@@ -889,6 +916,8 @@ def run_cell(
     progress_interval_s: float = 60.0,
     tool_relations: str = "on",
     enable_thinking: bool | None = None,
+    temperature: float = 0.1,
+    agent_llm_call_retries: int | None = None,
 ) -> dict:
     """Run one cell as a subprocess; capture output and parse FOS / workflow."""
     cell_dir = output_root / f"{cell.family}__{cell.scenario}__r{cell.repeat}"
@@ -918,6 +947,8 @@ def run_cell(
             "system_prompt_mode": system_prompt_mode,
             "tool_relations": tool_relations,
             "enable_thinking": enable_thinking,
+            "temperature": temperature,
+            "agent_llm_call_retries": agent_llm_call_retries,
             "max_output_tokens": max_output_tokens,
             "detail_enabled": detail_enabled,
             "wall_s": 0.0,
@@ -950,6 +981,8 @@ def run_cell(
         system_prompt_mode=system_prompt_mode,
         tool_relations=tool_relations,
         enable_thinking=enable_thinking,
+        temperature=temperature,
+        agent_llm_call_retries=agent_llm_call_retries,
         a2a_enabled=a2a_enabled,
         a2a_app_prop=a2a_app_prop,
         a2a_policy=a2a_policy,
@@ -1076,6 +1109,8 @@ def run_cell(
         "system_prompt_mode": system_prompt_mode,
         "tool_relations": tool_relations,
         "enable_thinking": enable_thinking,
+        "temperature": temperature,
+        "agent_llm_call_retries": agent_llm_call_retries,
         "max_output_tokens": max_output_tokens,
         "detail_enabled": detail_enabled,
         "scenario_kwargs": scenario_creation_kwargs or "",
@@ -1140,6 +1175,7 @@ def main() -> int:
         f"system_prompt_mode={args.system_prompt_mode}, "
         f"tool_relations={args.tool_relations}, "
         f"enable_thinking={args.enable_thinking}, "
+        f"temperature={args.temperature}, agent_llm_call_retries={args.agent_llm_call_retries}, "
         f"max_output_tokens={args.max_output_tokens}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
     )
@@ -1182,6 +1218,8 @@ def main() -> int:
                 args.progress_interval_s,
                 tool_relations=args.tool_relations,
                 enable_thinking=args.enable_thinking,
+                temperature=args.temperature,
+                agent_llm_call_retries=args.agent_llm_call_retries,
             ): cell
             for cell in cells
         }
@@ -1203,6 +1241,8 @@ def main() -> int:
                     "system_prompt_mode": args.system_prompt_mode,
                     "tool_relations": args.tool_relations,
                     "enable_thinking": args.enable_thinking,
+                    "temperature": args.temperature,
+                    "agent_llm_call_retries": args.agent_llm_call_retries,
                     "detail_enabled": detail_enabled,
                     "wall_s": None,
                     "return_code": -2,

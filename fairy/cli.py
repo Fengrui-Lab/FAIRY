@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import shutil
 import time
 from pathlib import Path
@@ -143,6 +144,10 @@ def main() -> None:
     )
     parser.add_argument("--provider", default="deepseek", help="LLM provider for --agent")
     parser.add_argument("--model", default="deepseek-chat", help="LLM model for --agent")
+    parser.add_argument(
+        "--agent-llm-call-retries", type=int, default=None,
+        help="Agent retries after the first LLM attempt; omit to use FAIRY_AGENT_LLM_CALL_RETRIES (default: 5)",
+    )
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
     parser.add_argument(
         "--enable-thinking",
@@ -197,6 +202,10 @@ def main() -> None:
         for scenario_id in list_scenarios():
             print(scenario_id)
         return
+    if not math.isfinite(args.temperature) or args.temperature < 0:
+        parser.error("--temperature must be a finite nonnegative number")
+    if args.agent_llm_call_retries is not None and args.agent_llm_call_retries < 0:
+        parser.error("--agent-llm-call-retries must be a nonnegative integer")
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
     if args.enable_thinking is not None:
@@ -333,7 +342,8 @@ def main() -> None:
                 list(scenario.apps or []),
                 llm_factory=_build_app_llm,
                 app_agent_builder=AppAgentBuilder(
-                    include_tool_relations=args.tool_relations == "on"
+                    include_tool_relations=args.tool_relations == "on",
+                    max_llm_call_retries=args.agent_llm_call_retries,
                 ),
                 app_agent_config_builder=AppAgentConfigBuilder(),
                 app_prop=args.a2a_app_prop,
@@ -358,6 +368,7 @@ def main() -> None:
             llm=llm,
             toolsets=scenario.apps,
             include_tool_relations=args.tool_relations == "on",
+            max_llm_call_retries=args.agent_llm_call_retries,
             system_message=get_farm_world_system_prompt(
                 args.system_prompt_mode,
                 parallel_tool_calls=args.parallel_tool_calls,

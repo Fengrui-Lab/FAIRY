@@ -79,7 +79,8 @@
   `response_policy`; `llm_call_start` also records the client configuration.
   These fields use an allowlist, not client `params` or credentials.
   Changing FAIRY does not impose this cap on the separate ARE runtime.
-- VLLM thinking overrides are tri-state and constructor-only: omitted/blank
+- VLLM thinking overrides are tri-state: runner/CLI `--enable-thinking` and
+  JSON `enable_thinking` reach the client constructor. Omitted/blank
   means no override; recognized true/false values are parsed strictly;
   invalid values fail configuration instead of silently disabling thinking.
   The thinking environment-variable entry point was removed on 2026-10-18.
@@ -99,8 +100,11 @@
   that isolation because CLI cleanup removes its export directories.
 - As of 2026-10-18, replies with `finish_reason=length`, or no nonblank
   content and no tool calls, are rejected and retried under the existing
-  `FAIRY_AGENT_LLM_CALL_RETRIES` budget (default 5 retries, at most 6
-  agent-level attempts). OpenAI-compatible SDKs may perform their own HTTP
+  agent retry budget: CLI `--agent-llm-call-retries` > runner JSON
+  `agent_llm_call_retries` > `FAIRY_AGENT_LLM_CALL_RETRIES` > 5 retries
+  (at most 6 agent-level attempts by default). Explicit `0` disables agent
+  retries; omission/JSON null inherits environment/defaults. Main and A2A
+  agents share the override. OpenAI-compatible SDKs may perform their own HTTP
   retries within an agent attempt; inspect `llm_config.sdk_max_retries`
   rather than treating agent attempts as HTTP request counts.
   A reply with empty content and valid tool calls is accepted unless it is
@@ -259,3 +263,13 @@
   and `init_kwargs`. Older batch traces recover constructor/setup kwargs from
   their neighboring `results.csv`. Rebatch must instantiate and set up the
   scenario through the same parameter path as the original CLI run.
+
+- LLM configuration precedence is not uniformly CLI > JSON > environment:
+  `temperature` is CLI > JSON > 0.1, and `enable_thinking` is CLI > JSON >
+  no client override. Neither has an environment fallback. The current OpenAI
+  reasoning branch omits temperature; report values describe configuration,
+  not necessarily transmitted sampling parameters.
+  OpenAI endpoint overrides now reach the SDK: CLI > JSON > `OPENAI_BASE_URL`
+  > official URL. Use `llm_config.base_url` to inspect the resolved URL, and
+  `response_policy.max_llm_call_retries` for effective agent retries. The batch
+  CSV retry field records the requested override and is empty when inherited.

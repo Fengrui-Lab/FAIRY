@@ -54,6 +54,7 @@ class Agent(BaseAgent):
         toolsets=None,
         hidden_tool_names: set[str] | frozenset[str] | None = None,
         include_tool_relations: bool = True,
+        max_llm_call_retries: int | None = None,
     ):
         """
         Agent extends BaseAgent with function-calling logic.
@@ -79,9 +80,16 @@ class Agent(BaseAgent):
         self.tool_call_count = 0
         self.llm_turn_count = 0
         self.stop_reason: str | None = None
-        self.max_llm_call_retries = int(os.getenv("FAIRY_AGENT_LLM_CALL_RETRIES", "5"))
+        if max_llm_call_retries is not None and (
+            isinstance(max_llm_call_retries, bool) or not isinstance(max_llm_call_retries, int)
+        ):
+            raise ValueError("max_llm_call_retries must be a nonnegative integer")
+        self.max_llm_call_retries = (
+            max_llm_call_retries if max_llm_call_retries is not None
+            else int(os.getenv("FAIRY_AGENT_LLM_CALL_RETRIES", "5"))
+        )
         if self.max_llm_call_retries < 0:
-            raise ValueError("FAIRY_AGENT_LLM_CALL_RETRIES must be nonnegative")
+            raise ValueError("max_llm_call_retries / FAIRY_AGENT_LLM_CALL_RETRIES must be nonnegative")
         self.llm_retry_sleep_seconds = float(os.getenv("FAIRY_AGENT_LLM_RETRY_SLEEP_S", "0"))
         self.rate_limit_retry_sleep_seconds = float(
             os.getenv("FAIRY_AGENT_RATE_LIMIT_SLEEP_S", "30")

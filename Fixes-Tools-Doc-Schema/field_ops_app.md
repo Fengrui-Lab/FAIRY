@@ -87,7 +87,7 @@ Description:
     ridges and chemical use.
 
 Relation:
-    Use RobotApp.inspect_pests to assess a localized infestation before spraying.
+    Use inspect_pests to maneuver the robot to assess a localized infestation before spraying.
 
 Args:
     ridge_id: Zero-based ID of the first existing ridge to spray.

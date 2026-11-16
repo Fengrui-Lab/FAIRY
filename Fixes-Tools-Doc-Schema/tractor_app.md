@@ -91,7 +91,7 @@ Description:
     Current hopper capacity: 300000 seeds.
 
 Relation:
-    Check FarmWorldApp.get_inventory for stock of the chosen seed type before loading.
+    Use get_inventory to check for stock of the chosen seed type before loading.
 
 Args:
     seed_type: STANDARD (standard), EARLY_COLD (early, cold-tolerant), HIGH_DENSITY
@@ -284,7 +284,7 @@ Description:
     updated load. Current tank capacity: 800 L.
 
 Relation:
-    Check FarmWorldApp.get_inventory for pesticide stock; fungicide loading uses this
+    Use get_inventory to check for pesticide stock; fungicide loading uses this
     shared stock.
 
 Args:
@@ -346,7 +346,7 @@ Description:
     and management usage.
 
 Relation:
-    Check FarmWorldApp.get_inventory for remaining management allowances.
+    Use get_inventory to check for remaining management allowances.
 
 Args:
     start_ridge: Zero-based ID of the first existing ridge.
@@ -369,7 +369,7 @@ Description:
     growth restarted).
 
 Relation:
-    Use RobotApp.inspect_emergence to assess the stand before replanting.
+    Use inspect_emergence to maneuver the robot to assess the stand before replanting.
 
 Args:
     start_ridge: Zero-based ID of the first existing ridge.
@@ -418,7 +418,7 @@ Description:
     is lower. Return harvested ridges and collected grain mass.
 
 Relation:
-    Check FarmWorldApp.get_ridge_range_state for maturity and grain moisture,
+    Use get_ridge_range_state to check for maturity and grain moisture,
     and get_status for onboard grain load and bin capacity.
     Use unload_grain when space is insufficient, and after the final pass
     if the task requires all harvested grain to be unloaded.
