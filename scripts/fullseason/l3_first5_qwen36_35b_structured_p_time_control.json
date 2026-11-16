@@ -1,0 +1,37 @@
+{
+  "phase": "l3_first5_qwen36_35b_structured_p_rel_on_nothink_time_control",
+  "families": ["farm_baseline_react"],
+  "scenarios": [
+    "scenario_full_season_hb_organic_residue_weed_establishment",
+    "scenario_full_season_hb_organic_patch_weed_mechanical_capacity",
+    "scenario_full_season_hb_micronutrient_deficiency_flowering_patch",
+    "scenario_full_season_hb_local_soil_constraint_nutrition_patch",
+    "scenario_full_season_heinong84_edge_low_fertility"
+  ],
+  "repeats": 1,
+  "provider": "vllm",
+  "model": "Qwen3.6-35B-A3B-FP8",
+  "model_family": "Qwen",
+  "endpoint": "http://100.115.106.71:8000/v1",
+  "temperature": 0.1,
+  "agent_llm_call_retries": 5,
+  "system_prompt_mode": "are",
+  "tool_relations": "on",
+  "enable_thinking": false,
+  "detail": "structured_true",
+  "scenario_kwargs": {
+    "detailed_briefing": "structured_true",
+    "structured_briefing": {
+      "components": ["scenario_specific_plan"]
+    }
+  },
+  "parallel_tool_calls": false,
+  "a2a": false,
+  "agent_max_iterations": 300,
+  "max_output_tokens": 8192,
+  "cell_timeout_s": 7200,
+  "cell_timeout_grace_s": 60,
+  "progress_interval_s": 60,
+  "max_concurrent": 1,
+  "cost_cap_dollars": 9999.0
+}
