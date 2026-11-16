@@ -15,5 +15,5 @@
 12. <span style="background-color:#FF5722; color:white;">TODO</span>: Library：如何补充当前的静态的知识载入？如何实现动态的知识载入？
 13. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 统一代码库中所有描述所用的语言，或者做成双语。
 14. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Agent Controller的实际实现；以及其与当前System的固定提示词之间的冲突或覆盖问题。
-15. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 当前的回放、评分逻辑的校准与修正（尚未校准）；目前观察到有多个回放与评估脚本/模式；一些被抛弃的统计指标（如FOS）也还仍然在被计算和记录
+15. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 当前的回放、评分逻辑的校准与修正（尚未校准）；目前观察到有多个回放与评估脚本/模式；一些被抛弃的统计指标（如FOS）也还仍然在被计算和记录；同时校准两种yield（biological，reserved），并基于此反向校准oracle
 16. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Scenario自动扩展构建？是否可以基于已有的[自动场景拼装逻辑](fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_catalog.py)，将Scenario设计与构建进一步组件化，并补充一些必要的gating，进而实现自动生成，然后通过执行和回放迭代优化？
