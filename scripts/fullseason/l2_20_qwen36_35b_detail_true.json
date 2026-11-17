@@ -1,0 +1,51 @@
+{
+  "phase": "l2_20_qwen36_35b_detail_true_rel_on_nothink",
+  "families": [
+    "farm_baseline_react"
+  ],
+  "scenarios": [
+    "scenario_l2_hb_coldspring_heihe50_planting_window",
+    "scenario_l2_hb_heihe43_recommended_density_planting",
+    "scenario_l2_hb_coldspring_heihe50_harvest_drydown_store",
+    "scenario_l2_hb_replant_crusting_replant_decision",
+    "scenario_l2_hb_wetcold_high_residue_replant_recovery",
+    "scenario_l2_hb_skip_rows_emergence_replant_12_15",
+    "scenario_l2_hb_fertilizer_quota_severe_edge_nutrient_recovery",
+    "scenario_l2_hb_heihe43_early_weed_control",
+    "scenario_l2_hb_heihe43_nutrient_recovery",
+    "scenario_l2_hb_disease_drought_mid_fungicide_20_43",
+    "scenario_l2_hb_hn58_dual_stress_r5_irrigation_8_23",
+    "scenario_l2_hb_disease_drought_harvest_window",
+    "scenario_l2_hb_hn58_dual_stress_r5_fungicide_40_55",
+    "scenario_l2_hb_hn58_dual_stress_harvest_window",
+    "scenario_l2_hb_hn60_water_budget_emergence_fertigation_8_19",
+    "scenario_l2_hb_hn60_water_budget_harvest_window",
+    "scenario_l2_hb_weed_seedbank_emergence_mechanical_weed_0_63",
+    "scenario_l2_hb_insect_budget_r5_manual_control",
+    "scenario_l2_hb_potassium_dry_harvest_window",
+    "scenario_l2_three_cultivar_zone_harvest_sequence"
+  ],
+  "repeats": 1,
+  "provider": "vllm",
+  "model": "Qwen3.6-35B-A3B-FP8",
+  "model_family": "Qwen",
+  "endpoint": "http://100.115.106.71:8000/v1",
+  "temperature": 0.1,
+  "agent_llm_call_retries": 5,
+  "system_prompt_mode": "are",
+  "tool_relations": "on",
+  "enable_thinking": false,
+  "detail": true,
+  "scenario_kwargs": {
+    "detailed_briefing": true
+  },
+  "parallel_tool_calls": false,
+  "a2a": false,
+  "agent_max_iterations": 300,
+  "max_output_tokens": 8192,
+  "cell_timeout_s": 7200,
+  "cell_timeout_grace_s": 60,
+  "progress_interval_s": 60,
+  "max_concurrent": 1,
+  "cost_cap_dollars": 9999.0
+}
