@@ -1,5 +1,14 @@
 # AI Change Log
 
+- 2026-11-18: Synchronized the English/Chinese READMEs, replication guide,
+  and configuration pitfalls with the current main-agent thinking controls:
+  DeepSeek `thinking` defaults to `disabled`; Qwen `enable_thinking` and
+  `preserve_thinking` default to `false`; vLLM main-agent `enable_thinking`
+  defaults to `false`. Documented provider-specific reasoning-history replay,
+  JSON null handling, direct-client/A2A differences, and historical Qwen
+  smoke results separately from current defaults. Documentation-only update;
+  no new live model validation is claimed.
+
 - 2026-11-16: Connected runner CLI/JSON `temperature` and
   `agent_llm_call_retries` to main and A2A agents. Explicit retry overrides
   take precedence over the existing environment fallback; zero disables

@@ -359,7 +359,7 @@ Relation 当前是原文追加，**不会按实例名改写引用，也不校验
 - 每次委派重建专家历史；user 是主模型给出的 task，附 Received at/Sender/Message 等字段。不会自动继承主 Agent briefing、知识、additional system 或历史；时间在委派 user 中。
 - 专家 tools 为被包装 App 的原始工具 + FinalAnswerTool；跨 App Relation 不因此获得直接调用权限。
 
-来源：[AppAgentConfigBuilder](../fairy/controllers/agent_config.py)、[AppAgent](../fairy/controllers/app_agent.py)、[AppAgentBuilder](../fairy/controllers/agent_builder.py)。`--provider/model/endpoint/temperature/max-output-tokens/enable-thinking` 及 A2A 对应参数控制模型请求，不直接选择本文的提示文字。
+来源：[AppAgentConfigBuilder](../fairy/controllers/agent_config.py)、[AppAgent](../fairy/controllers/app_agent.py)、[AppAgentBuilder](../fairy/controllers/agent_builder.py)。`--provider`、`--model`、`--endpoint`、`--temperature`、`--max-output-tokens` 控制模型请求，不直接选择本文的提示文字。思考配置按 provider 区分：DeepSeek 使用 `--thinking`，Qwen 使用 `--enable-thinking` 和 `--preserve-thinking`，vLLM 使用 `--enable-thinking`；主 Agent 默认关闭思考。默认值、历史回传及 A2A 适用范围见[主 README 的 LLM 配置说明](../README.zh-CN.md#llm-provider-环境变量)。
 
 ## 三个 L3 场景的 briefing 对照
 

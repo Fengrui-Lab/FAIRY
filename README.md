@@ -240,7 +240,9 @@ Complete `results.csv` columns:
 | `endpoint` | Endpoint resolved by the runner and passed to the CLI; inspect `run_report.llm_config.base_url` for the client address. |
 | `temperature` | Configured value; the current OpenAI reasoning branch does not send this field. |
 | `agent_llm_call_retries` | Explicit override; empty means environment/default inheritance. Effective count is in `response_policy.max_llm_call_retries`. |
-| `enable_thinking` | Thinking override; empty means no override, not proof of the server thinking mode. |
+| `thinking` | DeepSeek main-agent mode: `enabled` or `disabled` (default). Present for DeepSeek runs. |
+| `enable_thinking` | Qwen/vLLM main-agent setting; defaults to `false`, including omitted/null configuration. Other providers leave it empty. |
+| `preserve_thinking` | Qwen main-agent history replay setting; defaults to `false`. `true` requires `enable_thinking=true`. |
 | `a2a_enabled` | Whether A2A is enabled. |
 | `a2a_app_prop` | A2A app-wrapper proportion; `0.0` when A2A is off. |
 | `a2a_policy` | A2A policy; `off` when A2A is disabled. |
@@ -458,12 +460,16 @@ Supported providers:
   - Recommended model: `qwen3.6-flash`; reproducible snapshot: `qwen3.6-flash-2026-04-16`
   - Environment variables: `QWEN_API_KEY` or `DASHSCOPE_API_KEY`, optional `QWEN_API_BASE` or `DASHSCOPE_API_BASE` (the former wins)
   - Default endpoint: `https://dashscope.aliyuncs.com/compatible-mode/v1`
+  - Main-agent CLI: `--enable-thinking true|false` and `--preserve-thinking true|false`; runner JSON: `enable_thinking` and `preserve_thinking`. Both default to `false`, including omission or JSON `null`.
+  - The client sends these as top-level request fields through `extra_body`. `preserve_thinking=true` requires `enable_thinking=true`; it also keeps original `reasoning_content` from assistant history. With preservation disabled, that field is excluded from outgoing history. These main-agent settings are not forwarded to A2A experts.
 
 - vLLM
   - `--provider vllm`
   - Model name: the model exposed by your local vLLM server
   - Environment variables: optional `VLLM_API_KEY`, optional `VLLM_API_BASE`
   - Default endpoint: `http://localhost:8000/v1`
+  - Main-agent CLI/runner: `--enable-thinking true|false` / JSON `enable_thinking`, default `false` even when omitted or `null`. It is sent as `extra_body.chat_template_kwargs.enable_thinking`; effectiveness depends on the model and chat template. `--preserve-thinking` is not supported for vLLM.
+  - Direct `VLLMClient` construction without an override still leaves the server default unchanged. The main-agent default does not become an A2A override; an explicit vLLM override retains the existing requirement that both main and A2A providers are vLLM.
 
 `deepseek-json` and `qwen-json` are compatibility aliases for function calling, not JSON-only agents.
 
@@ -627,7 +633,9 @@ Parameters:
 | `--model` | string | `deepseek-chat` | Model name for the selected provider. |
 | `--temperature` | float | `0.1` | Shared main/A2A sampling temperature; no environment fallback. The current OpenAI reasoning branch omits this request field; see configuration notes below. |
 | `--agent-llm-call-retries` | nonnegative int | unset | Agent retries after the initial attempt; overrides `FAIRY_AGENT_LLM_CALL_RETRIES`, which defaults to 5. `0` disables agent retries, not SDK retries. |
-| `--enable-thinking` | `true` / `false` | unset | Override `chat_template_kwargs.enable_thinking` for vLLM main and A2A clients. Unset preserves the server default; requires vLLM for both when A2A is enabled. Effective value is recorded as `llm_config.enable_thinking_override`. |
+| `--thinking` | `enabled` / `disabled` | `disabled` | DeepSeek main agent only; sends `thinking.type` and controls replay of assistant reasoning history. |
+| `--enable-thinking` | `true` / `false` | `false` for Qwen/vLLM main agent | Qwen sends top-level `enable_thinking`; vLLM sends `chat_template_kwargs.enable_thinking`. Recorded as `llm_config.enable_thinking_override`; see the provider-specific A2A rules below. |
+| `--preserve-thinking` | `true` / `false` | `false` | Qwen main agent only; sends `preserve_thinking` and controls assistant reasoning-history replay. `true` requires `--enable-thinking true`. |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | Maximum completion tokens per LLM call; passed to the provider as `max_tokens`. |
 | `--endpoint` | URL | provider default | Override OpenAI-compatible base URL. Passed to the client as `base_url`. |
 | `--parallel-tool-calls` | `true` / `false` | `true` | Allow one assistant turn to return multiple native function calls. Set `false` for strict one-tool-call-per-turn traces. |
@@ -699,7 +707,8 @@ fairy-run \
   --agent \
   --controller farm_baseline_react \
   --provider deepseek \
-  --model deepseek-chat \
+  --model deepseek-flash \
+  --thinking disabled \
   --temperature 0.1 \
   --max-tool-calls 300 \
   --timeout-seconds 1200 \
@@ -715,6 +724,8 @@ fairy-run \
   --controller farm_baseline_react \
   --provider qwen \
   --model qwen3.6-flash-2026-04-16 \
+  --enable-thinking false \
+  --preserve-thinking false \
   --temperature 0.1 \
   --parallel-tool-calls false \
   --output-dir validation_runs/manual/qwen__farm_baseline_react__scenario_full_season_balanced__r1
@@ -729,6 +740,7 @@ fairy-run \
   --controller farm_baseline_react \
   --provider vllm \
   --model Qwen/Qwen3-1.7B \
+  --enable-thinking false \
   --endpoint http://localhost:8000/v1 \
   --output-dir validation_runs/manual/vllm__farm_baseline_react__scenario_full_season_balanced__r1
 ```
@@ -880,7 +892,7 @@ Final overview:
 | `scenario_id` | Scenario ID. |
 | `controller_id` | Agent controller; `null` for oracle/replay mode. |
 | `provider`, `model`, `temperature` | LLM configuration. |
-| `llm_config` | Client settings including `base_url`, `temperature`, `enable_thinking_override`, and `sdk_max_retries`; not every recorded field is sent to the API. |
+| `llm_config` | Client settings including `base_url`, `temperature`, `enable_thinking_override`, provider-specific `thinking` / `preserve_thinking`, `reasoning_history_policy` (`preserve` or `exclude`), and `sdk_max_retries`; not every recorded field is sent to the API. |
 | `response_policy` | Effective agent `max_llm_call_retries` and `max_llm_call_attempts`. |
 | `system_prompt_mode` | `fairy` or `are` for agent runs; `null` for oracle/replay. |
 | `status` | `completed`, `stopped`, or `failed`. |
@@ -1316,7 +1328,9 @@ Parameters:
 | `--parallel-tool-calls` | `true` / `false` | `true`                           | Passed to `fairy-run`. Set `false` for strict one-tool-call-per-assistant-turn ReAct-style traces. |
 | `--system-prompt-mode` | `fairy` / `are` | `fairy` | Passed to `fairy-run` and recorded in `run_report.json` and `results.csv`. `are` ports compatible legacy ARE behavior but does not restore the conflicting text-JSON `Action:`/`<end_action>` protocol or embedded tool catalog. |
 | `--tool-relations` | `on` / `off` | `on` | Passed to `fairy-run` for main and A2A agent tool schemas; recorded in `run_report.json` and `results.csv`. JSON config key: `tool_relations`. `off` omits only explicit Relation sections. |
-| `--enable-thinking` | `true` / `false` | unset | Passed to `fairy-run` for vLLM clients and recorded in `results.csv`. JSON key `enable_thinking` accepts `true`, `false`, or `null` (inherit server default). |
+| `--thinking` | `enabled` / `disabled` | `disabled` for DeepSeek | Main-agent mode; JSON key `thinking`. Omission/null resolves to `disabled`; recorded in `results.csv`. |
+| `--enable-thinking` | `true` / `false` | `false` for Qwen/vLLM main agent | JSON key `enable_thinking` accepts booleans or `null`; omission/null resolves to `false` for the main agent. Recorded in `results.csv`. |
+| `--preserve-thinking` | `true` / `false` | `false` for Qwen | Main-agent history replay; JSON key `preserve_thinking`. Omission/null resolves to `false`; `true` requires `enable_thinking=true`. |
 | `--wait-for-user-input-timeout` | float | `5.0`                            | Legacy runner field; current FAIRY CLI does not directly use it. |
 | `--scenario-kwargs`, `--init-kwargs` | JSON object string | none                             | Passed through to FAIRY CLI. Put `structured_briefing` in `--scenario-kwargs`, not `--init-kwargs`. |
 | `--detail` | detail mode | none                             | Merged into `--scenario-kwargs` as `detailed_briefing`, overriding that field. `structured_true` uses separately selected [components](#structured-briefing-components); mode alone selects none. |
@@ -1337,22 +1351,28 @@ Outputs:
 
 ### Precedence for the Four LLM Settings
 
-Runner JSON fields map to CLI flags, but not every setting has an environment fallback:
+Runner JSON fields map to CLI flags, but not every setting has an environment fallback. The thinking category uses different fields for DeepSeek, Qwen, and vLLM:
 
 | CLI / JSON field | Precedence, highest first |
 |---|---|
 | `--endpoint` / `endpoint` | CLI > JSON > provider environment variables > default URL |
 | `--temperature` / `temperature` | CLI > JSON > `0.1`; no environment fallback |
-| `--enable-thinking` / `enable_thinking` | CLI > JSON > omit the override and inherit server behavior; no environment fallback |
+| `--thinking` / `thinking` | DeepSeek main: CLI > JSON > `disabled`; no environment fallback |
+| `--enable-thinking` / `enable_thinking` | Qwen/vLLM main: CLI > JSON > `false`; no environment fallback |
+| `--preserve-thinking` / `preserve_thinking` | Qwen main: CLI > JSON > `false`; no environment fallback |
 | `--agent-llm-call-retries` / `agent_llm_call_retries` | CLI > JSON > `FAIRY_AGENT_LLM_CALL_RETRIES` > `5` |
 
 Endpoint environment variables are listed in the provider section above. The runner loads the repository `.env` without overriding existing shell exports. Supply an API base URL, without `/chat/completions`; the endpoint can be omitted when accessing OpenAI directly.
 
 Temperature must be finite and nonnegative; the server may impose further limits. The current OpenAI client sends temperature for `gpt-4o-mini` and `gpt-4o`, but omits it for `gpt-5`, `gpt-5-mini`, `gpt-5-nano`, `o1`, and `o3`. A recorded configuration value is therefore not the effective sampling temperature for these reasoning models.
 
-JSON `enable_thinking` accepts `true`, `false`, or `null`. Omission or `null` means no override; `false` explicitly requests disabling thinking. Only the vLLM client sends this field, and its effect depends on the deployed model and chat template. Other providers reject this CLI flag.
+DeepSeek uses `thinking: "enabled"` or `"disabled"`; omission or JSON `null` resolves to `disabled`, which is explicitly sent to the service. It rejects `--enable-thinking` and `--preserve-thinking`. When enabled, all existing assistant `reasoning_content` fields are preserved in outgoing history, including ordinary replies without tool calls. The client does not fabricate missing reasoning.
 
-`agent_llm_call_retries` must be a nonnegative integer. Omission or `null` inherits the environment; `0` disables agent retries, and `3` allows up to three retries after the initial attempt. Main and A2A agents share temperature, thinking override, and retry count; A2A can use a separate `--a2a-endpoint`. SDK HTTP retries and retry delays are unchanged. Delays still use `FAIRY_AGENT_LLM_RETRY_SLEEP_S` (default 0 seconds) and `FAIRY_AGENT_RATE_LIMIT_SLEEP_S` (default 30 seconds).
+Qwen uses boolean `enable_thinking` and `preserve_thinking`; omission or JSON `null` resolves to `false` for each. To think without replaying earlier reasoning, set only `enable_thinking=true`. To also replay it, set both to `true`; preservation with thinking disabled is rejected. Qwen sends these as top-level API fields. vLLM accepts only `enable_thinking` and sends it inside `chat_template_kwargs`; omission/null also resolves to `false` for the main agent. vLLM assistant reasoning history remains excluded. Other providers reject these CLI settings.
+
+These are main-agent entry-point defaults. Direct Qwen/vLLM client construction with omitted/`None` thinking options still sends no corresponding override. DeepSeek clients default to explicit `disabled`. Calls remain non-streaming; enabling thinking does not add streaming support or guarantee compatibility with every model offered by a provider.
+
+`agent_llm_call_retries` must be a nonnegative integer. Omission or `null` inherits the environment; `0` disables agent retries, and `3` allows up to three retries after the initial attempt. Main and A2A agents share temperature and retry count; A2A can use a separate `--a2a-endpoint`. DeepSeek `thinking` and Qwen thinking/preservation settings configure only the main agent. For vLLM, an explicitly supplied `enable_thinking` still applies to both main and A2A clients and requires both providers to be vLLM; the implicit main-agent default `false` is not forwarded to experts. SDK HTTP retries and retry delays are unchanged. Delays still use `FAIRY_AGENT_LLM_RETRY_SLEEP_S` (default 0 seconds) and `FAIRY_AGENT_RATE_LIMIT_SLEEP_S` (default 30 seconds).
 
 For example, save this as `validation_runs/llm_config.json` and replace `your-served-model` with the actual vLLM deployment name:
 
@@ -1380,7 +1400,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --agent-llm-call-retries 0
 ```
 
-This command overrides JSON temperature and retries, keeps the JSON endpoint, and inherits server thinking behavior. `results.csv` records configured overrides; inspect `run_report.json` at `response_policy.max_llm_call_retries` for effective retries and `llm_config.base_url` for the actual OpenAI endpoint.
+This command overrides JSON temperature and retries and keeps the JSON endpoint. The vLLM main agent explicitly requests thinking disabled because `enable_thinking: null` resolves to `false`. `results.csv` records the main-agent settings; inspect `run_report.json` at `response_policy.max_llm_call_retries` for effective retries and `llm_config` for the client settings and reasoning-history policy.
 
 ## Summarize Reports: `summarize_runs.py`
 

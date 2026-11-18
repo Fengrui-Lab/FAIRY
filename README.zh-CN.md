@@ -240,7 +240,9 @@ validation_runs/quickstart/batch/phase5_paper_matrix/results.csv
 | `endpoint` | runner 解析后传入 CLI 的 endpoint；客户端实际地址见 `run_report.llm_config.base_url`。 |
 | `temperature` | 请求配置值；OpenAI 当前 reasoning 分支不发送该字段。 |
 | `agent_llm_call_retries` | 显式覆盖值；为空时继承环境变量或默认值，实际次数见 `response_policy.max_llm_call_retries`。 |
-| `enable_thinking` | thinking 覆盖值；为空表示不覆盖服务端默认，不能据此判断实际 thinking 模式。 |
+| `enable_thinking` | Qwen/vLLM 主 Agent 的有效思考请求值，省略或 JSON `null` 最终为 `false`；服务端实际行为仍取决于模型。 |
+| `preserve_thinking` | Qwen 主 Agent 是否回传历史 `reasoning_content`，默认 `false`；其他 provider 不使用此字段。 |
+| `thinking` | DeepSeek 主 Agent 的有效模式：`enabled` / `disabled`，默认 `disabled`。 |
 | `a2a_enabled` | 是否开启 A2A。 |
 | `a2a_app_prop` | A2A app wrapper 比例；A2A off 时为 `0.0`。 |
 | `a2a_policy` | A2A policy；A2A off 时为 `off`。 |
@@ -437,7 +439,7 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
   - 示例模型：`deepseek-flash`
   - 环境变量：`DEEPSEEK_API_KEY`，可选 `DEEPSEEK_API_BASE`
   - runner 默认 endpoint：`https://api.deepseek.com/v1`；直接调用客户端时默认 `https://api.deepseek.com`
-  - 主 Agent CLI：`--thinking enabled|disabled`；runner JSON：`"thinking": "enabled"` 或 `"disabled"`，默认 `disabled`。该参数仅限 `deepseek` / `deepseek-json`，不使用 `--enable-thinking` / `--preserve-thinking`。
+  - 主 Agent CLI：`--thinking enabled|disabled`；runner JSON：`"thinking": "enabled"` 或 `"disabled"`，省略或 `null` 时默认 `disabled`。该参数仅限 `deepseek` / `deepseek-json`，不使用 `--enable-thinking` / `--preserve-thinking`。
   - 客户端每次请求都显式发送 `thinking.type`。开启时，Agent 保留所有 assistant 历史消息中的原始 `reasoning_content`，包括没有工具调用的回复；关闭时，从发送的历史中排除该字段，不修改保存的原始响应，也不伪造缺失的 reasoning。
   - CLI 优先于 JSON。报告记录 `llm_config.thinking` 和 `reasoning_history_policy`，runtime 请求日志记录实际发送的历史。主 Agent 参数不会传给 A2A 专家（DeepSeek 客户端默认关闭思考）。
 
@@ -458,12 +460,17 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
   - 推荐模型：`qwen3.6-flash`；固定复现快照：`qwen3.6-flash-2026-04-16`
   - 环境变量：`QWEN_API_KEY` 或 `DASHSCOPE_API_KEY`，可选 `QWEN_API_BASE` 或 `DASHSCOPE_API_BASE`（前者优先）
   - 默认 endpoint：`https://dashscope.aliyuncs.com/compatible-mode/v1`
+  - 主 Agent 使用 `--enable-thinking true|false` 和 `--preserve-thinking true|false`，runner JSON 字段分别为 `enable_thinking`、`preserve_thinking`。两者省略或 `null` 时均为 `false`，分别控制本轮思考和历史思考回传；`preserve_thinking=true` 必须同时设置 `enable_thinking=true`。
+  - 客户端通过 `extra_body` 顶层发送这两个字段。启用历史保留时，Agent 原样回传 assistant 历史中的 `reasoning_content`；关闭时不回传。主 Agent 的这两个设置不传给 A2A 专家。
+  - 当前采用非流式调用，目标模型需支持相应的思考和历史保留参数；这些开关不代表已适配所有 Qwen 型号。
 
 - vLLM
   - `--provider vllm`
   - 模型名：本地 vLLM 服务暴露的模型名
   - 环境变量：可选 `VLLM_API_KEY`，可选 `VLLM_API_BASE`
   - 默认 endpoint：`http://localhost:8000/v1`
+  - 主 Agent 的 `--enable-thinking true|false` / JSON `enable_thinking` 默认 `false`；省略或 `null` 也显式请求关闭。客户端发送 `chat_template_kwargs.enable_thinking`，是否生效取决于部署的模型和聊天模板。
+  - vLLM 不接受 `--preserve-thinking`，当前不回传历史 `reasoning_content`。直接构造未配置开关的 `VLLMClient` 仍不覆盖服务端默认；这与主 Agent CLI/runner 默认关闭不同。
 
 `deepseek-json` 和 `qwen-json` 是兼容别名；在 FAIRY 里仍然走 function calling，不再走 JSON-only agent。
 
@@ -627,7 +634,9 @@ fairy-run \
 | `--model` | string | `deepseek-chat` | provider 下的模型名。 |
 | `--temperature` | float | `0.1` | 主 Agent 和 A2A 共用的采样温度；没有环境变量回退。OpenAI 当前 reasoning 分支不发送该字段，见下方配置说明。 |
 | `--agent-llm-call-retries` | 非负整数 | 未指定 | 首次失败后的 Agent 重试次数；优先于 `FAIRY_AGENT_LLM_CALL_RETRIES`，环境变量未设置时为 5。`0` 关闭 Agent 重试，不改变 SDK 重试。 |
-| `--enable-thinking` | `true` / `false` | 未指定 | 仅 vLLM：发送 `chat_template_kwargs.enable_thinking`；未指定则继承服务端默认。显式设置且启用 A2A 时，两者 provider 都必须是 vLLM。 |
+| `--thinking` | `enabled` / `disabled` | `disabled`（DeepSeek） | 仅 DeepSeek 主 Agent：显式设置 `thinking.type`；开启时回传 assistant 历史 `reasoning_content`，关闭时排除。 |
+| `--enable-thinking` | `true` / `false` | `false`（Qwen/vLLM 主 Agent） | Qwen 发送顶层 `enable_thinking`；vLLM 发送 `chat_template_kwargs.enable_thinking`。A2A 规则见下方优先级说明。 |
+| `--preserve-thinking` | `true` / `false` | `false`（Qwen） | 仅 Qwen 主 Agent：发送 `preserve_thinking` 并控制历史思考回传；`true` 要求 `--enable-thinking true`。 |
 | `--max-output-tokens` (`--max-tokens`) | int | `2048` | 每次 LLM 调用允许的最大 completion token 数；以 `max_tokens` 传给 provider。 |
 | `--endpoint` | URL | provider 默认 | 覆盖 OpenAI-compatible base URL。会传成 client 的 `base_url`。 |
 | `--parallel-tool-calls` | `true` / `false` | `true` | 是否允许一个 assistant turn 返回多个 native function calls。严格要求每轮只调用一个工具时设为 `false`。 |
@@ -695,7 +704,8 @@ fairy-run \
   --agent \
   --controller farm_baseline_react \
   --provider deepseek \
-  --model deepseek-chat \
+  --model deepseek-flash \
+  --thinking disabled \
   --temperature 0.1 \
   --max-tool-calls 300 \
   --timeout-seconds 1200 \
@@ -711,6 +721,8 @@ fairy-run \
   --controller farm_baseline_react \
   --provider qwen \
   --model qwen3.6-flash-2026-04-16 \
+  --enable-thinking false \
+  --preserve-thinking false \
   --temperature 0.1 \
   --parallel-tool-calls false \
   --output-dir validation_runs/manual/qwen__farm_baseline_react__scenario_full_season_balanced__r1
@@ -725,6 +737,7 @@ fairy-run \
   --controller farm_baseline_react \
   --provider vllm \
   --model Qwen/Qwen3-1.7B \
+  --enable-thinking false \
   --endpoint http://localhost:8000/v1 \
   --output-dir validation_runs/manual/vllm__farm_baseline_react__scenario_full_season_balanced__r1
 ```
@@ -877,7 +890,7 @@ Oracle/replay/evaluate 不是一堆平级文件，而是三步。
 | `controller_id` | agent controller；oracle/replay 模式为 `null`。 |
 | `structured_briefing` | 仅 structured_true 的 Agent 报告存在：组件选择、知识来源/版本、实际 briefing 正文及 hash。 |
 | `provider`, `model`, `temperature` | LLM 配置。 |
-| `llm_config` | 客户端配置：包括 `base_url`、`temperature`、`enable_thinking_override` 和 `sdk_max_retries`；不等同于 API 实际发送了所有字段。 |
+| `llm_config` | 客户端配置：包括 `base_url`、`temperature`、`enable_thinking_override`、`sdk_max_retries`，以及适用时的 DeepSeek `thinking`、Qwen `preserve_thinking`。`reasoning_history_policy` 为 `preserve` 或 `exclude`；不等同于服务端实际思考状态。 |
 | `response_policy` | Agent 实际重试次数 `max_llm_call_retries` 与最多尝试次数 `max_llm_call_attempts`。 |
 | `system_prompt_mode` | agent run 为 `fairy` 或 `are`；oracle/replay 模式为 `null`。 |
 | `status` | `completed`、`stopped` 或 `failed`。 |
@@ -1306,7 +1319,9 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 | `--model`, `--provider`, `--endpoint` | string | `gpt-4o-mini`, `llama-api`, none | LLM 配置。 |
 | `--temperature` | float | `0.1` | 主 Agent 和 A2A 共用的采样温度；没有环境变量回退。OpenAI 当前 reasoning 分支不发送该字段，见下方配置说明。 |
 | `--agent-llm-call-retries` | 非负整数 | 未指定 | 首次失败后的 Agent 重试次数；优先于 `FAIRY_AGENT_LLM_CALL_RETRIES`，环境变量未设置时为 5。`0` 关闭 Agent 重试，不改变 SDK 重试。 |
-| `--enable-thinking` | `true` / `false` | 未指定 | 仅 vLLM：发送 `chat_template_kwargs.enable_thinking`；未指定则继承服务端默认。显式设置且启用 A2A 时，两者 provider 都必须是 vLLM。 |
+| `--thinking` | `enabled` / `disabled` | `disabled`（DeepSeek） | 仅 DeepSeek 主 Agent：显式设置 `thinking.type`；开启时回传 assistant 历史 `reasoning_content`，关闭时排除。 |
+| `--enable-thinking` | `true` / `false` | `false`（Qwen/vLLM 主 Agent） | Qwen 发送顶层 `enable_thinking`；vLLM 发送 `chat_template_kwargs.enable_thinking`。A2A 规则见下方优先级说明。 |
+| `--preserve-thinking` | `true` / `false` | `false`（Qwen） | 仅 Qwen 主 Agent：发送 `preserve_thinking` 并控制历史思考回传；`true` 要求 `--enable-thinking true`。 |
 | `--model-family` | string | 自动推断                             | CSV 里的模型族标签。 |
 | `--cost-cap-dollars` | float | `9999.0`                         | 估算费用上限；达到 80% 时取消剩余 cells。 |
 | `--max-concurrent` | int | `1`                              | 并行 cell 数。 |
@@ -1337,22 +1352,28 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 
 ### 四项 LLM 配置的优先级
 
-runner 的 JSON 字段与 CLI 参数对应，但并非每项都读取环境变量：
+以下四类配置包括 endpoint、temperature、思考模式和 Agent 重试；思考模式按 provider 使用不同字段。runner 的 JSON 字段与 CLI 参数对应，但并非每项都读取环境变量：
 
 | CLI / JSON 字段 | 优先级（从高到低） |
 |---|---|
 | `--endpoint` / `endpoint` | CLI > JSON > 对应 provider 环境变量 > 默认地址 |
 | `--temperature` / `temperature` | CLI > JSON > `0.1`；无环境变量回退 |
-| `--enable-thinking` / `enable_thinking` | CLI > JSON > 不发送覆盖参数，由服务端决定；无环境变量回退 |
+| `--thinking` / `thinking` | DeepSeek 主 Agent：CLI > JSON > `disabled`；无环境变量回退 |
+| `--enable-thinking` / `enable_thinking` | Qwen/vLLM 主 Agent：CLI > JSON > `false`；无环境变量回退 |
+| `--preserve-thinking` / `preserve_thinking` | Qwen 主 Agent：CLI > JSON > `false`；无环境变量回退 |
 | `--agent-llm-call-retries` / `agent_llm_call_retries` | CLI > JSON > `FAIRY_AGENT_LLM_CALL_RETRIES` > `5` |
 
 endpoint 环境变量见上方 provider 列表。runner 读取仓库 `.env`，但不覆盖已有 shell 环境变量。endpoint 是 API 基础地址，不附加 `/chat/completions`；直接访问 OpenAI 官方服务时可以省略。
 
 `temperature` 必须为有限非负数，服务端可能进一步限制取值范围。当前 OpenAI 客户端仅对 `gpt-4o-mini`、`gpt-4o` 发送 temperature；对 `gpt-5`、`gpt-5-mini`、`gpt-5-nano`、`o1`、`o3` 不发送。因此报告中的配置值不能视为这些 reasoning 模型的实际采样温度。
 
-`enable_thinking` 的 JSON 值可以为 `true`、`false`、`null`；`null` 或省略表示不覆盖，`false` 才是显式关闭请求。只有 vLLM 客户端发送该字段，最终是否生效取决于服务端模型和聊天模板；其他 provider 不接受此 CLI 开关。
+`thinking` 的 JSON 值为 `"enabled"`、`"disabled"` 或 `null`；省略或 `null` 最终为 `disabled`，客户端每次都显式发送 `thinking.type`。开启时保留所有 assistant 历史消息中的原始 `reasoning_content`，关闭时从发送的历史中排除，不伪造缺失内容。此字段仅适用于 DeepSeek。
 
-`agent_llm_call_retries` 为非负整数；`null` 或省略表示读取环境变量，`0` 表示关闭 Agent 层重试，`3` 表示首次请求后最多再试 3 次。主 Agent 和 A2A 共用 temperature、thinking 覆盖和重试次数；A2A 可以通过 `--a2a-endpoint` 独立设置地址。SDK HTTP 重试和重试等待时间不受次数配置影响；等待时间仍由 `FAIRY_AGENT_LLM_RETRY_SLEEP_S`（默认 0 秒）和 `FAIRY_AGENT_RATE_LIMIT_SLEEP_S`（默认 30 秒）控制。
+Qwen/vLLM 主 Agent 的 `enable_thinking` 接受 JSON `true`、`false`、`null`，省略或 `null` 最终为 `false`。Qwen 还支持 `preserve_thinking`，同样默认 `false`；开启历史保留必须同时开启思考。Qwen 将两者作为顶层扩展字段发送，vLLM 仅发送 `chat_template_kwargs.enable_thinking`。vLLM 的历史思考仍排除；其他 provider 不接受这两个开关。
+
+这些默认值适用于主 Agent CLI/runner。直接构造 `QwenClient` 或 `VLLMClient` 且不配置相应开关时，客户端仍省略覆盖字段、继承服务端行为。主 Agent 的请求值不能保证服务端模型或聊天模板一定支持对应功能。
+
+`agent_llm_call_retries` 为非负整数；`null` 或省略表示读取环境变量，`0` 表示关闭 Agent 层重试，`3` 表示首次请求后最多再试 3 次。主 Agent 和 A2A 共用 temperature 和重试次数；A2A 可以通过 `--a2a-endpoint` 独立设置地址。DeepSeek 的 `thinking` 与 Qwen 的两个思考设置不传给 A2A 专家。启用 A2A 且为 vLLM 显式设置 `--enable-thinking` 时，仍要求主 Agent 和专家均为 vLLM，并沿用共享覆盖值；省略时主 Agent 的默认 `false` 不传给专家。SDK HTTP 重试和重试等待时间不受次数配置影响；等待时间仍由 `FAIRY_AGENT_LLM_RETRY_SLEEP_S`（默认 0 秒）和 `FAIRY_AGENT_RATE_LIMIT_SLEEP_S`（默认 30 秒）控制。
 
 例如，将以下内容保存为 `validation_runs/llm_config.json`，并把 `your-served-model` 换成实际 vLLM 部署名称：
 
@@ -1380,7 +1401,7 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --agent-llm-call-retries 0
 ```
 
-此命令覆盖 JSON 中的温度和重试次数；endpoint 仍来自 JSON，thinking 继承服务端默认。`results.csv` 记录配置覆盖值；实际重试次数见 `run_report.json` 的 `response_policy.max_llm_call_retries`，OpenAI 实际端点见 `llm_config.base_url`。
+此命令覆盖 JSON 中的温度和重试次数；endpoint 仍来自 JSON，`enable_thinking: null` 在 vLLM 主 Agent 中解析为 `false`，显式请求关闭思考。`results.csv` 记录主 Agent 的有效思考配置；实际重试次数见 `run_report.json` 的 `response_policy.max_llm_call_retries`，客户端实际端点见 `llm_config.base_url`。
 
 ## 汇总 run_report：`summarize_runs.py`
 

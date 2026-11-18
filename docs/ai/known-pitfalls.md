@@ -79,22 +79,28 @@
   `response_policy`; `llm_call_start` also records the client configuration.
   These fields use an allowlist, not client `params` or credentials.
   Changing FAIRY does not impose this cap on the separate ARE runtime.
-- VLLM thinking overrides are tri-state: runner/CLI `--enable-thinking` and
-  JSON `enable_thinking` reach the client constructor. Omitted/blank
-  means no override; recognized true/false values are parsed strictly;
-  invalid values fail configuration instead of silently disabling thinking.
-  The thinking environment-variable entry point was removed on 2026-10-18.
-  An unset `enable_thinking_override` means the client sends no override;
-  it does not establish the server's thinking mode. QwenClient retains its
-  request behavior without adding a
-  thinking parameter; the extra constructor rejection introduced during
-  cleanup was removed. Excluding independent reasoning from prompts and
-  logs does not require a thinking request parameter or a provider change.
-- `tests/test_llm_runtime.py` covers exclusion of SDK reasoning from logs
-  and subsequent requests, rejected-response
-  retries and failed CLI reports with fake responses, including unchanged
-  requests and billing of discarded attempts. These checks do not call a
-  model or establish generation quality.
+- Main-agent thinking defaults are explicit and provider-specific:
+  DeepSeek uses `--thinking enabled|disabled` / JSON `thinking`, defaulting to
+  `disabled`; Qwen uses `--enable-thinking` and `--preserve-thinking`, both
+  defaulting to `false`; vLLM uses `--enable-thinking`, defaulting to `false`.
+  JSON `null` or omission resolves to those defaults. Qwen
+  `preserve_thinking=true` requires `enable_thinking=true`. DeepSeek does not
+  accept the Qwen/vLLM flags, and vLLM does not accept `preserve_thinking`.
+  All these settings use CLI > JSON > default, without environment fallback.
+  DeepSeek sends `thinking.type`; Qwen sends top-level `enable_thinking` and
+  `preserve_thinking`; vLLM sends `chat_template_kwargs.enable_thinking`.
+  Direct `QwenClient` / `VLLMClient` construction with no overrides still
+  omits these fields, unlike the main CLI/runner. DeepSeek clients default to
+  explicit `disabled` even when constructed directly.
+  DeepSeek `thinking` and Qwen's two controls are main-agent-only and are not
+  passed to A2A experts. vLLM retains the existing explicit-override rule:
+  with A2A enabled, both providers must be vLLM. Omitting the override gives
+  the main agent `false` while leaving the experts' client/server defaults.
+- `tests/test_deepseek_thinking.py` and `tests/test_tool_relations_cli.py`
+  cover provider-specific configuration and history replay, including real
+  SDK serialization through a mocked HTTP transport. `tests/test_error_contract.py`
+  covers rejected-response retries, failed reports and billing of discarded
+  attempts. These checks do not call a model or establish generation quality.
   Tests invoking workflow evaluation should change cwd to `tmp_path` because
   evaluation writes `workflow_exports/` relative to cwd; CLI tests also need
   that isolation because CLI cleanup removes its export directories.
@@ -119,17 +125,27 @@
   request still needs its own client request timeout.
   `llm_turn_count`/controller telemetry count accepted turns; runtime metrics
   count all completed response attempts, including rejected ones.
-- As of 2026-10-18, independent `reasoning` / `reasoning_content` text is
-  excluded from new logs. `llm_call_end` retains full `usage`, `finish_reason`
-  and content/tool summaries, but no complete SDK response dump that could
-  reintroduce reasoning. A2A message exports remove the two fields from a
-  serialized copy, preserving in-memory messages. `rationale` remains a
-  copy of content; content itself is not rewritten. Token counts (including
-  reasoning-token counts when supplied in usage) remain numeric diagnostics.
-  `_llm_compatible_messages` continues to exclude independent reasoning from
-  subsequent requests. Existing historical logs are not rewritten.
-  `llm_call_start.enable_thinking_override=null` means no client override;
-  it does not prove whether the server enabled thinking.
+- Reasoning-history replay is enabled only for DeepSeek with
+  `thinking=enabled`, or Qwen with `preserve_thinking=true`. In those cases,
+  `_llm_compatible_messages` preserves the original `reasoning_content` from
+  every assistant history message, including replies without tool calls and
+  empty strings. It does not fabricate missing fields or alter stored
+  responses. Other roles and providers retain the existing field filter;
+  in particular, vLLM's thinking switch does not enable reasoning replay.
+  The current DeepSeek filter also preserves reasoning when no tools are
+  supplied; its API ignores that history field in non-tool requests.
+  `llm_config.reasoning_history_policy` and `llm_call_start` record `preserve`
+  or `exclude`. Because `llm_call_start.messages` records the outgoing history,
+  it contains replayed reasoning when preservation is enabled; do not assume
+  all logs exclude thinking text. `llm_call_end` still records `usage`,
+  `finish_reason` and content/tool summaries without a separate reasoning
+  field. Its `rationale` is a copy of content, not `reasoning_content`.
+  Existing historical logs are not rewritten.
+  `llm_config.thinking` records the DeepSeek mode;
+  `enable_thinking_override` records the Qwen/vLLM client override, and
+  `preserve_thinking` records Qwen's replay setting. A null override in a
+  direct/shared client is not proof of the server's thinking mode; main
+  Qwen/vLLM runs now resolve omitted values to explicit `false`.
 - `management_regime.fertilizer_used_kg` is incremented when fertilizer
   is loaded from farm inventory, so it can differ from actual field use.
   For the 2026-10-17 false run, `load_fertilizer(2600)` loaded the 500 kg
@@ -152,12 +168,14 @@
   Use `FAIRY_LLM_REQUEST_TIMEOUT_S` or a client `timeout` config to bound a
   single OpenAI-compatible HTTP request so the failure is logged and retried or
   surfaced.
-- As of 2026-10-17, `VLLMClient` leaves thinking to the server/template
-  default; it no longer automatically sends `enable_thinking=false` for Qwen
-  model names. Only an explicit `enable_thinking` constructor value adds
-  `chat_template_kwargs.enable_thinking` to the request; environment variables
-  do not control this setting. This changes model
-  generation behavior; record the setting when comparing old and new runs.
+- `VLLMClient` itself adds `chat_template_kwargs.enable_thinking` only
+  for an explicit constructor value; model names and environment variables
+  do not choose the mode. The current CLI/runner supplies `false` for the main
+  agent when `--enable-thinking` is omitted or JSON is `null`. Therefore old
+  runs that relied on the server default need an explicit `true` to retain
+  thinking when rerun through the main CLI. Direct unconfigured clients and
+  A2A experts without an explicit override still inherit server/template
+  behavior. Record the effective setting when comparing runs.
   A short output budget can be exhausted in reasoning before content/tool
   calls appear; inspect `finish_reason` and token usage.
   Legacy runtime logs retain content/tool calls and four usage counters, but
@@ -265,10 +283,13 @@
   scenario through the same parameter path as the original CLI run.
 
 - LLM configuration precedence is not uniformly CLI > JSON > environment:
-  `temperature` is CLI > JSON > 0.1, and `enable_thinking` is CLI > JSON >
-  no client override. Neither has an environment fallback. The current OpenAI
-  reasoning branch omits temperature; report values describe configuration,
-  not necessarily transmitted sampling parameters.
+  `temperature` is CLI > JSON > 0.1. Main-agent thinking controls use CLI >
+  JSON > provider defaults: DeepSeek `thinking=disabled`, Qwen/vLLM
+  `enable_thinking=false`, and Qwen `preserve_thinking=false`. None of these
+  controls has an environment fallback. The current OpenAI reasoning branch
+  omits temperature; report values describe configuration, not necessarily
+  transmitted sampling parameters. Batch CSV thinking fields record the
+  applicable effective main-agent values, including the vLLM default `false`.
   OpenAI endpoint overrides now reach the SDK: CLI > JSON > `OPENAI_BASE_URL`
   > official URL. Use `llm_config.base_url` to inspect the resolved URL, and
   `response_policy.max_llm_call_retries` for effective agent retries. The batch

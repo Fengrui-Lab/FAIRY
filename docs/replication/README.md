@@ -65,7 +65,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --scenarios scenario_full_season_hb_base_hn84_std_normal \
   --repeats 1 \
   --provider deepseek \
-  --model deepseek-chat \
+  --model deepseek-flash \
+  --thinking disabled \
   --model-family DeepSeek \
   --detail true \
   --a2a false \
@@ -78,6 +79,14 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --progress-interval-s 60 \
   --cost-cap-dollars 9999
 ```
+
+`--thinking enabled|disabled` (JSON `thinking`) is exclusive to the DeepSeek
+main agent, including the `deepseek-json` alias. Omission or JSON `null`
+resolves to `disabled`; the client sends `thinking.type` explicitly on every
+request. With `enabled`, all historical assistant `reasoning_content` fields
+are sent unchanged, including replies without tool calls. With `disabled`,
+they are excluded from outgoing history while stored responses remain intact.
+This is an example smoke command, not a new live verification of `deepseek-flash`.
 
 ### Qwen Cloud
 
@@ -100,6 +109,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --repeats 1 \
   --provider qwen \
   --model qwen3.6-flash-2026-04-16 \
+  --enable-thinking true \
+  --preserve-thinking false \
   --model-family Qwen \
   --a2a false \
   --system-prompt-mode fairy \
@@ -112,13 +123,23 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
   --cost-cap-dollars 9999
 ```
 
-This path was verified with the rolling `qwen3.6-flash` alias: the physics
-smoke completed all 14 oracle tool steps with no LLM, tool, or parallel-call
-errors. The short scenario reduces the number of tool turns, but keeps the same
-`2048` output-token, `200` iteration, and `3600` second limits used for L3 runs.
-Qwen3.6 Flash returned `reasoning_content`, so this configuration uses the
-provider's default thinking mode; FAIRY does not currently override
-`enable_thinking`.
+The historical `qwen3.6-flash` physics smoke completed all 14 oracle tool
+steps with no LLM, tool, or parallel-call errors. That run used the provider's
+default thinking mode and returned `reasoning_content`; FAIRY did not yet send
+a thinking override. The example above now requests thinking explicitly and
+keeps reasoning-history replay off to match those historical settings. The
+current configuration path has been checked offline, not rerun against the
+cloud API. The short scenario keeps the same `2048` output-token, `200`
+iteration, and `3600` second limits used for L3 runs.
+
+The Qwen main agent now defaults to `--enable-thinking false` and
+`--preserve-thinking false`; omission or JSON `null` resolves to `false` for
+both. To replay historical assistant `reasoning_content`, set both options to
+`true`. `preserve_thinking=true` requires `enable_thinking=true`. The
+`preserve_thinking` option is Qwen-only; DeepSeek uses the separate `thinking`
+setting to control both generation and history replay. Qwen and vLLM clients
+still use non-streaming responses, so the selected model/server must support
+the requested mode without streaming.
 
 The batch runner accepts `--temperature` / JSON `temperature` (default `0.1`)
 and `--agent-llm-call-retries` / JSON `agent_llm_call_retries` for both main
@@ -132,13 +153,34 @@ from requests even when it is recorded in the configuration.
 Endpoint precedence is CLI > JSON > provider environment > default URL,
 including `--provider openai`: `OPENAI_BASE_URL` is its environment fallback,
 and `https://api.openai.com/v1` is its default. The actual OpenAI client URL is
-recorded in `llm_config.base_url`. `enable_thinking` has no environment fallback;
-only `--provider vllm` accepts an explicit `--enable-thinking true|false`.
-Omission or JSON null inherits server/template behavior. With A2A enabled,
-an explicit override requires both providers to be vLLM.
+recorded in `llm_config.base_url`. Main-agent thinking settings use
+CLI > JSON > the defaults below, with no environment fallback:
+
+| Provider | CLI / JSON | Main-agent default | API field |
+|---|---|---|---|
+| DeepSeek (`deepseek-json` alias) | `--thinking` / `thinking` | `disabled` | `thinking.type` |
+| Qwen (`qwen-json` alias) | `--enable-thinking` / `enable_thinking` | `false` | top-level `enable_thinking` |
+| Qwen (`qwen-json` alias) | `--preserve-thinking` / `preserve_thinking` | `false` | top-level `preserve_thinking` |
+| vLLM | `--enable-thinking` / `enable_thinking` | `false` | `chat_template_kwargs.enable_thinking` |
+
+Omission or JSON `null` uses these defaults; it does not restore the server
+thinking default for the main agent. The vLLM setting depends on the deployed
+model/chat template and does not enable reasoning-history replay. Direct
+`QwenClient` / `VLLMClient` construction without overrides still omits their
+thinking fields; this differs from the main CLI/runner defaults.
+
+DeepSeek `thinking` and Qwen's two settings are not forwarded to A2A experts.
+The existing vLLM rule remains: an explicit `--enable-thinking` override with
+A2A requires both main and expert providers to be vLLM. An omitted vLLM
+main-agent override becomes `false` only for the main agent; experts keep their
+client/server defaults. Temperature and Agent retry overrides remain shared.
 
 See the [four-setting reference and JSON example](../../README.md#precedence-for-the-four-llm-settings)
-for exact priorities and shared A2A behavior.
+for exact priorities and provider-specific thinking controls. Reports record
+`llm_config.thinking` (DeepSeek), `enable_thinking_override` (Qwen/vLLM),
+`preserve_thinking` (Qwen), and `reasoning_history_policy`; request logs contain
+the actual outgoing history. Batch CSV rows record the applicable main-agent
+`thinking`, `enable_thinking`, and `preserve_thinking` values.
 
 `--parallel-tool-calls false` requests one tool call per model turn, adds that
 rule to the system message, and keeps only the first call if a provider still
@@ -410,8 +452,8 @@ test before publishing the new scenario or API.
 ## Reproducibility checklist
 
 - Record commit hash, scenario manifest, provider/model, controller, seed/repeat,
-  detail mode, system prompt mode, parallel-tool setting, token/iteration/time
-  limits, and A2A settings.
+  detail mode, system prompt mode, parallel-tool setting, thinking mode and
+  reasoning-history policy, token/iteration/time limits, and A2A settings.
 - Build oracle baselines and replay with the same code revision as the agent run.
 - Preserve original run directories; retry failures into a separate directory.
 - Report failed/time-out cells separately and aggregate only verified replay rows.
