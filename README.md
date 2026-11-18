@@ -434,9 +434,12 @@ Supported providers:
 
 - DeepSeek
   - `--provider deepseek`
-  - Common model: `deepseek-chat`
+  - Example model: `deepseek-flash`
   - Environment variables: `DEEPSEEK_API_KEY`, optional `DEEPSEEK_API_BASE`
   - Runner default endpoint: `https://api.deepseek.com/v1`; direct client default: `https://api.deepseek.com`
+  - Main-agent CLI: `--thinking enabled|disabled`; runner JSON: `"thinking": "enabled"` or `"disabled"`. Default: `disabled`. This setting is exclusive to `deepseek` / `deepseek-json`; use it instead of `--enable-thinking` / `--preserve-thinking`.
+  - The client sends `thinking.type` on every request. When enabled, the Agent preserves original `reasoning_content` from all assistant history messages, including replies without tool calls. When disabled, it excludes that field from outgoing history without altering stored responses. Missing reasoning is never fabricated.
+  - CLI overrides JSON. Reports record `llm_config.thinking` and `reasoning_history_policy`; runtime request logs contain the actual outgoing history. The main-agent setting is not forwarded to A2A experts (DeepSeek clients default to disabled).
 
 - OpenAI
   - `--provider openai`

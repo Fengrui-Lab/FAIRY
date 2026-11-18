@@ -434,9 +434,12 @@ FAIRY 的 agent 路径使用 OpenAI-compatible chat completions + function calli
 
 - DeepSeek
   - `--provider deepseek`
-  - 常用模型：`deepseek-chat`
+  - 示例模型：`deepseek-flash`
   - 环境变量：`DEEPSEEK_API_KEY`，可选 `DEEPSEEK_API_BASE`
   - runner 默认 endpoint：`https://api.deepseek.com/v1`；直接调用客户端时默认 `https://api.deepseek.com`
+  - 主 Agent CLI：`--thinking enabled|disabled`；runner JSON：`"thinking": "enabled"` 或 `"disabled"`，默认 `disabled`。该参数仅限 `deepseek` / `deepseek-json`，不使用 `--enable-thinking` / `--preserve-thinking`。
+  - 客户端每次请求都显式发送 `thinking.type`。开启时，Agent 保留所有 assistant 历史消息中的原始 `reasoning_content`，包括没有工具调用的回复；关闭时，从发送的历史中排除该字段，不修改保存的原始响应，也不伪造缺失的 reasoning。
+  - CLI 优先于 JSON。报告记录 `llm_config.thinking` 和 `reasoning_history_policy`，runtime 请求日志记录实际发送的历史。主 Agent 参数不会传给 A2A 专家（DeepSeek 客户端默认关闭思考）。
 
 - OpenAI
   - `--provider openai`

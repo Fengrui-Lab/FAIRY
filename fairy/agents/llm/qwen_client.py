@@ -4,7 +4,7 @@ import os
 
 from openai import OpenAI
 
-from fairy.agents.llm.base_llm import BaseLLM
+from fairy.agents.llm.base_llm import BaseLLM, _coerce_optional_bool
 
 QWEN_API_BASE = os.getenv(
     "QWEN_API_BASE",
@@ -18,7 +18,16 @@ class QwenClient(BaseLLM):
     def __init__(self, model, temperature=0.1, api_key=None, **kwargs):
         super().__init__(model, temperature, **kwargs)
         self.provider = "qwen"
-        self.enable_thinking = None
+        # Main-agent entry points supply explicit defaults. Unconfigured shared
+        # clients (including A2A) retain their existing server-default behavior.
+        self.enable_thinking = _coerce_optional_bool(
+            kwargs.get("enable_thinking"), "enable_thinking"
+        )
+        self.preserve_thinking = _coerce_optional_bool(
+            kwargs.get("preserve_thinking"), "preserve_thinking"
+        )
+        if self.preserve_thinking and self.enable_thinking is not True:
+            raise ValueError("preserve_thinking=true requires enable_thinking=true")
         self.api_key = api_key or os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
         self.base_url = kwargs.get("base_url") or QWEN_API_BASE
         self.api_client = OpenAI(
@@ -28,6 +37,12 @@ class QwenClient(BaseLLM):
         )
 
     def chat_completion(self, messages, tools=None):
+        thinking_options = {
+            name: value for name, value in (
+                ("enable_thinking", self.enable_thinking),
+                ("preserve_thinking", self.preserve_thinking),
+            ) if value is not None
+        }
         return self.api_client.chat.completions.create(
             model=self.model,
             messages=messages,
@@ -35,6 +50,7 @@ class QwenClient(BaseLLM):
             temperature=self.temperature,
             **self.output_token_options(),
             **self.tool_call_options(tools),
+            **({"extra_body": thinking_options} if thinking_options else {}),
         )
 
     def to_dict(self):
@@ -45,4 +61,8 @@ class QwenClient(BaseLLM):
             "base_url": self.base_url,
             "parallel_tool_calls": self.parallel_tool_calls,
             "max_output_tokens": self.max_output_tokens,
+            **({"enable_thinking": self.enable_thinking}
+               if self.enable_thinking is not None else {}),
+            **({"preserve_thinking": self.preserve_thinking}
+               if self.preserve_thinking is not None else {}),
         }

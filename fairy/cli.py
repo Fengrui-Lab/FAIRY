@@ -150,11 +150,22 @@ def main() -> None:
     )
     parser.add_argument("--temperature", type=float, default=0.1, help="LLM temperature for --agent")
     parser.add_argument(
+        "--thinking", choices=("enabled", "disabled"), default=None,
+        help="DeepSeek main agent only: thinking and historical reasoning_content replay (default: disabled)",
+    )
+    parser.add_argument(
         "--enable-thinking",
         type=_str_to_bool,
         default=None,
         metavar="{true,false}",
-        help="Override thinking for vLLM main/A2A clients; omit to inherit the server default",
+        help="Thinking for the Qwen/vLLM main agent (default: false); explicit vLLM overrides also apply to vLLM A2A clients",
+    )
+    parser.add_argument(
+        "--preserve-thinking",
+        type=_str_to_bool,
+        default=None,
+        metavar="{true,false}",
+        help="Qwen main agent only: resend historical reasoning_content (default: false); true requires --enable-thinking true",
     )
     parser.add_argument(
         "--max-output-tokens",
@@ -208,9 +219,24 @@ def main() -> None:
         parser.error("--agent-llm-call-retries must be a nonnegative integer")
     if args.max_output_tokens <= 0:
         parser.error("--max-output-tokens must be a positive integer")
-    if args.enable_thinking is not None:
+    qwen_main = args.provider.lower() in {"qwen", "qwen-json"}
+    deepseek_main = args.provider.lower() in {"deepseek", "deepseek-json"}
+    if deepseek_main:
+        args.thinking = "disabled" if args.thinking is None else args.thinking
+    elif args.thinking is not None:
+        parser.error("--thinking requires --provider deepseek or deepseek-json")
+    if args.preserve_thinking is not None and not qwen_main:
+        parser.error("--preserve-thinking requires --provider qwen or qwen-json")
+    if qwen_main:
+        # Resolve the Qwen main defaults; keep the raw vLLM override optional
+        # so omission still preserves A2A's server-default behavior.
+        args.enable_thinking = False if args.enable_thinking is None else args.enable_thinking
+        args.preserve_thinking = False if args.preserve_thinking is None else args.preserve_thinking
+        if args.preserve_thinking and not args.enable_thinking:
+            parser.error("--preserve-thinking true requires --enable-thinking true")
+    elif args.enable_thinking is not None:
         if args.provider.lower() != "vllm":
-            parser.error("--enable-thinking currently requires --provider vllm")
+            parser.error("--enable-thinking requires --provider vllm, qwen or qwen-json")
         if args.a2a and (args.a2a_provider or args.provider).lower() != "vllm":
             parser.error("--enable-thinking also requires a vllm A2A provider when A2A is enabled")
     if not args.scenario:
@@ -307,6 +333,10 @@ def main() -> None:
         progress_log_path = output_dir / f"{args.scenario}.progress.jsonl"
         if progress_log_path.exists():
             progress_log_path.unlink()
+        # A default for the main agent must not become an explicit A2A override.
+        main_enable_thinking = args.enable_thinking
+        if args.provider.lower() == "vllm" and main_enable_thinking is None:
+            main_enable_thinking = False
         llm = BaseLLM.llm_builder(
             {
                 "provider": args.provider,
@@ -314,7 +344,9 @@ def main() -> None:
                 "temperature": args.temperature,
                 "max_output_tokens": args.max_output_tokens,
                 "parallel_tool_calls": args.parallel_tool_calls,
-                **({"enable_thinking": args.enable_thinking} if args.enable_thinking is not None else {}),
+                **({"thinking": args.thinking} if deepseek_main else {}),
+                **({"enable_thinking": main_enable_thinking} if main_enable_thinking is not None else {}),
+                **({"preserve_thinking": args.preserve_thinking} if qwen_main else {}),
                 **({"base_url": args.endpoint} if args.endpoint else {}),
             }
         )
@@ -333,7 +365,8 @@ def main() -> None:
                         "temperature": args.temperature,
                         "max_output_tokens": args.max_output_tokens,
                         "parallel_tool_calls": args.parallel_tool_calls,
-                        **({"enable_thinking": args.enable_thinking} if args.enable_thinking is not None else {}),
+                        **({"enable_thinking": args.enable_thinking}
+                           if not qwen_main and args.enable_thinking is not None else {}),
                         **({"base_url": app_endpoint} if app_endpoint else {}),
                     }
                 )

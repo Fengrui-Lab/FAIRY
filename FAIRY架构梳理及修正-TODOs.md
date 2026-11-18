@@ -12,7 +12,7 @@
 9. ✅ 时间推进工具的删减与整合（推进时间的工具advance_time、wait_for_notification、commit_daily_physics功能重叠，仅保留advance_time；有一个需要记录的连带反应，即“时间戳重建”，因为commit_daily_physics不会被Engine计入时间增量，已经完成了140个场景的oracle完整运行，未发现异常）
 10. (由于是内容层面的修正，将会与之前的FAIRY产生差异；已经有方案和相应内容准备，实施待定) 重新校准所有工具doc的内容（新版本位于[Fixes-Tools-Doc-Schema](Fixes-Tools-Doc-Schema)中的一系列以脚本文件为单位的md中）并测试，同时与老版本对比
 11. (由于是内容层面的修正，将会与之前的FAIRY产生差异；已经有方案和相应内容准备，实施待定) 重新校准所有工具error的内容（修改建议位于[Fixes-Error-Contract](Fixes-Error-Contract)中的一系列以脚本文件为单位的md中）并测试，同时与老版本对比
-12. <span style="background-color:#FF5722; color:white;">TODO</span>: 校准支持的LLM的参数配置，补充常用参数的支持，处理了：（1）修正了deepseek API的支持；（2）修正了qwen API的支持；（3）修正了openai API的支持
+12. ✅ LLM的"thinking大类"的参数配置，补充代码实现，（流式调用与非流式调用未纳入考虑范畴，仅遵循当前的FAIRY的解析操作的非流式版本），处理了：（1）补充了deepseek API的[thinking支持](https://api-docs.deepseek.com/guides/thinking_mode#tool-calls)**（测试通过）**；（2）补充了qwen API的[enable_thinking, preserve_thinking支持](https://www.alibabacloud.com/help/en/model-studio/deep-thinking)**（测试通过）**；（3）补充了本地vLLM（截止261118）已有系列Qwen模型的的enable_thinking支持**（测试通过）**；（4）补充了OpenAI API的 **（未测试）**
 13. <span style="background-color:#FF5722; color:white;">TODO</span>: Library：Current static-knowledge-construction--static-retrival method fixes.
 14. <span style="background-color:#FF5722; color:white;">TODO</span>: Library：（1）什么样的知识库结构适合FAIRY？（2）什么样的存储和检索模式适合FAIRY？（3）如何补充当前的静态的知识载入？（4）如何实现动态的知识载入？谁是触发知识检索的主体？
 15. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Engine & Yield (recovered) 演进和计算模式的校准

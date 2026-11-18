@@ -108,6 +108,8 @@ class BaseLLM:
             BaseLLM: An instance of the appropriate client subclass.
         """
         provider = cfg.get("provider", "openai").lower()
+        if cfg.get("thinking") is not None and provider not in {"deepseek", "deepseek-json"}:
+            raise ValueError("thinking is only supported by the DeepSeek provider")
         model = cfg.get("model", "gpt-4o-mini")
         temperature = cfg.get("temperature", 0.1)
         # Gather any additional parameters.

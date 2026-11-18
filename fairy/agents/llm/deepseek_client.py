@@ -21,6 +21,11 @@ class DeepSeekClient(BaseLLM):
         """
         super().__init__(model, temperature, **kwargs)
         self.provider = "deepseek"
+        self.thinking = kwargs.get("thinking")
+        if self.thinking is None:
+            self.thinking = "disabled"
+        if self.thinking not in ("enabled", "disabled"):
+            raise ValueError("thinking must be 'enabled' or 'disabled'")
         self.api_key = api_key or DEEPSEEK_API_KEY
         self.model = model
         self.base_url = kwargs.get("base_url") or DEEPSEEK_API_BASE
@@ -50,6 +55,7 @@ class DeepSeekClient(BaseLLM):
             temperature=self.temperature,
             **self.output_token_options(),
             **self.tool_call_options(tools),
+            extra_body={"thinking": {"type": self.thinking}},
         )
 
         return response
@@ -61,4 +67,5 @@ class DeepSeekClient(BaseLLM):
             'temperature': self.temperature,
             'parallel_tool_calls': self.parallel_tool_calls,
             'max_output_tokens': self.max_output_tokens,
+            'thinking': self.thinking,
         }

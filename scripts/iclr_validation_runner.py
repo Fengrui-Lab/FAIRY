@@ -105,6 +105,8 @@ RUNNER_DEFAULTS = {
     "system_prompt_mode": "fairy",
     "tool_relations": "on",
     "enable_thinking": None,
+    "preserve_thinking": None,
+    "thinking": None,
     "scenario_kwargs": None,
     "init_kwargs": None,
     "detail": None,
@@ -123,6 +125,11 @@ class CellSpec:
     family: str
     scenario: str
     repeat: int
+
+
+def _effective_main_thinking(provider: str, override: bool | None) -> bool | None:
+    # Keep the raw override for child/A2A routing; report the main CLI default.
+    return False if provider.lower() == "vllm" and override is None else override
 
 
 def _build_cell_command(
@@ -152,6 +159,8 @@ def _build_cell_command(
     enable_thinking: bool | None = None,
     temperature: float = 0.1,
     agent_llm_call_retries: int | None = None,
+    preserve_thinking: bool | None = None,
+    thinking: str | None = None,
 ) -> list[str]:
     cmd = [
         PYTHON_BIN,
@@ -189,6 +198,10 @@ def _build_cell_command(
         cmd.extend(["--endpoint", endpoint])
     if enable_thinking is not None:
         cmd.extend(["--enable-thinking", "true" if enable_thinking else "false"])
+    if preserve_thinking is not None:
+        cmd.extend(["--preserve-thinking", "true" if preserve_thinking else "false"])
+    if thinking is not None:
+        cmd.extend(["--thinking", thinking])
     if a2a_enabled:
         cmd.extend(["--a2a", "true"])
         cmd.extend(["--a2a-app-prop", str(a2a_app_prop)])
@@ -537,7 +550,7 @@ def _load_runner_config(config_path: Path | None) -> dict:
             config[field_name] = _serialize_json_arg(config[field_name], field_name)
     if "detail" in config:
         config["detail"] = _normalize_detail_arg(config["detail"])
-    for field_name in ("a2a", "parallel_tool_calls", "enable_thinking"):
+    for field_name in ("a2a", "parallel_tool_calls", "enable_thinking", "preserve_thinking"):
         if field_name in config:
             config[field_name] = _str_to_bool(config[field_name])
     return config
@@ -804,11 +817,23 @@ def _build_arg_parser(defaults: dict) -> argparse.ArgumentParser:
         help="Include Relation sections in main and A2A agent tool schemas (default: on).",
     )
     parser.add_argument(
+        "--thinking", choices=("enabled", "disabled"),
+        default=defaults.get("thinking"),
+        help="DeepSeek main agent only: thinking and historical reasoning_content replay (default: disabled).",
+    )
+    parser.add_argument(
         "--enable-thinking",
         type=_str_to_bool,
         metavar="{true,false}",
         default=defaults.get("enable_thinking"),
-        help="Override the vLLM thinking setting; omit to inherit the server default.",
+        help="Thinking for the Qwen/vLLM main agent (default: false); explicit vLLM overrides also apply to vLLM A2A clients.",
+    )
+    parser.add_argument(
+        "--preserve-thinking",
+        type=_str_to_bool,
+        metavar="{true,false}",
+        default=defaults.get("preserve_thinking"),
+        help="Qwen main agent only: resend historical reasoning_content (default: false); true requires --enable-thinking true.",
     )
     parser.add_argument(
         "--scenario-kwargs",
@@ -885,6 +910,21 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         parser.error("--system-prompt-mode must be one of: fairy, are")
     if args.tool_relations not in ("on", "off"):
         parser.error("--tool-relations must be one of: on, off")
+    if args.thinking is not None and args.thinking not in ("enabled", "disabled"):
+        parser.error("--thinking must be enabled or disabled")
+    if args.provider.lower() in {"deepseek", "deepseek-json"}:
+        args.thinking = "disabled" if args.thinking is None else args.thinking
+        if args.enable_thinking is not None:
+            parser.error("DeepSeek uses --thinking enabled/disabled, not --enable-thinking")
+    elif args.thinking is not None:
+        parser.error("--thinking requires --provider deepseek or deepseek-json")
+    if args.provider.lower() in {"qwen", "qwen-json"}:
+        args.enable_thinking = False if args.enable_thinking is None else args.enable_thinking
+        args.preserve_thinking = False if args.preserve_thinking is None else args.preserve_thinking
+        if args.preserve_thinking and not args.enable_thinking:
+            parser.error("--preserve-thinking true requires --enable-thinking true")
+    elif args.preserve_thinking is not None:
+        parser.error("--preserve-thinking requires --provider qwen or qwen-json")
     return args
 
 
@@ -918,8 +958,12 @@ def run_cell(
     enable_thinking: bool | None = None,
     temperature: float = 0.1,
     agent_llm_call_retries: int | None = None,
+    preserve_thinking: bool | None = None,
+    thinking: str | None = None,
 ) -> dict:
     """Run one cell as a subprocess; capture output and parse FOS / workflow."""
+    if provider.lower() in {"deepseek", "deepseek-json"} and thinking is None:
+        thinking = "disabled"
     cell_dir = output_root / f"{cell.family}__{cell.scenario}__r{cell.repeat}"
     cell_dir.mkdir(parents=True, exist_ok=True)
 
@@ -946,7 +990,9 @@ def run_cell(
             "a2a_enabled": a2a_enabled,
             "system_prompt_mode": system_prompt_mode,
             "tool_relations": tool_relations,
-            "enable_thinking": enable_thinking,
+            "enable_thinking": _effective_main_thinking(provider, enable_thinking),
+            **({"preserve_thinking": preserve_thinking} if preserve_thinking is not None else {}),
+            **({"thinking": thinking} if thinking is not None else {}),
             "temperature": temperature,
             "agent_llm_call_retries": agent_llm_call_retries,
             "max_output_tokens": max_output_tokens,
@@ -981,6 +1027,8 @@ def run_cell(
         system_prompt_mode=system_prompt_mode,
         tool_relations=tool_relations,
         enable_thinking=enable_thinking,
+        preserve_thinking=preserve_thinking,
+        thinking=thinking,
         temperature=temperature,
         agent_llm_call_retries=agent_llm_call_retries,
         a2a_enabled=a2a_enabled,
@@ -1108,7 +1156,9 @@ def run_cell(
         "parallel_tool_calls": parallel_tool_calls,
         "system_prompt_mode": system_prompt_mode,
         "tool_relations": tool_relations,
-        "enable_thinking": enable_thinking,
+        "enable_thinking": _effective_main_thinking(provider, enable_thinking),
+        **({"preserve_thinking": preserve_thinking} if preserve_thinking is not None else {}),
+        **({"thinking": thinking} if thinking is not None else {}),
         "temperature": temperature,
         "agent_llm_call_retries": agent_llm_call_retries,
         "max_output_tokens": max_output_tokens,
@@ -1168,13 +1218,19 @@ def main() -> int:
         for r in range(1, args.repeats + 1)
     ]
     total_cells = len(cells)
+    thinking_summary = f"thinking={args.thinking}, " if args.thinking is not None else ""
+    preserve_summary = (
+        f"preserve_thinking={args.preserve_thinking}, "
+        if args.preserve_thinking is not None else ""
+    )
     print(
         f"=== {args.phase}: {total_cells} cells, "
         f"provider={args.provider}, model={args.model}, family={model_family}, "
         f"a2a={bool(args.a2a)}, detail={detail_enabled}, "
         f"system_prompt_mode={args.system_prompt_mode}, "
         f"tool_relations={args.tool_relations}, "
-        f"enable_thinking={args.enable_thinking}, "
+        f"enable_thinking={_effective_main_thinking(args.provider, args.enable_thinking)}, "
+        f"{thinking_summary}{preserve_summary}"
         f"temperature={args.temperature}, agent_llm_call_retries={args.agent_llm_call_retries}, "
         f"max_output_tokens={args.max_output_tokens}, "
         f"cap=${args.cost_cap_dollars:.2f} ==="
@@ -1218,6 +1274,8 @@ def main() -> int:
                 args.progress_interval_s,
                 tool_relations=args.tool_relations,
                 enable_thinking=args.enable_thinking,
+                preserve_thinking=args.preserve_thinking,
+                thinking=args.thinking,
                 temperature=args.temperature,
                 agent_llm_call_retries=args.agent_llm_call_retries,
             ): cell
@@ -1240,7 +1298,9 @@ def main() -> int:
                     "a2a_enabled": bool(args.a2a),
                     "system_prompt_mode": args.system_prompt_mode,
                     "tool_relations": args.tool_relations,
-                    "enable_thinking": args.enable_thinking,
+                    "enable_thinking": _effective_main_thinking(args.provider, args.enable_thinking),
+                    **({"preserve_thinking": args.preserve_thinking} if args.preserve_thinking is not None else {}),
+                    **({"thinking": args.thinking} if args.thinking is not None else {}),
                     "temperature": args.temperature,
                     "agent_llm_call_retries": args.agent_llm_call_retries,
                     "detail_enabled": detail_enabled,

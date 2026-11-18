@@ -94,9 +94,23 @@ class BaseAgent:
             "max_output_tokens": getattr(self.llm, "max_output_tokens", None),
             "parallel_tool_calls": getattr(self.llm, "parallel_tool_calls", None),
             "enable_thinking_override": getattr(self.llm, "enable_thinking", None),
+            **({"thinking": self.llm.thinking}
+               if getattr(self.llm, "provider", None) == "deepseek"
+               and hasattr(self.llm, "thinking") else {}),
+            **({"preserve_thinking": self.llm.preserve_thinking}
+               if getattr(self.llm, "provider", None) == "qwen"
+               and getattr(self.llm, "preserve_thinking", None) is not None else {}),
             "sdk_max_retries": getattr(sdk_client, "max_retries", None),
-            "reasoning_history_policy": "exclude",
+            "reasoning_history_policy": "preserve" if self._preserve_reasoning_history() else "exclude",
         }
+
+    def _preserve_reasoning_history(self) -> bool:
+        if getattr(self.llm, "provider", None) == "deepseek":
+            return getattr(self.llm, "thinking", "disabled") == "enabled"
+        return (
+            getattr(self.llm, "provider", None) == "qwen"
+            and getattr(self.llm, "preserve_thinking", False) is True
+        )
 
     def chat_completion(self, messages, tools=None):
         """Log and account for a reply, accepting only usable, untruncated messages."""
@@ -131,7 +145,7 @@ class BaseAgent:
             max_output_tokens=getattr(self.llm, "max_output_tokens", None),
             parallel_tool_calls=getattr(self.llm, "parallel_tool_calls", None),
             enable_thinking_override=getattr(self.llm, "enable_thinking", None),
-            reasoning_history_policy="exclude",
+            reasoning_history_policy="preserve" if self._preserve_reasoning_history() else "exclude",
             llm_config=self.llm_config(),
             message_count=len(llm_messages),
             tool_schema_count=len(tools or []),
@@ -304,6 +318,7 @@ class BaseAgent:
             "function_call",
         }
         compatible_messages: list[dict[str, Any]] = []
+        preserve_reasoning = self._preserve_reasoning_history()
         for message in messages:
             jsonable_message = self._jsonable(message)
             if isinstance(jsonable_message, dict):
@@ -312,6 +327,12 @@ class BaseAgent:
                     for key, value in jsonable_message.items()
                     if key in allowed_keys and value is not None
                 }
+                if (
+                    preserve_reasoning
+                    and jsonable_message.get("role") == "assistant"
+                    and jsonable_message.get("reasoning_content") is not None
+                ):
+                    compatible["reasoning_content"] = jsonable_message["reasoning_content"]
                 if compatible:
                     compatible_messages.append(compatible)
                 continue
