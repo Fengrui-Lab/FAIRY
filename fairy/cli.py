@@ -455,6 +455,11 @@ def main() -> None:
                 for trace in a2a_traces
                 for metric in trace.get("runtime_metrics", [])
             ]
+            a2a_trace_events = [
+                event
+                for trace in a2a_traces
+                for event in trace.get("runtime_events", [])
+            ]
             a2a_metadata = {
                 **a2a_metadata,
                 "expert_trace_count": len(a2a_traces),
@@ -464,7 +469,9 @@ def main() -> None:
                 "expert_llm_turn_count": sum(
                     int(trace.get("llm_turn_count") or 0) for trace in a2a_traces
                 ),
-                "expert_metrics": metric_totals(a2a_trace_metrics),
+                "expert_metrics": metric_totals(
+                    a2a_trace_metrics, runtime_events=a2a_trace_events,
+                ),
             }
             a2a_metadata["expert_traces"] = a2a_traces
 
@@ -491,6 +498,7 @@ def main() -> None:
             llm_config=agent.llm_config(),
             response_policy=agent.response_policy(),
             runtime_metrics=runtime_metrics,
+            runtime_events=agent.runtime_events,
             artifacts=artifacts,
             evaluation=evaluation,
             outcome=engine.outcome_summary(),

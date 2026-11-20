@@ -3,7 +3,7 @@
 Run from the repository root:
     .venv/bin/python -B tests/test_error_contract.py -v
 
-The 41 tests make no external LLM requests and keep artifact I/O in memory.
+The tests make no external LLM requests and keep artifact I/O in memory.
 """
 from __future__ import annotations
 
@@ -647,9 +647,10 @@ class ErrorMetricsTests(unittest.TestCase):
         })
         self.assertEqual({key: result[key] for key in NEW_ERROR_METRIC_FIELDS}, {
             "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 2,
+            "new_llm_call_errors": None,
         })
 
-    def report(self, rows, tool_count=0):
+    def report(self, rows, tool_count=0, *, runtime_events=None):
         return build_run_report(
             scenario_id="sample", controller_id="react", provider="fake",
             model="fake", temperature=0.0, run_type="agent",
@@ -657,6 +658,7 @@ class ErrorMetricsTests(unittest.TestCase):
             max_tool_calls=None, timeout_seconds=None, parallel_tool_calls=True,
             max_output_tokens=100, workflow_steps=tool_count + 1,
             tool_call_count=tool_count, runtime_metrics=rows, artifacts={},
+            runtime_events=runtime_events,
             evaluation={"validation": {"success": False}},
             controller_telemetry={"error_count": 77, "tool_calls": 5},
         )
@@ -679,6 +681,7 @@ class ErrorMetricsTests(unittest.TestCase):
         self.assertEqual(result, {
             "new_tools": 2, "new_tool_errors": None,
             "new_llm": 1, "new_llm_errors": None,
+            "new_llm_call_errors": None,
         })
         invalid = error_metric_totals([
             {"role": "tool", "is_error": 0},
@@ -688,7 +691,7 @@ class ErrorMetricsTests(unittest.TestCase):
         self.assertIsNone(invalid["new_llm_errors"])
 
     def test_empty_metrics_and_missing_tool_records_are_distinct(self):
-        empty = self.report([], 0)["metrics"]
+        empty = self.report([], 0, runtime_events=[])["metrics"]
         self.assertEqual({key: empty[key] for key in NEW_ERROR_METRIC_FIELDS},
                          dict.fromkeys(NEW_ERROR_METRIC_FIELDS, 0))
         missing = self.report([], 2)["metrics"]
@@ -721,9 +724,10 @@ class ErrorMetricsTests(unittest.TestCase):
             "tokens_in=30 tokens_out=6 last=agent_run_end idle=10s"
         )
         self.assertEqual(text, expected_old_display +
-                         " new_tools=9 new_tool_errors=4 new_llm=3 new_llm_errors=2")
+                         " new_tools=9 new_tool_errors=4 new_llm=3 new_llm_errors=2"
+                         " new_llm_call_errors=1")
         self.assertEqual({key: result[key] for key in NEW_ERROR_METRIC_FIELDS},
-                         error_metric_totals(result_rows()))
+                         error_metric_totals(result_rows(), llm_call_errors=1))
 
     def test_old_progress_does_not_infer_business_failures_from_preview(self):
         rows = [
@@ -755,7 +759,7 @@ class ErrorMetricsTests(unittest.TestCase):
             {"record_type": "agent_run_end", "status": "stopped"},
         ]))
         self.assertEqual({key: result[key] for key in NEW_ERROR_METRIC_FIELDS},
-                         dict.fromkeys(NEW_ERROR_METRIC_FIELDS, 0))
+                         {**dict.fromkeys(NEW_ERROR_METRIC_FIELDS, 0), "new_llm_call_errors": 1})
 
     def test_csv_new_fields_append_after_old_columns_and_missing_values_stay_blank(self):
         path = MagicMock(spec=Path)
@@ -763,7 +767,8 @@ class ErrorMetricsTests(unittest.TestCase):
         path.with_suffix.return_value.open.return_value = file
         runner._write_results_csv(path, [
             {"scenario": "new", "error_count": 77,
-             "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 2},
+             "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 2,
+             "new_llm_call_errors": 1},
             {"scenario": "old", "error_count": 5},
         ])
         reader = csv.DictReader(io.StringIO(file.getvalue()))
@@ -771,8 +776,8 @@ class ErrorMetricsTests(unittest.TestCase):
         rows = list(reader)
         self.assertEqual(rows[0]["error_count"], "77")
         self.assertEqual(rows[1]["error_count"], "5")
-        self.assertEqual([rows[0][key] for key in NEW_ERROR_METRIC_FIELDS], ["9", "4", "3", "2"])
-        self.assertEqual([rows[1][key] for key in NEW_ERROR_METRIC_FIELDS], [""] * 4)
+        self.assertEqual([rows[0][key] for key in NEW_ERROR_METRIC_FIELDS], ["9", "4", "3", "2", "1"])
+        self.assertEqual([rows[1][key] for key in NEW_ERROR_METRIC_FIELDS], [""] * 5)
         path.with_suffix.return_value.replace.assert_called_once_with(path)
 
     def test_csv_uses_only_new_report_fields_not_old_telemetry(self):
@@ -782,7 +787,69 @@ class ErrorMetricsTests(unittest.TestCase):
         report = self.report(result_rows(), 9)
         self.assertEqual(runner._new_error_metrics_from_report(report), {
             "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 2,
+            "new_llm_call_errors": None,
         })
+
+    def test_call_error_count_requires_events_and_preserves_existing_metrics(self):
+        original = metric_totals(result_rows())
+        self.assertIsNone(original["new_llm_call_errors"])
+        self.assertIsNone(self.report(result_rows(), 9)["metrics"]["new_llm_call_errors"])
+        for events, expected in (
+            ([], 0),
+            ([{"event_type": "llm_call_retry"},
+              {"event_type": "llm_call_end", "accepted": False}], 0),
+            ([{"event_type": "llm_call_error"},
+              {"event_type": "llm_call_retry"},
+              {"event_type": "llm_call_error"},
+              {"event_type": "agent_run_error"}], 2),
+        ):
+            with self.subTest(events=events):
+                totals = metric_totals(result_rows(), runtime_events=events)
+                self.assertEqual(totals, {**original, "new_llm_call_errors": expected})
+                report = self.report(result_rows(), 9, runtime_events=events)
+                self.assertEqual(report["metrics"]["new_llm_call_errors"], expected)
+
+    def test_real_call_errors_and_response_rejections_are_counted_separately(self):
+        cases = (
+            ("retry_success", [OSError("network unavailable"), llm_response()],
+             1, 1, 0, 1, 1, [0, 0], False),
+            ("rejection_then_call_error", [llm_response(""), OSError("network unavailable"), llm_response()],
+             2, 2, 1, 1, 2, [0, 1, 0], False),
+            ("final_failure", [OSError("network unavailable")],
+             0, 0, 0, 1, 0, [0], True),
+        )
+        for name, outcomes, retries, llm_count, rejections, call_errors, retry_count, feedback_counts, fails in cases:
+            with self.subTest(name=name):
+                client = LLMResponseClient(*outcomes)
+                agent = running_agent(client, retries=retries)
+                with patch.object(agent, "log"):
+                    if fails:
+                        with self.assertRaisesRegex(OSError, "network unavailable"):
+                            agent.run("Complete the task.")
+                    else:
+                        self.assertEqual(agent.run("Complete the task."), "done")
+                messages_before = copy.deepcopy(agent.messages.messages)
+                workflow_before = copy.deepcopy(agent.workflow.to_dict())
+                metrics_before = copy.deepcopy(agent.messages.runtime_metrics)
+                report = self.report(metrics_before, runtime_events=agent.runtime_events)
+                progress = runner._runtime_progress_snapshot(
+                    progress_path(_runtime_log_rows(agent.runtime_events))
+                )
+                expected = {
+                    "new_tools": 0, "new_tool_errors": 0, "new_llm": llm_count,
+                    "new_llm_errors": rejections, "new_llm_call_errors": call_errors,
+                }
+                self.assertEqual({key: report["metrics"][key] for key in NEW_ERROR_METRIC_FIELDS}, expected)
+                self.assertEqual({key: progress[key] for key in NEW_ERROR_METRIC_FIELDS}, expected)
+                self.assertEqual(len(llm_events(agent, "llm_call_retry")), retry_count)
+                self.assertEqual(report["metrics"]["llm_call_count"], llm_count)
+                self.assertEqual(progress["llm_calls"], llm_count)
+                self.assertEqual(report["metrics"]["token_usage"]["total_tokens"], 0)
+                self.assertEqual([len(llm_feedbacks(request)) for request in client.requests], feedback_counts)
+                self.assertEqual([step.op_type for step in agent.workflow.dag.values()], ["USER"])
+                self.assertEqual(agent.messages.messages, messages_before)
+                self.assertEqual(agent.messages.runtime_metrics, metrics_before)
+                self.assertEqual(agent.workflow.to_dict(), workflow_before)
 
 
 # ----------------------------------------------------------------------------
@@ -808,6 +875,7 @@ def sample_report():
             "wall_time_seconds": 3.5, "workflow_steps": 10, "tool_call_count": 9,
             "token_usage": {"total_tokens": 120, "cached_tokens": 4},
             "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 0,
+            "new_llm_call_errors": 2,
         },
         "outcome": {
             "inventory": {"warehouse_grain_kg": 8},
@@ -833,7 +901,7 @@ class ErrorSummaryExportTests(unittest.TestCase):
             "total_tokens": 120, "cached_tokens": 4, "warehouse_grain_kg": 8,
             "harvested_ridges": 2, "yield_g_m2": 11.5,
         })
-        self.assertEqual([row[key] for key in NEW_ERROR_METRIC_FIELDS], [9, 4, 3, 0])
+        self.assertEqual([row[key] for key in NEW_ERROR_METRIC_FIELDS], [9, 4, 3, 0, 2])
 
     def test_missing_or_unknown_metrics_are_not_inferred_from_old_fields(self):
         for metrics in ({"tool_call_count": 9}, None, {key: None for key in NEW_ERROR_METRIC_FIELDS}):
@@ -841,7 +909,24 @@ class ErrorSummaryExportTests(unittest.TestCase):
             with self.subTest(metrics=metrics):
                 with patch.object(Path, "read_text", return_value=json.dumps(report)):
                     row = summarize_runs.row_from_report(Path("/synthetic/old.run_report.json"))
-                self.assertEqual([row[key] for key in NEW_ERROR_METRIC_FIELDS], [None] * 4)
+                self.assertEqual([row[key] for key in NEW_ERROR_METRIC_FIELDS], [None] * 5)
+
+    def test_report_with_previous_four_metrics_leaves_only_new_column_blank(self):
+        report = sample_report()
+        report["metrics"].pop("new_llm_call_errors")
+        with patch.object(Path, "read_text", return_value=json.dumps(report)):
+            row = summarize_runs.row_from_report(Path("/synthetic/previous.run_report.json"))
+        self.assertEqual([row[key] for key in NEW_ERROR_METRIC_FIELDS], [9, 4, 3, 0, None])
+        self.assertEqual(runner._new_error_metrics_from_report(report), {
+            "new_tools": 9, "new_tool_errors": 4, "new_llm": 3, "new_llm_errors": 0,
+            "new_llm_call_errors": None,
+        })
+        path = MagicMock(spec=Path)
+        output = MemoryFile()
+        path.with_suffix.return_value.open.return_value = output
+        runner._write_results_csv(path, [row])
+        exported = next(csv.DictReader(io.StringIO(output.getvalue())))
+        self.assertEqual([exported[key] for key in NEW_ERROR_METRIC_FIELDS], ["9", "4", "3", "0", ""])
 
     def test_csv_and_tsv_export_match_report_values_and_keep_unknown_blank(self):
         paths = [Path("/synthetic/new.run_report.json"), Path("/synthetic/old.run_report.json")]
@@ -871,8 +956,8 @@ class ErrorSummaryExportTests(unittest.TestCase):
         self.assertEqual(tsv_reader.fieldnames, csv_reader.fieldnames)
         csv_rows, tsv_rows = list(csv_reader), list(tsv_reader)
         self.assertEqual(csv_rows, tsv_rows)
-        self.assertEqual([csv_rows[0][key] for key in NEW_ERROR_METRIC_FIELDS], ["9", "4", "3", "0"])
-        self.assertEqual([csv_rows[1][key] for key in NEW_ERROR_METRIC_FIELDS], [""] * 4)
+        self.assertEqual([csv_rows[0][key] for key in NEW_ERROR_METRIC_FIELDS], ["9", "4", "3", "0", "2"])
+        self.assertEqual([csv_rows[1][key] for key in NEW_ERROR_METRIC_FIELDS], [""] * 5)
         self.assertEqual(csv_rows[0]["tool_call_count"], csv_rows[1]["tool_call_count"])
 
 
@@ -1038,6 +1123,7 @@ class ErrorRuntimeArtifactTests(unittest.TestCase):
             wall_time_seconds=1.0, max_tool_calls=None, timeout_seconds=None,
             parallel_tool_calls=True, max_output_tokens=None, workflow_steps=len(workflow),
             tool_call_count=agent.tool_call_count, runtime_metrics=agent.messages.runtime_metrics,
+            runtime_events=agent.runtime_events,
             artifacts={}, evaluation=engine.evaluation_report(workflow),
             llm_config=agent.llm_config(), response_policy=agent.response_policy(),
         )
@@ -1049,7 +1135,8 @@ class ErrorRuntimeArtifactTests(unittest.TestCase):
             progress = runner._runtime_progress_snapshot(progress_path)
             display = runner._format_cell_progress(progress_path, "integration", 12)
 
-        expected = {"new_tools": 4, "new_tool_errors": 3, "new_llm": 3, "new_llm_errors": 1}
+        expected = {"new_tools": 4, "new_tool_errors": 3, "new_llm": 3, "new_llm_errors": 1,
+                    "new_llm_call_errors": 0}
         self.assertEqual({key: report["metrics"][key] for key in NEW_ERROR_METRIC_FIELDS}, expected)
         self.assertEqual({key: progress[key] for key in NEW_ERROR_METRIC_FIELDS}, expected)
         self.assertEqual(runner._new_error_metrics_from_report(report), expected)
@@ -1058,7 +1145,7 @@ class ErrorRuntimeArtifactTests(unittest.TestCase):
         self.assertEqual((progress["prompt_tokens"], progress["completion_tokens"]), (30, 9))
         self.assertEqual(display, "  [progress] integration elapsed=12s llm=3 tools=1 tool_errors=3 "
                          "tokens_in=30 tokens_out=9 last=agent_run_end idle=0s "
-                         "new_tools=4 new_tool_errors=3 new_llm=3 new_llm_errors=1")
+                         "new_tools=4 new_tool_errors=3 new_llm=3 new_llm_errors=1 new_llm_call_errors=0")
         metrics = report["metrics"]
         self.assertEqual((metrics["llm_call_count"], metrics["tool_metric_count"], metrics["tool_call_count"]), (3, 4, 4))
         self.assertEqual(metrics["workflow_steps"], 5)

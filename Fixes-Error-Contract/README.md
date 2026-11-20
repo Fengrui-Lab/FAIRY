@@ -1,6 +1,6 @@
 # Agent 错误反馈协议
 
-本文描述当前实现，统一说明定义、改动与保留边界。适用范围只有 **Agent 工具调用错误**和 **LLM 响应不可用时的纠错反馈**，以及两者的记录、上下文与统计。
+本文描述当前实现，统一说明定义、改动与保留边界。反馈协议适用于 **Agent 工具调用错误**和 **LLM 响应不可用时的纠错反馈**；另统计 LLM 调用异常，不增加新的反馈类型。
 
 ## 格式与分类
 
@@ -37,14 +37,17 @@ LLM 沿用两项拒绝条件：`finish_reason="length"` 对应 `output_truncated
 | `new_tool_errors` | 其中 `is_error=true` 的次数 |
 | `new_llm` | 已完成响应接收及接受/拒绝判定的次数 |
 | `new_llm_errors` | 其中 `accepted=false` 的次数 |
+| `new_llm_call_errors` | FAIRY 记录的 `llm_call_error` 次数，包括网络、超时、鉴权、服务端及客户端/SDK 调用异常 |
 
 两组总数减错误数，分别得到未报错工具调用数、未被拒绝响应数；不代表任务成功或回答正确。没有响应判定的请求侧异常不计入 `new_llm`；被拒绝响应中的工具不执行、不另计工具调用。
 
-四项指标追加到 `run_report.metrics`、终端进度、runner CSV 和通用汇总 CSV/TSV。报告按 `runtime_metrics` 计数，进度按主结果事件计数；辅助日志和反馈消息不重复计数，父子 Agent 分别统计。
+`new_llm_call_errors` 是独立补充项，原四项口径不变。每个 `llm_call_error` 计一次，`llm_call_retry` 不重复计数，SDK 内部未向 FAIRY 暴露的重试失败不单独统计。新增统计不改变反馈、上下文、重试、停止或评分逻辑。
+
+五项指标追加到 `run_report.metrics`、终端进度、runner CSV 和通用汇总 CSV/TSV。报告的原四项按 `runtime_metrics` 计数，`new_llm_call_errors` 按已有 `runtime_events` 计数；进度按事件流计数，CSV/TSV 读取报告字段。辅助日志和反馈消息不重复计数，父子 Agent 分别统计。
 
 **旧字段、显示内容、数据来源和计算条件保持不变；旧数值不保证不变。** 例如进度中的 `tools` 仍只数 `tool_call_end`，`tool_errors` 仍数两类工具错误事件，`llm` 仍数 `llm_call_end`。业务 error 被重新分类后，这些旧数值可能变化；新指标不覆盖旧字段，也不接入评分公式。
 
-缺少失败分类时，已知总数保留、错误数标为未知（JSON 为 `null`，终端为 `unknown`，CSV/TSV 留空）。若报告的工具总数与逐次指标数不一致，两项新工具指标均为未知；缺少数据不能冒充零次调用。确认没有结果的空集合计为零。历史文件不追溯改写，不从预览文字猜测错误。
+缺少失败分类时，已知总数保留、错误数标为未知（JSON 为 `null`，终端为 `unknown`，CSV/TSV 留空）。若报告的工具总数与逐次指标数不一致，两项新工具指标均为未知。未提供运行事件时，`new_llm_call_errors` 为未知；明确提供空事件集时为零。旧报告缺少该字段时导出留空。缺少数据不能冒充零次调用；确认没有结果的空集合计为零。历史文件不追溯改写，不从预览文字猜测错误。
 
 # 错误反馈的上下文管理
 
@@ -62,7 +65,7 @@ LLM 沿用两项拒绝条件：`finish_reason="length"` 对应 `output_truncated
 
 同批**已处理调用**的工具回复排在执行期间产生的通知之前，包括异常回复。工具错误随正常历史进入后续请求，不自动删除、不推断已修复，也不采用 LLM 反馈的一次性规则。运行停止后，不为发送错误额外调用 LLM。
 
-## LLM 错误：只进入紧接着的一次实际请求
+## LLM 响应拒绝：只进入紧接着的一次实际请求
 
 纠错提示作为临时 `system` 消息追加在发送列表末尾，`content` 是 error 对象的 JSON 字符串。该角色表示框架纠错反馈，不是新增一类系统报错。
 
@@ -73,6 +76,8 @@ LLM 沿用两项拒绝条件：`finish_reason="length"` 对应 `output_truncated
 
 临时反馈不写入持久消息历史或 workflow。新 `Agent.run()` 清空待发送反馈；重试次数、等待和停止条件保持原样。这里的“请求”以 FAIRY 的 client 调用为单位，不另计算 SDK 内部 HTTP 重试。由于请求可能增加反馈，`response_policy.retry_changes_request=true`。
 
+`llm_call_error` 沿用原异常处理与重试规则，不因新增计数而生成临时 `system` 纠错提示。
+
 ## 运行后定位
 
 查看完整 `*.runtime_log.jsonl`；进度日志省略完整请求消息，不能代替它。
@@ -81,6 +86,7 @@ LLM 沿用两项拒绝条件：`finish_reason="length"` 对应 `output_truncated
 |---|---|
 | 工具失败及完整原因 | 运行归属、`record_index`（内存事件为 `event_index`）、`tool_call_id`、`is_error`、`agent_feedback`；不合规值另查 `error_contract_issue/error_value` |
 | LLM 不可用响应 | `llm_call_end.llm_call_id`、`accepted`、`rejection_reason`、`agent_feedback` |
+| LLM 调用异常 | `llm_call_error.llm_call_id`、`error_type`、`error_message` |
 | 哪次请求使用了纠错反馈 | `llm_call_start.feedback_for_llm_call_id` 指向来源请求，`messages` 保存实际发送列表的快照 |
 
 `llm_call_id` 按 Agent 实例递增；新运行清空反馈，不重置该计数。所有 ID 均结合所属 Agent/运行解读。日志可证明反馈进入了哪个 client 调用，不能在网络失败时证明服务端已收到。
@@ -96,7 +102,8 @@ LLM 拒绝、重试和临时纠错不成为 workflow 步骤；原始 Agent workf
 | [agent.py](../fairy/agents/agent/agent.py) | 统一三类工具失败的事件、标签、指标和反馈；业务 error 沿用正常返回回调，捕获异常沿用异常回调；同批工具回复统一排在通知前 |
 | [base_agent.py](../fairy/agents/agent/base_agent.py) | 为原有 LLM 响应拒绝增加一次性反馈、请求编号和来源关联；原发送快照记录实际含反馈的请求 |
 | [messages.py](../fairy/agents/agent/messages.py) | 合规工具错误使用 JSON 字符串；指标记录 `is_error`、响应接受/拒绝信息 |
-| [run_artifacts.py](../fairy/controllers/run_artifacts.py) | 汇总四个新指标，区分零值与缺失信息 |
+| [run_artifacts.py](../fairy/controllers/run_artifacts.py) | 汇总五个新指标，区分零值与缺失信息 |
+| [cli.py](../fairy/cli.py) | 将已有运行事件传给统计，主 Agent 与专家 Agent 分别计算调用异常数 |
 | [iclr_validation_runner.py](../scripts/iclr_validation_runner.py)、[summarize_runs.py](../scripts/summarize_runs.py) | 在进度和 CSV/TSV 中追加新指标，保留旧统计方法 |
 
 ## 保留了什么
@@ -117,7 +124,7 @@ LLM 拒绝、重试和临时纠错不成为 workflow 步骤；原始 Agent workf
 
 ## 验证
 
-本轮新增测试合并为 [tests/test_error_contract.py](../tests/test_error_contract.py)，保留 41 项：工具反馈 12、LLM 上下文 8、统计 10、汇总导出 3、运行产物集成 1、原版转换/回放 7。
+相关测试集中在 [tests/test_error_contract.py](../tests/test_error_contract.py)，共 44 项：工具反馈 12、LLM 上下文 8、统计 12、汇总导出 4、运行产物集成 1、原版转换/回放 7。
 
 在仓库根目录运行：
 

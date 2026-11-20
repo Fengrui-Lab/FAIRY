@@ -297,6 +297,7 @@ def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
     if path is None or not path.exists():
         return snapshot
     result_metrics: list[dict[str, object]] = []
+    llm_call_errors = 0
     try:
         with path.open(encoding="utf-8") as handle:
             for raw_line in handle:
@@ -306,6 +307,8 @@ def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
                     continue
                 snapshot["records"] = int(snapshot["records"]) + 1
                 record_type = row.get("record_type")
+                if record_type == "llm_call_error":
+                    llm_call_errors += 1
                 if record_type == "llm_call_end":
                     snapshot["llm_calls"] = int(snapshot["llm_calls"]) + 1
                     tokens = row.get("tokens") or {}
@@ -330,7 +333,7 @@ def _runtime_progress_snapshot(path: Path | None) -> dict[str, object]:
         if snapshot["records"]:
             # A readable stream with no result yet has zero completed calls;
             # an absent/empty stream still has unknown values and shows waiting.
-            snapshot.update(error_metric_totals(result_metrics))
+            snapshot.update(error_metric_totals(result_metrics, llm_call_errors=llm_call_errors))
     except OSError:
         pass
     return snapshot

@@ -29,6 +29,7 @@ FIELDS = [
     "new_tool_errors",
     "new_llm",
     "new_llm_errors",
+    "new_llm_call_errors",
 ]
 
 
@@ -68,6 +69,7 @@ def row_from_report(path: Path) -> dict[str, Any]:
         "new_tool_errors": nested(report, "metrics.new_tool_errors"),
         "new_llm": nested(report, "metrics.new_llm"),
         "new_llm_errors": nested(report, "metrics.new_llm_errors"),
+        "new_llm_call_errors": nested(report, "metrics.new_llm_call_errors"),
     }
 
 

@@ -50,15 +50,19 @@ NEW_ERROR_METRIC_FIELDS = (
     "new_tool_errors",
     "new_llm",
     "new_llm_errors",
+    "new_llm_call_errors",
 )
 
 
-def error_metric_totals(metrics: list[dict[str, Any]]) -> dict[str, int | None]:
+def error_metric_totals(
+    metrics: list[dict[str, Any]], *, llm_call_errors: int | None = None,
+) -> dict[str, int | None]:
     """Count completed results; missing classification is unknown, not success.
 
     Each input row represents one completed result. Empty input therefore
     means no completed results; callers without a readable source must retain
     unknown values instead of passing an empty list as evidence of zero calls.
+    Client exceptions have no response metric; their count comes from events.
     """
     tools = [entry for entry in metrics if entry.get("role") == "tool"]
     assistant = [entry for entry in metrics if entry.get("role") == "assistant"]
@@ -75,10 +79,14 @@ def error_metric_totals(metrics: list[dict[str, Any]]) -> dict[str, int | None]:
             if all(isinstance(entry.get("accepted"), bool) for entry in assistant)
             else None
         ),
+        "new_llm_call_errors": llm_call_errors,
     }
 
 
-def metric_totals(metrics: list[dict[str, Any]]) -> dict[str, Any]:
+def metric_totals(
+    metrics: list[dict[str, Any]], *,
+    runtime_events: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     assistant = [entry for entry in metrics if entry.get("role") == "assistant"]
     tools = [entry for entry in metrics if entry.get("role") == "tool"]
     return {
@@ -87,7 +95,13 @@ def metric_totals(metrics: list[dict[str, Any]]) -> dict[str, Any]:
         "llm_wall_time_seconds": round(sum(float(entry.get("time") or 0) for entry in assistant), 6),
         "tool_wall_time_seconds": round(sum(float(entry.get("time") or 0) for entry in tools), 6),
         "token_usage": token_usage_from_metrics(metrics),
-        **error_metric_totals(metrics),
+        **error_metric_totals(
+            metrics,
+            llm_call_errors=(
+                sum(event.get("event_type") == "llm_call_error" for event in runtime_events)
+                if runtime_events is not None else None
+            ),
+        ),
     }
 
 
@@ -139,8 +153,9 @@ def build_run_report(
     init_kwargs: dict[str, Any] | None = None,
     llm_config: dict[str, Any] | None = None,
     response_policy: dict[str, Any] | None = None,
+    runtime_events: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    totals = metric_totals(runtime_metrics)
+    totals = metric_totals(runtime_metrics, runtime_events=runtime_events)
     if totals["new_tools"] != tool_call_count:
         # Oracle/legacy reports may have a call count without per-call metrics.
         # Do not mistake their missing result rows for a zero-call execution.
