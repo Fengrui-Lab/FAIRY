@@ -16,6 +16,5 @@
 13. Library：Original-library-mode (static-knowledge-construction--static-retrival method) fixes if needed.
 14. Library：（1）什么样的知识库结构适合FAIRY？（2）什么样的存储和检索模式适合FAIRY？（3）如何补充当前的静态的知识载入？
 15. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Library：（4）❗需要注意改变上下文的动态知识注入对于“cashed_tokens和LLM成本”的影响❗️如何实现动态的知识载入？谁是触发知识检索的主体？
-16. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Engine & Yield (recovered) 演进和计算模式的校准
-17. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 当前的回放、评分逻辑的校准与修正（尚未校准）；目前观察到有多个回放与评估脚本/模式；一些被抛弃的统计指标（如FOS）也还仍然在被计算和记录；同时校准两种yield（biological，reserved），并基于此反向校准oracle
-18. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 统一代码库中所有描述所用的语言，或者做成双语。
+16. (Currently assuming the metrics' calculation and FAIRY engine is valid and robust) <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Engine & Yield (recovered) 演进和计算模式的校准（当前的回放、评分逻辑的校准与修正；目前观察到有多个回放与评估的脚本/模式；一些被抛弃的统计指标也还仍然在被计算和记录；一些如yield（biological，reserved）和ktc（ktc_score(%)、ktc_adjusted、ktc(%)）等存在多个别名指标），并基于此反向校准每个Scenario的Oracle
+17. (Currently assuming the language does not affect an LLM's understanding of tasks or the quality of its output.) <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: 统一代码库中所有描述所用的语言，或者实现双语适配。
