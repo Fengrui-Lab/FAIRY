@@ -13,7 +13,7 @@
 10. (由于是内容层面的修正，将会与之前的FAIRY产生差异；已经有方案和相应内容准备，未实施) 重新校准所有工具doc的内容（新版本位于[Fixes-Tools-Doc-Schema](Fixes-Tools-Doc-Schema)中的一系列以脚本文件为单位的md中）并测试，同时与老版本对比
 11. (由于是内容层面的修正，将会与之前的FAIRY产生差异；已经有方案和相应内容准备，未实施) 重新校准所有工具error的内容（修改建议位于[Fixes-Error-Contract](Fixes-Error-Contract)中的一系列以脚本文件为单位的md中）并测试，同时与老版本对比
 12. ✅ LLM的"thinking大类"的参数配置，补充代码实现，默认均为不开启思考（流式调用与非流式调用未纳入考虑范畴，仅遵循当前的FAIRY的解析操作的非流式版本），处理了：（1）补充了deepseek API的[thinking支持](https://api-docs.deepseek.com/guides/thinking_mode#tool-calls)**（测试通过）**；（2）补充了qwen API的[enable_thinking, preserve_thinking支持](https://www.alibabacloud.com/help/en/model-studio/deep-thinking)**（测试通过）**；（3）补充了本地vLLM（截止261118）已有系列Qwen模型的的enable_thinking支持**（测试通过）**
-13. Library：Original-library-mode (static-knowledge-construction--static-retrival method) fixes if needed.
+13. ✅ Library：Original-library-mode (static-knowledge-construction--static-retrival method) fixes if needed.
 14. Library：（1）什么样的知识库结构适合FAIRY？（2）什么样的存储和检索模式适合FAIRY？（3）如何补充当前的静态的知识载入？
 15. <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Library：（4）❗需要注意改变上下文的动态知识注入对于“cashed_tokens和LLM成本”的影响❗️如何实现动态的知识载入？谁是触发知识检索的主体？
 16. (Currently assuming the metrics' calculation and FAIRY engine is valid and robust) <span style="background-color:#FF5722; color:white;">(Less-prioritized)TODO</span>: Engine & Yield (recovered) 演进和计算模式的校准（当前的回放、评分逻辑的校准与修正；目前观察到有多个回放与评估的脚本/模式；一些被抛弃的统计指标也还仍然在被计算和记录；一些如yield（biological，reserved）和ktc（ktc_score(%)、ktc_adjusted、ktc(%)）等存在多个别名指标），并基于此反向校准每个Scenario的Oracle
