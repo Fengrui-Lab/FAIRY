@@ -607,6 +607,8 @@ map用于新G时，需记录匹配mode、正文及实际检索来源/分数：
 
 这里的ID和分数只是格式示例，实际须来自对应离线检索。缺来源、包含目标自身或mode不匹配会报错。既有纯文字map仍可供旧模式按原规则读取。
 
+**当前兼容缺口：** [旧检索脚本](../scripts/fullseason/run_l3_skill_retrieval_experiments.py)的 `_write_context_map()` 仅输出 `mode` 和 `contexts`，尚未写入 `sources[target_id]`。因此，`l2_pathsim_differ`、`l2_pathsim_grouped_differ`、`l3_pathsim_differ`、`l3_textsim_differ` 虽已被新 G 读取接口支持，该脚本生成的 map 仍不能直接接入新 G，须先依据实际检索结果补齐来源及分数。此缺口不影响旧模式独立读取这些 map，也不影响三种直接选卡的跨场景 L2 模式。
+
 #### 4. 接入与验证边界
 
 - `Scenario` 增加structured_briefing配置；共享入口及12个类内入口均透传。L1/L2和其他未支持场景在构造时明确拒绝新模式，避免按truthy退回true。

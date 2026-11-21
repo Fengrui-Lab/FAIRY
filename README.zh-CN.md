@@ -1080,6 +1080,8 @@ PYTHONPATH=. uv run python scripts/iclr_validation_runner.py \
 
 `source` 只选择来源，启用 G 仍需 components 包含 `reusable_operational_guidelines`。同源 library/same 模式不能作为 G 来源；原有独立模式照常可用。map 用于新 G 时须包含匹配的 mode、正文、非目标来源 ID 和实际检索分数，格式见[实现说明](Fixes-Knowledge-Library/README.md#3-用现有library知识替换g)。旧模式配非空 structured_briefing 会报错。
 
+**当前兼容缺口：** [旧检索脚本](scripts/fullseason/run_l3_skill_retrieval_experiments.py)的 `_write_context_map()` 仅写入 `mode` 和 `contexts`，缺少新 G 必需的 `sources[target_id]`。其生成的四种跨场景 map（L2 pathsim、L2 grouped pathsim、L3 pathsim、L3 textsim）须依据实际检索结果补齐来源及分数后才能用于新 G；旧模式独立使用和三种直接选卡的跨场景 L2 模式不受此缺口影响。
+
 例如将 G 换成现有 L2 textsim 知识时，只将上述 guidelines 改为 `{"source":"library","mode":"l2_textsim_differ","top_k":6}`。该来源在初始化时从预存卡池检索；默认 cross_scenario_detailed 则按 ID 直接读取离线指南映射。
 
 在已有 runner 命令中，可这样传递两类组件：
