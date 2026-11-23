@@ -51,6 +51,24 @@ Oracle 根目录为 [oracle_140_verification_20261116](../../validation_runs/ora
 
 Oracle 的首条 `briefing` 是详细计划，且 `op_type` 为 null，不能当作纯 B。后续整理时应将基础任务与通信／计划内容分开：单独提供纯 B，农事流程使用真实工具调用及返回，P/G 或开场详细计划不作为已执行的农事证据。保留原事件 ID、参数、返回、错误、partial、时间和依赖，原始文件留作核对。
 
+### 3. 用于知识库构建的数据源定位
+
+[l3_skill_source_ids.txt](../../scripts/fullseason/l3_skill_source_ids.txt) 中的 20 个场景作为第一批构建来源；首个场景 `scenario_full_season_hb_coldspring_planting_window_heihe50` 的 **DeepSeek B、r1** 作为校准样本。以下五项固定知识构建所需的输入及读取位置。
+
+| 输入 | 通用定位与读取规则 | 校准样本的具体来源与内容 |
+|---|---|---|
+| 基础任务描述 B | 给定 scenario ID，读取该场景的基础任务正文。对已有运行，可从工作流首条 USER 正文取得，并与运行报告中的 B 哈希校验；BP 等模式须分离附加内容 | [Agent 工作流](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/farm_baseline_react__scenario_full_season_hb_coldspring_planting_window_heihe50__r1/scenario_full_season_hb_coldspring_planting_window_heihe50.agent_workflow.json) 的 `step0.content`，已确认是纯 B，与场景源码的 `briefing_text` 一致 |
+| 单次 Agent 工作流 | 所选来源根目录的对应 cell 下 `<scenario_id>.agent_workflow.json`；读取原步骤 ID、`op_type`、`tool_name`、`tool_args`、完整 `content`、时间、依赖及错误 | 同一工作流的 `step1`—`step113` 为农事／环境工具事件；`step114` 是 Agent 最终总结，单独标注为自述，不作为工具观测 |
+| 该次 recovered_yield_loss | 在第 1 小节指定的评分汇总中，按 `(scenario, cell)` 唯一配对，读取 `recovered_yield_loss(%)` | [评分汇总](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/replay_analysis_20261122_0x7es521/rebatch_fos/summary_v2_rebatch_fos.csv) 第 8 行：**6.78%**，映射为 `recovered_yield_loss_pct=6.78`；同一行 Agent 回收量为 **4934.75 kg**，Oracle 回收量为 **5293.55 kg** |
+| 一次 Oracle 执行记录 | 指定 Oracle 根目录的 `execution_workflows/<scenario_id>.json`；读取有序工具调用及实际返回 | [Oracle 执行文件](../../validation_runs/oracle_140_verification_20261116/execution_workflows/scenario_full_season_hb_coldspring_planting_window_heihe50.json)。开场 `briefing` 与其他通信事件单独保留，不纳入实际农事操作序列 |
+| 配套回放的 oracle_recovered_yield_kg | 同一 Oracle 根目录的 `baselines/<scenario_id>.json`，读取**顶层** `recovered_yield_kg_total`，单位 kg | [Oracle baseline](../../validation_runs/oracle_140_verification_20261116/baselines/scenario_full_season_hb_coldspring_planting_window_heihe50.json)：**5293.55 kg**，作为知识构建输入中的 `oracle_recovered_yield_kg`；与上述 Agent 评分行的 Oracle 基线一致 |
+
+**输入组合：** Skill、Reflection、Guidance 使用“B＋单次 Agent 工作流＋该次 recovered_yield_loss”；Observation 使用“B＋一次 Oracle 执行记录＋配套 Oracle 回放产量”。损失率保留百分数口径，允许负数，负数表示 Agent 回收量超过 Oracle。按当前设计，KTC 虽存在于原始评分文件，但暂不进入知识构建输入。
+
+`results.csv` 与 `*.run_report.json` 用于确认场景、来源根、cell、repeat、rc、运行配置和 B 哈希；`*.runtime_log.jsonl` 按需回查。本版“单次 Agent 工作流”明确指 `agent_workflow.json`，不要求额外拼接每轮 LLM 的文字回复。评分解释由程序按固定口径附上，两个回收 kg 用于复核。Oracle 的 `workflows/<scenario_id>.json` 是声明流程，Observation 的实际过程以 `execution_workflows` 为准。原文件和步骤定位保留，以支持后续证据回查。
+
+**Oracle 开头 `briefing` 的来源：** 以本例为准，其正文预先定义在 [harbin_l3_detailed_briefings.py](../../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_detailed_briefings.py) 的 `DETAILED_BRIEFINGS[scenario_id]` 中，由 [场景目录](../../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_catalog.py) 的 `get_detailed_briefing(...)` 赋给 `ScenarioSpec.detailed_briefing_text`。该场景默认 `detailed_briefing=True`，上下文构造函数据此选取详细正文；[build_batch_events](../../fairy/scenarios/farm_world_fullseason_v2/harbin_l3_batch_scenario.py) 调用 `AgentUserInterface.send_message_to_agent(content=briefing_text)`，并以 `.with_id("briefing")` 注册开场事件。该事件随 Oracle 执行被记录为文件中的首项。因此它是场景代码提供的详细任务说明。纯 B 则来自同一 `ScenarioSpec` 的另一个字段 `briefing_text`；构建 Observation 时仍单独使用纯 B。
+
 ## 二、后续小范围验证与审核边界
 
 后续拟仅处理 [l3_skill_source_ids.txt](../../scripts/fullseason/l3_skill_source_ids.txt) 中的 **20 个场景**，该清单属于上述 70 场景集合，与 L3-mini 20 不重叠。70 场景统计用于说明原始数据覆盖范围，不代表本轮需要全量整理。

@@ -8,12 +8,12 @@
 
 ### 1. 四类知识及其来源
 
-| 类型 | 构建材料 | 一条 L2 级知识表达的内容 |
-|---|---|---|
-| Agronomic Skill | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 围绕一个农事目标的可复用方法，含条件、检查、约束、步骤与结果确认 |
-| Agronomic Reflection | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 对一个局部经验或错误的成因解释 |
-| Agronomic Guidance | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 针对一个局部决策问题的未来行为建议 |
-| Agronomic Observation | B＋一次 Oracle 执行记录＋配套回放 Yield | 一个可识别的实际农事过程 |
+| 类型 | 构建材料                                             | 一条 L2 级知识表达的内容 |
+|---|--------------------------------------------------|---|
+| Agronomic Skill | B＋单次 Agent 工作流＋该次 recovered_yield_loss           | 围绕一个农事目标的可复用方法，含条件、检查、约束、步骤与结果确认 |
+| Agronomic Reflection | B＋单次 Agent 工作流＋该次 recovered_yield_loss           | 对一个局部经验或错误的成因解释 |
+| Agronomic Guidance | B＋单次 Agent 工作流＋该次 recovered_yield_loss           | 针对一个局部决策问题的未来行为建议 |
+| Agronomic Observation | B＋一次 Oracle 执行记录＋配套回放的 oracle_recovered_yield_kg | 一个可识别的实际农事过程 |
 
 当前 Oracle 来源标为 `simulated_oracle_replay`。未来真实农场回流标为 `real_farm_record`，使用同一 Observation 内容结构，保留实际作业和收获证据。每次 Agent 运行分别支持前三类提炼，Oracle 记录支持 Observation。每类可以产出零条、一条或多条初始知识，所有条目保留各自来源。
 

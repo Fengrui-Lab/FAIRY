@@ -13,7 +13,7 @@ The **data flow** is: organize materials by scenario → read one L3 full-season
 | Agronomic Skill | B + one Agent workflow + recovered_yield_loss for that run | A reusable method for one agronomic objective, including conditions, checks, constraints, steps, and outcome verification |
 | Agronomic Reflection | B + one Agent workflow + recovered_yield_loss for that run | A causal explanation of a local experience or error |
 | Agronomic Guidance | B + one Agent workflow + recovered_yield_loss for that run | Advice for future actions addressing a local decision problem |
-| Agronomic Observation | B + one Oracle execution record + its corresponding replay Yield | An identifiable agronomic process that actually occurred |
+| Agronomic Observation | B + one Oracle execution record + its corresponding replay oracle_recovered_yield_kg | An identifiable agronomic process that actually occurred |
 
 The current Oracle source is labeled `simulated_oracle_replay`. Future records from real farms will be labeled `real_farm_record`, using the same Observation content structure and preserving evidence of actual operations and harvests. Each Agent run supports extraction of the first three knowledge types; Oracle records support Observation. Each type may produce zero, one, or multiple initial entries, all retaining their respective sources.
 
