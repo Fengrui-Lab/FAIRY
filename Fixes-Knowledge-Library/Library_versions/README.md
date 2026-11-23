@@ -86,11 +86,11 @@ Reflection 的 success 描述经验方向，成功完成的运行也可产生指
 | DeepSeek Flash B | [l3_formal90_deepseek_flash_B_nothink_El08gq](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/) | [20261122_0x7es521 汇总](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/replay_analysis_20261122_0x7es521/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | DeepSeek Flash BP | [l3_formal90_deepseek_flash_BP_nothink_OL0lel](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_OL0lel/) | [20261121_34tfrwwj 汇总](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_OL0lel/replay_analysis_20261121_34tfrwwj/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | DeepSeek Flash BP rerun | [l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM/) | [20261121_qmown_yo 汇总](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM/replay_analysis_20261121_qmown_yo/rebatch_fos/summary_v2_rebatch_fos.csv) |
-| Thor Qwen BP | [l3_formal90_thor_qwen35b_BP_nothink_lvxtsU](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/) | [20261120_3xx6dk_b 汇总](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/replay_analysis_20261120_3xx6dk_b/rebatch_fos/summary_v2_rebatch_fos.csv) |
-| Thor Qwen BP rerun | [l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0/) | 2026-11-23 核查时尚缺对应评分汇总，登记运行并待补 |
+| Thor Qwen BP | [l3_formal90_thor_qwen35b_BP_nothink_lvxtsU](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/) | [20261123_ccsvhd_7 汇总](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/replay_analysis_20261123_ccsvhd_7/rebatch_fos/summary_v2_rebatch_fos.csv) |
+| Thor Qwen BP rerun | [l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0/) | [20261123_rxp1itc_ 汇总](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0/replay_analysis_20261123_rxp1itc_/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | Oracle | [oracle_140_verification_20261116](../../validation_runs/oracle_140_verification_20261116/) | 同场景执行工作流及 baselines 中的回收量 |
 
-**Oracle 按场景统一绑定。** 对比上述 Oracle 包与历史评分使用的 `oracle_time_control_20261116/advance_time_v2`，70 个场景的回收量、声明流程，以及实际执行中的有序工具参数、时间和农事结果全部一致，执行记录仅有随机巡查／任务 ID 差异。两个 manifest 的 430 个来源代码哈希相同，相关场景、引擎和工具代码与当前工作区核对一致。前四个 Agent 来源的 190 条评分，其 Oracle 回收量也全部与指定 Oracle 包一致。因此首版在固定场景版本下，每个场景材料包绑定一套 Oracle 与配套 Yield，历史文件路径保留在来源记录中。[指定 Oracle manifest](../../validation_runs/oracle_140_verification_20261116/manifest.json) · [历史参考 manifest](../../validation_runs/oracle_time_control_20261116/advance_time_v2/manifest.json) · [Oracle 构建入口](../../fairy/scenarios/workflow_validation.py)
+**Oracle 按场景统一绑定。** 对比上述 Oracle 包与历史评分使用的 `oracle_time_control_20261116/advance_time_v2`，70 个场景的回收量、声明流程，以及实际执行中的有序工具参数、时间和农事结果全部一致，执行记录仅有随机巡查／任务 ID 差异。两个 manifest 的 430 个来源代码哈希相同，相关场景、引擎和工具代码与当前工作区核对一致。五个 Agent 来源中选定的 210 条评分，其 Oracle 回收量也全部与指定 Oracle 包一致。因此首版在固定场景版本下，每个场景材料包绑定一套 Oracle 与配套 Yield，历史文件路径保留在来源记录中。[指定 Oracle manifest](../../validation_runs/oracle_140_verification_20261116/manifest.json) · [历史参考 manifest](../../validation_runs/oracle_time_control_20261116/advance_time_v2/manifest.json) · [Oracle 构建入口](../../fairy/scenarios/workflow_validation.py)
 
 | 材料包部分 | 原始文件与整理内容 |
 |---|---|
@@ -99,7 +99,7 @@ Reflection 的 success 描述经验方向，成功完成的运行也可产生指
 | 场景 Oracle `oracle` | `execution_workflows/<id>.json` 与 `baselines/<id>.json`；声明 `workflows/<id>.json` 和 `terminal_states/<id>.json` 用于核对 |
 | 来源清单 | 来源身份、文件／评分行定位、哈希、版本、缺失项。原始内容保存不可变副本或引用可恢复的归档 |
 
-原始材料完整归集，生成时可分页读取。BP 开场指令中包含的 P/G 与系统指令从生成视图剔除，纯 B 单独传入，原始运行条件保留。当前五个 Agent 根目录分别有 70／56／14／50／20 个非 mini 的 rc=0 运行，合计 210 次。前四个来源已有 190 次配对评分；第五来源的 20 次与 Thor 主跑的 50 次恰好互补。正式导入时重新扫描并冻结清单。[运行产物定义](../../fairy/controllers/run_artifacts.py)
+原始材料完整归集，生成时可分页读取。BP 开场指令中包含的 P/G 与系统指令从生成视图剔除，纯 B 单独传入，原始运行条件保留。当前五个 Agent 根目录分别有 70／56／14／50／20 个非 mini 的 rc=0 运行，合计 210 次。五个来源的 210 次运行均已有配对评分和两项分数，第五来源的 20 次与 Thor 主跑的 50 次恰好互补，每个场景共有 3 次材料齐备的运行。正式导入时重新扫描并冻结清单。[运行产物定义](../../fairy/controllers/run_artifacts.py)
 
 ### 2. 分数及解释
 
