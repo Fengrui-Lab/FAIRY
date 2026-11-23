@@ -10,9 +10,9 @@
 
 | 类型 | 构建材料 | 一条知识表达的内容 |
 |---|---|---|
-| Agronomic Skill | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 一个可复用的操作方法，含条件、检查、约束、步骤与结果确认 |
-| Agronomic Reflection | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 对一个历史经验或错误的成因解释 |
-| Agronomic Guidance | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 一个条件明确的未来行为建议 |
+| Agronomic Skill | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 一个可复用的操作方法，含条件、检查、约束、步骤与结果确认 |
+| Agronomic Reflection | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 对一个历史经验或错误的成因解释 |
+| Agronomic Guidance | B＋单次 Agent 工作流＋该次 recovered_yield_loss | 一个条件明确的未来行为建议 |
 | Agronomic Observation | B＋一次 Oracle 执行记录＋配套回放 Yield | 一次可识别的事件或连续农事过程 |
 
 当前 Oracle 来源标为 `simulated_oracle_replay`。未来真实农场回流标为 `real_farm_record`，使用同一 Observation 内容结构，保留实际作业和收获证据。每次 Agent 运行分别支持前三类提炼，Oracle 记录支持 Observation。每类可以产出零条、一条或多条候选，所有候选保留各自来源。
@@ -146,14 +146,15 @@ release_id 在发布成员表中绑定确切 `(knowledge_id, revision)`，导出
 
 ### 2. 分数及解释
 
-每次 Agent 运行的 `scores` 只保存以下两项分数及解释，来源身份和评分文件位置由运行记录提供。解释由程序按固定口径生成，数据缺口或回放问题据报告补充。
+**前三类知识当前仅考虑 recovered_yield_loss，后续可扩展更多指标。** 每次 Agent 运行的 `scores` 当前保存下列一项指标及解释，来源身份和评分文件位置由运行记录提供。解释由程序按固定口径生成，数据缺口或回放问题据报告补充。
 
 | scores 中的键 | 子字段 | 解释与校验 |
 |---|---|---|
 | `recovered_yield_loss_pct` | `value` 数值或 null，`explanation` 字符串 | `100 × (1 − Agent 回收量 / Oracle 回收量)`，越低越好。**负数表示 Agent 回收量高于 Oracle，是该指标上的好结果**，例如 −5% 表示高出 5%。允许负数，禁止截为 0；分母缺失或不大于零时无定义 |
-| `ktc_pct` | `value` 数值或 null，`explanation` 字符串 | 对应 `ktc(%)`，v1 已匹配动作的相对顺序分数，范围 0–100。高分需结合实际完成范围和 Yield 理解 |
 
-两个回收 kg 保留在原始评分文件，整理时可复核公式。现有 JSON 和 CSV 均经过舍入，校验采用与保存精度一致的容差。Oracle 的配套 `recovered_yield_kg_total` 按 kg 保存在场景包内。整季评分通过来源关联到知识，局部成因和操作效果引用相应步骤。[指标公式](../../fairy/scenarios/fos/evaluation.py) · [KTC 计算](../../fairy/scenarios/workflow_validation.py) · [报告精度](../../fairy/scenarios/fos/metrics.py)
+存储沿用百分数口径。CSV 的 `recovered_yield_loss(%)` 直接映射为 `recovered_yield_loss_pct`，评分 JSON 中的 `recovered_yield_loss` 比例值乘以 100 后映射。两个回收 kg 保留在原始评分文件，整理时可复核公式。现有 JSON 和 CSV 均经过舍入，校验采用与保存精度一致的容差。Oracle 的配套 `recovered_yield_kg_total` 按 kg 保存在场景包内。整季评分通过来源关联到知识，局部成因和操作效果引用相应步骤。[指标公式](../../fairy/scenarios/fos/evaluation.py) · [报告精度](../../fairy/scenarios/fos/metrics.py)
+
+`scores` 保留按指标名称扩展的对象结构。单次提炼和场景内整理均按本版启用的指标提供输入及检查可用性，当前启用 `recovered_yield_loss_pct`。后续新增指标时明确名称、口径、单位、解释和校验规则，并记录相应规范及 prompt 版本。
 
 ### 3. 源字段与知识字段的对应
 
@@ -165,7 +166,7 @@ release_id 在发布成员表中绑定确切 `(knowledge_id, revision)`，导出
 | `content.ridges[]` 中的品种、物候、已播状态 | cultivars、growth_stages_before、适用条件 | 使用目标田块操作前的实际观测 |
 | 苗情、营养、水分、天气、病虫、库存与设备返回 | 适用条件、pre_checks、constraints | 保留单位、时点和覆盖范围，归纳为可判断条件 |
 | `status/error`、实际覆盖、完成垄、后续复查 | post_checks、Reflection、Guidance、Observation 结果 | 结合行为与返回解释结果，部分完成和错误照实记录 |
-| 两项 Agent 分数及解释 | 前三类知识的整季结果背景 | 支持比较历史运行，具体经验方向由正文与步骤证据判定 |
+| Agent 的 recovered_yield_loss 及解释 | 前三类知识的整季结果背景 | 支持比较历史运行，具体经验方向由正文与步骤证据判定 |
 | Oracle 实际执行及配套回收量 | applicable_constraints、procedure | 描述发生的过程，局部收获量和全季回收量注明各自范围 |
 
 第一阶段中，Skill 将单次运行事实整理为方法，Reflection 解释该次历史成因，Guidance 转为未来决策，Observation 记录 Oracle 过程。第二阶段在同场景同类型候选之间比较和凝练，分数仍保留各运行的原有含义。
@@ -183,7 +184,7 @@ release_id 在发布成员表中绑定确切 `(knowledge_id, revision)`，导出
 | Guidance | `guidance_extract`，提出该次历史经验支持的未来行为 | `guidance_consolidate`，比较建议方向与触发条件，处理重复和反例 |
 | Observation | `observation_extract`，按一次 Oracle 记录提炼实际过程 | `observation_consolidate`，核对同一过程的描述、范围和结果，整理重复与补录 |
 
-**第一组输入**为共享来源规则、对应类型 schema／词表、纯 B，以及一次源记录。前三类每次读取一份 Agent 工作流和该运行的两项分数及解释，Observation 读取一份 Oracle 执行记录和配套回收量。第一阶段可回查该源记录的完整时间线，生成视图限定在本次来源内。评分或关键证据缺失时报告待补，其他完备运行可独立处理。
+**第一组输入**为共享来源规则、对应类型 schema／词表、纯 B，以及一次源记录。前三类每次读取一份 Agent 工作流和该运行的 recovered_yield_loss 及解释，Observation 读取一份 Oracle 执行记录和配套回收量。第一阶段可回查该源记录的完整时间线，生成视图限定在本次来源内。当前启用的指标或关键证据缺失时报告待补，其他完备运行可独立处理。
 
 **第二组输入**为同一场景、同一类型的显式 selected_candidate_ids、候选内容及原证据、对应 B 和场景约束、已有正式条目及其修订。完整候选集可以分页读取，整理报告记录处理范围。允许回查这些候选关联的原始材料。单份 Oracle 也经过这一步，核对重复描述、事件身份和流程完整性。
 
