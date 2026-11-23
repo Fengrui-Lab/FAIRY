@@ -1,8 +1,8 @@
-# FAIRY 知识库构建与迭代计划
+# FAIRY 知识库设计方案
 
-**目标**是基于场景基础任务 B、Agent／Oracle 工作流及结果，自动生成四类农事知识，通过结构化 JSON 与固定读写函数存入 SQLite，支持新增、修改、撤回、查询及版本回查。
+**目标**是基于场景基础任务 B、Agent／Oracle 工作流及结果，自动构建四类农事知识。数据先按场景归集，再按单次运行提炼候选，最后在场景内整理形成正式知识，使用 SQLite 与结构化 JSON 支持增删改查和版本回查。
 
-**实施顺序**为按场景整理材料 → 明确源字段与知识字段 → 建立可读写四类知识的 SQLite → 小样本试验四类 prompt 并修订 → 按 20／20／20／10 个新场景分批循环验证。本文是建设规格，候选词表及 Agent 操作协议通过小样本和覆盖检查后定稿。面向任务的检索 query 暂定只使用纯 B，具体匹配和 G 装配留作后续接入。
+**数据流**为“场景材料包 → 单次运行提炼 → 第一张候选知识表 → 同场景同类型整理 → 第二张正式知识表 → 按发布版本查询／导出”。一个场景有多次 Agent 运行和一套 Oracle 记录。前期各环节产物由用户审阅、主导和判断，prompt 与处理规则校准后再逐步托管给 Agent。本文定义数据、字段和接口，任务词表仍需覆盖验收，具体程序为拟建内容。
 
 ## 一、FAIRY 知识库设计
 
@@ -10,18 +10,18 @@
 
 | 类型 | 构建材料 | 一条知识表达的内容 |
 |---|---|---|
-| Agronomic Skill | B＋Agent 工作流＋Yield 和 KTC | 一个可复用的操作方法，含条件、检查、约束、步骤与结果确认 |
-| Agronomic Reflection | B＋Agent 工作流＋Yield 和 KTC | 对一个历史经验或错误的成因解释 |
-| Agronomic Guidance | B＋Agent 工作流＋Yield 和 KTC | 一个条件明确的未来行为建议 |
-| Agronomic Observation | B＋Oracle 工作流＋配套回放 Yield | 一次可识别的事件或连续农事过程 |
+| Agronomic Skill | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 一个可复用的操作方法，含条件、检查、约束、步骤与结果确认 |
+| Agronomic Reflection | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 对一个历史经验或错误的成因解释 |
+| Agronomic Guidance | B＋单次 Agent 工作流＋该次 Yield 和 KTC | 一个条件明确的未来行为建议 |
+| Agronomic Observation | B＋一次 Oracle 执行记录＋配套回放 Yield | 一次可识别的事件或连续农事过程 |
 
-当前 Oracle 来源标为 `simulated_oracle_replay`。未来真实农场回流标为 `real_farm_record`，使用同一 Observation 内容结构，保留实际作业和收获证据。先完整整理场景材料，再决定生成哪些主题和多少条知识，允许某一类没有足够证据产出。
+当前 Oracle 来源标为 `simulated_oracle_replay`。未来真实农场回流标为 `real_farm_record`，使用同一 Observation 内容结构，保留实际作业和收获证据。每次 Agent 运行分别支持前三类提炼，Oracle 记录支持 Observation。每类可以产出零条、一条或多条候选，所有候选保留各自来源。
 
 ### 2. 公共标签与管理信息
 
 | 标签 | 格式与含义 | 填写依据 |
 |---|---|---|
-| `source_scenario_id` | 来源场景 ID，首版每条归属一个场景 | 材料包填写，同一条可关联该场景多次运行 |
+| `source_scenario_id` | 来源场景 ID，每条归属一个场景 | 候选对应该场景的一次源记录，正式知识可关联该场景多次运行的候选 |
 | `crop` | 当前枚举为 `soybean` | B 或实际记录中的作物 |
 | `cultivars` | 品种／通用种子类型代码数组，未知为 null | B 中明示品种及目标田块实际播种或状态 |
 | `growth_stages_before` | 该条知识开始适用时的物候标签数组，未知为 null | 对应田块操作前观测及引擎映射 |
@@ -34,7 +34,7 @@
 
 物候使用 `FAIRY-Engine-` 前缀及 14 个状态 `NOT_PLANTED、PLANTED_PRE_EMERGENCE、VE、VC、V1、V2、V3、V4_PLUS、R1、R3、R5、R6、R7、R8`。保存原始观测，显式映射引擎值，如 `R1_BEGINNING_BLOOM → R1`。旧显示值合并了多个状态时，结合对应版本和同一田块的证据判断，无法唯一确定则留 null。[物候定义](../../fairy/physics/phenology_engine.py) · [兼容映射](../../fairy/apps/farm_world/physics_orchestrator.py)
 
-管理信息单列。`knowledge_id` 是稳定知识身份，`revision` 从 1 开始，`knowledge_type` 为 `skill / reflection / guidance / observation`。发布版本使用 `structured_knowledge_v01、v02…`，导出时附 `release_id`。来源运行、文件、步骤和生成设置用于核查与更正，农业检索使用上表标签。
+两张表共用上述标签及四类 payload 定义。`knowledge_type` 为 `skill / reflection / guidance / observation`。管理字段在第 5 节定义，来源运行、步骤和生成设置用于核查与更正。发布版本使用 `structured_knowledge_v01、v02…`，正式知识导出时附 release_id。
 
 ### 3. task_types 的候选集合与覆盖要求
 
@@ -75,22 +75,65 @@ Reflection 的 success 描述经验方向，成功完成的运行也可产生指
 
 必要正文非空，检查、模板和流程为非空数组。约束暂缺可用空数组并报告缺口，未记录的结果为 null。无法形成有依据的知识时跳过。Observation 通过来源运行和步骤范围定位过程，首次接受后登记稳定 `episode_ref`；同一过程补录沿用身份，新运行的实例另行登记。
 
+### 5. 两张知识表的字段边界
+
+**第一张表 `knowledge_candidates` 保存逐次提炼结果。** 一行对应某次源运行的一条候选，内容可以与其他运行的候选相似。候选行固定后保留原文，源材料或 prompt 更正后生成新行，通过提炼请求关联前次结果。
+
+| 字段 | 类型与约束 | 来源及边界 |
+|---|---|---|
+| `candidate_id` | 字符串主键 | 程序分配，同一提炼请求重试复用已有 ID |
+| `source_scenario_id` | 非空字符串 | 从可信材料包填写 |
+| `source_ref` | 非空来源引用 | 唯一指向一次 Agent 运行或一次 Oracle 记录的冻结材料，含对应 B 和结果 |
+| `knowledge_type` | 四类枚举 | 与本次类型 prompt 一致 |
+| `crop` | 字符串 | 按公共标签规范填写 |
+| `cultivars` | JSON 数组或 null | 该次来源支持的适用范围 |
+| `growth_stages_before` | JSON 数组或 null | 该次来源中的操作前物候证据 |
+| `farming_group` | 三值枚举 | 候选主题所属的主要农事阶段 |
+| `task_types` | 非空 JSON 数组 | 受本次词表版本约束 |
+| `payload` | JSON 对象 | 按知识类型使用第 4 节的完整字段 |
+| `evidence` | 非空 JSON 数组 | 每项为 source_ref、原文定位 locators、对应知识字段 fields，均来自本次源记录 |
+| `episode_ref` | 字符串或 null | Observation 的稳定过程身份，由程序按源事件登记；其他类型为 null |
+| `extraction_request_id` | 非空字符串 | 关联本次单运行提炼的输入、prompt／模型配置、原始输出和审阅记录 |
+
+**第二张表 `knowledge_revisions` 保存整理后的正式知识及历史修订。** 一行是一条正式知识的一个修订，当前可用内容由发布成员关系确定。
+
+| 字段 | 类型与约束 | 来源及边界 |
+|---|---|---|
+| `knowledge_id`、`revision` | 字符串＋正整数联合主键 | 稳定知识身份及修订号，首次为 1，修改追加新修订 |
+| `source_scenario_id` | 非空字符串 | 与所有关联候选属于同一场景 |
+| `knowledge_type` | 四类枚举 | 与所有关联候选类型一致 |
+| `crop` | 字符串 | 整理后的适用作物，需有源证据 |
+| `cultivars` | JSON 数组或 null | 整理后的适用范围，合并时核对条件兼容性 |
+| `growth_stages_before` | JSON 数组或 null | 该正式条目开始适用的物候范围，无法确定时保留未知 |
+| `farming_group` | 三值枚举 | 正式知识的主要农事阶段 |
+| `task_types` | 非空 JSON 数组 | 凝练后主题对应的任务代码 |
+| `payload` | JSON 对象 | 合并、凝练或修订后的完整正文，遵循相同类型 schema |
+| `candidate_ids` | 非空、去重的 JSON 数组 | 支持该修订的完整候选 ID 集合，可包含历史候选与本轮新候选 |
+| `evidence` | 非空 JSON 数组 | 正式字段到原始步骤的证据，来源限于所关联候选的源记录 |
+| `episode_ref` | 字符串或 null | Observation 保留同一过程身份，独立事件分别成条；其他类型为 null |
+| `consolidation_request_id` | 非空字符串 | 关联场景内整理的输入候选、处理决定、审阅及写入结果 |
+
+来源分数及解释存于 source_ref 对应材料中，两张知识表通过关联取得。一个候选可以支持多条正式知识，多条候选也可以支持同一正式知识。正式修订保留完整 candidate_ids 和字段级 evidence，能够逐层追到原始运行。相同标签不会自动产生同一知识身份。
+
+release_id 在发布成员表中绑定确切 `(knowledge_id, revision)`，导出时加入正式记录。候选审阅是否通过、候选在某次整理中是否采用分别记入对应请求的审阅报告，候选表本身保存不可变提炼结果。两张表共用 schema／词表版本，版本号通过各自请求及发布记录确定。
+
 ## 二、FAIRY 知识库数据来源
 
 ### 1. 来源集合与场景材料包
 
-首轮使用[正式 90 场景](../../scripts/fullseason/formal_90_scenario_ids.txt)排除 [L3-mini 20](../../scripts/fullseason/l3_mini_20_scenario_ids.txt)后的 70 个场景。五个 Agent 来源中，纳入这些场景的 `return_code=0` 运行，同场景不同模型、B/BP 和重跑分别保留。每次生成冻结具体文件及评分行，按“来源根＋cell 路径”配对工作流、报告和分数。
+首轮使用[正式 90 场景](../../scripts/fullseason/formal_90_scenario_ids.txt)排除 [L3-mini 20](../../scripts/fullseason/l3_mini_20_scenario_ids.txt)后的 70 个场景。六个 Agent 来源中，纳入这些场景的 `return_code=0` 运行，同场景不同模型、B/BP 和重跑分别保留。每次生成冻结具体文件及评分行，按“来源根＋cell 路径”配对工作流、报告和分数。
 
 | 来源 | 允许目录 | 评分材料 |
 |---|---|---|
 | DeepSeek Flash B | [l3_formal90_deepseek_flash_B_nothink_El08gq](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/) | [20261122_0x7es521 汇总](../../validation_runs/l3_formal90_deepseek_flash_B_nothink_El08gq/replay_analysis_20261122_0x7es521/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | DeepSeek Flash BP | [l3_formal90_deepseek_flash_BP_nothink_OL0lel](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_OL0lel/) | [20261121_34tfrwwj 汇总](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_OL0lel/replay_analysis_20261121_34tfrwwj/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | DeepSeek Flash BP rerun | [l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM/) | [20261121_qmown_yo 汇总](../../validation_runs/l3_formal90_deepseek_flash_BP_nothink_rerun_qn7CQM/replay_analysis_20261121_qmown_yo/rebatch_fos/summary_v2_rebatch_fos.csv) |
+| Thor Qwen B | [l3_formal90_thor_qwen35b_B_nothink_vrNWR4](../../validation_runs/l3_formal90_thor_qwen35b_B_nothink_vrNWR4/) | 本轮核查已有运行，尚未发现配套评分汇总，登记后待补 |
 | Thor Qwen BP | [l3_formal90_thor_qwen35b_BP_nothink_lvxtsU](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/) | [20261123_ccsvhd_7 汇总](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU/replay_analysis_20261123_ccsvhd_7/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | Thor Qwen BP rerun | [l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0/) | [20261123_rxp1itc_ 汇总](../../validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0/replay_analysis_20261123_rxp1itc_/rebatch_fos/summary_v2_rebatch_fos.csv) |
 | Oracle | [oracle_140_verification_20261116](../../validation_runs/oracle_140_verification_20261116/) | 同场景执行工作流及 baselines 中的回收量 |
 
-**Oracle 按场景统一绑定。** 对比上述 Oracle 包与历史评分使用的 `oracle_time_control_20261116/advance_time_v2`，70 个场景的回收量、声明流程，以及实际执行中的有序工具参数、时间和农事结果全部一致，执行记录仅有随机巡查／任务 ID 差异。两个 manifest 的 430 个来源代码哈希相同，相关场景、引擎和工具代码与当前工作区核对一致。五个 Agent 来源中选定的 210 条评分，其 Oracle 回收量也全部与指定 Oracle 包一致。因此首版在固定场景版本下，每个场景材料包绑定一套 Oracle 与配套 Yield，历史文件路径保留在来源记录中。[指定 Oracle manifest](../../validation_runs/oracle_140_verification_20261116/manifest.json) · [历史参考 manifest](../../validation_runs/oracle_time_control_20261116/advance_time_v2/manifest.json) · [Oracle 构建入口](../../fairy/scenarios/workflow_validation.py)
+**Oracle 按场景统一绑定。** 对比上述 Oracle 包与历史评分使用的 `oracle_time_control_20261116/advance_time_v2`，70 个场景的回收量、声明流程，以及实际执行中的有序工具参数、时间和农事结果全部一致，执行记录仅有随机巡查／任务 ID 差异。两个 manifest 的 430 个来源代码哈希相同，相关场景、引擎和工具代码与当前工作区核对一致。已选定的 210 条 Agent 评分，其 Oracle 回收量也全部与指定 Oracle 包一致。因此首版在固定场景版本下，每个场景材料包绑定一套 Oracle 与配套 Yield，历史文件路径保留在来源记录中。[指定 Oracle manifest](../../validation_runs/oracle_140_verification_20261116/manifest.json) · [历史参考 manifest](../../validation_runs/oracle_time_control_20261116/advance_time_v2/manifest.json) · [Oracle 构建入口](../../fairy/scenarios/workflow_validation.py)
 
 | 材料包部分 | 原始文件与整理内容 |
 |---|---|
@@ -99,7 +142,7 @@ Reflection 的 success 描述经验方向，成功完成的运行也可产生指
 | 场景 Oracle `oracle` | `execution_workflows/<id>.json` 与 `baselines/<id>.json`；声明 `workflows/<id>.json` 和 `terminal_states/<id>.json` 用于核对 |
 | 来源清单 | 来源身份、文件／评分行定位、哈希、版本、缺失项。原始内容保存不可变副本或引用可恢复的归档 |
 
-原始材料完整归集，生成时可分页读取。BP 开场指令中包含的 P/G 与系统指令从生成视图剔除，纯 B 单独传入，原始运行条件保留。当前五个 Agent 根目录分别有 70／56／14／50／20 个非 mini 的 rc=0 运行，合计 210 次。五个来源的 210 次运行均已有配对评分和两项分数，第五来源的 20 次与 Thor 主跑的 50 次恰好互补，每个场景共有 3 次材料齐备的运行。正式导入时重新扫描并冻结清单。[运行产物定义](../../fairy/controllers/run_artifacts.py)
+原始材料完整归集，生成时可分页读取。BP 开场指令中包含的 P/G 与系统指令从生成视图剔除，纯 B 单独传入，原始运行条件保留。本轮核查时，原五个来源已有 210 次配对评分，每个场景有 3 次评分齐备的运行。新增 Thor B 已有 26 次非 mini 的 rc=0 运行，工作流及报告可读取，暂缺评分汇总。当前共 236 次原始运行，按场景实际可用数量装包，缺口单独报告。正式导入时重新扫描并冻结清单。[运行产物定义](../../fairy/controllers/run_artifacts.py)
 
 ### 2. 分数及解释
 
@@ -125,50 +168,47 @@ Reflection 的 success 描述经验方向，成功完成的运行也可产生指
 | 两项 Agent 分数及解释 | 前三类知识的整季结果背景 | 支持比较历史运行，具体经验方向由正文与步骤证据判定 |
 | Oracle 实际执行及配套回收量 | applicable_constraints、procedure | 描述发生的过程，局部收获量和全季回收量注明各自范围 |
 
-Skill 将事实整理为方法，Reflection 解释历史成因，Guidance 转为未来决策，Observation 记录过程。字段与证据的对应关系由四类 prompt 明确，并在输出中保存具体来源定位。
+第一阶段中，Skill 将单次运行事实整理为方法，Reflection 解释该次历史成因，Guidance 转为未来决策，Observation 记录 Oracle 过程。第二阶段在同场景同类型候选之间比较和凝练，分数仍保留各运行的原有含义。
 
-## 三、FAIRY 知识库的更新与迭代
+## 三、两阶段 prompt、写入及更新设计
 
-### 1. 四类 Agent 共用的生成与比较流程
+### 1. 两组、八个逻辑 prompt
 
-**本版建议统一首次和后续调用。** 每类知识维护一套 prompt，输入均为“共享规则＋类型字段与写作规范＋场景材料＋已有相关知识＋本批待写候选”。空库时已有知识为空；已有库时先读出相关条目。后续都经过比较和去重。bootstrap／maintain 可作为调用状态描述，共用这一流程。
+共两组功能，每组四个类型 prompt，使用共享规则和类型规范装配。第一组负责单次提炼，第二组负责场景内整理。首次建库和后续更新共用这两组，第二阶段通过已有正式知识是否为空适配调用。
 
-仅允许首次 add 无法避免内容重叠。提交前需比较“新候选与已有库”和“同批候选之间”的核心主张、适用条件及证据。同场景多次运行先归集，完全重复候选归并，语义相近候选由 Agent 判断补充、修订或分别保留；并行生成后统一检查再写入。
-
-首版 source_scenario_id 为单值，同场景、同类型的等价知识可以合并证据。跨场景相似内容保留各自来源身份，登记为相似候选，供后续明确合并规则。若要求跨场景只存一条知识，需同时定义多场景来源与排除目标场景的语义，此项待商议。同主题的不同知识类型按各自用途检查冗余。
-
-| 类型 prompt | 归纳与更新指令 |
-|---|---|
-| Skill | 提炼适用条件、观察顺序、约束、操作方法和后检查；新证据补足同一方法时修订，独立方法新增 |
-| Reflection | 先写历史行为和可见结果，再写原因推断与不确定性；新事实影响旧解释时说明修改依据 |
-| Guidance | 写将来采取、避免或按检查结果选择的行为；反例涉及部分条件时收窄条件或拆开建议 |
-| Observation | 按实际执行整理过程；相同 episode 的补录或纠错采用修订，独立实例采用新增 |
-
-共享规则要求来源和时点可核查，实际覆盖取返回，事实、归纳与推断表达清楚。原始 Agent 轨迹用于解释历史观察，评分用于说明其评估结果。单次高分或行为先后不足以证明局部因果或必要顺序。具体数值作为实例保留，通用阈值和方法约束须有证据。
-
-### 2. 中间 JSON 与增删改的暂定语义
-
-以下协议用于小样本试验，重点核验重复内容、keep 与 retire 的边界。
-
-| 结果 | 判定 | 写入行为 |
+| 类型 | 第一组，单次运行提炼 | 第二组，场景内整理 |
 |---|---|---|
-| `add` | 新的有效主题或适用情境，且比较后无等价条目 | 新 knowledge_id，revision=1 |
-| `revise` | 同一知识的内容、标签或证据需补足／更正 | 保持 ID，增加修订号，提交完整新记录 |
-| `no_change`（原 keep） | 比较后已有内容和证据足够 | 写入比较报告，沿用旧修订；未提到的旧条目也沿用 |
-| `retire` | 有证据确认错误、失效，或已被其他条目完整替代 | 从新版本有效成员中撤回，历史版本保留 |
-| `pending` | 缺证据、归属不明或冲突未解决 | 保存原因，待补材料或复核 |
+| Skill | `skill_extract`，从一次 Agent 运行提取条件、检查、约束、操作和验收 | `skill_consolidate`，比较方法及适用条件，合并等价内容，保留必要差异 |
+| Reflection | `reflection_extract`，解释该次运行中有证据的经验或错误 | `reflection_consolidate`，核对多次运行的成因解释，补充条件、收窄或修订推断 |
+| Guidance | `guidance_extract`，提出该次历史经验支持的未来行为 | `guidance_consolidate`，比较建议方向与触发条件，处理重复和反例 |
+| Observation | `observation_extract`，按一次 Oracle 记录提炼实际过程 | `observation_consolidate`，核对同一过程的描述、范围和结果，整理重复与补录 |
 
-keep 作为“比较后无变更”的报告结果。正文相同但需要增加已接受证据时使用 revise。retire 是有明确对象和理由的撤回提案，证据冲突或暂缺材料先进入 pending。替代条目与关联撤回一起核验和提交。这些语义须在小样本评审中确认。
+**第一组输入**为共享来源规则、对应类型 schema／词表、纯 B，以及一次源记录。前三类每次读取一份 Agent 工作流和该运行的两项分数及解释，Observation 读取一份 Oracle 执行记录和配套回收量。第一阶段可回查该源记录的完整时间线，生成视图限定在本次来源内。评分或关键证据缺失时报告待补，其他完备运行可独立处理。
 
-中间 JSON 使用 `changes` 数组提交 add／revise／retire，`notes` 数组记录 no_change／pending。下例为格式模板，实际值由材料和现有知识提供。
+**第二组输入**为同一场景、同一类型的显式 selected_candidate_ids、候选内容及原证据、对应 B 和场景约束、已有正式条目及其修订。完整候选集可以分页读取，整理报告记录处理范围。允许回查这些候选关联的原始材料。单份 Oracle 也经过这一步，核对重复描述、事件身份和流程完整性。
+
+同一源运行、同一类型可能因 prompt 修订而多次提炼。来源清单指定采用哪次提炼结果，重复提炼保留历史，不按多次独立运行计证。整理时可引用已有正式条目关联的历史候选，并明确保留或替换的证据。
+
+### 2. 场景内合并、凝练和删减规则
+
+- 同场景、同类型中，主张及适用条件一致时合并，保留有效候选与原始证据。方法或条件差异会影响决策时分别成条。
+- 跨运行比较保留各自的观测、动作、结果和分数，因果解释中的前后证据须来自同一运行或明确说明比较条件。不同运行的步骤不能拼接成一次实际发生的过程。
+- 多次运行支持相近结论时，核对共同条件后再凝练。标签数组的并集不自动成为更广泛的适用范围，未知信息不能推导为 any。
+- 解释或建议冲突时回查事实，可补充条件、收窄范围或登记待处理。候选数量、模型数量及整季分数不能代替具体证据判断。
+- 精简重复表述时保留触发条件、操作限制和结果边界。未采纳的候选在报告中写明重复、证据不足等原因，原始候选仍可读取。
+- 新内容接受了额外来源证据时，即使正文相同，也通过正式修订固定新 candidate_ids 和 evidence。
+- Observation 的独立事件分别保留，同一事件补录或纠错沿用 episode_ref。Skill、Reflection、Guidance 和 Observation 各按自身用途整理。
+
+候选未被采纳只表示本次整理的选择。撤回已有正式知识需要明确的目标 ID、理由和证据。跨场景材料保持各自来源身份，首版整理范围为场景内部。
+
+### 3. 两阶段结构化输出
+
+**第一阶段输出**为 `candidates` 和 `issues`。每个候选包含类型、五个农学标签、完整 payload 和 evidence。程序从可信 context 填入候选 ID、场景、唯一 source_ref、提炼请求及 Observation 过程身份。下面是格式模板。
 
 ```json
 {
-  "changes": [
+  "candidates": [
     {
-      "operation": "revise",
-      "knowledge_id": "<现有 ID>",
-      "expected_revision": 1,
       "knowledge_type": "guidance",
       "tags": {
         "crop": "soybean",
@@ -179,70 +219,88 @@ keep 作为“比较后无变更”的报告结果。正文相同但需要增加
       },
       "payload": {
         "recommendation": "conditional",
-        "applicable_when": "<修订后的适用条件>",
-        "content": "<检查后满足哪些条件才行动，否则如何处理>"
+        "applicable_when": "<该次运行支持的条件>",
+        "content": "<检查结果满足何种条件才行动>"
       },
       "evidence": [
         {
-          "source_ref": "<材料标识>",
+          "source_ref": "<本次唯一源记录>",
           "locators": ["workflow#/<步骤 ID>/content"],
           "fields": ["/payload/content"]
         }
-      ],
-      "reason": "<新证据及修改理由>"
+      ]
     }
   ],
-  "notes": []
+  "issues": []
 }
 ```
 
-add 省略旧 ID 和 expected_revision，由程序分配身份。revise 提交完整 tags、payload 和证据，retire 提交旧 ID、预期修订、理由和证据。因替代而撤回时另带 replaced_by 数组，每项使用 `{"knowledge_id": "已有ID"}` 或 `{"change_index": 0}`，后者指向本批 changes 中 add 的零基索引。替代目标须在新版本有效，关联候选未通过时撤回也暂缓提交。
+实际输出须补全所有非空标签和正文的证据，示例仅展示一项。locators 和 fields 均为非空字符串数组，分别定位原材料内容和被支持的知识字段。issues 每项说明 field、code 和 reason。tags 展平为知识表的标签列，payload 与 evidence 按 JSON 保存。第一阶段的候选输出由 `write_candidates` 校验并保存，再进入用户的候选审阅。
 
-全部非空标签和正文主张需要证据对应，示例仅展示一项。场景身份、输入版本和生成配置由调用端的可信 context 提供。notes 每项包含 status、来源或旧知识 ID 及 reason。模型输出只允许引用已提供的 ID 与来源。
+**第二阶段输出**为 `changes` 和 `notes`。changes 每项包含 operation、knowledge_type、reason，以及下表中的类型专属内容。
 
-### 3. SQLite 与固定读写函数
+| 操作／报告结果 | 必需内容 | 效果 |
+|---|---|---|
+| `add` | 完整 tags、payload、candidate_ids、evidence、Observation 的 episode_ref | 分配正式 knowledge_id，revision=1 |
+| `revise` | 旧 knowledge_id、expected_revision，以及完整的新 tags、payload、candidate_ids、evidence、episode_ref | 追加正式修订，历史版本保留 |
+| `retire` | 旧 ID、expected_revision、撤回依据的 candidate_ids 与 evidence | 从新版本有效成员中撤回 |
+| `no_change` | notes 中记录旧 ID、相关 candidate_ids 和原因 | 正式内容与证据沿用原修订 |
+| `not_selected` | notes 中记录未采用的 candidate_ids 和原因，可指向等价正式条目 | 保留候选及本次选择理由 |
+| `pending` | notes 中记录候选或旧 ID、冲突／缺口和原因 | 留待补充材料或复核 |
 
-第一步建立能存入并读回四类知识的 SQLite。标量标签存普通列，数组、各类型 payload 和 evidence 存 JSON，写入函数按类型 schema 校验。查询通过固定函数内的参数化 SQL 实现，结果序列化为 JSON。相同函数可在后续封装为 Agent 工具。
+notes 项使用 status、candidate_ids、knowledge_id（无关联时为 null）、reason。全部输入候选须在 changes 或 notes 中有处理说明，一个候选可以支撑多条正式知识。candidate_ids 限于 context 冻结的 selected_candidate_ids 及本次提供的旧正式修订关联候选，类型和场景须一致。正式字段证据必须来自关联候选的源记录，Observation 的候选还须指向同一 episode_ref。已有正式条目未被列入变更时沿用原修订。
 
-| 首版逻辑表 | 内容 |
+revise 的 candidate_ids 是新修订的完整关联集合。替代关系使用可选 replaced_by 数组，每项为 `{"knowledge_id": "已有ID"}` 或 `{"change_index": 0}`，后者指向本批 changes 中的 add。替代目标须在新版本有效，替代与撤回成组校验和提交。以上操作的判定规则在小样本中由用户审阅确认。
+
+retire 的 evidence.fields 指向 `/reason`，理由及证据保存在整理请求和操作记录中，撤回通过新发布成员关系生效。
+
+### 4. SQLite 与固定读写函数
+
+两张业务表分别承担候选积累和正式知识使用。结构校验通过的候选先入第一表，经过用户审阅和场景内整理后，再将审阅通过的变更写入第二表。SQLite 保存正式状态，JSON 用于两阶段交换、审阅和导出。
+
+| 表 | 职责 |
 |---|---|
-| `sources` | 场景包及来源运行的身份、材料定位、归档哈希、分数与解释；更正材料创建新来源版本 |
-| `knowledge_revisions` | `(knowledge_id, revision)`，类型、来源场景、农学标签、payload、evidence 及对应写入批次 |
-| `releases`、`release_items` | 发布版本、父版本、规范与词表版本、提交记录；每个发布中知识 ID 对应确切 revision |
-| `change_batches` | request_id、基础版本、输入清单、prompt／模型配置、原始 JSON、检查结果及最终发布 ID |
+| `sources` | 场景材料及单次源记录、归档定位、哈希、分数与解释 |
+| `knowledge_candidates` | 第一次提炼的不可变候选，字段见第一节 |
+| `knowledge_revisions` | 第二次整理的正式修订，含确切 candidate_ids 和原始证据 |
+| `releases`、`release_items` | 发布版本、父版本及有效知识的确切修订 |
+| `change_batches` | request_id、阶段 extract／consolidate、输入清单、规范／prompt／模型配置、原始输出、用户审阅结论及写入结果 |
+
+candidate_ids 用 JSON 数组保存，固定写入函数核验所有引用、同场景同类型约束和证据来源。标量标签存普通列，数组、payload、evidence 存 JSON。所有业务读写经过参数化 SQL 函数，后续可将同一函数封装为 Agent 工具。
 
 | 固定函数接口草案 | 职责 |
 |---|---|
-| `init_db()` | 创建表与约束，支持四类 schema 及版本 |
-| `validate_changes(context, proposal)` | 检查字段、枚举、来源、重复候选和目标修订，返回错误位置与原因；语义检查结果附在批次记录中 |
-| `apply_changes(request_id, base_release_id, context, proposal)` | 从可信 context 填入场景及来源信息，原子应用 add／revise／retire，保存 notes、修订及新快照；重复请求返回原结果 |
-| `get_knowledge(release_id, knowledge_id)` | 读取指定发布绑定的完整条目 |
-| `query_knowledge(release_id, filters, pagination)` | 按类型、场景、标签和私有方向字段筛选，确定性排序并返回 JSON |
-| `get_history(knowledge_id)`、`export_release(release_id)` | 回查修订与证据，导出指定版本 |
+| `init_db()` | 创建两张业务表及来源、请求、发布辅助表 |
+| `write_candidates(request_id, context, output)` | 校验单次来源及类型，保存候选、issues 和生成上下文，返回 candidate_ids |
+| `get_candidates(scenario_id, knowledge_type, candidate_ids)` | 读取冻结的候选集合及原证据，供审阅和场景整理 |
+| `validate_changes(context, proposal)` | 检查正式字段、候选引用及允许集合、处理覆盖、证据和目标修订，返回错误位置与原因 |
+| `apply_changes(request_id, base_release_id, context, proposal)` | 核验已登记的正式审阅结论，原子提交修订、notes 和新快照 |
+| `get_knowledge(release_id, knowledge_id)`、`query_knowledge(release_id, filters, pagination)` | 读取正式发布，按类型、场景、标签及私有方向字段筛选，确定性排序并返回 JSON |
+| `get_history(knowledge_id)`、`export_release(release_id)` | 回查正式修订到候选及源步骤，导出指定版本 |
 
-release_id 使用 `structured_knowledge_v01` 等。变更在事务外生成并检查，事务内校验基础版本和 expected_revision，再一起写入操作记录、知识修订及发布成员。相同 request_id 必须对应相同输入，重试已经成功的请求返回原发布，冲突返回明确错误。并行候选合并时，同一旧 ID 的互斥操作先解决冲突。旧快照始终引用原有修订。
+同一 request_id 绑定同一阶段、输入及输出，重试复用已写入的候选 ID 或发布结果。新材料、prompt 调整或主动重提炼使用新请求，保留旧候选。正式写入在短事务中校验基础版本、expected_revision 和依赖，一起提交知识修订、操作记录与发布成员。并发冲突返回明确错误，回到最新版本重新比较。
 
-未修改的条目沿用父版本，撤回只改变新版本成员。JSON 导出来自指定数据库快照，拟修改内容通过中间 JSON 和写入函数进入新版本。来源、规范或 prompt 发生变化时，写入批次保留其版本与设置，以便复核。
+### 5. 新数据与持续更新
 
-查询层先确定基本合同。跨字段条件使用 AND，数组字段显式选择 ANY／ALL；有字段筛选时未知值默认不匹配，可通过参数纳入。类型私有条件只适用于相应知识类型。分数按来源返回，指标条件如后续接入，应在同次运行内同时满足。待运行场景以纯 B 提供任务输入，B 如何转成筛选／匹配条件及结果如何装入 G，后续再接入。
+新运行先进入相应场景包，第一组 prompt 为该次输入产生新候选。候选审阅后，第二组读取本轮选定的新旧候选和当前正式知识，提出增删改及未采纳理由。源数据更正或评分补齐也走此流程，原候选与旧发布可回查。
 
-## 四、实施方案与验收
+同场景的独立运行分别保存分数，正式知识根据 candidate_ids 取得其来源结果。查询历史发布时使用当时绑定的材料，重新评分通过新候选和正式修订接入。知识内容与来源补充分别在整理报告中说明。
 
-| 阶段 | 交付物 | 验收 |
-|---|---|---|
-| 1. 整理场景材料 | 五个 Agent 来源和 Oracle 的冻结清单、材料包、源字段说明、缺失报告 | 运行与评分正确配对，Oracle 按场景绑定，来源可回读 |
-| 2. 明确字段并建库 | JSON Schema、任务词表及 70 场景片段覆盖表、SQLite、固定读写函数 | 四类完整写入与读回；合法负损失率被保留，非法字段有明确报错 |
-| 3. 小样本 prompt 试验 | 四套共享流程的类型 prompt、中间 JSON、检查与比较报告 | 首次生成和追加都检查重复，能判断新增、修订、无变更、撤回及待处理 |
-| 4. 验证修订和查询 | 固定增删改查案例、版本回查与导出结果 | 重试不重复新增，旧版本可恢复，更新冲突可定位，撤回及替代成组完成 |
-| 5. 分批循环 | 按 formal90 顺序排除 mini20，冻结 20／20／20／10 个新场景，累计 20／40／60／70 | 每批记录新增、修订、撤回、无变更和待补项，查询与固定更新案例回归通过 |
+查询层先约定跨字段 AND、数组字段显式 ANY／ALL，有条件筛选时未知值默认不匹配，可由参数纳入。面向待运行任务的 query 只使用纯 B。B 到匹配条件的转换及正式结果到 G 的载入留作后续接入，实际任务使用第二张表的已发布内容。
 
-小样本建议从首批非 mini 场景中选 3–5 个，覆盖成功运行里的局部错误、partial、多次运行差异、缺分数或缺证据、同事件补录及独立新事件。必要异常可用明确标记的测试夹具验证。样例通过后计入首批，利用相同写入身份避免重复导入。
+## 四、审阅边界与设计验收
 
-每批库版本准备后运行 mini20 的 Agent 效果验证，依赖后续完成 B 查询和 G 载入接口。此前先完成数据库与生成流程的验收。mini20 结果绑定知识版本、模型、种子及载入配置，作为开发验证反馈；生成和更正内容从建库来源取证。
+前期由用户审阅并决定各环节产物。材料包审阅检查来源及评分配对，字段／词表审阅检查含义和覆盖。第一张表审阅检查单次提炼是否准确、充分、有证据，第二阶段审阅检查凝练后是否保留必要条件、如何处理冲突及删减，正式写入以通过审阅的变更为依据。审阅结论和修正要求随请求保存，自动化校准后再逐步交给 Agent。
 
-必要错误包括 `SOURCE_OUT_OF_SCOPE`、`RUN_ID_MISMATCH`、`METRIC_MISSING`、`UNCLASSIFIED_TASK`、`INVALID_PAYLOAD`、`UNSUPPORTED_CLAIM`、`STALE_REVISION`、`RELEASE_CONFLICT`。报告返回具体场景、运行、字段或知识 ID 与原因，来源缺失和未决候选保留待处理，其他完备材料可继续。
+正式审阅结论绑定 request_id、基础发布、选中候选集合及 proposal 内容哈希，提交时核对一致。审阅后修改内容须重新登记对该产物的审阅结论。
 
-**当前待定项**为 13 类任务词表的逐片段覆盖验收、跨场景相似知识的合并策略、no_change／retire 的小样本判定规则，以及纯 B 的匹配与 G 载入。首版可以先完成四类知识存储和固定函数，再逐项用真实材料校准。
+设计验收包括单运行输入隔离、四类字段合法、同场景多运行整理、同源重复提炼去重计证、正式字段追到候选与原步骤、候选未采纳不误撤回正式知识，以及重复提交、修订、撤回和历史导出正确。冲突或证据不足可保留待处理，其他完备材料独立推进。
+
+首次分批仍按 formal90 顺序排除 mini20，冻结 20／20／20／10 个新场景，累计覆盖 20／40／60／70。每批分别记录候选产出与正式新增、修订、撤回及待处理项。小样本包含在首批范围中。mini20 验证绑定正式发布版本，待纯 B 查询和 G 载入接口可用后检验 Agent 效果。
+
+必要错误包括 `SOURCE_OUT_OF_SCOPE`、`RUN_ID_MISMATCH`、`METRIC_MISSING`、`UNCLASSIFIED_TASK`、`INVALID_PAYLOAD`、`CANDIDATE_SCOPE_MISMATCH`、`UNSUPPORTED_CLAIM`、`STALE_REVISION`、`RELEASE_CONFLICT`。报告定位到具体来源、候选或正式知识字段。
+
+待校准项为 13 类 task_types 的逐片段覆盖、同场景候选的合并／删减和正式撤回边界、纯 B 的匹配及 G 载入。用户审阅通过后固化为 schema、词表和 prompt 版本。
 
 ## Original Library Modes
 
