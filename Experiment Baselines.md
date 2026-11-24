@@ -17,8 +17,8 @@
 1. [B](validation_runs/l3_mini20_qwen36_35b_structured_b_on_nothink_DkOhBQ)
 2. [B+P](validation_runs/l3_mini20_qwen36_35b_structured_p_on_nothink_E7vlwd)
 3. [B+G(structured-knowledge/v1)](validation_runs/l3_deepseek_B_thor_BG_QaasC1/thor_qwen35b_bg)
-4. [B+Original-l2_textsim_grouped_differ, UNDONE]()
-5. [detail=true, UNDONE]()
+4. [B+Original-l2_textsim_grouped_differ](validation_runs/l3_mini20_thor_qwen35b_structured_grouped_vs_true_KdAT6Z/structured_grouped)
+5. [detail=true](validation_runs/l3_mini20_thor_qwen35b_structured_grouped_vs_true_KdAT6Z/detail_true)
 
 
 # II. Scenario set: L3-full
@@ -36,7 +36,7 @@
 1. [B+P, 64/90](validation_runs/l3_formal90_thor_qwen35b_BP_nothink_lvxtsU)
 2. [B+P, reruns](validation_runs/l3_formal90_thor_qwen35b_BP_nothink_rerun_BvciC0)
 3. [B, 61/90](validation_runs/l3_formal90_thor_qwen35b_B_nothink_vrNWR4)
-4. [B, reruns, UNDONE]()
+4. [B, reruns](validation_runs/l3_formal90_thor_qwen35b_B_nothink_rerun29_nqgiBs)
 
 
 
